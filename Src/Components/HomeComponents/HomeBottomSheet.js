@@ -1,14 +1,46 @@
-import {StyleSheet, View, TouchableOpacity, Text, Image, Pressable, BackHandler, Vibration, Platform} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Image,
+  Pressable,
+  BackHandler,
+  Vibration,
+  Platform,
+} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import {BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal} from '@gorhom/bottom-sheet';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+} from 'react-native-responsive-dimensions';
+import {
+  BottomSheetBackdrop,
+  BottomSheetFlatList,
+  BottomSheetModal,
+} from '@gorhom/bottom-sheet';
 import {FlatList} from 'react-native-gesture-handler';
-import {homeBottomSheetList, homeBottomSheetListRoleUser} from '../../../DesiginData/Data';
+import {
+  homeBottomSheetList,
+  homeBottomSheetListRoleUser,
+} from '../../../DesiginData/Data';
 import {useDispatch, useSelector} from 'react-redux';
-import {setPostsCardType, toggleHideShowInformationModal, toggleHomeBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {
+  setPostsCardType,
+  toggleHideShowInformationModal,
+  toggleHomeBottomSheet,
+} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
-import {getSupportRoomId, useDeleteScheduledPostMutation, useLazyGetFSDQuery, useLazyGetFSQuery, useLazyGetScheduledPostsQuery, useLazyGetSupportRoomIdQuery, useLazyLogoutFromServerQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {
+  getSupportRoomId,
+  useDeleteScheduledPostMutation,
+  useLazyGetFSDQuery,
+  useLazyGetFSQuery,
+  useLazyGetScheduledPostsQuery,
+  useLazyGetSupportRoomIdQuery,
+  useLazyLogoutFromServerQuery,
+} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import PagerView from 'react-native-pager-view';
 import {autoLogout, logoutExplicit} from '../../../AutoLogout';
 import AddSvg from '../../../AddSvg';
@@ -24,7 +56,9 @@ const HomeBottomSheet = ({currentUserDetails}) => {
 
   const [subscribers, setSubscribers] = useState(0);
 
-  const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.homeBottomSheet);
+  const homeBottomSheetVisibility = useSelector(
+    state => state.hideShow.visibility.homeBottomSheet,
+  );
 
   const [logoutFromServer] = useLazyLogoutFromServerQuery();
 
@@ -58,19 +92,21 @@ const HomeBottomSheet = ({currentUserDetails}) => {
   }, []);
 
   useEffect(() => {
-    if (bottomSheetRef.current !== null) {
-      if (homeBottomSheetVisibility === -1) {
-        bottomSheetRef.current.close();
-        console.log('Closing');
-        resetSheet();
-      } else {
-        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    if (!bottomSheetRef.current) return;
 
-        return () => {
-          BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-        };
-      }
+    if (homeBottomSheetVisibility === -1) {
+      bottomSheetRef.current.close();
+      console.log('Closing');
+      resetSheet();
+      return;
     }
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
+
+    return () => backHandler.remove();
   }, [homeBottomSheetVisibility]);
 
   useEffect(() => {
@@ -231,7 +267,16 @@ const HomeBottomSheet = ({currentUserDetails}) => {
     }
   }, [token, loggedInUserRole]);
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   function resetSheet() {
     if (pagerViewRef.current) {
@@ -273,20 +318,45 @@ const HomeBottomSheet = ({currentUserDetails}) => {
 
   if (homeBottomSheetVisibility === 1) {
     return (
-      <BottomSheetModal name="HOmeBottom" backdropComponent={renderBackdrop} ref={bottomSheetRef} index={homeBottomSheetVisibility} snapPoints={snapPoints} onChange={handleSheetChanges} enablePanDownToClose={true} backgroundStyle={{backgroundColor: '#fffef9'}}>
+      <BottomSheetModal
+        name="HOmeBottom"
+        backdropComponent={renderBackdrop}
+        ref={bottomSheetRef}
+        index={homeBottomSheetVisibility}
+        snapPoints={snapPoints}
+        onChange={handleSheetChanges}
+        enablePanDownToClose={true}
+        backgroundStyle={{backgroundColor: '#fffef9'}}>
         <PagerView ref={pagerViewRef} style={{height: '100%', width: '100%'}}>
           <View style={styles.contentContainer} key="1">
             <View>
               <FlatList
-                data={loggedInUserRole === 'creator' ? homeBottomSheetList : homeBottomSheetListRoleUser}
+                data={
+                  loggedInUserRole === 'creator'
+                    ? homeBottomSheetList
+                    : homeBottomSheetListRoleUser
+                }
                 renderItem={({item, index}) => (
-                  <Pressable onPress={() => handleEachOptions(item.id)} style={({pressed}) => [styles.eachSortModalList, pressed && {backgroundColor: '#FFF3EB'}]}>
+                  <Pressable
+                    onPress={() => handleEachOptions(item.id)}
+                    style={({pressed}) => [
+                      styles.eachSortModalList,
+                      pressed && {backgroundColor: '#FFF3EB'},
+                    ]}>
                     <AddSvg name={item.iconName} />
-                    <Text style={styles.eachSortByModalListText}>{item.name}</Text>
+                    <Text style={styles.eachSortByModalListText}>
+                      {item.name}
+                    </Text>
                   </Pressable>
                 )}
                 style={{marginTop: responsiveWidth(3)}}
-                ItemSeparatorComponent={() => <View style={{borderWidth: responsiveWidth(0.3), borderColor: '#EEEEEE'}}></View>}
+                ItemSeparatorComponent={() => (
+                  <View
+                    style={{
+                      borderWidth: responsiveWidth(0.3),
+                      borderColor: '#EEEEEE',
+                    }}></View>
+                )}
               />
             </View>
           </View>

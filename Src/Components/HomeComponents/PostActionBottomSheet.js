@@ -1,26 +1,78 @@
-import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Share, Vibration, TextInput, Button} from 'react-native';
-import React, {useMemo, useCallback, useRef, useState, useEffect, memo} from 'react';
-import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import BottomSheet, {BottomSheetBackdrop, BottomSheetFlatList, BottomSheetTextInput, BottomSheetModal} from '@gorhom/bottom-sheet';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Pressable,
+  BackHandler,
+  Share,
+  Vibration,
+  TextInput,
+  Button,
+} from 'react-native';
+import React, {
+  useMemo,
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+  memo,
+} from 'react';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+} from 'react-native-responsive-dimensions';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetFlatList,
+  BottomSheetTextInput,
+  BottomSheetModal,
+} from '@gorhom/bottom-sheet';
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import {useDispatch, useSelector} from 'react-redux';
-import {togglePostActionBottomSheet, togglePostEditModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {
+  togglePostActionBottomSheet,
+  togglePostEditModal,
+} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import DIcon from '../../../DesiginData/DIcons';
-import {useFocusEffect, useNavigation, useNavigationState} from '@react-navigation/native';
-import {ChatWindowError, LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
+import {
+  useFocusEffect,
+  useNavigation,
+  useNavigationState,
+} from '@react-navigation/native';
+import {
+  ChatWindowError,
+  LoginPageErrors,
+  chatRoomSuccess,
+} from '../ErrorSnacks';
 import PagerView from 'react-native-pager-view';
-import {useBlockUserMutation, useDeleteMyPostMutation, usePinUnPinPostMutation, usePostEditMutation, useReportPostMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {
+  useBlockUserMutation,
+  useDeleteMyPostMutation,
+  usePinUnPinPostMutation,
+  usePostEditMutation,
+  useReportPostMutation,
+} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import share from 'react-native-share';
 import LinearGradient from 'react-native-linear-gradient';
-import {blockPost, resetFeed} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
+import {
+  blockPost,
+  resetFeed,
+} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import {padios, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {deleteMyProfilePost, editMyPostCaption, pinMyProfilePost} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
+import {
+  deleteMyProfilePost,
+  editMyPostCaption,
+  pinMyProfilePost,
+} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import {Image} from 'expo-image';
 
 const PostActionBottomSheet = () => {
   const attachmentInputRef = React.useRef();
 
-  const screenName = useNavigationState(state => state.routes[state.index].name);
+  const screenName = useNavigationState(
+    state => state.routes[state.index].name,
+  );
 
   console.log(screenName, '::::');
 
@@ -28,9 +80,17 @@ const PostActionBottomSheet = () => {
 
   const pagerRef = useRef(null);
 
-  const {postId, show: postActionSheetBottomSheetVisibility, userId, userName, profileImage} = useSelector(state => state.hideShow.visibility.postActionBottomSheet);
+  const {
+    postId,
+    show: postActionSheetBottomSheetVisibility,
+    userId,
+    userName,
+    profileImage,
+  } = useSelector(state => state.hideShow.visibility.postActionBottomSheet);
 
-  const {role: currentUserRole, currentUserId} = useSelector(state => state.auth.user);
+  const {role: currentUserRole, currentUserId} = useSelector(
+    state => state.auth.user,
+  );
 
   const dispatch = useDispatch();
 
@@ -62,7 +122,13 @@ const PostActionBottomSheet = () => {
   });
 
   const handleSaveEditPost = useCallback(async () => {
-    const {data, error} = await postEdit({token, data: {postId: postId, postContent: attachmentInputRef.current.value.trim()}});
+    const {data, error} = await postEdit({
+      token,
+      data: {
+        postId: postId,
+        postContent: attachmentInputRef.current.value.trim(),
+      },
+    });
 
     console.log(data, error);
 
@@ -77,7 +143,12 @@ const PostActionBottomSheet = () => {
     if (data?.data) {
       setCaption('');
       chatRoomSuccess(data?.message);
-      dispatch(editMyPostCaption({postId, caption: attachmentInputRef.current.value.trim()}));
+      dispatch(
+        editMyPostCaption({
+          postId,
+          caption: attachmentInputRef.current.value.trim(),
+        }),
+      );
       bottomSheetModalRef.current?.close();
     }
   }, [postId, attachmentInputRef.current]);
@@ -126,7 +197,9 @@ const PostActionBottomSheet = () => {
   const handleSheetChanges = useCallback(index => {
     console.log(index);
     if (index === -1) {
-      dispatch(togglePostActionBottomSheet({info: {show: -1, postId: undefined}}));
+      dispatch(
+        togglePostActionBottomSheet({info: {show: -1, postId: undefined}}),
+      );
     }
   }, []);
 
@@ -142,19 +215,34 @@ const PostActionBottomSheet = () => {
   };
 
   useEffect(() => {
-    if (bottomSheetModalRef.current && postActionSheetBottomSheetVisibility === -1) {
+    if (!bottomSheetModalRef.current) return;
+
+    if (postActionSheetBottomSheetVisibility === -1) {
       setReportIndex(undefined);
       setReportText('');
       setCustomReportText('');
       bottomSheetModalRef.current.close();
-    } else {
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      return;
     }
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
+
+    return () => backHandler.remove();
   }, [postActionSheetBottomSheetVisibility]);
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   const handleSubmitReport = useCallback(async () => {
     const {data, error} = await reportPost({
@@ -289,44 +377,100 @@ const PostActionBottomSheet = () => {
           backgroundColor: '#D9D9D9',
         }}
         backgroundStyle={{backgroundColor: '#fff'}}>
-        <PagerView scrollEnabled={false} ref={pagerRef} style={{height: '100%'}} initialPage={0}>
+        <PagerView
+          scrollEnabled={false}
+          ref={pagerRef}
+          style={{height: '100%'}}
+          initialPage={0}>
           <View style={styles.contentContainer} key="1">
             <BottomSheetFlatList
-              data={currentUserId !== userId ? otherProfileAction : myProfileAction}
+              data={
+                currentUserId !== userId ? otherProfileAction : myProfileAction
+              }
               renderItem={({item, index}) => {
                 return (
                   <Pressable
                     onPress={() => handlePostActionHandler(item.id)}
                     onPressIn={() => setButtonClick({click: true, id: index})}
                     onPressOut={() => setButtonClick({click: false, id: 0})}
-                    style={[{paddingVertical: 8}, buttonClick.id === index && buttonClick.click && styles.touchFeedBack]}>
-                    <View style={[styles.eachSortModalList, {marginVertical: responsiveWidth(3)}]}>
+                    style={[
+                      {paddingVertical: 8},
+                      buttonClick.id === index &&
+                        buttonClick.click &&
+                        styles.touchFeedBack,
+                    ]}>
+                    <View
+                      style={[
+                        styles.eachSortModalList,
+                        {marginVertical: responsiveWidth(3)},
+                      ]}>
                       {/* <DIcon name={item.iconName} provider={item.provider} size={responsiveWidth(6)} color={item.color} /> */}
 
                       <View style={styles.verifyContainer}>
-                        <Image cachePolicy="memory-disk" source={item.imgSrc} contentFit="contain" style={{flex: 1}} />
+                        <Image
+                          cachePolicy="memory-disk"
+                          source={item.imgSrc}
+                          contentFit="contain"
+                          style={{flex: 1}}
+                        />
                       </View>
 
-                      <Text style={[styles.eachSortByModalListText, item.id === 1 && {color: '#FF2020'}]}>{item.name}</Text>
+                      <Text
+                        style={[
+                          styles.eachSortByModalListText,
+                          item.id === 1 && {color: '#FF2020'},
+                        ]}>
+                        {item.name}
+                      </Text>
                     </View>
                   </Pressable>
                 );
               }}
-              ItemSeparatorComponent={() => <View style={{borderBottomWidth: WIDTH_SIZES['1.5'], borderBottomColor: '#EAEAEA'}} />}
+              ItemSeparatorComponent={() => (
+                <View
+                  style={{
+                    borderBottomWidth: WIDTH_SIZES['1.5'],
+                    borderBottomColor: '#EAEAEA',
+                  }}
+                />
+              )}
               style={{marginTop: responsiveWidth(3)}}
             />
           </View>
 
           <View key="3" style={styles.contentContainer}>
-            <Text style={{textAlign: 'center', fontFamily: 'Rubik-Medium', alignSelf: 'center', width: '50%'}}>Edit post description</Text>
+            <Text
+              style={{
+                textAlign: 'center',
+                fontFamily: 'Rubik-Medium',
+                alignSelf: 'center',
+                width: '50%',
+              }}>
+              Edit post description
+            </Text>
             <View style={{width: '25%'}} />
 
             <View style={styles.textInputContainer}>
-              <TextInput returnKeyType="done" ref={attachmentInputRef} style={styles.textInputStyle} maxLength={500} placeholder="Write, what's in your mind!" multiline onChangeText={t => (attachmentInputRef.current.value = t)} />
+              <TextInput
+                returnKeyType="done"
+                ref={attachmentInputRef}
+                style={styles.textInputStyle}
+                maxLength={500}
+                placeholder="Write, what's in your mind!"
+                multiline
+                onChangeText={t => (attachmentInputRef.current.value = t)}
+              />
               <Text style={styles.charCount}>{`${count}/500`}</Text>
             </View>
 
-            <Text style={{textAlign: 'center', marginTop: responsiveWidth(4), fontFamily: 'Rubik-Bold', color: '#ffa07a'}} onPress={() => handleSaveEditPost()}>
+            <Text
+              style={{
+                textAlign: 'center',
+                marginTop: responsiveWidth(4),
+                fontFamily: 'Rubik-Bold',
+                color: '#ffa07a',
+              }}
+              onPress={() => handleSaveEditPost()}>
               SAVE EDIT
             </Text>
           </View>
@@ -335,17 +479,47 @@ const PostActionBottomSheet = () => {
             {currentUserRole !== 'creator' && (
               <>
                 <View style={styles.profilePictureContainer}>
-                  <Image source={profileImage ? {uri: profileImage} : require('../../../Assets/Images/DefaultProfile.jpg')} style={styles.profilePicture} resizeMethod="resize" resizeMode="contain" />
+                  <Image
+                    source={
+                      profileImage
+                        ? {uri: profileImage}
+                        : require('../../../Assets/Images/DefaultProfile.jpg')
+                    }
+                    style={styles.profilePicture}
+                    resizeMethod="resize"
+                    resizeMode="contain"
+                  />
                 </View>
 
-                <Text style={[styles.title, {marginTop: responsiveWidth(4), fontSize: responsiveFontSize(2.2)}]}>{userName}</Text>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      marginTop: responsiveWidth(4),
+                      fontSize: responsiveFontSize(2.2),
+                    },
+                  ]}>
+                  {userName}
+                </Text>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: responsiveWidth(16)}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginTop: responsiveWidth(16),
+                  }}>
                   <Pressable onPress={() => handlePostActionHandler(7)}>
-                    <Text style={[styles.loginButton, {backgroundColor: '#FC766A'}]}>BLOCK</Text>
+                    <Text
+                      style={[
+                        styles.loginButton,
+                        {backgroundColor: '#FC766A'},
+                      ]}>
+                      BLOCK
+                    </Text>
                   </Pressable>
 
-                  <Pressable onPress={() => bottomSheetModalRef.current?.close()}>
+                  <Pressable
+                    onPress={() => bottomSheetModalRef.current?.close()}>
                     <Text style={styles.loginButton}>CANCEL</Text>
                   </Pressable>
                 </View>

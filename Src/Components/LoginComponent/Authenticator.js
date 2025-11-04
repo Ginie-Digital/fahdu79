@@ -1,6 +1,26 @@
-import {StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, TextInput, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Animated,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  TextInput,
+  Switch,
+  ToastAndroid,
+  Pressable,
+  ActivityIndicator,
+  Platform,
+  BackHandler,
+  Linking,
+} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
+import {
+  responsiveFontSize,
+  responsiveHeight,
+  responsiveWidth,
+} from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
 import DIcon from '../../../DesiginData/DIcons';
 import {useSelector, useDispatch} from 'react-redux';
@@ -11,7 +31,12 @@ import axios from 'axios';
 
 import {emptyUnreadRoomList} from '../../../Redux/Slices/NormalSlices/UnReadThreadSlice';
 import {LoginPageErrors, successSnack} from '../ErrorSnacks';
-import {FONT_SIZES, padios, selectionTwin, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import {
+  FONT_SIZES,
+  padios,
+  selectionTwin,
+  WIDTH_SIZES,
+} from '../../../DesiginData/Utility';
 
 import {BottomSheetBackdrop, BottomSheetModal} from '@gorhom/bottom-sheet';
 import AnimatedButton from '../AnimatedButton';
@@ -57,7 +82,9 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
 
   const bottomSheetRef = useRef(null);
 
-  const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.verficationScreen);
+  const homeBottomSheetVisibility = useSelector(
+    state => state.hideShow.visibility.verficationScreen,
+  );
   // const homeBottomSheetVisibility = 1
 
   const snapPoints = useMemo(() => ['40%', '50%', '60%'], []);
@@ -88,11 +115,14 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
         bottomSheetRef.current.close();
         console.log('Closing');
       } else {
-        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        // BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-        return () => {
-          BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-        };
+        const backHandler = BackHandler.addEventListener(
+          'hardwareBackPress',
+          onBackPress,
+        );
+
+        return () => backHandler.remove();
       }
     }
   }, [homeBottomSheetVisibility]);
@@ -103,7 +133,16 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
     }
   }, [homeBottomSheetVisibility]);
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   //Main finish
 
@@ -198,7 +237,9 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
           <View style={styles.headerContainer}>
             <Text style={styles.heading}>Security Check</Text>
           </View>
-          <Text style={styles.subtext}>Enter the security code we just sent on your email address.</Text>
+          <Text style={styles.subtext}>
+            Enter the security code we just sent on your email address.
+          </Text>
 
           <View style={styles.tipContainer}>
             <View style={styles.tipCounterContainer}>
@@ -213,14 +254,20 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
                       value={verificationCode[index] || ''}
                       onChangeText={text => handleCodeChange(text, index)}
                       onKeyPress={({nativeEvent}) => {
-                        if (nativeEvent.key === 'Backspace' && verificationCode[index] === '') {
+                        if (
+                          nativeEvent.key === 'Backspace' &&
+                          verificationCode[index] === ''
+                        ) {
                           handleBackspace(index);
                         }
                       }}
                       maxLength={1}
                       autoCapitalize="characters"
                       keyboardType="default"
-                      style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null]}
+                      style={[
+                        styles.codeBox,
+                        verificationCode[index] ? styles.codeBoxFilled : null,
+                      ]}
                       selectionColor={selectionTwin()}
                       selectionHandleColor={'#ffa86b'}
                       cursorColor={'#1e1e1e'}
@@ -244,9 +291,17 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
               <Pressable onPress={() => handleVerification()}>{!loading ? <Text style={[styles.loginButton]}>VERIFY</Text> : <ActivityIndicator size={"small"} color={"#282828"} style={styles.loginButton} />}</Pressable>
             </View> */}
 
-            <AnimatedButton title={'Verify'} buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} />
+            <AnimatedButton
+              title={'Verify'}
+              buttonMargin={0}
+              onPress={handleVerification}
+              loading={loading}
+              disabled={loading}
+            />
 
-            <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => openInbox()}>
+            <TouchableOpacity
+              style={styles.alreadyAccountContainer}
+              onPress={() => openInbox()}>
               <View style={styles.alreadyAccountRow}>
                 <Text style={styles.forgotTextTitle}>Open Mail App</Text>
               </View>

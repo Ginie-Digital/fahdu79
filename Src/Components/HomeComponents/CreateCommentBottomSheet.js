@@ -1,20 +1,51 @@
-import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Button, Platform, Keyboard, ActivityIndicator} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Pressable,
+  BackHandler,
+  Button,
+  Platform,
+  Keyboard,
+  ActivityIndicator,
+} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import {BottomSheetBackdrop, BottomSheetModal, BottomSheetTextInput} from '@gorhom/bottom-sheet';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+} from 'react-native-responsive-dimensions';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
 import DIcon from '../../../DesiginData/DIcons';
 import {FlatList, TextInput} from 'react-native-gesture-handler';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleCommentBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {useDoCommentMutation, useLazyGetAllCommentsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {
+  useDoCommentMutation,
+  useLazyGetAllCommentsQuery,
+} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import Moment from 'react-moment';
 import {LoginPageErrors} from '../ErrorSnacks';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {deletePostComments, pushComment, savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
+import {
+  deletePostComments,
+  pushComment,
+  savePostComments,
+  setCurrentCommentDetails,
+  setTotalPages,
+} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import CommentShimmer from '../Shimmers/CommentShimmer';
 import {Image} from 'expo-image';
-import {FONT_SIZES, selectionTwin, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import {
+  FONT_SIZES,
+  selectionTwin,
+  WIDTH_SIZES,
+} from '../../../DesiginData/Utility';
 import {incrementCommentCount} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import {myProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import {otherProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
@@ -26,13 +57,20 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
   const inputRef = useRef(null);
 
-  const {show: commentBottomSheetVisibility, focus: shouldBeFocus} = useSelector(state => state.hideShow.visibility.commentBottomSheet);
+  const {show: commentBottomSheetVisibility, focus: shouldBeFocus} =
+    useSelector(state => state.hideShow.visibility.commentBottomSheet);
 
   const loggedInUser = useSelector(state => state.auth.user);
 
-  const {data: postData, comments, totalPages} = useSelector(state => state.currentComment.content);
+  const {
+    data: postData,
+    comments,
+    totalPages,
+  } = useSelector(state => state.currentComment.content);
 
-  const showCommentsShimmer = useSelector(state => state.hideShow.visibility.loadingComments);
+  const showCommentsShimmer = useSelector(
+    state => state.hideShow.visibility.loadingComments,
+  );
 
   const [text, setText] = useState('');
 
@@ -40,7 +78,13 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
   const dispatch = useDispatch();
 
-  const snapPoints = useMemo(() => [responsiveWidth(100), Keyboard.isVisible() ? responsiveWidth(100) : responsiveWidth(150)], []);
+  const snapPoints = useMemo(
+    () => [
+      responsiveWidth(100),
+      Keyboard.isVisible() ? responsiveWidth(100) : responsiveWidth(150),
+    ],
+    [],
+  );
 
   const [getAllComments] = useLazyGetAllCommentsQuery();
 
@@ -76,8 +120,21 @@ const CreateCommentBottomSheet = ({fromPage}) => {
           {loading ? (
             <ActivityIndicator color="#1e1e1e" />
           ) : (
-            <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 3}}>
-              <Text style={{color: '#1e1e1e', fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES['10']}}>Load More</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 3,
+              }}>
+              <Text
+                style={{
+                  color: '#1e1e1e',
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: FONT_SIZES['10'],
+                }}>
+                Load More
+              </Text>
               <DIcon provider={'Entypo'} name={'chevron-small-down'} />
             </View>
           )}
@@ -133,7 +190,11 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
     console.log(id, 'POSTID');
 
-    const {data, error} = await getAllComments({token, _id: id, page: currentPage});
+    const {data, error} = await getAllComments({
+      token,
+      _id: id,
+      page: currentPage,
+    });
 
     console.log('Comments errors', error);
 
@@ -143,7 +204,9 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     }
 
     if (data) {
-      dispatch(savePostComments({comments: [...comments, ...data?.data?.comments]}));
+      dispatch(
+        savePostComments({comments: [...comments, ...data?.data?.comments]}),
+      );
       dispatch(setCurrentCommentDetails({data: {id}}));
       setCurrentPage(currentPage + 1);
       setCommentLoader(false);
@@ -163,19 +226,21 @@ const CreateCommentBottomSheet = ({fromPage}) => {
   };
 
   useEffect(() => {
-    if (commentBottomSheetVisibility === -1) {
-      if (bottomSheetRef.current) {
-        dispatch(deletePostComments());
-        bottomSheetRef.current.close();
-      }
-      console.log('Closing');
-    } else {
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    if (!bottomSheetRef.current) return;
 
-      return () => {
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-      };
+    if (commentBottomSheetVisibility === -1) {
+      dispatch(deletePostComments());
+      bottomSheetRef.current.close();
+      console.log('Closing');
+      return;
     }
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
+
+    return () => backHandler.remove();
   }, [commentBottomSheetVisibility]);
 
   useEffect(() => {
@@ -242,7 +307,10 @@ const CreateCommentBottomSheet = ({fromPage}) => {
   const NoComments = () => {
     return (
       <View style={{alignSelf: 'center'}}>
-        <Text style={{fontFamily: 'Rubik-Medium', fontSize: 18, color: '#6d6d6d'}}>Be the first to comment!</Text>
+        <Text
+          style={{fontFamily: 'Rubik-Medium', fontSize: 18, color: '#6d6d6d'}}>
+          Be the first to comment!
+        </Text>
       </View>
     );
   };
@@ -268,12 +336,33 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
       return (
         <View style={styles.eachCommentContainer}>
-          <View style={[styles.headerLeftContentContainer, {alignItems: 'flex-start'}]}>
-            <TouchableOpacity style={[styles.profileImageContainer]} onPress={goToProfile}>
-              <Image placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={item?.profile_image?.url ? {uri: item?.profile_image?.url} : require('../../../Assets/Images/DefaultProfile.jpg')} resizeMethod="resize" style={[styles.profileImage]} />
+          <View
+            style={[
+              styles.headerLeftContentContainer,
+              {alignItems: 'flex-start'},
+            ]}>
+            <TouchableOpacity
+              style={[styles.profileImageContainer]}
+              onPress={goToProfile}>
+              <Image
+                placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
+                source={
+                  item?.profile_image?.url
+                    ? {uri: item?.profile_image?.url}
+                    : require('../../../Assets/Images/DefaultProfile.jpg')
+                }
+                resizeMethod="resize"
+                style={[styles.profileImage]}
+              />
             </TouchableOpacity>
 
-            <View style={{flexDirection: 'column', justifyContent: 'center', width: '100%', paddingRight: 24}}>
+            <View
+              style={{
+                flexDirection: 'column',
+                justifyContent: 'center',
+                width: '100%',
+                paddingRight: 24,
+              }}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -316,7 +405,16 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
   //Get Total Followers and subscribers
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   if (commentBottomSheetVisibility === 1) {
     console.log('HOLO', currentPage, totalPages);
@@ -356,8 +454,14 @@ const CreateCommentBottomSheet = ({fromPage}) => {
             ) : (
               <>
                 <FlatList
-                  contentContainerStyle={{paddingBottom: showLoadMoreButton ? 100 : 35}}
-                  ItemSeparatorComponent={() => <View style={{height: responsiveWidth(3), marginVertical: 8}} />}
+                  contentContainerStyle={{
+                    paddingBottom: showLoadMoreButton ? 100 : 35,
+                  }}
+                  ItemSeparatorComponent={() => (
+                    <View
+                      style={{height: responsiveWidth(3), marginVertical: 8}}
+                    />
+                  )}
                   style={{
                     height: '90%',
                     paddingTop: responsiveWidth(4),
@@ -368,11 +472,18 @@ const CreateCommentBottomSheet = ({fromPage}) => {
                     paddingBottom: 50,
                   }}
                   data={comments}
-                  renderItem={({item, index}) => <EachComments item={item} loggedInUser={loggedInUser} />}
+                  renderItem={({item, index}) => (
+                    <EachComments item={item} loggedInUser={loggedInUser} />
+                  )}
                   ListEmptyComponent={() => <NoComments />}
                 />
 
-                {currentPage <= totalPages && <LoadMoreButton loading={commentLoader} onPress={handleCommentLoadMore} />}
+                {currentPage <= totalPages && (
+                  <LoadMoreButton
+                    loading={commentLoader}
+                    onPress={handleCommentLoadMore}
+                  />
+                )}
               </>
             )}
           </View>
@@ -381,8 +492,17 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
           <View style={styles.bottomCommentBoxContainer}>
             <View style={styles.headerLeftContentContainer}>
-              <TouchableOpacity style={[styles.profileImageContainer, {height: 25, width: 25, borderWidth: 1.5}]} onPress={() => gotomyprofile()}>
-                <Image source={{uri: loggedInUser?.currentUserProfilePicture}} resizeMethod="resize" style={[styles.profileImage]} />
+              <TouchableOpacity
+                style={[
+                  styles.profileImageContainer,
+                  {height: 25, width: 25, borderWidth: 1.5},
+                ]}
+                onPress={() => gotomyprofile()}>
+                <Image
+                  source={{uri: loggedInUser?.currentUserProfilePicture}}
+                  resizeMethod="resize"
+                  style={[styles.profileImage]}
+                />
               </TouchableOpacity>
 
               <View style={styles.headerInformation}>
@@ -392,16 +512,47 @@ const CreateCommentBottomSheet = ({fromPage}) => {
                     value={text}
                     placeholderTextColor={'#4D4D4D'}
                     onChangeText={t => setText(t)}
-                    style={[{width: responsiveWidth(68), fontFamily: 'Rubik-Regular'}, Platform.OS === 'ios' ? {height: responsiveWidth(8), fontSize: responsiveFontSize(1.5)} : {}]}
+                    style={[
+                      {width: responsiveWidth(68), fontFamily: 'Rubik-Regular'},
+                      Platform.OS === 'ios'
+                        ? {
+                            height: responsiveWidth(8),
+                            fontSize: responsiveFontSize(1.5),
+                          }
+                        : {},
+                    ]}
                     placeholder="Add a Comment..."
                     selectionHandleColor={'#ffa86b'}
                     cursorColor={'#1e1e1e'}
                   />
                 ) : (
-                  <TextInput autoCapitalize="sentences" ref={inputRef} value={text} onChangeText={t => setText(t)} style={styles.textInput} placeholder="Add a Comment..." selectionHandleColor={'#ffa86b'} selectionColor={selectionTwin()} cursorColor={'#1e1e1e'} />
+                  <TextInput
+                    autoCapitalize="sentences"
+                    ref={inputRef}
+                    value={text}
+                    onChangeText={t => setText(t)}
+                    style={styles.textInput}
+                    placeholder="Add a Comment..."
+                    selectionHandleColor={'#ffa86b'}
+                    selectionColor={selectionTwin()}
+                    cursorColor={'#1e1e1e'}
+                  />
                 )}
 
-                {doCommentLoader ? <ActivityIndicator size="small" color={'#1e1e1e'} style={{marginLeft: 6}} /> : <DIcon provider={'Octicons'} name={'paper-airplane'} style={{marginLeft: 6}} onPress={handleDoComment} />}
+                {doCommentLoader ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={'#1e1e1e'}
+                    style={{marginLeft: 6}}
+                  />
+                ) : (
+                  <DIcon
+                    provider={'Octicons'}
+                    name={'paper-airplane'}
+                    style={{marginLeft: 6}}
+                    onPress={handleDoComment}
+                  />
+                )}
               </View>
             </View>
           </View>

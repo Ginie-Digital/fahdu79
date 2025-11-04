@@ -1,7 +1,23 @@
-import {StyleSheet, View, Text, Pressable, BackHandler, ActivityIndicator, Keyboard, Platform, TouchableOpacity} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Pressable,
+  BackHandler,
+  ActivityIndicator,
+  Keyboard,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import BottomSheet, {BottomSheetBackdrop, BottomSheetTextInput} from '@gorhom/bottom-sheet';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+} from 'react-native-responsive-dimensions';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleWishListSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import ProgressBar from 'react-native-progress/Bar';
@@ -15,8 +31,12 @@ import {WIDTH_SIZES} from '../../../DesiginData/Utility';
 
 const WishListDonateSheet = () => {
   const bottomSheetRef = useRef(null);
-  const donateData = useSelector(state => state.wishListDonateSheet.data.donationInfo);
-  const wishListBottomSheetVisibility = useSelector(state => state.hideShow.visibility.wishListSheet);
+  const donateData = useSelector(
+    state => state.wishListDonateSheet.data.donationInfo,
+  );
+  const wishListBottomSheetVisibility = useSelector(
+    state => state.hideShow.visibility.wishListSheet,
+  );
   const dispatch = useDispatch();
 
   const snapPoints = useMemo(() => ['75%', '85%', '90%'], []);
@@ -42,14 +62,23 @@ const WishListDonateSheet = () => {
   };
 
   useEffect(() => {
+    // Make sure the ref exists before using it
+    if (!bottomSheetRef.current) return;
+
     if (wishListBottomSheetVisibility === -1) {
+      // Close the bottom sheet
       bottomSheetRef.current.close();
-    } else {
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => {
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-      };
+      return; // Stop here; no need to attach back handler
     }
+
+    // Add hardware back press listener when sheet is open
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
+
+    // Cleanup listener when visibility changes or component unmounts
+    return () => backHandler.remove();
   }, [wishListBottomSheetVisibility]);
 
   const token = useSelector(state => state.auth.user.token);
@@ -64,14 +93,31 @@ const WishListDonateSheet = () => {
   // Increment and decrement handlers
   const incrementAmount = () => {
     // If empty, start with 1
-    setAmount(prev => (Number(prev) > 90 ? String(Number(prev || '0') + 100) : String(Number(prev || '0') + 10)));
+    setAmount(prev =>
+      Number(prev) > 90
+        ? String(Number(prev || '0') + 100)
+        : String(Number(prev || '0') + 10),
+    );
   };
 
   const decrementAmount = () => {
-    setAmount(prev => (Number(prev) > 100 ? String(Number(prev || '0') - 100) : String(Number(prev || '0') - 10)));
+    setAmount(prev =>
+      Number(prev) > 100
+        ? String(Number(prev || '0') - 100)
+        : String(Number(prev || '0') - 10),
+    );
   };
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   const [wishListDonation] = useWishListDonationMutation();
 
@@ -92,7 +138,10 @@ const WishListDonateSheet = () => {
     console.log('Paying');
     setLoading(true);
 
-    wishListDonation({token, data: {wishlistItem: donateData?._id, amount: numericAmount}}).then(e => {
+    wishListDonation({
+      token,
+      data: {wishlistItem: donateData?._id, amount: numericAmount},
+    }).then(e => {
       if (e?.error?.status === 'FETCH_ERROR') {
         LoginPageErrors('Please check your network');
       } else {
@@ -139,8 +188,23 @@ const WishListDonateSheet = () => {
               </View>
 
               <View style={styles.cardBottomView}>
-                <View style={{width: '100%', overflow: 'hidden', backgroundColor: 'red', height: responsiveWidth(60)}}>
-                  <Image placeholder={require('../../../Assets/Images/WishlistDefault.jpg')} source={donateData?.images[0]?.url} style={[styles.donationImage, {width: '100%', height: '100%'}]} placeholderContentFit="cover" contentFit="cover" />
+                <View
+                  style={{
+                    width: '100%',
+                    overflow: 'hidden',
+                    backgroundColor: 'red',
+                    height: responsiveWidth(60),
+                  }}>
+                  <Image
+                    placeholder={require('../../../Assets/Images/WishlistDefault.jpg')}
+                    source={donateData?.images[0]?.url}
+                    style={[
+                      styles.donationImage,
+                      {width: '100%', height: '100%'},
+                    ]}
+                    placeholderContentFit="cover"
+                    contentFit="cover"
+                  />
                 </View>
 
                 <Text style={styles.description}>{donateData?.title}</Text>
@@ -149,25 +213,57 @@ const WishListDonateSheet = () => {
                   <Text style={styles.fundLabel}>Fund Raised</Text>
                   <View style={styles.fundValueContainer}>
                     <Text style={styles.fundValue}>
-                      <Text style={{fontFamily: 'Rubik-Regular'}}>{Number(donateData?.totalCollected).toLocaleString('en-IN')}</Text>/{Number(donateData?.listedCoinsRequired).toLocaleString('en-IN')}
+                      <Text style={{fontFamily: 'Rubik-Regular'}}>
+                        {Number(donateData?.totalCollected).toLocaleString(
+                          'en-IN',
+                        )}
+                      </Text>
+                      /
+                      {Number(donateData?.listedCoinsRequired).toLocaleString(
+                        'en-IN',
+                      )}
                     </Text>
 
-                    <Image source={require('../../../Assets/Images/Coins.png')} style={styles.coinIcon} />
+                    <Image
+                      source={require('../../../Assets/Images/Coins.png')}
+                      style={styles.coinIcon}
+                    />
                   </View>
                 </View>
 
                 <View style={styles.progressBarContainer}>
-                  <ProgressBar borderWidth={0} height={responsiveWidth(3)} unfilledColor={'#f2f2f2'} width={responsiveWidth(80)} progress={Number(donateData?.totalCollected + Number(amount)) / donateData?.listedCoinsRequired} color={'#FFA86B'} />
+                  <ProgressBar
+                    borderWidth={0}
+                    height={responsiveWidth(3)}
+                    unfilledColor={'#f2f2f2'}
+                    width={responsiveWidth(80)}
+                    progress={
+                      Number(donateData?.totalCollected + Number(amount)) /
+                      donateData?.listedCoinsRequired
+                    }
+                    color={'#FFA86B'}
+                  />
                 </View>
               </View>
 
               {/* Amount input with increment and decrement buttons */}
               <View style={styles.amountContainer}>
                 {/* Coin image on the very left */}
-                <Image source={require('../../../Assets/Images/Coins.png')} style={styles.coinIcon} />
+                <Image
+                  source={require('../../../Assets/Images/Coins.png')}
+                  style={styles.coinIcon}
+                />
 
                 {/* Amount input */}
-                <BottomSheetTextInput maxLength={6} style={styles.amountInput} placeholder="Amount" keyboardType="numeric" onChangeText={handleAmountInput} value={amount} placeholderTextColor="#888" />
+                <BottomSheetTextInput
+                  maxLength={6}
+                  style={styles.amountInput}
+                  placeholder="Amount"
+                  keyboardType="numeric"
+                  onChangeText={handleAmountInput}
+                  value={amount}
+                  placeholderTextColor="#888"
+                />
 
                 {/* Increment/Decrement buttons in a horizontal row */}
                 <View style={styles.incDecContainer}>
@@ -184,7 +280,12 @@ const WishListDonateSheet = () => {
                     <Text style={styles.incDecButtonText}>–</Text>
                   </Pressable>
 
-                  <Pressable onPress={incrementAmount} style={({pressed}) => [styles.incDecButton, {backgroundColor: pressed ? '#CCFFD7' : '#A4FFB8'}]}>
+                  <Pressable
+                    onPress={incrementAmount}
+                    style={({pressed}) => [
+                      styles.incDecButton,
+                      {backgroundColor: pressed ? '#CCFFD7' : '#A4FFB8'},
+                    ]}>
                     <Text style={styles.incDecButtonText}>+</Text>
                   </Pressable>
                 </View>
@@ -193,13 +294,27 @@ const WishListDonateSheet = () => {
           </View>
 
           <View style={{width: '90%', alignSelf: 'center'}}>
-            <AnimatedButton onPress={handleSubmitMoney} loading={loading} title={'Pay'} />
+            <AnimatedButton
+              onPress={handleSubmitMoney}
+              loading={loading}
+              title={'Pay'}
+            />
           </View>
         </View>
       </BottomSheet>
     );
   } else {
-    return <BottomSheet backdropComponent={renderBackdrop} ref={bottomSheetRef} index={wishListBottomSheetVisibility} snapPoints={snapPoints} onChange={handleSheetChanges} enablePanDownToClose={true} backgroundStyle={styles.bottomSheetBackground} />;
+    return (
+      <BottomSheet
+        backdropComponent={renderBackdrop}
+        ref={bottomSheetRef}
+        index={wishListBottomSheetVisibility}
+        snapPoints={snapPoints}
+        onChange={handleSheetChanges}
+        enablePanDownToClose={true}
+        backgroundStyle={styles.bottomSheetBackground}
+      />
+    );
   }
 };
 

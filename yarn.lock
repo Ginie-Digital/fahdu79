@@ -4656,7 +4656,7 @@ __metadata:
     react-native-simple-dialogs: "npm:^2.1.0"
     react-native-snackbar: "npm:^2.6.2"
     react-native-svg: "npm:^15.14.0"
-    react-native-svg-transformer: "npm:^1.5.0"
+    react-native-svg-transformer: "npm:^1.5.1"
     react-native-text-ticker: "npm:^1.14.0"
     react-native-url-polyfill: "npm:^3.0.0"
     react-native-uuid: "npm:^2.0.3"
@@ -11945,7 +11945,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-svg-transformer@npm:^1.5.0":
+"react-native-svg-transformer@npm:^1.5.1":
   version: 1.5.1
   resolution: "react-native-svg-transformer@npm:1.5.1"
   dependencies:

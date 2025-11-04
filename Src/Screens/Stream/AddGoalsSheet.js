@@ -1,13 +1,42 @@
-import {StyleSheet, View, TouchableOpacity, Text, Image, Pressable, BackHandler, Vibration, Keyboard, Platform} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Image,
+  Pressable,
+  BackHandler,
+  Vibration,
+  Keyboard,
+  Platform,
+} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import {BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal, BottomSheetTextInput} from '@gorhom/bottom-sheet';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+} from 'react-native-responsive-dimensions';
+import {
+  BottomSheetBackdrop,
+  BottomSheetFlatList,
+  BottomSheetModal,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
 
 import {useDispatch, useSelector} from 'react-redux';
-import {setPostsCardType, toggleAddGoals, toggleHideShowInformationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {
+  setPostsCardType,
+  toggleAddGoals,
+  toggleHideShowInformationModal,
+} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
-import {FONT_SIZES, nTwins, nTwinsFont, selectionTwin, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import {
+  FONT_SIZES,
+  nTwins,
+  nTwinsFont,
+  selectionTwin,
+  WIDTH_SIZES,
+} from '../../../DesiginData/Utility';
 import {TextInput} from 'react-native-gesture-handler';
 import DIcon from '../../../DesiginData/DIcons';
 import {useAddGoalsLiveStreamMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
@@ -20,7 +49,9 @@ let regex = /^[0-9]*$/;
 const AddGoalsSheet = () => {
   const bottomSheetRef = useRef(null);
 
-  const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.addGoalsSheet);
+  const homeBottomSheetVisibility = useSelector(
+    state => state.hideShow.visibility.addGoalsSheet,
+  );
 
   const dispatch = useDispatch();
 
@@ -31,9 +62,7 @@ const AddGoalsSheet = () => {
   const titleRef = useRef('');
   const amountRef = useRef('');
 
-
-    const [isLoading, setIsLoading] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSheetChanges = useCallback(index => {
     if (index === -1) {
@@ -62,14 +91,20 @@ const AddGoalsSheet = () => {
   useEffect(() => {
     if (bottomSheetRef.current !== null) {
       if (homeBottomSheetVisibility === -1) {
+        // Close the sheet when visibility is -1
         bottomSheetRef.current.close();
         console.log('Closing');
         resetSheet();
       } else {
-        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        // Add back button listener
+        const backHandler = BackHandler.addEventListener(
+          'hardwareBackPress',
+          onBackPress,
+        );
 
+        // Cleanup properly when effect re-runs or unmounts
         return () => {
-          BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+          backHandler.remove();
         };
       }
     }
@@ -83,66 +118,73 @@ const AddGoalsSheet = () => {
 
   const token = useSelector(state => state.auth.user.token);
 
-
-
-const handleAddReward = async () => {
-  if (
-    amountRef.current.value?.length === 0 ||
-    titleRef.current.value?.length === 0 ||
-    amountRef.current.value === undefined ||
-    titleRef.current.value === undefined
-  ) {
-    LoginPageErrors('Invalid goal input');
-    return;
-  }
-
-  if (!regex.test(amountRef.current.value)) {
-    LoginPageErrors('Invalid amount');
-    return;
-  }
-
-  if (Number(amountRef.current.value) === 0) {
-    LoginPageErrors("Amount can't be zero");
-    return;
-  }
-
-  // ✅ Set loading to true before making API call
-  setIsLoading(true);
-
-  try {
-    const {error, data} = await addGoalsLiveStream({
-      token,
-      data: {
-        amount: amountRef.current.value,
-        title: titleRef.current.value,
-      },
-    });
-
-    if (data) {
-      dispatch(toggleAddGoals({show: -1}));
+  const handleAddReward = async () => {
+    if (
+      amountRef.current.value?.length === 0 ||
+      titleRef.current.value?.length === 0 ||
+      amountRef.current.value === undefined ||
+      titleRef.current.value === undefined
+    ) {
+      LoginPageErrors('Invalid goal input');
+      return;
     }
 
-    if (error?.data?.statusCode === 400) {
-      setNoSlotLeft(true);
-      LoginPageErrors("No slots left, you can't add more");
+    if (!regex.test(amountRef.current.value)) {
+      LoginPageErrors('Invalid amount');
+      return;
     }
 
-    if (amountRef.current && titleRef.current) {
-      amountRef.current.value = '';
-      titleRef.current.value = '';
-      titleRef.current.clear();
-      amountRef.current.clear();
+    if (Number(amountRef.current.value) === 0) {
+      LoginPageErrors("Amount can't be zero");
+      return;
     }
-  } catch (err) {
-    console.log('Error in handleAddReward:', err);
-    LoginPageErrors('Something went wrong, please try again');
-  } finally {
-    // ✅ Reset loading state after everything finishes
-    setIsLoading(false);
-  }
-};
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+    // ✅ Set loading to true before making API call
+    setIsLoading(true);
+
+    try {
+      const {error, data} = await addGoalsLiveStream({
+        token,
+        data: {
+          amount: amountRef.current.value,
+          title: titleRef.current.value,
+        },
+      });
+
+      if (data) {
+        dispatch(toggleAddGoals({show: -1}));
+      }
+
+      if (error?.data?.statusCode === 400) {
+        setNoSlotLeft(true);
+        LoginPageErrors("No slots left, you can't add more");
+      }
+
+      if (amountRef.current && titleRef.current) {
+        amountRef.current.value = '';
+        titleRef.current.value = '';
+        titleRef.current.clear();
+        amountRef.current.clear();
+      }
+    } catch (err) {
+      console.log('Error in handleAddReward:', err);
+      LoginPageErrors('Something went wrong, please try again');
+    } finally {
+      // ✅ Reset loading state after everything finishes
+      setIsLoading(false);
+    }
+  };
+
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   if (homeBottomSheetVisibility === 1) {
     return (
@@ -158,12 +200,35 @@ const handleAddReward = async () => {
         backgroundStyle={{backgroundColor: '#fffef9'}}>
         <View style={styles.contentContainer}>
           <View style={{marginTop: responsiveWidth(4)}}>
-            <Text style={{fontFamily: 'Rubik-Bold', color: 'black', fontSize: FONT_SIZES[20]}}>Add Goal</Text>
-            <Text style={{fontFamily: 'Rubik-Medium', color: 'black', fontSize: FONT_SIZES[12], marginTop: WIDTH_SIZES[4] + WIDTH_SIZES[2], lineHeight: 16}}>You can add your goal to your livestream, so that the audience can give you tips for your goal.</Text>
+            <Text
+              style={{
+                fontFamily: 'Rubik-Bold',
+                color: 'black',
+                fontSize: FONT_SIZES[20],
+              }}>
+              Add Goal
+            </Text>
+            <Text
+              style={{
+                fontFamily: 'Rubik-Medium',
+                color: 'black',
+                fontSize: FONT_SIZES[12],
+                marginTop: WIDTH_SIZES[4] + WIDTH_SIZES[2],
+                lineHeight: 16,
+              }}>
+              You can add your goal to your livestream, so that the audience can
+              give you tips for your goal.
+            </Text>
           </View>
 
           <View style={styles.propertyTitle}>
-            <BottomSheetTextInput ref={titleRef} placeholderTextColor={'gray'} placeholder="Enter your goal for your audience.." style={[styles.inputStyle]} onChangeText={t => (titleRef.current.value = t)} />
+            <BottomSheetTextInput
+              ref={titleRef}
+              placeholderTextColor={'gray'}
+              placeholder="Enter your goal for your audience.."
+              style={[styles.inputStyle]}
+              onChangeText={t => (titleRef.current.value = t)}
+            />
           </View>
 
           <View style={{justifyContent: 'space-between', alignItems: 'center'}}>
@@ -173,21 +238,49 @@ const handleAddReward = async () => {
               <Image source={require('../../../Assets/Images/Coin.png')} style={{height: responsiveWidth(5), width: responsiveWidth(5), resizeMode: 'contain', alignSelf: 'center', marginRight: responsiveWidth(1)}} />
             </View> */}
 
-            <View style={[styles.amountInput, {alignSelf: 'center', width: responsiveWidth(82), backgroundColor: 'white'}]}>
+            <View
+              style={[
+                styles.amountInput,
+                {
+                  alignSelf: 'center',
+                  width: responsiveWidth(82),
+                  backgroundColor: 'white',
+                },
+              ]}>
               <View style={{flexDirection: 'row'}}>
                 <View style={[styles.titleback, {backgroundColor: '#FFE1CC'}]}>
                   <Text style={[styles.titleSetPrice]}>Amount</Text>
                 </View>
               </View>
-              <View style={{flexDirection: 'row', alignItems: 'center', marginRight: responsiveWidth(2), gap: Platform.OS == 'ios' ? responsiveWidth(2) : null}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginRight: responsiveWidth(2),
+                  gap: Platform.OS == 'ios' ? responsiveWidth(2) : null,
+                }}>
                 <BottomSheetTextInput
                   ref={amountRef}
-                  keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'number-pad'}
+                  keyboardType={
+                    Platform.OS === 'ios'
+                      ? 'numbers-and-punctuation'
+                      : 'number-pad'
+                  }
                   selectionHandleColor={'#ffa86b'}
                   selectionColor={selectionTwin()}
                   cursorColor={'#1e1e1e'}
                   maxLength={6}
-                  style={[{padding: 0, color: '#1e1e1e', fontFamily: 'Rubik-Medium', width: responsiveWidth(40), height: '100%', textAlign: 'right'}, styles.amountStyle]}
+                  style={[
+                    {
+                      padding: 0,
+                      color: '#1e1e1e',
+                      fontFamily: 'Rubik-Medium',
+                      width: responsiveWidth(40),
+                      height: '100%',
+                      textAlign: 'right',
+                    },
+                    styles.amountStyle,
+                  ]}
                   // value={String(amount)}
                   onChangeText={t => (amountRef.current.value = t)}
                   placeholder="10"
@@ -196,14 +289,28 @@ const handleAddReward = async () => {
               </View>
             </View>
 
-            <Text style={{marginTop: responsiveWidth(1), left: responsiveWidth(13), width: responsiveWidth(80), color: 'black', fontFamily: 'Rubik-Regular', fontSize: responsiveWidth(3)}}>*That you need for the completion of your goal</Text>
+            <Text
+              style={{
+                marginTop: responsiveWidth(1),
+                left: responsiveWidth(13),
+                width: responsiveWidth(80),
+                color: 'black',
+                fontFamily: 'Rubik-Regular',
+                fontSize: responsiveWidth(3),
+              }}>
+              *That you need for the completion of your goal
+            </Text>
             {/* <Pressable style={[styles.propertyTitle, {width: responsiveWidth(82), justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFA86B', borderBottomWidth: responsiveWidth(1.2), borderRightWidth: responsiveWidth(1)}]} onPress={() => handleAddReward()}>
 
               <Text style={{fontFamily: 'Rubik-Medium', color: 'black'}}>Add Goal</Text>
             </Pressable> */}
 
             <View style={{width: responsiveWidth(80)}}>
-              <AnimatedButton title={'Add Goal'} onPress={handleAddReward} loading = {isLoading}/>
+              <AnimatedButton
+                title={'Add Goal'}
+                onPress={handleAddReward}
+                loading={isLoading}
+              />
             </View>
           </View>
         </View>
@@ -241,11 +348,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center content vertically
     alignItems: 'center', // Center content horizontally
     paddingHorizontal: responsiveWidth(4), // Add horizontal padding
-    borderTopLeftRadius : responsiveWidth(2),
-    borderBottomLeftRadius : responsiveWidth(2),
-    height : "100%"
+    borderTopLeftRadius: responsiveWidth(2),
+    borderBottomLeftRadius: responsiveWidth(2),
+    height: '100%',
   },
-  
+
   titleSetPrice: {
     fontSize: nTwinsFont(1.6, 1.7),
     fontFamily: 'Rubik-Medium',
@@ -259,7 +366,7 @@ const styles = StyleSheet.create({
     paddingLeft: 2,
     marginLeft: responsiveWidth(2),
     fontSize: responsiveFontSize(1.6),
-    backgroundColor : '#fff',
+    backgroundColor: '#fff',
     height: '100%',
     fontFamily: 'Rubik-Regular',
     paddingHorizontal: 20,

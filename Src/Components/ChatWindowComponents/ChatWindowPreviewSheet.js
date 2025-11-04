@@ -191,11 +191,12 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
         setAmount(0);
         console.log('Closing');
       } else {
-        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        const backHandler = BackHandler.addEventListener(
+          'hardwareBackPress',
+          onBackPress,
+        );
 
-        return () => {
-          BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-        };
+        return () => backHandler.remove(); // Use .remove() instead
       }
     }
   }, [homeBottomSheetVisibility]);

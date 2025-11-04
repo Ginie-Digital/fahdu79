@@ -1,10 +1,24 @@
-import {StyleSheet, View, TouchableOpacity, Text, Image, Pressable, BackHandler} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  Image,
+  Pressable,
+  BackHandler,
+} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+} from 'react-native-responsive-dimensions';
 import {BottomSheetBackdrop, BottomSheetModal} from '@gorhom/bottom-sheet';
 
 import {useDispatch, useSelector} from 'react-redux';
-import {toggleCreatePostBottomSheet, toggleHideShowLiveTerms} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {
+  toggleCreatePostBottomSheet,
+  toggleHideShowLiveTerms,
+} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import DIcon from '../../../DesiginData/DIcons';
 import {useNavigation} from '@react-navigation/native';
 import {LoginPageErrors} from '../ErrorSnacks';
@@ -13,7 +27,9 @@ const CreatePostBottomSheet = ({}) => {
   const navigation = useNavigation();
   const bottomSheetRef = useRef(null);
 
-  const createPostBottomSheetVisibility = useSelector(state => state.hideShow.visibility.createPostSheet);
+  const createPostBottomSheetVisibility = useSelector(
+    state => state.hideShow.visibility.createPostSheet,
+  );
 
   const {role} = useSelector(state => state.auth.user);
 
@@ -41,15 +57,19 @@ const CreatePostBottomSheet = ({}) => {
   }, []);
 
   useEffect(() => {
-    if (createPostBottomSheetVisibility === -1) {
-      if (bottomSheetRef.current) {
-        bottomSheetRef.current.close();
-      }
-    } else {
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    if (!bottomSheetRef.current) return;
 
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    if (createPostBottomSheetVisibility === -1) {
+      bottomSheetRef.current.close();
+      return;
     }
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
+
+    return () => backHandler.remove();
   }, [createPostBottomSheetVisibility]);
 
   useEffect(() => {
@@ -58,7 +78,16 @@ const CreatePostBottomSheet = ({}) => {
     }
   }, [createPostBottomSheetVisibility]);
 
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+      />
+    ),
+    [],
+  );
 
   const handleGoToItem = index => {
     if (index === 1) {
@@ -84,7 +113,15 @@ const CreatePostBottomSheet = ({}) => {
 
   if (createPostBottomSheetVisibility === 1) {
     return (
-      <BottomSheetModal name="createpost" backdropComponent={renderBackdrop} ref={bottomSheetRef} index={createPostBottomSheetVisibility} snapPoints={snapPoints} onChange={handleSheetChanges} enablePanDownToClose={true} backgroundStyle={{backgroundColor: '#fff'}}>
+      <BottomSheetModal
+        name="createpost"
+        backdropComponent={renderBackdrop}
+        ref={bottomSheetRef}
+        index={createPostBottomSheetVisibility}
+        snapPoints={snapPoints}
+        onChange={handleSheetChanges}
+        enablePanDownToClose={true}
+        backgroundStyle={{backgroundColor: '#fff'}}>
         <View style={styles.contentContainer}>
           <View style={styles.createPostListContainer}>
             <Pressable
@@ -97,7 +134,12 @@ const CreatePostBottomSheet = ({}) => {
                 },
               ]}
               onPress={() => handleGoToItem(1)}>
-              <View style={{flexDirection: 'row', alignItems: 'center', paddingLeft: 24}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingLeft: 24,
+                }}>
                 <Image
                   source={require('../../../Assets/Images/AddPosts.png')}
                   style={{
@@ -129,7 +171,12 @@ const CreatePostBottomSheet = ({}) => {
                 },
               ]}
               onPress={() => handleGoToItem(2)}>
-              <View style={{flexDirection: 'row', alignItems: 'center', paddingLeft: 24}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingLeft: 24,
+                }}>
                 <Image
                   source={require('../../../Assets/Images/AddStories.png')}
                   style={{

@@ -446,7 +446,7 @@ const Main = () => {
     // Cleanup event listeners
     return () => {
       linkingSubscription.remove();
-      firebaseSubscription();
+      // firebaseSubscription();
     };
   }, [data.email, data.password, doUserLoggedIn, currentUserId]);
 

@@ -16,10 +16,9 @@ import store from './Redux/Store';
 import {updateCacheRoomList} from './Redux/Slices/NormalSlices/RoomListSlice';
 import {pushUnReadRoomIds} from './Redux/Slices/NormalSlices/UnReadThreadSlice';
 import {setClickedNotification} from './Redux/Slices/NormalSlices/HideShowSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {navigate} from './Navigation/RootNavigation';
 // import {DevLauncher, DevMenu} from 'expo-dev-client';
-// import BootSplash from 'react-native-bootsplash';
+import BootSplash from 'react-native-bootsplash';
 import CallKeepService from './service/CallKeepService';
 import VoipPushNotification from 'react-native-voip-push-notification';
 
@@ -148,7 +147,7 @@ notifee.onForegroundEvent(async ({type, detail}) => {
   }
 });
 
-// BootSplash.hide({fade: false});
+BootSplash.hide({fade: false});
 
 CallKeepService.setupCallKeep();
 

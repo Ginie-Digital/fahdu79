@@ -443,14 +443,6 @@ const Main = () => {
       handleDeepLink(url);
     });
 
-    // 🔹 Handle Firebase dynamic links while the app is running (Android)
-    const firebaseSubscription = dynamicLinks().onLink(link => {
-      if (link?.url) {
-        console.log('Deep link received:', link.url);
-        handleDeepLink(link.url);
-      }
-    });
-
     // Cleanup event listeners
     return () => {
       linkingSubscription.remove();

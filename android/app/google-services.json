@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "244359435466",
+    "project_id": "fahdu-ec678",
+    "storage_bucket": "fahdu-ec678.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244359435466:android:6e0133522678bf86245033",
+        "android_client_info": {
+          "package_name": "com.fahdu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "244359435466-0104uk5dajvmosmpkrpgfgc60s2blemt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fahdu",
+            "certificate_hash": "af0ed9f3d52869c97bf93e4537440bb56c106c86"
+          }
+        },
+        {
+          "client_id": "244359435466-0d1abpvt65ef0oi184m6sasvmvvmc5ik.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fahdu",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "244359435466-1v5qtnn5suvivvdpp4il6tnkghf2k4dt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgmZR-8ZcxjVjyo431HkSR7QBz2ilnMds"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "244359435466-1v5qtnn5suvivvdpp4il6tnkghf2k4dt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "244359435466-248r1iu0uc1jf2m1tt5tjpi4fb1gl1tj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.fahdu"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

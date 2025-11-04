@@ -1,4 +1,10 @@
-import {ActivityIndicator, Alert, StyleSheet, Platform, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Platform,
+  View,
+} from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import './service/CallKeepService';
@@ -17,11 +23,11 @@ import {checkForUpdate, UpdateFlow} from 'react-native-in-app-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import DeviceInfo from 'react-native-device-info';
-import {MMKV} from 'react-native-mmkv';
+// import {MMKV} from 'react-native-mmkv';
 
 const persistor = persistStore(store);
 
-const storage = new MMKV();
+// const storage = new MMKV();
 
 const App = () => {
   const LoadingComponent = useCallback(() => {
@@ -66,7 +72,7 @@ const App = () => {
 
   useEffect(() => {
     getData();
-    clearRNCacheOnUpdate();
+    // clearRNCacheOnUpdate();
   }, []);
 
   return (
@@ -75,7 +81,9 @@ const App = () => {
         <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
             <SafeAreaProvider>
-              <NavigationContainer ref={navigationRef} fallback={<LoadingComponent />}>
+              <NavigationContainer
+                ref={navigationRef}
+                fallback={<LoadingComponent />}>
                 <Main />
               </NavigationContainer>
             </SafeAreaProvider>

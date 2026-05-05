@@ -420,19 +420,19 @@ const Main = () => {
           });
       } else {
         // 🔹 Handle cold start for Android using Firebase Dynamic Links
-        dynamicLinks()
-          .getInitialLink()
-          .then(link => {
-            if (link?.url) {
-              console.log('Deep link on cold start:', link.url);
-              handleDeepLink(link.url);
-            } else {
-              console.log('No initial URL found');
-            }
-          })
-          .catch(error => {
-            console.error('Error getting initial link:', error);
-          });
+        // dynamicLinks()
+        //   .getInitialLink()
+        //   .then(link => {
+        //     if (link?.url) {
+        //       console.log('Deep link on cold start:', link.url);
+        //       handleDeepLink(link.url);
+        //     } else {
+        //       console.log('No initial URL found');
+        //     }
+        //   })
+        //   .catch(error => {
+        //     console.error('Error getting initial link:', error);
+        //   });
       }
     } catch (e) {
       console.log('DDEEEEP', e);

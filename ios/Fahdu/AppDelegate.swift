@@ -8,10 +8,6 @@ import RNBootSplash
 
 @main
 class AppDelegate: ExpoAppDelegate {
-  override var window: UIWindow? {
-    get { return super.window }
-    set { super.window = newValue }
-  }
 
   override func application(
     _ application: UIApplication,

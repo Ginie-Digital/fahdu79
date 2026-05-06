@@ -1,3 +1,5 @@
+source 'https://github.com/CocoaPods/Specs.git'
+
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
@@ -37,6 +39,10 @@ target 'Fahdu' do
   end
 
   config = use_native_modules!(config_command)
+
+  # Using full-gpl FFmpeg for advanced filters (curves, vignette, gblur, etc.)
+  pod 'ffmpeg-kit-ios-full-gpl', :podspec => './vendor/ffmpeg-kit-ios-full-gpl.podspec'
+  pod 'ffmpeg-kit-react-native', :path => '../node_modules/ffmpeg-kit-react-native', :subspecs => ['full-gpl']
 
   use_react_native!(
     :path => config[:reactNativePath],

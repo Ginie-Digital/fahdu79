@@ -80,3 +80,4 @@ dist/
 web-build/
 
 service/fahdu-ec678-8031e1e8a63f.json
+ios/vendor/*.zip

@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 14,
     backgroundColor: '#FFF9F5',
-    marginHorizontal: -(WIDTH_SIZES[24] - 1.1),
+    marginHorizontal: -Math.round(WIDTH_SIZES[24] - 1.1),
   },
   textInputPill: {
     flex: 1,

@@ -3,35 +3,53 @@ import Expo
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import Firebase
+import RNBootSplash
 
 @main
 class AppDelegate: ExpoAppDelegate {
-  var window: UIWindow?
-
-  var reactNativeDelegate: ReactNativeDelegate?
-  var reactNativeFactory: RCTReactNativeFactory?
+  override var window: UIWindow? {
+    get { return super.window }
+    set { super.window = newValue }
+  }
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    FirebaseApp.configure()
+    
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
 
-    reactNativeDelegate = delegate
-    reactNativeFactory = factory
+    self.reactNativeDelegate = delegate
+    self.reactNativeFactory = factory
     bindReactNativeFactory(factory)
 
-    window = UIWindow(frame: UIScreen.main.bounds)
+    super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    
+    if let rootView = self.window?.rootViewController?.view {
+      RNBootSplash.initWithStoryboard("BootSplash", rootView: rootView)
+    }
 
-    factory.startReactNative(
-      withModuleName: "Fahdu",
-      in: window,
-      launchOptions: launchOptions
-    )
+    return true
+  }
 
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  override func application(
+    _ application: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+  ) -> Bool {
+    return RCTLinkingManager.application(application, open: url, options: options)
+  }
+
+  override func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    return RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
   }
 }
 

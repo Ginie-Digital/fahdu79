@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>244359435466-3qkjdjrf7ik5igii35ddprfvc82d16pl.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.244359435466-3qkjdjrf7ik5igii35ddprfvc82d16pl</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>244359435466-43t2cf3bou0mu2679rpfsji592mpi0ar.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDnJfyhK5j80z4ui_d0wH32GBHniyAx1ug</string>
+	<key>GCM_SENDER_ID</key>
+	<string>244359435466</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.giniedigital.fahdu</string>
+	<key>PROJECT_ID</key>
+	<string>fahdu-ec678</string>
+	<key>STORAGE_BUCKET</key>
+	<string>fahdu-ec678.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:244359435466:ios:a396ecfbe85a820e245033</string>
+</dict>
+</plist>

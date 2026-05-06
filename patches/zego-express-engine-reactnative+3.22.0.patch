@@ -99,39 +99,17 @@ index 0000000..1675490
 @@ -0,0 +1,2 @@
 +connection.project.dir=../../../android
 +eclipse.preferences.version=1
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/results.bin
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/0e4ebde20e4112c7f06de7c45c8b28f3/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/0e4ebde20e4112c7f06de7c45c8b28f3/results.bin
 new file mode 100644
 index 0000000..0d259dd
 --- /dev/null
-+++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/results.bin
++++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/0e4ebde20e4112c7f06de7c45c8b28f3/results.bin
 @@ -0,0 +1 @@
 +o/classes
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/transformed/classes/classes_dex/classes.dex
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/0e4ebde20e4112c7f06de7c45c8b28f3/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/0e4ebde20e4112c7f06de7c45c8b28f3/transformed/classes/classes_dex/classes.dex
 new file mode 100644
-index 0000000..e9818d7
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/transformed/classes/classes_dex/classes.dex differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/results.bin
-new file mode 100644
-index 0000000..0d259dd
---- /dev/null
-+++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/results.bin
-@@ -0,0 +1 @@
-+o/classes
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/transformed/classes/classes_dex/classes.dex
-new file mode 100644
-index 0000000..92c327c
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/transformed/classes/classes_dex/classes.dex differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/results.bin
-new file mode 100644
-index 0000000..0d259dd
---- /dev/null
-+++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/results.bin
-@@ -0,0 +1 @@
-+o/classes
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/transformed/classes/classes_dex/classes.dex
-new file mode 100644
-index 0000000..de38a70
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/transformed/classes/classes_dex/classes.dex differ
+index 0000000..ff19410
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/0e4ebde20e4112c7f06de7c45c8b28f3/transformed/classes/classes_dex/classes.dex differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/generated/source/buildConfig/debug/im/zego/reactnative/BuildConfig.java b/node_modules/zego-express-engine-reactnative/android/build/generated/source/buildConfig/debug/im/zego/reactnative/BuildConfig.java
 new file mode 100644
 index 0000000..520da26
@@ -210,10 +188,6 @@ index 0000000..45f9503
 +  "elementType": "File"
 +}
 \ No newline at end of file
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar
-new file mode 100644
-index 0000000..745e575
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
 new file mode 100644
 index 0000000..1211b1e
@@ -234,12 +208,9 @@ index 0000000..9e26dfe
 @@ -0,0 +1 @@
 +{}
 \ No newline at end of file
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt
-new file mode 100644
-index 0000000..e69de29
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
 new file mode 100644
-index 0000000..7f27147
+index 0000000..aa3ba9e
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
 new file mode 100644
@@ -248,17 +219,13 @@ Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/androi
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
 new file mode 100644
 index 0000000..e69de29
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state
-new file mode 100644
-index 0000000..1c983fc
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
 new file mode 100644
-index 0000000..3e7e089
+index 0000000..3e0e2a9
 --- /dev/null
 +++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
 @@ -0,0 +1 @@
-+#Wed May 06 15:45:22 IST 2026
++#Wed May 06 19:33:05 IST 2026
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
 new file mode 100644
 index 0000000..a267ab8
@@ -321,39 +288,39 @@ index 0000000..83cd65f
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$1.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$10.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$10.class
 new file mode 100644
-index 0000000..6f7f1d0
+index 0000000..51ac2ef
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$10.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$11.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$11.class
 new file mode 100644
-index 0000000..9deb052
+index 0000000..6a9f483
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$11.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$12.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$12.class
 new file mode 100644
-index 0000000..7076756
+index 0000000..41bb458
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$12.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$14.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$14.class
 new file mode 100644
-index 0000000..f64bde0
+index 0000000..2e7989f
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$14.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$15.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$15.class
 new file mode 100644
-index 0000000..e8611eb
+index 0000000..2d79e79
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$15.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$16.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$16.class
 new file mode 100644
-index 0000000..fda6117
+index 0000000..cdbe90a
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$16.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$17.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$17.class
 new file mode 100644
-index 0000000..9eb1ac3
+index 0000000..eda6c1d
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$17.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$18.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$18.class
 new file mode 100644
-index 0000000..9bf1a93
+index 0000000..9e5315f
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$18.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$19.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$19.class
 new file mode 100644
-index 0000000..82c0bf7
+index 0000000..5ebe7de
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$19.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$2.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$2.class
 new file mode 100644
@@ -361,39 +328,39 @@ index 0000000..b03c71f
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$2.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$21.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$21.class
 new file mode 100644
-index 0000000..66c49b1
+index 0000000..4581e80
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$21.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$22.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$22.class
 new file mode 100644
-index 0000000..7ccd0b5
+index 0000000..7ca8ed6
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$22.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$23.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$23.class
 new file mode 100644
-index 0000000..623c523
+index 0000000..a6e39a2
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$23.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$24.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$24.class
 new file mode 100644
-index 0000000..91d0dfa
+index 0000000..f8a27f7
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$24.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$25.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$25.class
 new file mode 100644
-index 0000000..6ec2429
+index 0000000..1118859
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$25.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$26.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$26.class
 new file mode 100644
-index 0000000..8438c38
+index 0000000..8717145
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$26.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$27.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$27.class
 new file mode 100644
-index 0000000..0253f7a
+index 0000000..9e961e7
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$27.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$28.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$28.class
 new file mode 100644
-index 0000000..04a45dd
+index 0000000..5712ef8
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$28.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$29.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$29.class
 new file mode 100644
-index 0000000..555f12c
+index 0000000..59a6b21
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$29.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$3.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$3.class
 new file mode 100644
@@ -401,43 +368,43 @@ index 0000000..4b1e45c
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$3.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$30.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$30.class
 new file mode 100644
-index 0000000..902f99b
+index 0000000..f4e074a
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$30.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$31.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$31.class
 new file mode 100644
-index 0000000..ab7346a
+index 0000000..6827403
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$31.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$32.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$32.class
 new file mode 100644
-index 0000000..7015eb4
+index 0000000..546e328
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$32.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$33.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$33.class
 new file mode 100644
-index 0000000..5b2dbc2
+index 0000000..ab99eee
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$33.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$34.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$34.class
 new file mode 100644
-index 0000000..9eb304d
+index 0000000..7b37633
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$34.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$35.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$35.class
 new file mode 100644
-index 0000000..2cc256c
+index 0000000..b7bd7fa
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$35.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$36.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$36.class
 new file mode 100644
-index 0000000..3d14dda
+index 0000000..5ed9373
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$36.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$37.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$37.class
 new file mode 100644
-index 0000000..b28a6e9
+index 0000000..8b08d59
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$37.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$38.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$38.class
 new file mode 100644
-index 0000000..bed3075
+index 0000000..11617ed
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$38.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$39.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$39.class
 new file mode 100644
-index 0000000..d839d35
+index 0000000..baf54b2
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$39.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$4.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$4.class
 new file mode 100644
@@ -445,11 +412,11 @@ index 0000000..dbde2df
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$4.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$40.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$40.class
 new file mode 100644
-index 0000000..8195f3f
+index 0000000..cbc4799
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$40.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$41.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$41.class
 new file mode 100644
-index 0000000..c0eeb6f
+index 0000000..7e04eb7
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$41.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$5.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$5.class
 new file mode 100644
@@ -465,11 +432,11 @@ index 0000000..26ffef2
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$7.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$9.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$9.class
 new file mode 100644
-index 0000000..0753252
+index 0000000..f8be279
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$9.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule.class
 new file mode 100644
-index 0000000..5a17377
+index 0000000..ad5c8dc
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule.class differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoSurfaceViewManager.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoSurfaceViewManager.class
 new file mode 100644
@@ -562,10 +529,6 @@ index 0000000..14b72a9
 +26    </application>
 +27
 +28</manifest>
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-zego-express-engine-reactnative.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-zego-express-engine-reactnative.jar
-new file mode 100644
-index 0000000..15cb0ec
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-zego-express-engine-reactnative.jar differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
 new file mode 100644
 index 0000000..c2075fc
@@ -619,7 +582,7 @@ index 0000000..08f4ebe
 \ No newline at end of file
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
 new file mode 100644
-index 0000000..6d99c91
+index 0000000..531df82
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
 new file mode 100644
@@ -628,10 +591,6 @@ index 0000000..3a37011
 +++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
 @@ -0,0 +1 @@
 +im.zego.reactnative
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/outputs/aar/zego-express-engine-reactnative-debug.aar b/node_modules/zego-express-engine-reactnative/android/build/outputs/aar/zego-express-engine-reactnative-debug.aar
-new file mode 100644
-index 0000000..fb12985
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/outputs/aar/zego-express-engine-reactnative-debug.aar differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/zego-express-engine-reactnative/android/build/outputs/logs/manifest-merger-debug-report.txt
 new file mode 100644
 index 0000000..e5403d4
@@ -689,169 +648,9 @@ index 0000000..e5403d4
 +		INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
 +	android:minSdkVersion
 +		INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressEnginePackage.class.uniqueId24 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressEnginePackage.class.uniqueId24
-new file mode 100644
-index 0000000..f33bd3b
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressEnginePackage.class.uniqueId24 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$1.class.uniqueId3 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$1.class.uniqueId3
-new file mode 100644
-index 0000000..83cd65f
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$1.class.uniqueId3 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$10.class.uniqueId28 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$10.class.uniqueId28
-new file mode 100644
-index 0000000..e12df77
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$10.class.uniqueId28 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$11.class.uniqueId16 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$11.class.uniqueId16
-new file mode 100644
-index 0000000..bdc3653
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$11.class.uniqueId16 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$12.class.uniqueId32 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$12.class.uniqueId32
-new file mode 100644
-index 0000000..9daa925
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$12.class.uniqueId32 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$14.class.uniqueId4 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$14.class.uniqueId4
-new file mode 100644
-index 0000000..d39878b
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$14.class.uniqueId4 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$15.class.uniqueId22 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$15.class.uniqueId22
-new file mode 100644
-index 0000000..963776a
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$15.class.uniqueId22 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$16.class.uniqueId18 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$16.class.uniqueId18
-new file mode 100644
-index 0000000..310f399
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$16.class.uniqueId18 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$17.class.uniqueId36 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$17.class.uniqueId36
-new file mode 100644
-index 0000000..63d02ad
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$17.class.uniqueId36 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$18.class.uniqueId9 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$18.class.uniqueId9
-new file mode 100644
-index 0000000..9e6ce9f
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$18.class.uniqueId9 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$19.class.uniqueId7 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$19.class.uniqueId7
-new file mode 100644
-index 0000000..21ec654
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$19.class.uniqueId7 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$2.class.uniqueId31 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$2.class.uniqueId31
-new file mode 100644
-index 0000000..3cb74db
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$2.class.uniqueId31 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$21.class.uniqueId11 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$21.class.uniqueId11
-new file mode 100644
-index 0000000..59cc48d
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$21.class.uniqueId11 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$22.class.uniqueId39 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$22.class.uniqueId39
-new file mode 100644
-index 0000000..7e137f8
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$22.class.uniqueId39 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$23.class.uniqueId20 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$23.class.uniqueId20
-new file mode 100644
-index 0000000..83c7a5f
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$23.class.uniqueId20 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$24.class.uniqueId0 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$24.class.uniqueId0
-new file mode 100644
-index 0000000..fb1a337
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$24.class.uniqueId0 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$25.class.uniqueId23 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$25.class.uniqueId23
-new file mode 100644
-index 0000000..ddab94b
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$25.class.uniqueId23 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$26.class.uniqueId21 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$26.class.uniqueId21
-new file mode 100644
-index 0000000..ceabd51
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$26.class.uniqueId21 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$27.class.uniqueId38 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$27.class.uniqueId38
-new file mode 100644
-index 0000000..d8546fe
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$27.class.uniqueId38 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$28.class.uniqueId13 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$28.class.uniqueId13
-new file mode 100644
-index 0000000..5ff7931
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$28.class.uniqueId13 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$29.class.uniqueId5 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$29.class.uniqueId5
-new file mode 100644
-index 0000000..97e0ac1
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$29.class.uniqueId5 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$3.class.uniqueId10 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$3.class.uniqueId10
-new file mode 100644
-index 0000000..6221bac
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$3.class.uniqueId10 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$30.class.uniqueId27 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$30.class.uniqueId27
-new file mode 100644
-index 0000000..0537277
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$30.class.uniqueId27 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$31.class.uniqueId8 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$31.class.uniqueId8
-new file mode 100644
-index 0000000..14dd250
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$31.class.uniqueId8 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$32.class.uniqueId37 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$32.class.uniqueId37
-new file mode 100644
-index 0000000..056c282
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$32.class.uniqueId37 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$33.class.uniqueId25 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$33.class.uniqueId25
-new file mode 100644
-index 0000000..5309671
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$33.class.uniqueId25 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$34.class.uniqueId1 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$34.class.uniqueId1
-new file mode 100644
-index 0000000..d141360
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$34.class.uniqueId1 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$35.class.uniqueId26 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$35.class.uniqueId26
-new file mode 100644
-index 0000000..d27ed21
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$35.class.uniqueId26 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$36.class.uniqueId19 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$36.class.uniqueId19
-new file mode 100644
-index 0000000..0aeb26d
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$36.class.uniqueId19 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$37.class.uniqueId33 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$37.class.uniqueId33
-new file mode 100644
-index 0000000..b51f605
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$37.class.uniqueId33 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$38.class.uniqueId15 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$38.class.uniqueId15
-new file mode 100644
-index 0000000..d04051c
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$38.class.uniqueId15 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$39.class.uniqueId6 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$39.class.uniqueId6
-new file mode 100644
-index 0000000..66c371a
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$39.class.uniqueId6 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$4.class.uniqueId35 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$4.class.uniqueId35
-new file mode 100644
-index 0000000..b09335c
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$4.class.uniqueId35 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$40.class.uniqueId29 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$40.class.uniqueId29
-new file mode 100644
-index 0000000..3e4ce4f
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$40.class.uniqueId29 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$41.class.uniqueId12 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$41.class.uniqueId12
-new file mode 100644
-index 0000000..e0a9550
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$41.class.uniqueId12 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$5.class.uniqueId17 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$5.class.uniqueId17
-new file mode 100644
-index 0000000..deaf387
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$5.class.uniqueId17 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$6.class.uniqueId2 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$6.class.uniqueId2
-new file mode 100644
-index 0000000..ee0207d
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$6.class.uniqueId2 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$7.class.uniqueId30 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$7.class.uniqueId30
-new file mode 100644
-index 0000000..20d6417
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$7.class.uniqueId30 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$9.class.uniqueId34 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$9.class.uniqueId34
-new file mode 100644
-index 0000000..44b259a
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$9.class.uniqueId34 differ
-diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule.class.uniqueId14 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule.class.uniqueId14
-new file mode 100644
-index 0000000..ffe2220
-Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule.class.uniqueId14 differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
 new file mode 100644
-index 0000000..30b220c
+index 0000000..249272d
 Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
 diff --git a/node_modules/zego-express-engine-reactnative/android/src/main/java/im/zego/reactnative/RCTZegoExpressNativeModule.java b/node_modules/zego-express-engine-reactnative/android/src/main/java/im/zego/reactnative/RCTZegoExpressNativeModule.java
 index 1abce24..66801db 100644

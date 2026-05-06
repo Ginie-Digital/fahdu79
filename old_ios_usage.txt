@@ -1,0 +1,17 @@
+	<key>NSAppleMusicUsageDescription</key>
+	<string>We need access to your music library to enhance your music experience.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Our app does not request this permission or utilize this functionality but it is included in our info.plist since our app utilizes some library, which references this permission in its code.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Our app does not request this permission or utilize this functionality but it is included in our info.plist since our app utilizes some library, which references this permission in its code.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>$(PRODUCT_NAME) requires to access camera for uploading photos to your profile or posts</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>$(PRODUCT_NAME) requires to access Audio recording to record and uplod videos</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>$(PRODUCT_NAME) would like to upload photos from your photo gallery</string>
+--
+	<key>NSVoIPUsageDescription</key>
+	<string>To wake up app from background when got incoming call from fahdu</string>

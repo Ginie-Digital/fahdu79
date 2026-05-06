@@ -1,0 +1,100 @@
+#import "AppDelegate.h"
+#import <Firebase.h>
+#import <GoogleSignIn/GoogleSignIn.h>
+#import <React/RCTBundleURLProvider.h>
+#import <React/RCTLinkingManager.h>
+
+#import "EXUpdatesInterface-Swift.h"
+#import "ExpoModulesCore-Swift.h"
+
+#import "RNVoipPushNotificationManager.h"
+#import <PushKit/PushKit.h>
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application
+    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+  // 1. Configure Firebase
+  [FIRApp configure];
+
+  // Set properties
+  self.moduleName = @"fahdu";
+  self.initialProps = @{};
+
+  // 2. Initialize the RCTBridge
+  RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self
+                                            launchOptions:launchOptions];
+
+  // 3. Register for VoIP Notifications
+  [RNVoipPushNotificationManager voipRegistration];
+
+  // 4. Create the Root View
+  RCTRootView *rootView =
+      [[RCTRootView alloc] initWithBridge:bridge
+                               moduleName:self.moduleName
+                        initialProperties:self.initialProps];
+
+  // 5. Finalize Window Setup
+  rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f
+                                                    green:1.0f
+                                                     blue:1.0f
+                                                    alpha:1];
+
+  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+  UIViewController *rootViewController = [UIViewController new];
+  rootViewController.view = rootView;
+  self.window.rootViewController = rootViewController;
+  [self.window makeKeyAndVisible];
+
+  return YES;
+}
+
+// --- Handle updated push credentials
+- (void)pushRegistry:(PKPushRegistry *)registry
+    didUpdatePushCredentials:(PKPushCredentials *)credentials
+                     forType:(PKPushType)type {
+  [RNVoipPushNotificationManager didUpdatePushCredentials:credentials
+                                                  forType:(NSString *)type];
+}
+
+- (void)pushRegistry:(PKPushRegistry *)registry
+    didInvalidatePushTokenForType:(PKPushType)type {
+  // Token invalidated - notify server
+}
+
+- (void)pushRegistry:(PKPushRegistry *)registry
+    didReceiveIncomingPushWithPayload:(PKPushPayload *)payload
+                              forType:(PKPushType)type
+                withCompletionHandler:(void (^)(void))completion {
+
+  // Retrieve information from voip push payload
+  NSDictionary *data = payload.dictionaryPayload;
+
+  // 🔥 FIX: Check notification type first
+  NSString *notificationType = data[@"type"];
+
+  NSLog(@"📨 [AppDelegate] Received VoIP push with type: %@", notificationType);
+
+  // 🔥 If it's call_unavailable, call_ended, or call_rejected - DON'T show
+  // CallKit UI
+  if ([notificationType isEqualToString:@"call_unavailable"] ||
+      [notificationType isEqualToString:@"call_ended"] ||
+      [notificationType isEqualToString:@"call_rejected"]) {
+
+    NSLog(@"⚠️ [AppDelegate] Call unavailable/ended/rejected - NOT showing "
+          @"CallKit UI");
+
+    // Just notify JavaScript without showing CallKit
+    [RNVoipPushNotificationManager
+        didReceiveIncomingPushWithPayload:payload
+                                  forType:(NSString *)type];
+
+    // Complete immediately
+    completion();
+
+    return;
+  }
+
+  // 🔥 Notify JavaScript directly via the VoIP library without reporting to
+  // CallKit
+  [RNVoipPushNotificationManager

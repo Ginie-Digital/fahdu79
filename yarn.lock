@@ -4785,7 +4785,7 @@ __metadata:
     expo-av: "npm:~15.1.7"
     expo-blur: "npm:^15.0.7"
     expo-dev-client: "npm:~5.2.4"
-    expo-image: "npm:^3.0.10"
+    expo-image: "npm:~2.4.1"
     expo-linear-gradient: "npm:^55.0.13"
     expo-status-bar: "npm:^3.0.8"
     expo-video: "npm:~2.2.2"
@@ -7508,9 +7508,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image@npm:^3.0.10":
-  version: 3.0.11
-  resolution: "expo-image@npm:3.0.11"
+"expo-image@npm:~2.4.1":
+  version: 2.4.1
+  resolution: "expo-image@npm:2.4.1"
   peerDependencies:
     expo: "*"
     react: "*"
@@ -7519,7 +7519,7 @@ __metadata:
   peerDependenciesMeta:
     react-native-web:
       optional: true
-  checksum: 10c0/a1cc61d3927ec5eb96875c2021706e1a418d37a77d1e657a4e0d3aa9b3325a45501b1113847783b0b249ca3679286dfb7683ed8239c48a206e9fdf79f232c754
+  checksum: 10c0/ea702e6c84a6067ca13397d7b32f50fd009d136463c5dcb44bec91c960a372cb8a49d3ec016e2b372b7867a342c487b56cbeaccfcbddefdfca5df45d8758ecbe
   languageName: node
   linkType: hard
 

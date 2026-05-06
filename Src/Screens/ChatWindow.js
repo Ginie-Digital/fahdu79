@@ -33,7 +33,7 @@ import { authLogout } from '../../Redux/Slices/NormalSlices/AuthSlice';
 import { emptyUnreadRoomList, removeRoomIds } from '../../Redux/Slices/NormalSlices/UnReadThreadSlice';
 import { saveFeeDetails } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowFeeDetailsSlice';
 import { setCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
-import { Text } from 'react-native-svg';
+
 import { ChatWindowError, ChatWindowFollowError, LoginPageErrors } from '../Components/ErrorSnacks';
 import { signOutGoogle } from '../../OAuth';
 import { useFollowUserMutation, useLazyCallTriesStatusQuery, useLazyOnlineStatusQuery, useUnFollowUserMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: 'white',
-    paddingHorizontal: WIDTH_SIZES[24] - 1.1,
+    paddingHorizontal: Math.round(WIDTH_SIZES[24] - 1.1),
   },
   leftChat: {
     flexDirection: 'row',

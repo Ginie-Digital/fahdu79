@@ -3,8 +3,7 @@ import React, {useCallback, useRef, useState, useEffect} from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleCreatePostBottomSheet, toggleHideShowLiveTerms} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useNavigation} from '@notifee/react-native'; // Wait, navigation was from @react-navigation/native
-import {useNavigation as useRealNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {LoginPageErrors} from '../ErrorSnacks';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import {Alert, Linking} from 'react-native';
@@ -15,7 +14,7 @@ import {BlurView} from 'expo-blur';
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const CreatePostBottomSheet = () => {
-  const navigation = useRealNavigation();
+  const navigation = useNavigation();
   const dispatch = useDispatch();
 
   const visible = useSelector(state => state.hideShow.visibility.createPostSheet === 1);
@@ -97,18 +96,41 @@ const CreatePostBottomSheet = () => {
           }
 
           if (hasVideo) {
-            if (images.length > 1) {
-              LoginPageErrors('Please select only one video.');
+            // Video selected — Validate before navigation
+            const video = images[0];
+            
+            // 1. Size check (150MB)
+            if (video.size > 150 * 1024 * 1024) {
+              LoginPageErrors('Video size must be less than 150MB.');
               return;
             }
-            const videoMetadata = await getVideoMetadata(images[0].path);
-            if (videoMetadata.duration > 600) {
-              LoginPageErrors('Please select a video less than 10 minutes.');
-              return;
+
+            // 2. Metadata checks (Duration and Resolution)
+            const videoMetadata = await getVideoMetadata(video.path);
+            if (videoMetadata) {
+              // Duration check (60s = 60000ms)
+              if (videoMetadata.duration > 60000) {
+                LoginPageErrors('Video duration must be less than 1 minute.');
+                return;
+              }
+              // Resolution check (1080p max)
+              if (Math.max(videoMetadata.width || 0, videoMetadata.height || 0) > 1920) {
+                LoginPageErrors('Video resolution must be 1080p or lower (4K is not supported).');
+                return;
+              }
             }
-            navigation.navigate('postEditor', {media: images, type: 'video'});
+
+            navigation.navigate('createpostpage', {
+              uri: video.path,
+              isVideo: true,
+            });
           } else {
-            navigation.navigate('postEditor', {media: images, type: 'image'});
+            // Images selected — go to filterScreen first
+            navigation.navigate('filterScreen', {
+              uris: images.map(img => img.path),
+              width: 4,
+              height: 5,
+            });
           }
         } catch (e) {
           console.log(e);

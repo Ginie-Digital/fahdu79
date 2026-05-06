@@ -10,6 +10,9 @@ import InputOverlay from '../InputOverlay';
 import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
 import {setAboutUser, setCategoryDescription, setCategoryHeader, setCurrentUserFullName, updateDisplayName, updateEditProfile} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import {nTwins, selectionTwin} from '../../../DesiginData/Utility';
+import {autoLogout} from '../../../AutoLogout';
+
+const regex = /^[\w](?!.*?\.{2})[\w.]{1,28}[\w]$/;
 
 const EditProfiler = ({route, navigation}) => {
   console.log(route?.params?.categoryHeader);
@@ -30,13 +33,104 @@ const EditProfiler = ({route, navigation}) => {
 
   const [updateProfile] = useUpdateProfileMutation();
 
+  // ✅ NEW: Validation errors state
+  const [errors, setErrors] = useState({
+    fullName: '',
+    userName: '',
+    bio: '',
+    descriptionHeading: '',
+    description: '',
+  });
+
   const characterLimits = {
     bio: 100,
     descriptionHeading: 50,
     description: 500,
   };
 
+  // ✅ NEW: Validation functions
+  const validateFullName = name => {
+    if (!name || name.trim().length < 2) {
+      return 'Full name must be at least 2 characters';
+    }
+    if (name.length > 50) {
+      return 'Full name must be less than 50 characters';
+    }
+    return '';
+  };
+
+  const validateUsername = username => {
+    if (!username || username.trim().length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (username.length > 30) {
+      return 'Username must be less than 30 characters';
+    }
+    if (!regex.test(username)) {
+      return 'Username can only contain letters, numbers, dots and underscores';
+    }
+    return '';
+  };
+
+  const validateBio = bioText => {
+    if (bioText && bioText.length > 100) {
+      return 'Bio must be less than 100 characters';
+    }
+    return '';
+  };
+
+  const validateDescriptionHeading = heading => {
+    if (heading && heading.length > 50) {
+      return 'Heading must be less than 50 characters';
+    }
+    return '';
+  };
+
+  const validateDescription = desc => {
+    if (desc && desc.length > 500) {
+      return 'Description must be less than 500 characters';
+    }
+    return '';
+  };
+
+  // ✅ NEW: Validate all fields before saving
+  const validateFields = () => {
+    const newErrors = {
+      fullName: '',
+      userName: '',
+      bio: '',
+      descriptionHeading: '',
+      description: '',
+    };
+
+    if (route?.params?.type === 'personal') {
+      newErrors.fullName = validateFullName(fullName);
+      newErrors.userName = validateUsername(userName);
+    }
+
+    if (route?.params?.type === 'bio') {
+      newErrors.bio = validateBio(bio);
+    }
+
+    if (route?.params?.type === 'desc') {
+      newErrors.descriptionHeading = validateDescriptionHeading(descriptionHeading);
+      newErrors.description = validateDescription(description);
+    }
+
+    setErrors(newErrors);
+
+    // Return true if no errors
+    return !Object.values(newErrors).some(error => error !== '');
+  };
+
+  // ✅ UPDATED: onSave with validation
   const onSave = () => {
+    // Validate before saving
+    if (!validateFields()) {
+      LoginPageErrors('Please fix the errors before saving');
+      return;
+    }
+
     setLoading(true);
 
     let data = Object.assign({});
@@ -65,6 +159,7 @@ const EditProfiler = ({route, navigation}) => {
       console.log(e?.error, '::::::');
       if (e?.error?.status === 'FETCH_ERROR') {
         LoginPageErrors('Please check your network');
+        setLoading(false);
       } else {
         if (!e?.error) {
           if (e?.data?.statusCode === 200) {
@@ -87,10 +182,11 @@ const EditProfiler = ({route, navigation}) => {
             navigate('editProfile');
           }
         } else {
-          if (e?.error?.data?.status_code === 401) {
+          if (e?.error?.data?.status_code === 2044) {
             autoLogout();
           }
           LoginPageErrors(e?.error?.data?.message);
+          setLoading(false);
         }
       }
     });
@@ -104,7 +200,7 @@ const EditProfiler = ({route, navigation}) => {
         <>
           <Text style={styles.fieldName}>Full Name</Text>
           <View>
-            <View style={styles.textInputContainer}>
+            <View style={[styles.textInputContainer, errors.fullName && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -115,11 +211,19 @@ const EditProfiler = ({route, navigation}) => {
                 autoCorrect={false}
                 autoCapitalize={'sentences'}
                 style={styles.textInputs}
-                onChangeText={t => setFullName(t)}
+                onChangeText={t => {
+                  setFullName(t);
+                  // Clear error on change
+                  if (errors.fullName) {
+                    setErrors(prev => ({...prev, fullName: ''}));
+                  }
+                }}
                 value={fullName}
                 onFocus={() => setFocusedInput('fullName')}
+                maxLength={30}
               />
             </View>
+            {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
             {focusedInput === 'fullName' && (
               <InputOverlay
                 isVisible={isKeyboardVisible}
@@ -130,9 +234,10 @@ const EditProfiler = ({route, navigation}) => {
               />
             )}
           </View>
+
           <Text style={styles.fieldName}>Username</Text>
           <View>
-            <View style={styles.textInputContainer}>
+            <View style={[styles.textInputContainer, errors.userName && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -141,13 +246,21 @@ const EditProfiler = ({route, navigation}) => {
                 placeholder="Enter Your Username"
                 spellCheck={false}
                 autoCorrect={false}
-                autoCapitalize={'sentences'}
+                autoCapitalize={'none'}
                 style={styles.textInputs}
-                onChangeText={t => setUserName(t)}
+                onChangeText={t => {
+                  setUserName(t);
+                  // Clear error on change
+                  if (errors.userName) {
+                    setErrors(prev => ({...prev, userName: ''}));
+                  }
+                }}
                 value={userName}
                 onFocus={() => setFocusedInput('userName')}
+                maxLength={30}
               />
             </View>
+            {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
             {focusedInput === 'userName' && (
               <InputOverlay
                 isVisible={isKeyboardVisible}
@@ -164,7 +277,7 @@ const EditProfiler = ({route, navigation}) => {
       {route?.params?.type === 'bio' && (
         <>
           <View>
-            <View style={styles.textInputContainer}>
+            <View style={[styles.textInputContainer, errors.bio && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -175,16 +288,23 @@ const EditProfiler = ({route, navigation}) => {
                 autoCorrect={false}
                 autoCapitalize={'sentences'}
                 style={[styles.textInputs, {height: 129, paddingTop: nTwins(4, 4), paddingRight: responsiveWidth(4)}]}
-                onChangeText={t => setBio(t)}
+                onChangeText={t => {
+                  setBio(t);
+                  // Clear error on change
+                  if (errors.bio) {
+                    setErrors(prev => ({...prev, bio: ''}));
+                  }
+                }}
                 value={bio}
                 multiline
                 textAlignVertical="top"
                 maxLength={100}
               />
               <Text style={styles.characterCount}>
-                {bio?.length}/<Text style={{color: '#1e1e1e'}}>{characterLimits.bio}</Text>
+                {bio?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.bio}</Text>
               </Text>
             </View>
+            {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
             <InputOverlay
               isVisible={isKeyboardVisible}
               style={{
@@ -199,9 +319,9 @@ const EditProfiler = ({route, navigation}) => {
 
       {route?.params?.type === 'desc' && (
         <>
-          <Text style={styles.fieldName}>What’s your role?</Text>
+          <Text style={styles.fieldName}>What's your role?</Text>
           <View>
-            <View style={styles.textInputContainer}>
+            <View style={[styles.textInputContainer, errors.descriptionHeading && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -212,12 +332,19 @@ const EditProfiler = ({route, navigation}) => {
                 autoCorrect={false}
                 autoCapitalize={'sentences'}
                 style={styles.textInputs}
-                onChangeText={t => setDescriptionHeading(t)}
+                onChangeText={t => {
+                  setDescriptionHeading(t);
+                  // Clear error on change
+                  if (errors.descriptionHeading) {
+                    setErrors(prev => ({...prev, descriptionHeading: ''}));
+                  }
+                }}
                 value={descriptionHeading}
                 onFocus={() => setFocusedInput('descriptionHeading')}
-                maxLength={30}
+                maxLength={50}
               />
             </View>
+            {errors.descriptionHeading && <Text style={styles.errorText}>{errors.descriptionHeading}</Text>}
             {focusedInput === 'descriptionHeading' && (
               <InputOverlay
                 isVisible={isKeyboardVisible}
@@ -228,9 +355,10 @@ const EditProfiler = ({route, navigation}) => {
               />
             )}
           </View>
+
           <Text style={styles.fieldName}>Describe your role</Text>
           <View>
-            <View style={styles.textInputContainer}>
+            <View style={[styles.textInputContainer, errors.description && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -241,7 +369,13 @@ const EditProfiler = ({route, navigation}) => {
                 autoCorrect={false}
                 autoCapitalize={'sentences'}
                 style={[styles.textInputs, {height: 205, paddingTop: responsiveWidth(4), paddingRight: responsiveWidth(4)}]}
-                onChangeText={t => setDescription(t)}
+                onChangeText={t => {
+                  setDescription(t);
+                  // Clear error on change
+                  if (errors.description) {
+                    setErrors(prev => ({...prev, description: ''}));
+                  }
+                }}
                 multiline
                 value={description}
                 onFocus={() => setFocusedInput('description')}
@@ -250,9 +384,10 @@ const EditProfiler = ({route, navigation}) => {
               />
 
               <Text style={styles.characterCount}>
-                {description?.length}/<Text style={{color: '#1e1e1e'}}>{characterLimits.description}</Text>
+                {description?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.description}</Text>
               </Text>
             </View>
+            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
             {focusedInput === 'description' && (
               <InputOverlay
                 isVisible={isKeyboardVisible}
@@ -281,7 +416,6 @@ const styles = StyleSheet.create({
   },
 
   heading: {
-    // marginTop: responsiveWidth(5),
     fontFamily: 'Rubik-Bold',
     color: '#1e1e1e',
     fontSize: 24,
@@ -313,6 +447,7 @@ const styles = StyleSheet.create({
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2),
+    borderColor: '#1e1e1e',
   },
   textInputs: {
     fontSize: responsiveFontSize(1.8),
@@ -331,6 +466,18 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginRight: responsiveWidth(4),
     marginBottom: responsiveWidth(4),
+  },
+  // ✅ NEW: Error styles
+  errorText: {
+    fontFamily: 'Rubik-Regular',
+    fontSize: 12,
+    color: '#E74C3C',
+    marginTop: 4,
+    marginLeft: responsiveWidth(2),
+  },
+  inputError: {
+    borderColor: '#E74C3C',
+    borderWidth: 2,
   },
 });
 

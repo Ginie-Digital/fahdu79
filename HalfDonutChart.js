@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { responsiveWidth } from 'react-native-responsive-dimensions';
 
-const HalfDonutChart = ({ graphData }) => {
+const HalfDonutChart = ({ graphData, subtitle = "Earned this Week", onChartClick }) => {
 
 
   const htmlContent = `
@@ -72,6 +72,16 @@ const HalfDonutChart = ({ graphData }) => {
           responsive: true,
           maintainAspectRatio: false,
           cutout: '70%',
+          onClick: (e, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const label = finalLabels[index]; 
+              // alert("Clicked: " + label); // Debug
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(label);
+              }
+            }
+          },
           plugins: {
             legend: { display: false },
             datalabels: {
@@ -99,11 +109,12 @@ const HalfDonutChart = ({ graphData }) => {
             ctx.fillStyle = "#000";
 
             // ✅ Dynamic ₹ Earnings Text
-            ctx.fillText("₹" + totalEarningsWeek.toLocaleString(), width / 2, height / 1.7);
+            ctx.fillText("₹" + totalEarningsWeek.toLocaleString(), width / 2, height / 1.8);
 
-            // ✅ Earned this Week Text
-            ctx.font = "500 40px 'Rubik', sans-serif";
-            ctx.fillText("Earned this Week", width / 2, height / 1.4);
+            // ✅ Earned this Week Text (Dynamic)
+            const subtitle = "$SUBTITLE$";
+            ctx.font = "500 35px 'Rubik', sans-serif"; // Slightly smaller for date ranges
+            ctx.fillText(subtitle, width / 2, height / 1.3);
             ctx.save();
           }
         }]
@@ -118,7 +129,8 @@ const HalfDonutChart = ({ graphData }) => {
   // ✅ Replace Dynamic Data with Graph Data
   const finalHtml = htmlContent
     .replace('$LOG_DATA$', JSON.stringify(graphData.orderedEarnings))
-    .replace('$TOTAL_EARNINGS$', graphData.totalEarningsWeek);
+    .replace('$TOTAL_EARNINGS$', graphData.totalEarningsWeek)
+    .replace('$SUBTITLE$', subtitle);
 
   return (
     <View style={{ height: 200, width: '100%' }}>
@@ -130,6 +142,9 @@ const HalfDonutChart = ({ graphData }) => {
         domStorageEnabled
         mixedContentMode="always"
         androidLayerType="hardware"
+        onMessage={(event) => {
+             if (onChartClick) onChartClick(event.nativeEvent.data);
+        }}
       />
     </View>
   );

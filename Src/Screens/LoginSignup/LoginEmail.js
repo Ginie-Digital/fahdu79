@@ -1,26 +1,9 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  Keyboard,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import {Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {TextInput} from 'react-native-gesture-handler';
 import {navigate} from '../../../Navigation/RootNavigation';
-import {
-  responsiveWidth,
-  responsiveFontSize,
-  responsiveHeight,
-} from 'react-native-responsive-dimensions';
-import {
-  FONT_SIZES,
-  nTwins,
-  selectionTwin,
-  validEmail,
-} from '../../../DesiginData/Utility';
+import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
+import {FONT_SIZES, nTwins, selectionTwin, validEmail} from '../../../DesiginData/Utility';
 import {LoginPageErrors} from '../../Components/ErrorSnacks';
 import Back from '../../../Assets/svg/back.svg';
 import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
@@ -45,21 +28,19 @@ const LoginEmail = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView testID="login-email-screen" style={{flex: 1, backgroundColor: '#fff'}}>
       <View style={styles.container}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigate('LoginHome')}>
+        <TouchableOpacity testID="login-email-back-button" accessibilityLabel="login-email-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
           <Back />
         </TouchableOpacity>
         <Text style={styles.heading}>Login</Text>
-        <Text style={styles.subHead}>
-          Welcome to Fahdu, Login to Continue...
-        </Text>
+        <Text style={styles.subHead}>Welcome to Fahdu, Login to Continue...</Text>
         <Text style={styles.fieldName}>Email</Text>
         <View>
           <View style={styles.textInputContainer}>
             <TextInput
+              testID="login-email-input"
+              accessibilityLabel="login-email-input"
               selectionHandleColor={'#ffa86b'}
               selectionColor={selectionTwin()}
               cursorColor={'#1e1e1e'}
@@ -69,8 +50,9 @@ const LoginEmail = () => {
               autoCorrect={false}
               autoCapitalize={'none'}
               style={styles.textInputs}
-              onChangeText={t => setEmail(t)}
-              maxLength={30}
+              value={email} // Add this line
+              onChangeText={t => setEmail(t.toLowerCase())}
+              maxLength={50}
             />
           </View>
           <InputOverlay
@@ -82,19 +64,11 @@ const LoginEmail = () => {
           />
         </View>
 
-        <AnimatedButton
-          title={'Next'}
-          onPress={handleGoToNext}
-          loading={false}
-        />
+        <AnimatedButton testID="login-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} />
 
-        <TouchableOpacity
-          style={styles.alreadyAccountContainer}
-          onPress={() => navigate('SignupEmail')}>
+        <TouchableOpacity testID="login-email-signup-link" accessibilityLabel="login-email-signup-link" style={styles.alreadyAccountContainer} onPress={() => navigate('SignupEmail')}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={styles.alreadyAccountText}>
-              Don't you have an account?{' '}
-            </Text>
+            <Text style={styles.alreadyAccountText}>Don't you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Sign Up</Text>
           </View>
         </TouchableOpacity>

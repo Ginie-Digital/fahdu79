@@ -5,7 +5,7 @@ import {useSelector, useDispatch} from 'react-redux';
 
 import {Dialog} from 'react-native-simple-dialogs';
 import {BlurView} from 'expo-blur';
-import {FONT_SIZES} from '../../../DesiginData/Utility';
+import { FONT_SIZES, formatIndianNumber } from '../../../DesiginData/Utility';
 
 import DIcon from '../../../DesiginData/DIcons';
 import {useLazyIsValidFollowQuery, useSubscriptionPaymentsMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
@@ -109,7 +109,7 @@ const ConfirmSubscribeModal = ({code, userId, userName, coins}) => {
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
               <Text style={styles.textYesNo} numberOfLines={1}>
-                Pay {coins} coins to Subscribe
+                Pay {formatIndianNumber(coins)} coins to Subscribe
               </Text>
 
               <View style={styles.buttonContainer}>

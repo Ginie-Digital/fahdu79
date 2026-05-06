@@ -60,22 +60,58 @@ const ChatWindowLabelModal = ({roomId, label}) => {
     getAllLabelNamesHandler();
   }, []);
 
-  const handleRoomListSort = id => {
-    setCurrent(labelList[Number(id) - 1].labelName);
-  };
+  const handleRoomListSort = async id => {
+    console.log('🟣 handleRoomListSort called with id:', id);
 
-  const assignLablehandler = async () => {
-    console.log('Assigning label');
+    const selected = labelList[Number(id) - 1]?.labelName;
+    console.log('🔵 Selected label:', selected);
 
-    const {data, error} = await assignLabel({
-      token,
-      data: {
-        label: current,
-        roomId: roomId,
-      },
-    });
+    if (!selected) {
+      console.log('❌ No label found for this id!');
+      return;
+    }
 
-    console.log(data, error, 'ASS');
+    // Update local state
+    setCurrent(selected);
+    console.log('🟠 setCurrent called → current =', selected);
+
+    // API CALL inside try–catch
+    try {
+      console.log('📤 Sending assignLabel API request...');
+
+      const {data, error} = await assignLabel({
+        token,
+        data: {
+          label: selected,
+          roomId: roomId,
+        },
+      });
+
+      if (error) {
+        console.log('❌ assignLabel returned error:', error);
+      } else {
+        console.log('📥 assignLabel success:', data);
+      }
+    } catch (err) {
+      console.log('🔥 Exception during assignLabel API call:', err);
+    }
+
+    // Redux update
+    console.log('🟢 Dispatching updateLabel...');
+    dispatcher(
+      updateLabel({
+        data: {
+          roomId,
+          current: selected,
+        },
+      }),
+    );
+
+    // Close modal
+    console.log('🔚 Closing modal...');
+    dispatcher(toggleLabelModal({show: false}));
+
+    console.log('✅ handleRoomListSort completed.\n\n');
   };
 
   // const getAllLabelNamesHandler = async () => {
@@ -107,24 +143,6 @@ const ChatWindowLabelModal = ({roomId, label}) => {
   useEffect(() => {
     setCurrent(label);
   }, []);
-
-  useEffect(() => {
-    if (hasMounted.current) {
-      assignLablehandler();
-
-      dispatcher(
-        updateLabel({
-          data: {
-            roomId,
-            current,
-          },
-        }),
-      );
-      dispatcher(toggleLabelModal({show: false}));
-    } else {
-      hasMounted.current = true;
-    }
-  }, [current]);
 
   return (
     visible && (

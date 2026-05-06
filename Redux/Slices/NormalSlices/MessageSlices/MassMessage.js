@@ -18,10 +18,16 @@ const initialState = {
     target: {
       selectedUsers: [],
       label: [],
+      filter: 'none', // Default set to 'none'
     },
     status: {
       online: true,
       offline: false,
+    },
+    audienceType: {
+      followers: false,
+      subscribers: false,
+      all: false,
     },
   },
 };
@@ -35,18 +41,23 @@ const massMessageSlice = createSlice({
       const labelIndex = state.data.target.label.findIndex(l => l === label);
 
       if (labelIndex >= 0) {
-        // Label exists, remove it (uncheck)
         state.data.target.label.splice(labelIndex, 1);
       } else {
-        // Label doesn't exist, add it (check)
         state.data.target.label.push(label);
       }
     },
 
     setMassMessageTargetOnlinleOffline: (state, action) => {
       console.log('AC', action.payload);
-      state.data.status.offline = action.payload.status.offline;
-      state.data.status.online = action.payload.status.online;
+
+      const {online, offline} = action.payload.status;
+
+      if (!online && !offline) {
+        return;
+      }
+
+      state.data.status.online = online;
+      state.data.status.offline = offline;
     },
 
     setMassMessageAddToUserList: (state, action) => {
@@ -61,36 +72,52 @@ const massMessageSlice = createSlice({
     },
 
     massMessageUpdateBody: (state, action) => {
-      const { message, attachment } = action.payload;
-    
+      const {message, attachment} = action.payload;
+
       if (message !== undefined) {
         state.data._body.message = message;
       }
-    
+
       if (attachment !== undefined) {
         state.data._body.attachment = {
           ...state.data._body.attachment,
-          ...attachment
+          ...attachment,
         };
+      }
+    },
+
+    setAudienceType: (state, action) => {
+      const {audienceType} = action.payload;
+
+      if (audienceType === 'followers') {
+        const newValue = !state.data.audienceType.followers;
+        state.data.audienceType.followers = newValue;
+        state.data.audienceType.subscribers = false;
+        state.data.audienceType.all = false;
+        state.data.target.filter = newValue ? 'followers' : 'none';
+      } else if (audienceType === 'subscribers') {
+        const newValue = !state.data.audienceType.subscribers;
+        state.data.audienceType.followers = false;
+        state.data.audienceType.subscribers = newValue;
+        state.data.audienceType.all = false;
+        state.data.target.filter = newValue ? 'subscribers' : 'none';
+      } else if (audienceType === 'all') {
+        const newValue = !state.data.audienceType.all;
+        state.data.audienceType.followers = false;
+        state.data.audienceType.subscribers = false;
+        state.data.audienceType.all = newValue;
+        state.data.target.filter = newValue ? 'all' : 'none';
       }
     },
 
     resetMassMessage: () => initialState,
   },
-  
-  // Add extra reducers to respond to the global reset action
-  extraReducers: (builder) => {
+
+  extraReducers: builder => {
     builder.addCase(resetAll, () => initialState);
-  }
+  },
 });
 
-export const {
-  setMassMessageLabel,
-  setMassMessageTargetOnlinleOffline,
-  setMassMessageMedia,
-  setMassMessageAddToUserList,
-  massMessageUpdateBody,
-  resetMassMessage,  // Export the new reset action
-} = massMessageSlice.actions;
+export const {setMassMessageLabel, setMassMessageTargetOnlinleOffline, setMassMessageMedia, setMassMessageAddToUserList, massMessageUpdateBody, setAudienceType, resetMassMessage} = massMessageSlice.actions;
 
 export default massMessageSlice.reducer;

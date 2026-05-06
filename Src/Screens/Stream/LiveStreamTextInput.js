@@ -1,18 +1,19 @@
-import {StyleSheet, Text, View, TouchableOpacity, Pressable, TextInput, KeyboardAvoidingView, Platform, FlatList, Image, Keyboard, ActivityIndicator} from 'react-native';
-import React, {memo, useEffect, useRef, useState} from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Pressable, TextInput, KeyboardAvoidingView, Platform, FlatList, Image, Keyboard, ActivityIndicator } from 'react-native';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import DIcon from '../../../DesiginData/DIcons';
-import {FONT_SIZES, nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {useSelector} from 'react-redux';
+import { FONT_SIZES, nTwins, WIDTH_SIZES } from '../../../DesiginData/Utility';
+import { useSelector } from 'react-redux';
 
-import {useSendMessageLiveStreamMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {token as memoizedToken, token} from '../../../Redux/Slices/NormalSlices/AuthSlice';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
+import { useSendMessageLiveStreamMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { token as memoizedToken, token } from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import LinearGradient from 'react-native-linear-gradient';
 import Send from '../../../Assets/svg/send.svg';
 import LiveStreamComment from './LiveStreamComment';
 import Feather from 'react-native-vector-icons/Feather';
+import MaskedView from '@react-native-masked-view/masked-view';
 
-const LiveStreamTextInput = ({roomId, setShowCommentArea}) => {
+const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
   const commentChat = useRef('');
 
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,7 @@ const LiveStreamTextInput = ({roomId, setShowCommentArea}) => {
     return () => listener.remove();
   }, []);
 
-  const {role, currentUserDisplayName, currentUserProfilePicture} = useSelector(state => state.auth.user);
+  const { role, currentUserDisplayName, currentUserProfilePicture } = useSelector(state => state.auth.user);
 
   const [sendMessageLiveStream] = useSendMessageLiveStreamMutation();
 
@@ -52,7 +53,7 @@ const LiveStreamTextInput = ({roomId, setShowCommentArea}) => {
     setLoading(true); // Start loading
 
     try {
-      const {error, data} = await sendMessageLiveStream({
+      const { error, data } = await sendMessageLiveStream({
         token,
         data: {
           roomId,
@@ -99,25 +100,30 @@ const LiveStreamTextInput = ({roomId, setShowCommentArea}) => {
         width: '100%',
         marginBottom: 10,
       }}>
-      <TouchableOpacity style={{flex: 1, backgroundColor: 'transparent'}} onPress={() => setShowCommentArea(false)}>
+      <TouchableOpacity style={{ flex: 1, backgroundColor: 'transparent' }} onPress={() => setShowCommentArea(false)}>
         <View style={styles.overlayCommentsContainer}>
-          <View
+          <MaskedView
             style={{
-              maxHeight: responsiveWidth(60),
+              height: responsiveWidth(60),
               marginTop: responsiveWidth(3),
-              position: 'relative',
-            }}>
-            {/* {falshChats?.length >= 4 && <LinearGradient colors={["#000", "#00000090", "#00000080", "transparent", "transparent", "transparent"]} style={{ position: "absolute", width: "100%", height: responsiveWidth(35), zIndex: 2 }} />} */}
-
+            }}
+            maskElement={
+              <LinearGradient
+                style={{ flex: 1 }}
+                colors={['transparent', 'black']}
+                locations={[0, 0.2]}
+              />
+            }
+          >
             <FlatList
               data={[...falshChats].reverse()}
-              renderItem={({item}) => <LiveStreamComment item={item} currentUserDisplayName={currentUserDisplayName} />}
-              style={{marginLeft: responsiveWidth(2)}}
-              contentContainerStyle={{gap: responsiveWidth(3)}}
+              renderItem={({ item }) => <LiveStreamComment item={item} currentUserDisplayName={currentUserDisplayName} />}
+              style={{ marginLeft: responsiveWidth(2), flex: 1 }}
+              contentContainerStyle={{ gap: responsiveWidth(3) }}
               showsVerticalScrollIndicator={false}
               inverted
             />
-          </View>
+          </MaskedView>
         </View>
       </TouchableOpacity>
 
@@ -137,6 +143,7 @@ const LiveStreamTextInput = ({roomId, setShowCommentArea}) => {
               keyboardAppearance="light"
               onSubmitEditing={() => (loading ? null : emitMessage())}
               blurOnSubmit={false}
+              maxLength={50}
             />
 
             <Pressable
@@ -144,7 +151,7 @@ const LiveStreamTextInput = ({roomId, setShowCommentArea}) => {
               onPress={() => !loading && emitMessage()} // disable press when loading
               disabled={loading} // makes sure it’s not pressable
             >
-              {loading ? <ActivityIndicator size="small" color="#1e1e1e" /> : ({pressed}) => <Feather name="send" size={24} color={pressed ? '#999' : '#1e1e1e'} />}
+              {loading ? <ActivityIndicator size="small" color="#1e1e1e" /> : ({ pressed }) => <Feather name="send" size={24} color={pressed ? '#999' : '#1e1e1e'} />}
             </Pressable>
           </View>
         </View>
@@ -213,7 +220,7 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    fontFamily: 'MabryPro-Medium',
+    fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.8),
     color: '#fff',
   },

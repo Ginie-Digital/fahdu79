@@ -99,10 +99,7 @@ const CreatorSearch = () => {
               {
                 backgroundColor: pressed ? '#FFEDE0' : 'transparent',
               },
-            ]}
-            
-            
-            >
+            ]}>
             <DIcon name="chevron-back" provider="IonIcons" size={responsiveFontSize(3)} color="#1E1E1E" />
           </Pressable>
 
@@ -166,7 +163,7 @@ const CreatorSearch = () => {
 
                   <Text style={styles.username}>{item?.displayName}</Text>
                 </View>
-                {searchedProfiles.length < 1 && (
+                {searchedProfiles?.length < 1 && (
                   <Pressable style={styles.closeButton} onPress={() => dispatch(deleteSearchedProfile({id: item._id}))}>
                     <Ionicons name="close" size={responsiveFontSize(2.5)} color="black" />
                   </Pressable>

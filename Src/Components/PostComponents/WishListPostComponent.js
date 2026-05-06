@@ -1,7 +1,7 @@
-import {StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator} from 'react-native';
+import {StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator, TouchableOpacity} from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useFocusEffect} from '@react-navigation/native';
-import {useLazyGetWishListQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useLazyGetShowBankDetailsQuery, useLazyGetWishListQuery, useWishlistPayoutMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useSelector} from 'react-redux';
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
@@ -12,13 +12,16 @@ import EmptyComponent from './EmptyComponent';
 import {Tabs} from 'react-native-collapsible-tab-view';
 
 import {Image} from 'expo-image';
+import AnimatedButton from '../AnimatedButton';
+import {LoginPageErrors} from '../ErrorSnacks';
 
 const WishListPostComponent = ({wishlistId}) => {
   const flatListRef = useRef(null);
-
-  console.log('789', wishlistId);
+  const navigation = useNavigation();
 
   const [getWishList] = useLazyGetWishListQuery({refetchOnFocus: true});
+  const [getShowBankDetails] = useLazyGetShowBankDetailsQuery();
+  const [wishlistPayout] = useWishlistPayoutMutation();
   const token = useSelector(state => state.auth.user.token);
   const [wishList, setWishList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,8 +63,62 @@ const WishListPostComponent = ({wishlistId}) => {
     }
   }, [wishlistId, wishList]);
 
+  const handleRequestPayout = async item => {
+    try {
+      console.log('Request payout for:', item._id);
+
+      // Check if bank details exist
+      const {data, error} = await getShowBankDetails({token});
+
+      if (error) {
+        console.log('Error fetching bank details:', error);
+        // Handle error - show error message
+        return;
+      }
+
+      if (data?.statusCode === 200 && data?.data) {
+        // Bank details exist, navigate to payout screen
+        console.log('Bank details found:', data.data);
+
+        // Calculate amount and fahduFees
+        const totalAmount = item.totalCollected;
+        const payoutAmount = Math.round(totalAmount / 1.1); // Round to nearest integer
+        const fahduFees = totalAmount - payoutAmount; // The 10% fee
+
+        // Navigate to payout final screen with all data
+        navigation.navigate('wishlistpayoutfinal', {
+          wishlistItem: {
+            wishlistId: item._id,
+            title: item.title,
+            fundRaised: totalAmount,
+            fahduFees: fahduFees,
+            payoutAmount: payoutAmount,
+          },
+          bankDetails: {
+            beneficiaryName: data.data.beneficiaryName,
+            accountNo: data.data.accountNo,
+            IFSC: data.data.IFSC,
+            PAN: data.data.PAN || 'Not Available',
+          },
+        });
+      } else {
+        // No bank details found, redirect user to add bank details
+        console.log('No bank details found. Please add bank details first.');
+        // Navigate to add bank details screen or show modal
+
+        LoginPageErrors('No Bank Details found, add in dashboard');
+
+        setTimeout(() => {
+          navigation.navigate('mrDashboard');
+        }, 1000);
+      }
+    } catch (err) {
+      console.log('Error in handleRequestPayout:', err);
+    }
+  };
+
   const WishListCard = useCallback(({item, setDonateData, pressDisabled}) => {
-    console.log(item?._id, 'olol');
+    console.log(item?.withdrawable, 'olol');
 
     return (
       <Pressable disabled={true} style={styles.cardWrapper} android_ripple={{color: '#f3f3f3'}}>
@@ -77,13 +134,19 @@ const WishListPostComponent = ({wishlistId}) => {
             <Text style={styles.smallTexts}>Fund Raised</Text>
             <Text style={[styles.smallTexts, {flexDirection: 'row'}]}>
               {item?.totalCollected}/{item?.listedCoinsRequired}
-              <Image source={require('../../../Assets/Images/Coin.png')} style={{height: responsiveWidth(3.5), width: responsiveWidth(3.5), resizeMode: 'contain', alignSelf: 'center', marginRight: responsiveWidth(1)}} />
+              <Image source={require('../../../Assets/Images/Coin.png')} style={{height: responsiveWidth(3.5), width: responsiveWidth(3.5), resizeMode: 'contain', alignSelf: 'center', marginLeft: responsiveWidth(1)}} />
             </Text>
           </View>
 
           <View style={{width: '100%', paddingHorizontal: responsiveWidth(2), marginTop: responsiveWidth(4)}}>
             <ProgressBar borderWidth={0} height={responsiveWidth(3)} unfilledColor={'#f2f2f2'} width={responsiveWidth(82)} progress={item?.totalCollected / item?.listedCoinsRequired} color={'#e0383e'} />
           </View>
+
+          {item?.withdrawable && (
+            <TouchableOpacity style={styles.payoutButton} onPress={() => handleRequestPayout(item)} activeOpacity={0.7}>
+              <Text style={styles.payoutButtonText}>Request Payout</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Pressable>
     );
@@ -124,16 +187,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   imageContainer: {
-    width: '100%', // Ensure the container takes the full width
-    height: responsiveWidth(60), // Fixed height for the container
+    width: '100%',
+    height: responsiveWidth(60),
     marginBottom: responsiveWidth(4),
-    overflow: 'hidden', // Ensure the image doesn't overflow the container
+    overflow: 'hidden',
   },
-
   image: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover', // Ensure the image covers the entire container
+    resizeMode: 'cover',
   },
   wishtitle: {
     fontFamily: 'Rubik-Bold',
@@ -151,12 +213,10 @@ const styles = StyleSheet.create({
     color: '#282828',
   },
   cardBottomView: {
-    // borderWidth : 1,
     marginTop: responsiveWidth(4),
-    height: responsiveWidth(16),
+    paddingBottom: responsiveWidth(4),
   },
   cardBottomViewUpper: {
-    // borderWidth : 1,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -166,5 +226,21 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.6),
     color: '#282828',
     fontFamily: 'Rubik-Bold',
+  },
+  payoutButton: {
+    marginHorizontal: responsiveWidth(2),
+    marginTop: responsiveWidth(4),
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#282828',
+    borderRadius: 14,
+    paddingVertical: responsiveWidth(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payoutButtonText: {
+    fontFamily: 'Rubik-Bold',
+    fontSize: responsiveFontSize(1.8),
+    color: '#282828',
   },
 });

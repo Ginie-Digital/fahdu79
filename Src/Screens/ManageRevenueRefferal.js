@@ -8,7 +8,7 @@ import {Image} from 'expo-image';
 import {useLazyGetRefferalLinkDetailsQuery, useLazyRefferalDetailsQuery, useLazyRefferalListQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useSelector} from 'react-redux';
 import {chatRoomSuccess, LoginPageErrors} from '../Components/ErrorSnacks';
-import { ScrollView } from 'react-native-gesture-handler';
+import {ScrollView} from 'react-native-gesture-handler';
 
 const ReferralLevel = ({level, users}) => {
   const [expanded, setExpanded] = useState(true);
@@ -87,8 +87,6 @@ const CommissionCard = ({level, commission, referrals, percentage}) => {
 };
 
 const ManageRevenueRefferal = () => {
-  const referralLink = 'https://app.fahdu.com/invite/';
-
   const token = useSelector(state => state.auth.user.token);
 
   const [refferalDetails] = useLazyRefferalDetailsQuery();
@@ -108,15 +106,6 @@ const ManageRevenueRefferal = () => {
       {
         level: 1,
         users: listData?.data?.level1?.map(user => ({
-          id: user._id,
-          name: user.fullName,
-          username: user.displayName,
-          profile_image: user.profile_image,
-        })),
-      },
-      {
-        level: 2,
-        users: listData?.data?.level2?.map(user => ({
           id: user._id,
           name: user.fullName,
           username: user.displayName,
@@ -167,7 +156,7 @@ const ManageRevenueRefferal = () => {
       </View>
 
       {!isNotDashboardScreen ? (
-        <ScrollView showsVerticalScrollIndicator = {false} style = {{paddingRight : WIDTH_SIZES['2'] + WIDTH_SIZES['1.5'], paddingBottom : 100}}>
+        <ScrollView showsVerticalScrollIndicator={false} style={{paddingRight: WIDTH_SIZES['2'] + WIDTH_SIZES['1.5'], paddingBottom: 100}}>
           <View style={styles.containerClip}>
             <Text style={styles.text}>Refer and earn commission on every friend that joins Fahdu through your referral.</Text>
             <View style={styles.linkRow}>
@@ -182,7 +171,6 @@ const ManageRevenueRefferal = () => {
 
           <View>
             <CommissionCard level={1} commission={dashboardData?.level1Earnings} referrals={dashboardData?.level1} percentage={dashboardData?.level1Rate} />
-            <CommissionCard level={2} commission={dashboardData?.level2Earnings} referrals={dashboardData?.level1} percentage={dashboardData?.level2Rate} />
           </View>
         </ScrollView>
       ) : (

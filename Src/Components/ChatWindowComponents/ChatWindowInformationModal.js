@@ -1,19 +1,19 @@
-import {StyleSheet, Text, View, TouchableOpacity, Image, Platform, Pressable} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
-import {useSelector, useDispatch} from 'react-redux';
-import {toggleChatWindowInformationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Platform, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleChatWindowInformationModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import Modal from 'react-native-modal';
-import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { token as memoizedToken } from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import DIcon from '../../../DesiginData/DIcons';
 import axios from 'axios';
-import {LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
-import {FONT_SIZES, nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import { LoginPageErrors, chatRoomSuccess } from '../ErrorSnacks';
+import { FONT_SIZES, formatIndianNumber, nTwins, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import Wallet from '../../../Assets/svg/wall.svg';
-import {navigate} from '../../../Navigation/RootNavigation';
+import { navigate } from '../../../Navigation/RootNavigation';
 
-const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}) => {
+const ChatWindowInformationModal = ({ chatRoomId, followUser, unFollowUser, role }) => {
   const dispatcher = useDispatch();
   const senderBioDetail = useSelector(state => state.senderDetail.bio);
   const feeDetails = useSelector(state => state.chatWindowFeeDetails.data[chatRoomId]);
@@ -24,8 +24,8 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
   const [fetchingCoins, setFetchingCoins] = useState(false);
   const modalVisibility = useSelector(state => state.hideShow.visibility.chatWindowInformationModal);
 
-  const [walletLayout, setWalletLayout] = useState({width: 0, height: 0});
-  const [detailsLayout, setDetailsLayout] = useState({width: 0, height: 0});
+  const [walletLayout, setWalletLayout] = useState({ width: 0, height: 0 });
+  const [detailsLayout, setDetailsLayout] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     fetchCoins();
@@ -35,7 +35,7 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
   const fetchCoins = async () => {
     try {
       setFetchingCoins(true);
-      let {data} = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {headers: {Authorization: `Bearer ${token}`}});
+      let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}` } });
       setCoins(data?.data);
       setFetchingCoins(false);
     } catch (e) {
@@ -46,28 +46,35 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
   const fetchIsFollowing = async () => {
     try {
       setFetchingCoins(true);
-      let {data} = await axios.get(`https://api.fahdu.in/api/user/valid-follow-check?id=${senderBioDetail?.name}`, {headers: {Authorization: `Bearer ${token}`}});
+      let { data } = await axios.get(`https://api.fahdu.com/api/user/valid-follow-check?id=${senderBioDetail?.name}`, { headers: { Authorization: `Bearer ${token}` } });
       setFollowing(data?.data?.follow);
     } catch (e) {
       console.log('Get Coin Error ', e);
     }
   };
 
+  const handleWalletPress = () => {
+    dispatcher(toggleChatWindowInformationModal());
+    setTimeout(() => {
+      navigate('wallet');
+    }, 650);
+  };
+
   return (
     <Modal isVisible={modalVisibility} animationIn={'slideInUp'} animationOut={'slideOutDown'} onBackdropPress={() => dispatcher(toggleChatWindowInformationModal())} style={styles.modalStyle}>
       <View style={styles.modalContent}>
         {/* Wallet Balance Section */}
-        <View style={{position: 'relative'}}>
-          <View style={[styles.overlay, {width: walletLayout.width, height: walletLayout.height}, {backgroundColor: coins <= 10 ? '#FF8080' : '#A4FFB8'}]} />
-          <Pressable style={styles.walletSection} onLayout={event => setWalletLayout(event.nativeEvent.layout)} onPress={() => navigate('wallet')}>
-            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+        <View style={{ position: 'relative' }}>
+          <View style={[styles.overlay, { width: walletLayout.width, height: walletLayout.height }, { backgroundColor: coins <= 10 ? '#FF8080' : '#A4FFB8' }]} />
+          <Pressable style={styles.walletSection} onLayout={event => setWalletLayout(event.nativeEvent.layout)} onPress={handleWalletPress}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
               <Wallet />
 
               <Text style={styles.walletText}>Wallet balance</Text>
             </View>
 
             <View style={styles.coinsWrapper}>
-              <Text style={styles.coinsText}>{coins}</Text>
+              <Text style={styles.coinsText}>{formatIndianNumber(coins)}</Text>
               <Paisa />
             </View>
           </Pressable>
@@ -76,13 +83,13 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
         <Text style={styles.headingTitle}>Chat Fee</Text>
 
         {/* Fee Details Section */}
-        <View style={{position: 'relative'}}>
+        <View style={{ position: 'relative' }}>
           {/* <View style={[styles.overlayTwo, {width: detailsLayout.width, height: detailsLayout.height}]} /> */}
           <View style={styles.detailsContainer} onLayout={event => setDetailsLayout(event.nativeEvent.layout)}>
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>For Subscribers</Text>
               <Text style={styles.feeText}>
-                <Text style={styles.feeNumber}>{feeDetails?.subscribers?.message > 0 ? feeDetails?.subscribers?.message : 0} Coins/</Text>
+                <Text style={styles.feeNumber}>{feeDetails?.subscribers?.message} Coins/</Text>
                 Message
               </Text>
             </View>
@@ -90,7 +97,7 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>For Followers</Text>
               <Text style={styles.feeText}>
-                <Text style={styles.feeNumber}>{feeDetails?.followers?.message > 0 ? feeDetails?.followers?.message : 0} Coins/</Text>
+                <Text style={styles.feeNumber}>{feeDetails?.followers?.message} Coins/</Text>
                 Message
               </Text>
             </View>
@@ -100,13 +107,13 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
         <Text style={styles.headingTitleTow}>Video Call Fee</Text>
 
         {/* Fee Details Section */}
-        <View style={{position: 'relative'}}>
+        <View style={{ position: 'relative' }}>
           {/* <View style={[styles.overlayTwo, {width: detailsLayout.width, height: detailsLayout.height}]} /> */}
           <View style={styles.detailsContainer} onLayout={event => setDetailsLayout(event.nativeEvent.layout)}>
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>For Subscribers</Text>
               <Text style={styles.feeText}>
-                <Text style={styles.feeNumber}>{feeDetails?.subscribers?.message > 0 ? feeDetails?.subscribers?.message : 0} Coins/</Text>
+                <Text style={styles.feeNumber}>{feeDetails?.subscribers?.videoCall} Coins/</Text>
                 Min.
               </Text>
             </View>
@@ -114,7 +121,7 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>For Followers</Text>
               <Text style={styles.feeText}>
-                <Text style={styles.feeNumber}>{feeDetails?.followers?.message > 0 ? feeDetails?.followers?.message : 0} Coins/</Text>
+                <Text style={styles.feeNumber}>{feeDetails?.followers?.videoCall} Coins/</Text>
                 Min.
               </Text>
             </View>
@@ -124,13 +131,13 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
         <Text style={styles.headingTitleTow}>Audio Call Fee</Text>
 
         {/* Fee Details Section */}
-        <View style={{position: 'relative'}}>
+        <View style={{ position: 'relative' }}>
           {/* <View style={[styles.overlayTwo, {width: detailsLayout.width, height: detailsLayout.height}]} /> */}
           <View style={styles.detailsContainer} onLayout={event => setDetailsLayout(event.nativeEvent.layout)}>
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>For Subscribers</Text>
               <Text style={styles.feeText}>
-                <Text style={styles.feeNumber}>{feeDetails?.subscribers?.message > 0 ? feeDetails?.subscribers?.message : 0} Coins/</Text>
+                <Text style={styles.feeNumber}>{feeDetails?.subscribers?.audioCall} Coins/</Text>
                 Min.
               </Text>
             </View>
@@ -138,7 +145,7 @@ const ChatWindowInformationModal = ({chatRoomId, followUser, unFollowUser, role}
             <View style={styles.detailSection}>
               <Text style={styles.sectionTitle}>For Followers</Text>
               <Text style={styles.feeText}>
-                <Text style={styles.feeNumber}>{feeDetails?.followers?.message > 0 ? feeDetails?.followers?.message : 0} Coins/</Text>
+                <Text style={styles.feeNumber}>{feeDetails?.followers?.audioCall} Coins/</Text>
                 Min.
               </Text>
             </View>

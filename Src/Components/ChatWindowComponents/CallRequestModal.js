@@ -1,45 +1,91 @@
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator} from 'react-native';
 import {Dialog} from 'react-native-simple-dialogs';
 import {useDispatch, useSelector} from 'react-redux';
 import {BlurView} from 'expo-blur';
 import {Image} from 'expo-image';
-import {toggleCallRequestModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {toggleCallAccepted, toggleCallRequestModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import {navigate} from '../../../Navigation/RootNavigation';
-import {useAcceptCallRequestMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useAcceptCallRequestMutation, useDeclineCallRequestMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { AppLog } from '../../Utils/Logger';
 import {LoginPageErrors} from '../ErrorSnacks';
 import dayjs from 'dayjs';
+import {setCallRejected} from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
 
-const CallRequestModal = ({roomId, callTriesData, name, profileImageUrl}) => {
+const CallRequestModal = ({doRaisedRequest, roomId, name, profileImageUrl, targetUserId = undefined}) => {
   const dispatch = useDispatch();
   const visibility = useSelector(state => state.hideShow.visibility.callRequestModal);
-  const token = useSelector(state => state.auth.user.token);
+  const {token, currentUserId} = useSelector(state => state.auth.user);
 
   const [acceptCallRequest] = useAcceptCallRequestMutation();
+
+  const [declineCallRequest] = useDeclineCallRequestMutation();
+
+  const [loading, setLoading] = useState(false);
 
   const handleClose = () => dispatch(toggleCallRequestModal({show: false}));
 
   const handleAcceptCallRequest = async () => {
+    setLoading(true);
+    console.log(doRaisedRequest?.initiator, String(doRaisedRequest?.type).toLowerCase());
+    AppLog('CALL', 'User clicked Accept on call request modal', { roomId, initiator: doRaisedRequest?.initiator, type: doRaisedRequest?.type });
+    
     const {data, error} = await acceptCallRequest({
       token,
       data: {
         roomId,
-        userId: callTriesData?.initiator,
-        callType: String(callTriesData?.type).toLowerCase(),
+        userId: doRaisedRequest?.initiator,
+        callType: String(doRaisedRequest?.type).toLowerCase(),
+        callerId: currentUserId,
       },
     });
 
-    if (data) {
-      navigate('callScreen', {roomId, name, profileImageUrl});
+    console.log(data, 'CALLREQUESTx');
+
+    if (data?.data) {
+      AppLog('CALL', 'Call request accepted successfully via API', { roomId, data: data?.data });
+      setLoading(false);
+      dispatch(setCallRejected(false));
+      dispatch(toggleCallAccepted({status: false}));
+      const resolvedCallType = String(doRaisedRequest?.type).toLowerCase();
+      navigate(resolvedCallType === 'video' ? 'videoCallScreen' : 'callScreen', {roomId, name, profileImageUrl, callerId: currentUserId, targetUserId, callType: resolvedCallType});
+    } else {
+      handleClose();
+      LoginPageErrors('User not available for call.');
     }
 
     if (error) {
+      setLoading(false);
+      handleClose();
       LoginPageErrors(error?.data?.message);
-      setTimeout(() => {
-        handleClose();
-      }, 1000);
     }
+    handleClose();
+  };
+
+  const handleDeclineRequest = async () => {
+    setLoading(true);
+    console.log(doRaisedRequest?.initiator, String(doRaisedRequest?.type).toLowerCase());
+
+    const {data, error} = await declineCallRequest({
+      token,
+      data: {
+        roomId,
+        userId: doRaisedRequest?.initiator,
+        callType: String(doRaisedRequest?.type).toLowerCase(),
+        callerId: currentUserId,
+      },
+    });
+
+    if (error) {
+      console.log('error', error);
+    }
+
+    if (data) {
+      console.log('data', data);
+    }
+
+    handleClose();
   };
 
   return (
@@ -55,21 +101,26 @@ const CallRequestModal = ({roomId, callTriesData, name, profileImageUrl}) => {
 
             <View style={styles.textSection}>
               <Text style={styles.title}>Call Request</Text>
-              <Text style={styles.subtitle}>Now ({callTriesData?.callTries}/3)</Text>
+              <Text style={styles.subtitle}>Now ({doRaisedRequest?.callTries}/3)</Text>
             </View>
 
             <View style={styles.buttonGroup}>
-              <TouchableOpacity style={styles.acceptBtn} onPress={handleAcceptCallRequest}>
-                <Text style={styles.btnText}>Accept</Text>
+              <TouchableOpacity style={[styles.acceptBtn, {alignItems: 'center', justifyContent: 'center', opacity: loading ? 0.8 : 1}]} onPress={handleAcceptCallRequest} disabled={loading}>
+                <View style={{width: 60, alignItems: 'center'}}>{loading ? <ActivityIndicator size="small" color="#1e1e1e" /> : <Text style={styles.btnText}>call</Text>}</View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.denyBtn} onPress={handleClose}>
+
+              <TouchableOpacity style={styles.denyBtn} onPress={handleDeclineRequest}>
                 <Text style={styles.btnText}>Deny</Text>
               </TouchableOpacity>
             </View>
           </View>
           <View style={{width: '100%', height: WIDTH_SIZES['1.5'], backgroundColor: '#1e1e1e', marginTop: 8}} />
           <View style={styles.bottomRow}>
-            <Text style={styles.availabilityText}>{`Request Availability : ${dayjs(callTriesData?.availability).format('D MMMM YYYY, h:mmA')}`}</Text>
+            <Text style={styles.availabilityText}>
+              <Text style={{fontFamily: 'Rubik-Regular', fontSize: FONT_SIZES['12'], color: '#1e1e1e'}}>
+                Available for {doRaisedRequest?.type?.toLowerCase()} call on {dayjs(doRaisedRequest?.availability).format('D MMM [at] h:mm A')}
+              </Text>
+            </Text>
           </View>
         </Dialog>
       </View>

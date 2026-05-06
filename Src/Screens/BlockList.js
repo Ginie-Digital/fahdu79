@@ -1,13 +1,13 @@
-import {StyleSheet, Text, View, Image, TouchableOpacity, FlatList, Pressable, Button, Platform} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
-import {useLazyGetBlockListQuery, useLazyGetFSDQuery, useLazyGetFSQuery, useLazyIsValidFollowQuery, useUnblockUserMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList, Pressable, Button, Platform } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
+import { useLazyGetBlockListQuery, useLazyGetFSDQuery, useLazyGetFSQuery, useLazyIsValidFollowQuery, useUnblockUserMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import LinearGradient from 'react-native-linear-gradient';
 import DIcon from '../../DesiginData/DIcons';
-import {LoginPageErrors, chatRoomSuccess} from '../Components/ErrorSnacks';
-import {WIDTH_SIZES} from '../../DesiginData/Utility';
+import { LoginPageErrors, chatRoomSuccess } from '../Components/ErrorSnacks';
+import { WIDTH_SIZES } from '../../DesiginData/Utility';
 
-const BlockList = ({route, navigation}) => {
+const BlockList = ({ route, navigation }) => {
   const [isValidFollow] = useLazyIsValidFollowQuery();
 
   const [blockListArr, setBlockListArr] = useState([]);
@@ -19,7 +19,7 @@ const BlockList = ({route, navigation}) => {
   const [unblockUser] = useUnblockUserMutation();
 
   const handleUnblock = async id => {
-    const {error, data} = await unblockUser({token: route?.params?.token, data: {id}});
+    const { error, data } = await unblockUser({ token: route?.params?.token, data: { id } });
 
     if (error) {
       if (error?.status === 'FETCH_ERROR') {
@@ -38,21 +38,21 @@ const BlockList = ({route, navigation}) => {
       console.log('Callijg', userId, userName);
 
       if (unblockId.includes(userId)) {
-        navigation.navigate('othersProfile', {userName, userId});
+        navigation.navigate('othersProfile', { userName, userId });
       }
     },
     [unblockId],
   );
 
-  const EachList = ({item}) => {
+  const EachList = ({ item }) => {
     return (
       <>
-        <Pressable style={styles.eachListContainer} android_ripple={{color: 'white'}} onPress={() => handleGoToOthersProfile(item?.displayName, item?._id)}>
-          <View style={{flexDirection: 'row', gap: responsiveWidth(2)}}>
+        <Pressable style={styles.eachListContainer} android_ripple={{ color: 'white' }} onPress={() => handleGoToOthersProfile(item?.displayName, item?._id)}>
+          <View style={{ flexDirection: 'row', gap: responsiveWidth(2) }}>
             <View style={styles.imageContainer}>
-              <Image source={{uri: item?.profile_image?.url}} resizeMethod="resize" resizeMode="cover" style={styles.profileImage} />
+              <Image source={{ uri: item?.profile_image?.url }} resizeMethod="resize" resizeMode="cover" style={styles.profileImage} />
               {item?.role === 'creator' ? (
-                <View style={{position: 'absolute', transform: [{translateX: responsiveWidth(8.4)}, {translateY: responsiveWidth(-5)}]}}>
+                <View style={{ position: 'absolute', transform: [{ translateX: responsiveWidth(8.4) }, { translateY: responsiveWidth(-5) }] }}>
                   <DIcon provider={'MaterialIcons'} name={'verified'} color="#FFA07A" size={responsiveWidth(4.5)} />
                 </View>
               ) : null}
@@ -65,7 +65,7 @@ const BlockList = ({route, navigation}) => {
           </View>
 
           {!unblockId?.includes(item?._id) && (
-            <Pressable onPress={() => handleUnblock(item?._id)} style={({pressed}) => [styles.unblockWrapper, {backgroundColor: pressed ? '#FFC399' : '#FFA86B'}]}>
+            <Pressable onPress={() => handleUnblock(item?._id)} style={({ pressed }) => [styles.unblockWrapper, { backgroundColor: pressed ? '#FFC399' : '#FFA86B' }]}>
               <Text style={styles.unbockText}>Unblock</Text>
             </Pressable>
           )}
@@ -78,7 +78,7 @@ const BlockList = ({route, navigation}) => {
 
   useEffect(() => {
     const blockLists = async () => {
-      const {data, error} = await getBlockList({token: route?.params?.token});
+      const { data, error } = await getBlockList({ token: route?.params?.token });
 
       if (error) {
         if (error?.status === 'FETCH_ERROR') {
@@ -97,7 +97,7 @@ const BlockList = ({route, navigation}) => {
 
   if (blockListArr?.length <= 0) {
     return (
-      <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <Text style={styles.userName}>No Blocked User Found</Text>
       </View>
     );
@@ -108,11 +108,11 @@ const BlockList = ({route, navigation}) => {
       <FlatList
         data={blockListArr}
         ItemSeparatorComponent={() => (
-          <LinearGradient colors={['#FFFDF650', '#43423D50', '#FFFDF650']} start={{x: 0, y: 0}} end={{x: 1, y: 0}} style={styles.linearGradient}>
-            <View style={{height: 1}} />
+          <LinearGradient colors={['#FFFDF650', '#43423D50', '#FFFDF650']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.linearGradient}>
+            <View style={{ height: 1 }} />
           </LinearGradient>
         )}
-        renderItem={({item, index}) => <EachList item={item} index={index} />}
+        renderItem={({ item, index }) => <EachList item={item} index={index} />}
       />
     </View>
   );

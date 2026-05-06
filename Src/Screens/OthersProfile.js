@@ -16,13 +16,13 @@ import PostCards from "../Components/HomeComponents/PostCards";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import CreatePostBottomSheet from "../Components/HomeComponents/CreatePostBottomSheet";
 import WishList from "../Components/MyProfile/WishList";
-import { toggleCreatePostBottomSheet, toggleHomeBottomSheet, toggleWishListSheet } from "../../Redux/Slices/NormalSlices/HideShowSlice";
+import { toggleCreatePostBottomSheet, toggleHomeBottomSheet, toggleRefreshOtherProfile, toggleWishListSheet } from "../../Redux/Slices/NormalSlices/HideShowSlice";
 import WishListCard from "../Components/MyProfile/WishListCard";
 import MessageSubButton from "../Components/MyProfile/MessageSubButton";
 import { configureStore } from "@reduxjs/toolkit";
 import ProfileActionModal from "../Components/MyProfile/ProfileActionModal";
 import AreYouSure from "../Components/AreYouSure";
-import WishListDonateSheet from "../Components/MyProfile/WishListDonateSheet";
+import UnSubscribeModal from "../Components/MyProfile/UnSubscribeModal";
 
 const OthersProfile = ({ route }) => {
 
@@ -62,6 +62,9 @@ const OthersProfile = ({ route }) => {
 
   const [subscribed, setSubscribed] = useState(false);
 
+  const [unsubscribeModalVisible, setUnsubscribeModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
   const token = useSelector(state => state.auth.user.token);
 
   const navigation = useNavigation();
@@ -69,6 +72,8 @@ const OthersProfile = ({ route }) => {
   const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(true);
+
+  const refreshOtherProfile = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
 
   useFocusEffect(
     useCallback(() => {
@@ -125,7 +130,7 @@ const OthersProfile = ({ route }) => {
       }
 
       wishListCall();
-    }, [isFollowing])
+    }, [isFollowing, refreshOtherProfile])
   );
 
   //Just to remove homeBottomSheet
@@ -136,6 +141,45 @@ const OthersProfile = ({ route }) => {
       dispatch(toggleWishListSheet({ show: -1 }));
     }, [])
   );
+
+  const [getCashfreeSub] = useLazyGetCashfreeSubscriptionQuery();
+  const [isFetchingSubscription, setIsFetchingSubscription] = useState(false);
+
+  const handleUnsubscribePress = useCallback(async () => {
+    const creatorId = userProfileDetails?._id;
+    if (!creatorId) return;
+
+    setIsFetchingSubscription(true);
+    try {
+      await getCashfreeSub({ token, creatorId }).unwrap();
+      setSelectedItem({
+        userDetails: userProfileDetails,
+        creatorId: userProfileDetails?._id,
+        creatorName: userProfileDetails?.displayName,
+      });
+      dispatch(toggleProfileAction());
+      setTimeout(() => {
+        setUnsubscribeModalVisible(true);
+      }, 300);
+    } catch (error) {
+      console.error('Error prefetching subscription details:', error);
+      setSelectedItem({
+        userDetails: userProfileDetails,
+        creatorId: userProfileDetails?._id,
+        creatorName: userProfileDetails?.displayName,
+      });
+      dispatch(toggleProfileAction());
+      setTimeout(() => {
+        setUnsubscribeModalVisible(true);
+      }, 300);
+    } finally {
+      setIsFetchingSubscription(false);
+    }
+  }, [userProfileDetails, token]);
+
+  const onUnsubscribePress = () => {
+    handleUnsubscribePress();
+  };
 
   const GridPostComponent = useCallback(({ item }) => {
     return item?.post_content_files?.[0]?.format === "image" ? (
@@ -264,9 +308,28 @@ const OthersProfile = ({ route }) => {
               showsVerticalScrollIndicator={false}
             />
           )}
-          <WishListDonateSheet donateData={donateData} />
           <CreatePostBottomSheet />
-          <ProfileActionModal setIsFollowing={setIsFollowing} isFollowing={isFollowing} token={token} userName={route?.params?.userName} setSubscribed={setSubscribed} />
+          <ProfileActionModal 
+            setIsFollowing={setIsFollowing} 
+            isFollowing={isFollowing} 
+            token={token} 
+            userName={route?.params?.userName} 
+            setSubscribed={setSubscribed} 
+            onUnsubscribePress={handleUnsubscribePress}
+            subscribed={subscribed}
+            isFetchingSubscription={isFetchingSubscription}
+          />
+
+          <UnSubscribeModal
+            visible={unsubscribeModalVisible}
+            onClose={() => setUnsubscribeModalVisible(false)}
+            item={selectedItem}
+            onSuccess={() => {
+              dispatch(toggleRefreshOtherProfile());
+              setSubscribed(false);
+              setUnsubscribeModalVisible(false);
+            }}
+          />
         </GestureHandlerRootView>
       );
     }

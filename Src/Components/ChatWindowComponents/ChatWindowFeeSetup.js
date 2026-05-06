@@ -1,11 +1,11 @@
 import React, {useRef, useMemo, useCallback, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Platform, TextInput, ScrollView, KeyboardAvoidingView} from 'react-native';
-import {BottomSheetModal, BottomSheetBackdrop} from '@gorhom/bottom-sheet';
-import {responsiveFontSize, responsiveWidth, responsiveHeight} from 'react-native-responsive-dimensions';
+import {View, Text, StyleSheet, Platform} from 'react-native';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput} from '@gorhom/bottom-sheet';
+import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import AnimatedButton from '../AnimatedButton';
-import {useUpdateFeeSetupChatWindowMutation, useUpdateFeeSetupMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useUpdateFeeSetupChatWindowMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
 import {chatRoomSuccess, LoginPageErrors} from '../ErrorSnacks';
 import {toggleChatWindowFeeSetup} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
@@ -17,28 +17,21 @@ const ChatWindowFeeSetup = () => {
   const [amount, setAmount] = useState('');
   const [amountError, setAmountError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [contentHeight, setContentHeight] = useState(0);
 
   const token = useSelector(state => state.auth.user.token);
   const dispatch = useDispatch();
 
   // Refs
   const bottomSheetRef = useRef(null);
-  const contentRef = useRef(null);
 
   // API
   const [updateFeeSetupChatWindow] = useUpdateFeeSetupChatWindowMutation();
 
-  // Calculate dynamic snap points based on content height
-  const snapPoints = useMemo(() => {
-    const baseHeight = Math.min(Math.max(contentHeight, responsiveHeight(25)), responsiveHeight(70));
-    return [baseHeight];
-  }, [contentHeight]);
+  // Fixed snap points — no dynamic measurement needed
+  const snapPoints = useMemo(() => ['50%'], []);
 
   // Callbacks
   const handleSheetChanges = useCallback(index => {
-    console.log('Sheet position changed:', index);
-
     if (index === -1) {
       dispatch(toggleChatWindowFeeSetup({show: false}));
     }
@@ -51,17 +44,9 @@ const ChatWindowFeeSetup = () => {
     if (visible) {
       bottomSheetRef.current?.present();
     } else {
-      console.log('VISIBIOKL Ofdf');
-
       bottomSheetRef.current?.dismiss();
     }
   }, [visible]);
-
-  // Measure content height
-  const handleContentLayout = event => {
-    const {height} = event.nativeEvent.layout;
-    setContentHeight(height + 50); // Add some padding
-  };
 
   // Handle Amount Change
   const handleAmount = t => {
@@ -96,7 +81,7 @@ const ChatWindowFeeSetup = () => {
         LoginPageErrors('Please check your network');
       }
 
-      if (error?.data?.status_code === 401) {
+      if (error?.data?.status_code === 2044) {
         autoLogout();
       }
 
@@ -117,37 +102,61 @@ const ChatWindowFeeSetup = () => {
   const subscriberFee = amount ? Math.floor(parseInt(amount, 10) / 2) : 0;
 
   return (
-    <BottomSheetModal ref={bottomSheetRef} index={0} snapPoints={snapPoints} onChange={handleSheetChanges} backdropComponent={renderBackdrop} enablePanDownToClose={true} backgroundStyle={styles.background} handleIndicatorStyle={styles.handleIndicator}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingView}>
-        <ScrollView ref={contentRef} contentContainerStyle={styles.contentContainer} onLayout={handleContentLayout} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={styles.heading}>Set Chat Fee</Text>
-            <Text style={styles.subText}>Create your custom automated message</Text>
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={visible ? 0 : -1}
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      backdropComponent={renderBackdrop}
+      enablePanDownToClose={true}
+      enableDynamicSizing={false}
+      backgroundStyle={styles.background}
+      handleIndicatorStyle={styles.handleIndicator}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
+    >
+      <BottomSheetScrollView
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.heading}>Set Chat Fee</Text>
+          <Text style={styles.subText}>Create your custom automated message</Text>
+        </View>
+
+        <View style={styles.amountInput}>
+          <View style={styles.titleback}>
+            <Text style={styles.titleSetPrice}>Set Price</Text>
           </View>
-
-          <View style={styles.amountInput}>
-            <View style={styles.titleback}>
-              <Text style={styles.titleSetPrice}>Set Price</Text>
-            </View>
-            <View style={styles.inputContainer}>
-              <TextInput maxLength={6} keyboardType="number-pad" style={styles.amountStyle} value={amount} onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))} placeholder="0" placeholderTextColor="#888" />
-              <Paisa width={20} height={20} />
-            </View>
+          <View style={styles.inputContainer}>
+            <BottomSheetTextInput
+              maxLength={6}
+              keyboardType="number-pad"
+              style={styles.amountStyle}
+              value={amount}
+              onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))}
+              placeholder="0"
+              placeholderTextColor="#888"
+            />
+            <Paisa width={20} height={20} />
           </View>
+        </View>
 
-          {amountError ? <Text style={styles.errorText}>*{amountError}</Text> : <Text style={styles.infoText}>*Chat/Message</Text>}
+        {amountError ? <Text style={styles.errorText}>*{amountError}</Text> : <Text style={styles.infoText}>*Chat/Message</Text>}
 
-          <View style={styles.subscriberContainer}>
-            <Text style={styles.subscriberText}>Subscriber Fee</Text>
-            <View style={styles.rightSection}>
-              <Text style={styles.subscriberAmount}>{subscriberFee}</Text>
-              <Paisa width={20} height={20} />
-            </View>
+        <View style={styles.subscriberContainer}>
+          <Text style={styles.subscriberText}>Subscriber Fee</Text>
+          <View style={styles.rightSection}>
+            <Text style={styles.subscriberAmount}>{subscriberFee}</Text>
+            <Paisa width={20} height={20} />
           </View>
+        </View>
 
-          <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 };
@@ -168,12 +177,9 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   contentContainer: {
     paddingHorizontal: WIDTH_SIZES[32],
-    paddingBottom: 30,
+    paddingBottom: 40,
     paddingTop: 20,
   },
   header: {

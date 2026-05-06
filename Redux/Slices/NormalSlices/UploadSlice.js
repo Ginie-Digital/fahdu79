@@ -18,17 +18,17 @@ const uploadSlice = createSlice({
       state.processing = true;
       state.isModalVisible = true;
       state.postIndex = undefined;
-      // state.previewUrl = action.payload.previewUrl;
+      state.previewUrl = action.payload.previewUrl;
       // state.progress = 0;
     },
 
     startUpload: (state, action) => {
-      console.log('uiui', {imagtePayLoad: action.payload.previewUrl});
       state.isUploading = true;
       state.processing = false;
       state.isModalVisible = true;
 
-      state.previewUrl = action.payload.previewUrl;
+      // previewUrl is already set by startProcessing — don't overwrite it
+      // to avoid thumbnail flickering during multi-image uploads
 
       if (Platform.OS === 'ios') {
         const iosProgress = [40, 68, 77];
@@ -53,10 +53,9 @@ const uploadSlice = createSlice({
       state.postIndex = action.payload;
     },
 
-
-    resetPostIndex : (state, action) => {
+    resetPostIndex: (state, action) => {
       state.postIndex = undefined;
-      state.isModalVisible = false
+      state.isModalVisible = false;
     },
 
     resetUploadProgress: state => {

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, Dimensions, Platform, Modal} from 'react-native';
+import {View, Text, StyleSheet, Dimensions, Platform} from 'react-native';
 import {BlurView} from 'expo-blur';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {WIDTH_SIZES} from '../DesiginData/Utility';
@@ -29,47 +29,45 @@ const AlertBox = () => {
     };
   }, [show]);
 
+  if (!show) return null;
+
   return (
-    show && (
-      <Modal transparent animationType={'fade'} style={styles.absoluteContainer}>
-        {/* Blur behind entire alert */}
+    <View style={styles.absoluteContainer} pointerEvents="box-none">
+      {/* Blur behind entire alert - non-interactive */}
+      <View pointerEvents="none">
         <BlurView intensity={20} style={styles.blurContainer} />
+      </View>
 
-        {/* White box with border on top */}
-        <View style={styles.boxContainer}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: type ? '#A4FFB8' : '#FF8080',
-                borderColor: '#1e1e1e',
-              },
-            ]}>
-            <Icon name={type ? 'checkmark' : 'close'} size={20} color={'#1e1e1e'} />
-          </View>
-
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>{type === true ? 'Success' : 'Error'}</Text>
-            <Text style={styles.message}>{message}</Text>
-          </View>
+      {/* White box with border on top - non-interactive */}
+      <View style={styles.boxContainer} pointerEvents="none">
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              backgroundColor: type ? '#A4FFB8' : '#FF8080',
+              borderColor: '#1e1e1e',
+            },
+          ]}>
+          <Icon name={type ? 'checkmark' : 'close'} size={20} color={'#1e1e1e'} />
         </View>
-      </Modal>
-    )
+
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{type === true ? 'Success' : 'Error'}</Text>
+          <Text style={styles.message}>{message}</Text>
+        </View>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   absoluteContainer: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? -20 : 0,
-    // left: (width - 373) / 2,
-    alignSelf: 'center',
-    width: '100%',
-    // height: 72,
-    overflow: 'hidden',
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 9999,
-    // paddingHorizontal : 10
-    // backgroundColor : 'red'
+    elevation: 9999,
   },
   blurContainer: {
     // ...StyleSheet.absoluteFillObject,

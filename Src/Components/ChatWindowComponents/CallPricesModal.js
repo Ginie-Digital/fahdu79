@@ -2,7 +2,7 @@ import {StyleSheet, Text, View, TouchableOpacity, Image, Platform, Pressable} fr
 import React, {useEffect, useState} from 'react';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useSelector, useDispatch} from 'react-redux';
-import {toggleCallMethodSelector, toggleCallPriceModal, toggleChatWindowInformationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {toggleCallMethodSelector, toggleCallPriceModal, toggleChatWindowInformationModal, toggleTimeRequestModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import Modal from 'react-native-modal';
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import DIcon from '../../../DesiginData/DIcons';
@@ -22,8 +22,6 @@ const CallPricesModal = ({userId, roomId}) => {
 
   const token = useSelector(state => state.auth.user.token);
 
-  const [callRequest] = useCallRequestMutation();
-
   const {show: modalVisibility, type} = useSelector(state => state.hideShow.visibility.callPriceModal);
 
   const [othersCallingFeeDetail] = useLazyOthersCallingFeeDetailQuery();
@@ -32,39 +30,9 @@ const CallPricesModal = ({userId, roomId}) => {
 
   const [fee, setFee] = useState({});
 
-  const [loading, setLoading] = useState(false);
-
   const handleCallRequest = async type => {
-    setLoading(true);
-
-    const {data, error} = await callRequest({token, data: {roomId, type, availability : '2025-06-25T20:30:00Z'}});
-
-    console.log(data, error, )
-    if (data?.data === true) {
-      chatRoomSuccess('Call request sent!');
-
-      // navigate('callScreen', {roomId});
-      dispatcher(toggleCallPriceModal({show: false, type: 'audio'}));
-
-      console.log(data);
-    }
-
-    if (error) {
-      ChatWindowError(error?.data?.message);
-
-      dispatcher(toggleCallPriceModal({show: false, type: 'audio'}));
-
-      console.log(error);
-    }
-
-    setTimeout(() => {
-      dispatcher(toggleCallMethodSelector({show: false}));
-    }, 1000)
-
-    setLoading(false);
-
-    // setVisible(false)
-    // navigate('callScreen', {roomId});
+    dispatcher(toggleCallPriceModal({show: false, type}));
+    navigate('SelectDuration', { callType: type === 'audio' ? 'Audio' : 'Video', userId, roomId });
   };
 
   useEffect(() => {
@@ -84,17 +52,15 @@ const CallPricesModal = ({userId, roomId}) => {
     }
 
     getFeeDeatil(userId);
-
-
   }, [modalVisibility, userId]);
 
   return (
     <Modal isVisible={modalVisibility} animationIn={'slideInUp'} animationOut={'slideOutDown'} onBackdropPress={() => dispatcher(toggleCallPriceModal({show: false, type: 'audio'}))} style={styles.modalStyle}>
       <View style={styles.modalContent}>
-        <Text style={styles.headingTitleTow}>Do you want to send audio {type === 'audio' ? 'Audio' : 'Video'} call request?</Text>
+        <Text style={styles.headingTitleTow}>Do You want to send {type === 'audio' ? 'Audio' : 'Video'} Call request?</Text>
 
         {/* Fee Details Section */}
-        {type === 'audio' && (
+        {type === 'video' && (
           <View style={{position: 'relative'}}>
             <View style={[styles.overlayTwo, {width: detailsLayout.width, height: detailsLayout.height}]} />
             <View style={styles.detailsContainer} onLayout={event => setDetailsLayout(event.nativeEvent.layout)}>
@@ -118,7 +84,7 @@ const CallPricesModal = ({userId, roomId}) => {
         )}
 
         {/* Fee Details Section */}
-        {type === 'video' && (
+        {type === 'audio' && (
           <View style={{position: 'relative'}}>
             {/* <View style={[styles.overlayTwo, {width: detailsLayout.width, height: detailsLayout.height}]} /> */}
             <View style={styles.detailsContainer} onLayout={event => setDetailsLayout(event.nativeEvent.layout)}>
@@ -147,7 +113,7 @@ const CallPricesModal = ({userId, roomId}) => {
           </View>
 
           <View style={{flexBasis: '48%'}}>
-            <AnimatedButton showOverlay={false} title={'Yes'} onPress={() => handleCallRequest(type === 'audio' ? 'Audio' : 'Video')} loading={loading} disabled={loading} />
+            <AnimatedButton showOverlay={false} title={'Yes'} onPress={() => handleCallRequest(type === 'audio' ? 'Audio' : 'Video')} />
           </View>
         </View>
       </View>
@@ -168,6 +134,7 @@ const styles = StyleSheet.create({
     borderColor: '#282828',
     padding: 20,
     paddingBottom: 30,
+    borderBottomWidth: 0,
   },
   walletSection: {
     flexDirection: 'row',

@@ -1,13 +1,9 @@
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Platform,
-  View,
-} from 'react-native';
+import {ActivityIndicator, Alert, StyleSheet, Platform, View} from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
+import NetInfo from "@react-native-community/netinfo";
+import NoInternet from './Src/Components/NoInternet';
 
-import './service/CallKeepService';
+
 import {NavigationContainer} from '@react-navigation/native';
 import {Provider} from 'react-redux';
 import store from './Redux/Store';
@@ -23,13 +19,30 @@ import {checkForUpdate, UpdateFlow} from 'react-native-in-app-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import DeviceInfo from 'react-native-device-info';
-// import {MMKV} from 'react-native-mmkv';
+import {createMMKV} from 'react-native-mmkv';
+import BootSplash from 'react-native-bootsplash';
 
 const persistor = persistStore(store);
 
-// const storage = new MMKV();
+const storage = createMMKV();
 
 const App = () => {
+  const [isConnected, setIsConnected] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isConnected === false) {
+        setIsConnected(false);
+      } else {
+        setIsConnected(true);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const LoadingComponent = useCallback(() => {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
@@ -43,8 +56,6 @@ const App = () => {
       try {
         let x = await checkForUpdate(UpdateFlow.FLEXIBLE);
         console.log(x, '::::');
-
-        storage.clearAll();
         // Alert.alert(String(x));
       } catch (e) {
         // Handle error
@@ -72,7 +83,7 @@ const App = () => {
 
   useEffect(() => {
     getData();
-    // clearRNCacheOnUpdate();
+    clearRNCacheOnUpdate();
   }, []);
 
   return (
@@ -81,11 +92,16 @@ const App = () => {
         <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
             <SafeAreaProvider>
-              <NavigationContainer
-                ref={navigationRef}
-                fallback={<LoadingComponent />}>
+              <NavigationContainer 
+                ref={navigationRef} 
+                fallback={<LoadingComponent />}
+                onReady={() => {
+                  BootSplash.hide({ fade: true });
+                }}
+              >
                 <Main />
               </NavigationContainer>
+              {!isConnected && <NoInternet />}
             </SafeAreaProvider>
           </BottomSheetModalProvider>
         </GestureHandlerRootView>

@@ -9,16 +9,15 @@ import OthersProfileActionSheet from '../Components/NewOtherProfileComponents/Ot
 import OtherProfileFeedPost from '../Components/NewOtherProfileComponents/OtherProfileFeedPost';
 import OtherGridFeedPostComponent from '../Components/NewOtherProfileComponents/OtherGridFeedPostComponent';
 import OtherWishListPostComponent from '../Components/NewOtherProfileComponents/OtherWishListPostComponent';
-import WishListDonateSheet from '../Components/MyProfile/WishListDonateSheet';
-import {toggleOtherProfileActionSheet} from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import PostTipModal from '../Components/HomeComponents/PostTipModal';
+import {toggleOtherProfileActionSheet, toggleOtherProfileActionModal, toggleRefreshOtherProfile} from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import PostActionBottomSheet from '../Components/HomeComponents/PostActionBottomSheet';
 import CreateCommentBottomSheet from '../Components/HomeComponents/CreateCommentBottomSheet';
 import OtherProfileRatingSheet from '../Components/NewOtherProfileComponents/OtherProfileRatingSheet';
+import UnSubscribeModal from '../Components/MyProfile/UnSubscribeModal';
 import Loader from '../Components/Loader';
-import {useLazyContactInfoQuery, useLazyOtherPostListQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useLazyContactInfoQuery, useLazyOtherPostListQuery, useLazyGetCashfreeSubscriptionQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {token as memoizedToken} from '../../Redux/Slices/NormalSlices/AuthSlice';
-import {setFeedCachePost} from '../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
+import {setFeedCachePost, manipulateTotalPagesPost, manipulateCurrentPagePost} from '../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 
 import FAbout from '../../Assets/Images/ProfileTab/fabout.svg';
 import UFAbout from '../../Assets/Images/ProfileTab/ufabout.svg';
@@ -63,7 +62,12 @@ const OtherProfileNew = ({route}) => {
 
   const {stateOne, stateTwo, stateThree} = useSelector(state => state.hideShow.visibility.otherProfileLoader);
   const {haveSubscribed, haveFollowed} = useSelector(state => state.profileFeedCache.data);
+  const [unsubscribeModalVisible, setUnsubscribeModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   const dispatch = useDispatch();
+
+  const [getCashfreeSub] = useLazyGetCashfreeSubscriptionQuery();
+  const [isFetchingSubscription, setIsFetchingSubscription] = useState(false);
 
   useEffect(() => {
     dispatch(toggleOtherProfileActionSheet({info: {show: -1}}));
@@ -79,6 +83,8 @@ const OtherProfileNew = ({route}) => {
 
   const token = useSelector(state => state.auth.user.token);
   const [otherPostList] = useLazyOtherPostListQuery();
+
+  const refreshOtherProfile = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
 
   useEffect(() => {
     console.log('Called get profile');
@@ -100,6 +106,14 @@ const OtherProfileNew = ({route}) => {
 
             let combinedPinnedUnPinnedPosts = [...pinnedPost, ...postData?.data?.posts];
             dispatch(setFeedCachePost({data: combinedPinnedUnPinnedPosts}));
+
+            if (postData?.data?.metadata?.[0]) {
+              const meta = postData.data.metadata[0];
+              const totalPages = Math.ceil(meta.total / meta.limit);
+              console.log('Dispatching Total Pages:', totalPages);
+              dispatch(manipulateTotalPagesPost({currentTotalPage: totalPages}));
+              dispatch(manipulateCurrentPagePost({currentPage: 1}));
+            }
           }
         } catch (error) {
           console.error('Error fetching posts:', error);
@@ -118,7 +132,7 @@ const OtherProfileNew = ({route}) => {
         setPostsLoaded(true);
       }, 500);
     }
-  }, [route?.params?.userName, haveSubscribed, haveFollowed]);
+  }, [route?.params?.userName, haveSubscribed, haveFollowed, refreshOtherProfile]);
 
   const [contactInfo] = useLazyContactInfoQuery();
 
@@ -149,6 +163,46 @@ const OtherProfileNew = ({route}) => {
   useEffect(() => {
     fetchContactInfo(token, route?.params?.userId);
   }, [token, route?.params?.userId]);
+
+  const handleUnsubscribePress = useCallback(async () => {
+    const creatorId = route?.params?.userId;
+    if (!creatorId) return;
+
+    setIsFetchingSubscription(true);
+    try {
+      await getCashfreeSub({ token, creatorId }).unwrap();
+      setSelectedItem({
+        userDetails: {
+          _id: route?.params?.userId,
+          displayName: route?.params?.userName,
+          role: route?.params?.role,
+        },
+        creatorId: route?.params?.userId,
+        creatorName: route?.params?.userName,
+      });
+      dispatch(toggleOtherProfileActionModal({show: false}));
+      setTimeout(() => {
+        setUnsubscribeModalVisible(true);
+      }, 300);
+    } catch (error) {
+      console.error('Error prefetching subscription details:', error);
+      setSelectedItem({
+        userDetails: {
+          _id: route?.params?.userId,
+          displayName: route?.params?.userName,
+          role: route?.params?.role,
+        },
+        creatorId: route?.params?.userId,
+        creatorName: route?.params?.userName,
+      });
+      dispatch(toggleOtherProfileActionModal({show: false}));
+      setTimeout(() => {
+        setUnsubscribeModalVisible(true);
+      }, 300);
+    } finally {
+      setIsFetchingSubscription(false);
+    }
+  }, [route?.params, token]);
 
   // Check if all data is loaded
   useEffect(() => {
@@ -186,11 +240,11 @@ const OtherProfileNew = ({route}) => {
             renderTabBar={props => <MaterialTabBar {...props} indicatorStyle={{backgroundColor: '#1E1E1E', height: responsiveWidth(0.4)}} />}
             onTabChange={({tabName}) => setCurrentTab(tabName)}>
             <Tabs.Tab name="profile" label={({name}) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
-              <OtherProfileFeedPost contactDescription={contactDescription} /> 
+              <OtherProfileFeedPost contactDescription={contactDescription} />
             </Tabs.Tab>
 
             <Tabs.Tab name="post" label={({name}) => (currentTab === name ? <FPost size={20} /> : <UFPost />)}>
-              <OtherGridFeedPostComponent />
+            <OtherGridFeedPostComponent toCallApiInfo={route?.params} />
             </Tabs.Tab>
 
             <Tabs.Tab name="wishlist" label={({name}) => (currentTab === name ? <FWishlist size={20} /> : <UFWishlist />)}>
@@ -215,9 +269,21 @@ const OtherProfileNew = ({route}) => {
         )}
       </View>
 
-      <WishListDonateSheet />
-      <OthersProfileActionSheet toCallApiInfo={route?.params} />
-      <PostTipModal />
+      <OthersProfileActionSheet 
+        toCallApiInfo={route?.params} 
+        onUnsubscribePress={handleUnsubscribePress}
+        isFetchingSubscription={isFetchingSubscription}
+      />
+      <UnSubscribeModal
+        visible={unsubscribeModalVisible}
+        onClose={() => setUnsubscribeModalVisible(false)}
+        item={selectedItem}
+        onSuccess={() => {
+          // Handle success (could dispatch refresh if needed)
+          dispatch(toggleRefreshOtherProfile());
+          setUnsubscribeModalVisible(false);
+        }}
+      />
       <PostActionBottomSheet />
       <CreateCommentBottomSheet fromPage={'otherProfile'} />
       <OtherProfileRatingSheet />

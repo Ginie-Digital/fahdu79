@@ -23,28 +23,8 @@ const HeaderLeft = () => {
 
   const dispatcher = useDispatch();
 
-  const token = useSelector(state => state.auth.user.token);
+  const isOnline = useSelector(state => state.hideShow.visibility.onlineStatus);
 
-  const [isOnline, setIsOnline] = useState('offline');
-
-  const [onlineStatus] = useLazyOnlineStatusQuery();
-
-  console.log('::::::', senderBioDetail?.role, ':::::::::');
-
-  async function userStatusHandler() {
-    try {
-      const response = await onlineStatus({token, displayName: senderBioDetail?.name});
-
-      if (response.data?.statusCode === 200) {
-        setIsOnline(response.data?.data?.status);
-      }
-    } catch (error) {
-      console.error('Error fetching user status:', error);
-    }
-  }
-  useEffect(() => {
-    userStatusHandler();
-  }, []);
   const handleGoToOthersProfile = useCallback(() => {
     navigation.navigate('othersProfile', {
       userName: senderBioDetail?.name,
@@ -54,7 +34,7 @@ const HeaderLeft = () => {
   }, [senderBioDetail]);
 
   return (
-    <SafeAreaView>
+    <SafeAreaView edges={['top']}>
       <View style={[styles.headerWrapper]}>
         {/* Back Button */}
         {/* <DIcon provider={'Ionicons'} name={'chevron-back'} color={'#000'} size={responsiveWidth(6)} style={styles.backIcon}  /> */}
@@ -107,14 +87,14 @@ const HeaderLeft = () => {
                 width: 11,
                 height: 11,
                 borderRadius: responsiveWidth(20),
-                backgroundColor: isOnline === 'online' ? '#00E532' : '#FF4539',
+                backgroundColor: isOnline === true ? '#00E532' : '#FF4539',
                 borderColor: '#1e1e1e',
                 borderWidth: WIDTH_SIZES['1.5'],
                 marginRight: 6,
               }}
             />
 
-            <Text style={styles.profileCategory}>{String(isOnline).charAt(0).toUpperCase() + String(isOnline).slice(1)}</Text>
+            <Text style={styles.profileCategory}>{isOnline ? 'online' : 'offline'}</Text>
           </View>
         </View>
 
@@ -126,25 +106,17 @@ const HeaderLeft = () => {
               <Image source={require('../../../Assets/Images/coinSetting.png')} style={styles.iconImage} />
             </TouchableOpacity>
 
-            {senderBioDetail?.role === 'creator' && (
-              <TouchableOpacity onPress={() => dispatcher(toggleChatWindowInformationModal())}>
-                <Image source={require('../../../Assets/Images/upSideI.png')} style={styles.iconImage} />
-              </TouchableOpacity>
-            )}
-
             <TouchableOpacity onPress={() => dispatcher(toggleLabelModal({show: true}))}>
               <Image source={require('../../../Assets/Images/threeDotsNew.png')} style={styles.iconImage} />
             </TouchableOpacity>
           </View>
         )}
 
-        {currentUserRole === 'user' && (
+        {currentUserRole === 'user' && senderBioDetail?.role === 'creator' && (
           <View style={styles.newIconContainer}>
-            {senderBioDetail?.role !== 'admin' && (
-              <TouchableOpacity onPress={() => dispatcher(toggleChatWindowInformationModal())}>
-                <Image source={require('../../../Assets/Images/upSideI.png')} style={styles.iconImage} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity onPress={() => dispatcher(toggleChatWindowInformationModal())}>
+              <Image source={require('../../../Assets/Images/upSideI.png')} style={styles.iconImage} />
+            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -159,7 +131,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: nTwins(12, 10),
+    height: 48,
     paddingHorizontal: WIDTH_SIZES[24],
     backgroundColor: '#fff',
     width: '100%',

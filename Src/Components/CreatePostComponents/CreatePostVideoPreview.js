@@ -1,52 +1,47 @@
-import {StyleSheet, View} from 'react-native';
-import React, {useEffect} from 'react';
-import {useNavigation} from '@react-navigation/native';
-import {VideoView, useVideoPlayer} from 'expo-video';
+import { StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { useNavigation } from "@react-navigation/native";
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const CreatePostVideoPreview = ({route}) => {
+const CreatePostVideoPreview = ({ route }) => {
   const navigation = useNavigation();
+  const videoUri = route?.params?.videoUri || "https://fahdu.s3.ap-south-1.amazonaws.com/post/video-1679564683518.mp4";
 
-  const videoSource = route?.params?.videoUri
-    ? route?.params?.videoUri
-    : 'https://fahdu.s3.ap-south-1.amazonaws.com/post/video-1679564683518.mp4';
-
-  const player = useVideoPlayer(videoSource, player => {
-    player.loop = false;
+  const player = useVideoPlayer(videoUri, player => {
+    player.loop = true;
     player.play();
   });
 
-  // Handle cleanup when component unmounts
-  useEffect(() => {
-    return () => {
-      if (player) {
-        player.pause();
-      }
-    };
-  }, []);
-
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: 'black' }}>
       <VideoView
-        style={styles.video}
+        style={{
+          flex: 1,
+          width: "100%",
+        }}
         player={player}
         allowsFullscreen
         allowsPictureInPicture
-        nativeControls
-        contentFit="contain"
       />
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          top: 40,
+          left: 20,
+          padding: 10,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          borderRadius: 20,
+        }}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
 
 export default CreatePostVideoPreview;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  video: {
-    flex: 1,
-    width: '100%',
-  },
-});
+const styles = StyleSheet.create({});

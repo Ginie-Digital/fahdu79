@@ -7,12 +7,17 @@ import DIcon from '../../../DesiginData/DIcons';
 import ProfileDescriptionModal from '../../Screens/LoginSignup/ProfileDescriptionModal';
 import {toggleProfileDescriptionModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
+//
+//
+//
+//
+
 const FeedPostComponent = ({navigation}) => {
   const initialServiceData = [
     {
       id: '1',
       type: 'Video Call',
-      description: 'Do a face-to-face chat with your favourite creator',
+      description: 'Video-Connect face-to-face with creators in real-time!',
       icon: 'videocam',
       buttonText: 'Call Now',
       price: 2,
@@ -23,7 +28,7 @@ const FeedPostComponent = ({navigation}) => {
     {
       id: '2',
       type: 'Audio Call',
-      description: 'Do a face-to-face chat with your favourite creator',
+      description: 'Audio-Discuss your passions over phone calls.',
       icon: 'phone-call',
       buttonText: 'Call Now',
       price: 1,
@@ -34,7 +39,7 @@ const FeedPostComponent = ({navigation}) => {
     {
       id: '3',
       type: 'Chat',
-      description: 'Do a face-to-face chat with your favourite creator',
+      description: 'Chat-Spark insightful convos with creators',
       icon: 'message1',
       buttonText: 'Chat Now',
       price: 1,
@@ -45,7 +50,7 @@ const FeedPostComponent = ({navigation}) => {
     {
       id: '4',
       type: 'Live Stream',
-      description: 'Do a face-to-face chat with your favourite creator',
+      description: 'Livestream-Time to interact and experience exclusive content!',
       icon: 'live-tv',
       buttonText: 'Stream',
       price: null,
@@ -115,16 +120,24 @@ const FeedPostComponent = ({navigation}) => {
 
         {/* Pricing */}
         <View style={styles.priceRow}>
+          {/* Followers Pricing */}
           <View style={styles.priceBox}>
-            <Text style={styles.priceValue}>{userDetail?.followerFee?.[typeKey] || 0}</Text>
-            <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
-            <Text style={styles.priceLabel}>/{`${index === 2 ? 'Msg.' : 'Min'}`} Foll.</Text>
+            <Text style={[styles.priceTitle, {color: '#314158'}]}>Followers</Text>
+            <View style={styles.priceRightContainer}>
+              <Text style={styles.priceValue}>{userDetail?.followerFee?.[typeKey] || 0}</Text>
+              <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
+              <Text style={styles.priceLabel}>/{`${index === 2 ? 'msg' : 'min'}`}</Text>
+            </View>
           </View>
 
+          {/* Subscribers Pricing */}
           <View style={styles.priceBox}>
-            <Text style={styles.priceValue}>{userDetail?.subscriberFee?.[typeKey] || 0}</Text>
-            <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
-            <Text style={styles.priceLabel}>/{`${index === 2 ? 'Msg.' : 'Min'}`} Subs</Text>
+            <Text style={[styles.priceTitle, {color: '#314158'}]}>Subscribers</Text>
+            <View style={styles.priceRightContainer}>
+              <Text style={styles.priceValue}>{userDetail?.subscriberFee?.[typeKey] || 0}</Text>
+              <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
+              <Text style={styles.priceLabel}>/{`${index === 2 ? 'msg' : 'min'}`}</Text>
+            </View>
           </View>
         </View>
 
@@ -284,27 +297,37 @@ const styles = StyleSheet.create({
   },
 
   priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     marginBottom: 16,
-    gap: 6,
+    gap: 12,
   },
 
   priceBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#FFF3EB',
     borderRadius: 14,
     paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     borderWidth: 1.5,
     borderColor: '#1e1e1e',
-    flexWrap: 'wrap',
-    flex: 1, // ✅ ensures both boxes stay balanced inside row
+    width: '100%',
+  },
+
+  priceTitle: {
+    fontSize: 15,
+    fontFamily: 'Rubik-SemiBold',
+    color: '#344054', // Dark slate/navy to match other profile
+  },
+
+  priceRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   priceValue: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Rubik-Medium',
     color: '#1e1e1e',
     marginRight: 4,
@@ -317,7 +340,7 @@ const styles = StyleSheet.create({
   },
 
   priceLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Rubik-Regular',
     color: '#1e1e1e',
   },

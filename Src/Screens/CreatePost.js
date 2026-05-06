@@ -1,107 +1,74 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  Switch,
-  Pressable,
-  ActivityIndicator,
-  ScrollView,
-  Platform,
-  InputAccessoryView,
-  Keyboard,
-  Alert,
-} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {
-  responsiveFontSize,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
+import {StyleSheet, Text, View, Image, TextInput, TouchableOpacity, Switch, Pressable, KeyboardAvoidingView, ScrollView, Platform, InputAccessoryView, Keyboard, Alert} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {useNavigation} from '@react-navigation/native';
-import DateTimePickerSheet from '../Components/CreatePostComponents/DateTimePickerSheet';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useDispatch, useSelector} from 'react-redux';
-import {toggleDateTimePicker} from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import {
-  useCreatePostMutation,
-  useCreatePostUploadAttachmentMutation,
-  useLazyMyPostListQuery,
-} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {
-  generateBase64Image,
-  generateVideoThumbnail,
-  getImageSize,
-  getVideoMetadata,
-  videoReducer,
-} from '../../FFMPeg/FFMPegModule';
+import {toggleDateTimePicker, toggleShowProgress, resetDateTimePicker, toggleCreatorSelectorModal} from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import {useCreatePostMutation, useCreatePostUploadAttachmentMutation, useLazyMyPostListQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {generateBase64Image, generateVideoThumbnail, getImageSize, getVideoMetadata, videoReducer} from '../../FFMPeg/FFMPegModule';
 import {LoginPageErrors, successSnacks} from '../Components/ErrorSnacks';
 import DIcon from '../../DesiginData/DIcons';
-import {
-  dismissProgressNotification,
-  displayNotificationProgressIndicator,
-} from '../../Notificaton';
+import {dismissProgressNotification, displayNotificationProgressIndicator} from '../../Notificaton';
 import {autoLogout} from '../../AutoLogout';
 import {FONT_SIZES, padios, WIDTH_SIZES} from '../../DesiginData/Utility';
-import {
-  PERMISSIONS,
-  RESULTS,
-  checkMultiple,
-  request,
-} from 'react-native-permissions';
+import {PERMISSIONS, RESULTS, checkMultiple, request} from 'react-native-permissions';
 import ImageCropPicker from 'react-native-image-crop-picker';
-import {
-  addNewPostToMyProfileCache,
-  setFeedCacheMyPost,
-} from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
+import {addNewPostToMyProfileCache, setFeedCacheMyPost} from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import Upload from '../../Assets/svg/uploadP.svg';
 import {check} from 'react-native-permissions';
 import Ionicons from 'react-native-vector-icons/Ionicons'; // Import Ionicons
 import AnimatedButton from '../Components/AnimatedButton';
 import RNFS from 'react-native-fs';
 
-import {pick, types, isCancel} from '@react-native-documents/picker';
-
-import {
-  resetUploadProgress,
-  setPostIndex,
-  setUploadProgress,
-  startProcessing,
-  startUpload,
-} from '../../Redux/Slices/NormalSlices/UploadSlice';
+import {resetPostIndex, resetUploadProgress, setPostIndex, setUploadProgress, startProcessing, startUpload} from '../../Redux/Slices/NormalSlices/UploadSlice';
 import {navigate} from '../../Navigation/RootNavigation';
+import Carousel from 'react-native-reanimated-carousel';
+import CreatorSelectorModal from '../Components/Verification/CreatorSelectorModal';
+
 
 const CreatePost = ({route}) => {
   console.log(route?.params?.uri, '{}{}{})__+_+_+_+_+');
 
-  if (route?.params?.uri) {
-    RNFS.stat(route?.params?.uri)
-      .then(stat => {
-        console.log(`File size: ${stat.size} bytes`);
-        console.log(`File size: ${(stat.size / 1024).toFixed(2)} KB`);
-        console.log(`File size: ${(stat.size / (1024 * 1024)).toFixed(2)} MB`);
-      })
-      .catch(error => {
-        console.error('Error getting file size:', error);
-      });
+  const scrollViewRef = useRef(null);
+  const textInputRef = useRef(null);
+
+  if (route?.params?.uris) {
+    route.params.uris.forEach((uri, i) => {
+      RNFS.stat(uri)
+        .then(stat => {
+          console.log(`File ${i + 1} size: ${(stat.size / (1024 * 1024)).toFixed(2)} MB`);
+        })
+        .catch(error => {
+          console.error('Error getting file size:', error);
+        });
+    });
   }
 
   console.log(route?.params, '::::::');
 
+  const handleTextInputFocus = () => {
+    setTimeout(() => {
+      textInputRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        scrollViewRef.current?.scrollTo({
+          y: pageY - 100, // Adjust this offset as needed
+          animated: true,
+        });
+      });
+    }, 100);
+  };
+
+  const [activeIndex, setActiveIndex] = useState(0);
   const [count, setCount] = React.useState(0);
 
   const inputAccessoryViewID = 'createPost';
 
   // const [uploadAttachment, {error}] = useUploadAttachmentMutation();
 
-  const [createPostUploadAttachment, {isLoading}] =
-    useCreatePostUploadAttachmentMutation();
+  const [createPostUploadAttachment, {isLoading}] = useCreatePostUploadAttachmentMutation();
 
-  const {postIndex, isUploading, processing, progress} = useSelector(
-    state => state.upload,
-  );
+  const {postIndex, isUploading, processing, progress} = useSelector(state => state.upload);
 
   const navigation = useNavigation();
 
@@ -109,17 +76,17 @@ const CreatePost = ({route}) => {
 
   const [createPost] = useCreatePostMutation();
 
-  const [date, setDate] = useState(new Date());
+  const {status: dateTimePickerStatus, date: dateString} = useSelector(state => state.hideShow.visibility.dateTimePickerData);
+  const date = new Date(dateString);
 
   const [caption, setCaption] = useState('');
 
   const token = useSelector(state => state.auth.user.token);
+  const userRole = useSelector(state => state.auth.user.role || 'creator');
 
   const [base64Image, setBase64Image] = useState(undefined);
-
   const [loading, setLoading] = useState(false);
-
-  const [mediaUri, setMediaUri] = useState(undefined);
+  const [mediaUris, setMediaUris] = useState([]);
 
   const [videoUrl, setVideoUrl] = useState(undefined);
 
@@ -131,149 +98,320 @@ const CreatePost = ({route}) => {
 
   const [postList] = useLazyMyPostListQuery();
 
-  const getPostContent = useSelector(
-    state => state.myProfileFeedCache.data.content,
-  );
+  const getPostContent = useSelector(state => state.myProfileFeedCache.data.content);
 
-  console.log({getPostContent});
+  const [selection, setSelection] = useState({start: 0, end: 0});
+  const [mentions, setMentions] = useState([]); // [{ id, name, start, length }]
+  const [mentionSearchQuery, setMentionSearchQuery] = useState('');
 
-  useEffect(() => {
-    console.log({progress});
-    console.log('🐞');
-  }, [progress]);
+  const syncMentions = (newText, prevText, prevMentions, currentSelection) => {
+    const diff = newText.length - prevText.length;
+    if (diff === 0) return prevMentions;
+
+    const cursor = currentSelection.start;
+    const changeIndex = diff > 0 ? cursor - diff : cursor;
+
+    // Remove mentions that are affected by deletion
+    let filteredMentions = prevMentions;
+    if (diff < 0) {
+      const deletedRange = [cursor, cursor + Math.abs(diff)];
+      filteredMentions = prevMentions.filter(m => {
+        const mEnd = m.start + m.name.length + 1; // +1 for @
+        const isHit = (deletedRange[0] < mEnd && deletedRange[1] > m.start);
+        return !isHit;
+      });
+    }
+
+    // Shift remaining mentions
+    return filteredMentions.map(m => {
+      if (m.start >= changeIndex) {
+        return { ...m, start: m.start + diff };
+      }
+      return m;
+    });
+  };
+  const prevCaptionRef = useRef('');
+
+  const getRawCaption = () => {
+    let raw = caption;
+    // Sort mentions descending to replace from end to avoid index shifting issues
+    const sortedMentions = [...mentions].sort((a, b) => b.start - a.start);
+    
+    sortedMentions.forEach(m => {
+      const tag = `@[${m.name}](userId:${m.id})`;
+      raw = raw.slice(0, m.start) + tag + raw.slice(m.start + m.name.length + 1);
+    });
+    return raw;
+  };
 
   const handleTextInput = x => {
+    const diff = x.length - caption.length;
+    
+    // Atomic deletion logic
+    if (diff < 0) {
+      const cursor = selection.start;
+      // Adjust range due to potentially stale selection state: 
+      // characters were deleted just before the current selection
+      const deletedRange = [cursor - Math.abs(diff), cursor];
+      
+      const hitMention = mentions.find(m => {
+        const mEnd = m.start + m.name.length + 1;
+        return (deletedRange[0] < mEnd && deletedRange[1] > m.start);
+      });
+
+      if (hitMention) {
+        const mStart = hitMention.start;
+        const mEnd = hitMention.start + hitMention.name.length + 1;
+        const newCaption = caption.slice(0, mStart) + caption.slice(mEnd);
+        
+        const newMentions = mentions.filter(m => m !== hitMention).map(m => {
+          if (m.start > mStart) {
+            return { ...m, start: m.start - (mEnd - mStart) };
+          }
+          return m;
+        });
+        
+        setMentions(newMentions);
+        setCaption(newCaption);
+        setCount(newCaption.length);
+        return;
+      }
+    }
+
+    const updatedMentions = syncMentions(x, caption, mentions, selection);
+    setMentions(updatedMentions);
+    
     setCount(x?.length);
     setCaption(x);
   };
 
-  const [forSubscribers, setForSubscribers] = useState(false);
+  useEffect(() => {
+    // Check if the change was a deletion
+    const isDeletion = caption.length < prevCaptionRef.current.length;
+    prevCaptionRef.current = caption;
+
+    // Detect @ trigger for mentions using latest caption and selection
+    const cursorPosition = selection.start;
+    const textBeforeCursor = caption.slice(0, cursorPosition);
+    
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1);
+      
+      // If there's no space between @ and cursor, it's a potential mention search
+      if (!textAfterAt.includes(' ')) {
+        // Check if this is already an established mention to blink re-triggering
+        const isAlreadyMention = mentions.some(m => m.start === lastAtIndex);
+        
+        if (isAlreadyMention || isDeletion) {
+          setMentionSearchQuery('');
+          return;
+        }
+
+        setMentionSearchQuery(textAfterAt);
+        if (textBeforeCursor.endsWith('@') || textAfterAt.length > 0) {
+           dispatch(toggleCreatorSelectorModal({show: true}));
+        }
+      } else {
+        setMentionSearchQuery('');
+      }
+    } else {
+      setMentionSearchQuery('');
+    }
+  }, [caption, selection.start, mentions]);
+
+  const handleCreatorSelect = (creator) => {
+    const {displayName, _id} = creator;
+    
+    const textBeforeCursor = caption.slice(0, selection.start);
+    const textAfterCursor = caption.slice(selection.start);
+    
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const newText = textBeforeCursor.slice(0, lastAtIndex) + '@' + displayName + textAfterCursor;
+      
+      // Update mentions metadata
+      const newMention = {
+        id: _id,
+        name: displayName,
+        start: lastAtIndex
+      };
+      
+      setMentions([...mentions, newMention]);
+      setCaption(newText);
+      setCount(newText.length);
+      setMentionSearchQuery(''); // Reset search query after selection
+    }
+  };
+
+  const [visibility, setVisibility] = useState('all'); // 'all' | 'user' | 'creator' (Admin only)
+  const [forSubscribers, setForSubscribers] = useState(false); // (Non-Admin only)
 
   const [isEnabled, setIsEnabled] = useState(false);
 
   const toggleSwitch = () => {
-    if (!loading) {
-      setIsEnabled(previousState => !previousState);
+    if (!isEnabled) {
+      dispatch(toggleDateTimePicker({
+        show: 1,
+        type: 'datetime',
+        date: new Date(Date.now() + 120000).toISOString()
+      }));
     } else {
-      return;
+      setIsEnabled(false);
     }
   };
+
+  useEffect(() => {
+    dispatch(resetPostIndex());
+    dispatch(resetUploadProgress());
+
+    if (!isEnabled) {
+      dispatch(toggleShowProgress({show: true}));
+    } else {
+      dispatch(toggleShowProgress({show: false}));
+    }
+
+    console.log('EMNA', isEnabled);
+  }, [isEnabled]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetDateTimePicker());
+    };
+  }, []);
 
   const resetMediaState = () => {
     console.log('Resetting all media states...');
 
     setBase64Image(undefined);
     setLoading(false);
-    setMediaUri(undefined);
+    setMediaUris([]);
     setVideoUrl(undefined);
     setIsMediaVideo(false);
     setMediaSelected(false);
-    setLoading(false);
   };
 
   const selectMedia = async () => {
     console.log('Selecting media');
     if (loading) return;
-    resetMediaState();
 
     try {
-      let mediaInfo; // Type definition removed for plain JS
+      setLoading(true);
+      const media = await ImageCropPicker.openPicker({
+        multiple: true,
+        maxFiles: 5,
+        mediaType: 'any',
+        forceJpg: true,
+        compressImageQuality: 1.0,
+        compressVideoPreset: 'Passthrough',
+      });
 
-      if (Platform.OS === 'ios') {
-        // --- Use Image Picker for iOS ---
-        const result = await launchImageLibrary({
-          mediaType: 'mixed', // Allows both images and videos
-        });
-
-        if (result.didCancel || !result.assets?.[0]) {
-          console.log('User cancelled selection or no assets found.');
-          return;
-        }
-
-        const asset = result.assets[0];
-        // Normalize the response to match DocumentPicker's structure
-        mediaInfo = {
-          uri: asset.uri,
-          type: asset.type,
-          name: asset.fileName,
-          size: asset.fileSize,
-        };
-      } else {
-        // --- Use Document Picker for Android ---
-        // mediaInfo = await DocumentPicker.pickSingle({
-        //   type: [types.images, types.video],
-        // });
-
-        mediaInfo = await pick({
-          type: [types.images, types.video],
-          multiple: false,
-        });
+      if (!media || media.length === 0) {
+        setLoading(false);
+        return;
       }
 
-      if (!mediaInfo) return;
-      setLoading(true);
+      const hasVideo = media.some(item => 
+        (item.mime && item.mime.startsWith('video/')) || 
+        ['mp4', 'mov', 'avi', 'mkv', 'm4v', '3gp'].includes((item.path || item.filename || '').split('.').pop()?.toLowerCase())
+      );
+      const hasImage = media.some(item => 
+        (item.mime && item.mime.startsWith('image/')) || 
+        !((item.mime && item.mime.startsWith('video/')) || ['mp4', 'mov', 'avi', 'mkv', 'm4v', '3gp'].includes((item.path || item.filename || '').split('.').pop()?.toLowerCase()))
+      );
 
-      // --- Process selected media ---
-      if (mediaInfo.type?.startsWith('image/')) {
-        console.log('Image size', mediaInfo.size);
-        if (mediaInfo.size >= 20000000) {
-          // 20 MB limit
-          LoginPageErrors('Image size must be lower than 20 MB');
-          setLoading(false);
-          return;
-        }
+      console.log('SELECT_MEDIA_DEBUG:', {
+        hasVideo,
+        media: media.map(m => ({ mime: m.mime, path: m.path }))
+      });
 
-        setMediaSelected(true);
-        setIsMediaVideo(false);
-        setVideoUrl(undefined);
+      if (hasVideo && hasImage) {
+        LoginPageErrors('Please select either images or a video, not both.');
         setLoading(false);
-        navigation.navigate('cropViewScreen', {uri: mediaInfo.uri});
-      } else if (mediaInfo.type?.startsWith('video/')) {
-        console.log('Video selected:', mediaInfo.uri);
-        const destinationPath = `${RNFS.CachesDirectoryPath}/${Date.now()}_${
-          mediaInfo.name
-        }`;
+        return;
+      }
 
-        // Copy file to a stable cache location
-        await RNFS.copyFile(
-          mediaInfo.uri.replace('file://', ''),
-          destinationPath,
-        );
-        console.log('Video copied to:', destinationPath);
+      setIsMediaVideo(hasVideo);
 
-        const meta = await getVideoMetadata(destinationPath);
-        if (!meta?.isValid) {
+      if (hasVideo && media.length > 1) {
+        LoginPageErrors('You can only select one video at a time.');
+        setLoading(false);
+        return;
+      }
+
+      if (hasImage && media.length > 5) {
+        LoginPageErrors('You can select up to 5 images only.');
+        setLoading(false);
+        return;
+      }
+
+      if (hasVideo) {
+        // Video selected — stay on CreatePost, set video state
+        const video = media[0];
+        
+        // 1. Size check (150MB)
+        if (video.size > 150 * 1024 * 1024) {
+          LoginPageErrors('Video size must be less than 150MB.');
           setLoading(false);
-          LoginPageErrors(meta.validationReason);
           return;
         }
 
-        setBitRate(meta.bitrate);
-        setMediaSelected(true);
-        setIsMediaVideo(true);
-        setVideoUrl(destinationPath);
+        // 2. Metadata checks (Duration and Resolution)
+        const meta = await getVideoMetadata(video.path);
+        if (meta) {
+          // Duration check (60s = 60000ms)
+          if (meta.duration > 60000) {
+            LoginPageErrors('Video duration must be less than 1 minute.');
+            setLoading(false);
+            return;
+          }
 
-        generateVideoThumbnail(destinationPath).then(thumbnailUri => {
-          console.log('Thumbnail generated at:', thumbnailUri);
-          setMediaUri(thumbnailUri);
+          // Resolution check (1080p max)
+          const isTooLarge = Math.max(meta.width || 0, meta.height || 0) > 1920;
+          if (isTooLarge) {
+            LoginPageErrors('Video resolution must be 1080p or lower (4K is not supported).');
+            setLoading(false);
+            return;
+          }
+        }
+
+        resetMediaState();
+        setVideoUrl(video.path);
+        setIsMediaVideo(true);
+        setMediaSelected(true);
+
+        generateVideoThumbnail(video.path).then(thumbnailUri => {
+          if (thumbnailUri) {
+            setMediaUris([thumbnailUri]);
+          }
+        });
+        setLoading(false);
+      } else {
+        // Images selected — go to FilterScreen
+        navigation.navigate('filterScreen', {
+          uris: media.map(img => img.path),
+          width: 4,
+          height: 5,
         });
         setLoading(false);
       }
     } catch (err) {
-      // if (DocumentPicker.isCancel(err)) {
-      //   console.log('User cancelled the document picker.');
-      // } else {
-      //   console.error('Error selecting media:', err);
-      //   LoginPageErrors('An unexpected error occurred.');
-      // }
-
-      if (isCancel(err)) {
-        console.log('User cancelled the document picker.');
-      } else {
-        console.error('Error selecting media:', err);
+      console.error('Error selecting media:', err);
+      if (err.message && err.message.includes('permission')) {
+        Alert.alert(
+          'Photo Access Required',
+          'Please allow access to your photo library to select images for your post.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => {
+              const { Linking } = require('react-native');
+              Linking.openSettings();
+            }},
+          ]
+        );
+      } else if (err.message !== 'User cancelled image selection') {
         LoginPageErrors('An unexpected error occurred.');
       }
-
       setLoading(false);
     }
   };
@@ -283,16 +421,71 @@ const CreatePost = ({route}) => {
   };
 
   useEffect(() => {
-    if (isEnabled) {
-      dispatch(toggleDateTimePicker({show: 1}));
+    if (dateTimePickerStatus === 'confirmed') {
+      setIsEnabled(true);
     }
-  }, [isEnabled]);
+  }, [dateTimePickerStatus]);
 
   useEffect(() => {
-    console.log('Uri Changed');
+    if (route?.params?.uris) {
+      console.log('URIs received in CreatePost:', route.params.uris);
+      setMediaUris(route.params.uris);
+      setMediaSelected(true);
+      // Clear video state when images arrive from FilterScreen
+      setIsMediaVideo(false);
+      setVideoUrl(undefined);
+    }
+  }, [route?.params?.uris]);
 
-    setMediaUri(route?.params?.uri);
-  }, [route?.params?.uri]);
+  // Handle video passed directly from BottomSheet
+  useEffect(() => {
+    const validateAndSetVideo = async () => {
+      if (route?.params?.uri && route?.params?.isVideo) {
+        console.log('Video URI received in CreatePost:', route.params.uri);
+
+        try {
+          // 1. Size check
+          const stat = await RNFS.stat(route.params.uri);
+          if (stat.size > 150 * 1024 * 1024) {
+            LoginPageErrors('Video size must be less than 150MB.');
+            resetMediaState();
+            return;
+          }
+
+          // 2. Metadata checks
+          const meta = await getVideoMetadata(route.params.uri);
+          if (meta) {
+            if (meta.duration > 60000) {
+              LoginPageErrors('Video duration must be less than 1 minute.');
+              resetMediaState();
+              return;
+            }
+            if (Math.max(meta.width || 0, meta.height || 0) > 1920) {
+              LoginPageErrors('Video resolution must be 1080p or lower (4K is not supported).');
+              resetMediaState();
+              return;
+            }
+          }
+
+          setVideoUrl(route.params.uri);
+          setIsMediaVideo(true);
+          setMediaSelected(true);
+
+          // Generate thumbnail for the video
+          const thumbnailUri = await generateVideoThumbnail(route.params.uri);
+          if (thumbnailUri) {
+            console.log('Video thumbnail generated:', thumbnailUri);
+            setMediaUris([thumbnailUri]);
+          }
+        } catch (error) {
+          console.error('Error handling BottomSheet video:', error);
+          LoginPageErrors('Could not process the selected video.');
+        }
+      }
+    };
+
+    validateAndSetVideo();
+  }, [route?.params?.uri, route?.params?.isVideo]);
 
   const getFirstNonPinnedIndex = posts => {
     if (!posts || posts.length === 0) return -1;
@@ -323,17 +516,12 @@ const CreatePost = ({route}) => {
         pinned: true,
       }));
 
-      let combinedPinnedUnPinnedPosts = [
-        ...pinnedPost,
-        ...postData?.data?.posts,
-      ];
+      let combinedPinnedUnPinnedPosts = [...pinnedPost, ...postData?.data?.posts];
 
       dispatch(setFeedCacheMyPost({data: combinedPinnedUnPinnedPosts}));
 
       // just get the index
-      const firstNonPinnedIndex = getFirstNonPinnedIndex(
-        combinedPinnedUnPinnedPosts,
-      );
+      const firstNonPinnedIndex = getFirstNonPinnedIndex(combinedPinnedUnPinnedPosts);
       console.log('First non-pinned index:', firstNonPinnedIndex);
       dispatch(setPostIndex(firstNonPinnedIndex));
     }
@@ -353,595 +541,396 @@ const CreatePost = ({route}) => {
       return;
     }
 
-    // Alert.alert('working');
-
     dispatch(resetUploadProgress());
 
-    dispatch(startProcessing());
+    if (!mediaUris || mediaUris.length === 0) {
+      LoginPageErrors('Please select any media');
+      return;
+    }
+
+    const previewUri = mediaUris[0]?.startsWith('file://') ? mediaUris[0] : `file://${mediaUris[0]}`;
+    
+    dispatch(startProcessing({previewUrl: previewUri}));
     navigate('home');
 
-    // setLoading(true);
-    if (mediaUri) {
-      if (isMediaVideo) {
-        console.log('Meida is video');
+    setLoading(true);
+    await displayNotificationProgressIndicator();
+    
+    const uploadedFiles = [];
+    let videoThumbnailUrl = '';
+    
+    try {
+        dispatch(startUpload());
 
-        await displayNotificationProgressIndicator();
+        if (isMediaVideo && videoUrl) {
+            // 0. Normalize URI: On Android, content:// URIs can't be read by FormData.
+            //    Copy to a local cache file first.
+            let normalizedVideoUrl = videoUrl;
+            if (Platform.OS === 'android' && videoUrl.startsWith('content://')) {
+                try {
+                    const localPath = `${RNFS.CachesDirectoryPath}/video_upload_${Date.now()}.mp4`;
+                    await RNFS.copyFile(videoUrl, localPath);
+                    normalizedVideoUrl = `file://${localPath}`;
+                    console.log('📁 Copied content:// video to local path:', normalizedVideoUrl);
+                } catch (copyErr) {
+                    console.error('❌ Failed to copy content:// video:', copyErr);
+                    // Fall through with original URI as last resort
+                }
+            }
 
-        async function videoFormatter(uri) {
-          const result = await videoReducer(uri, bitRate);
-          return result;
-        }
+            // 1. Compress the video first
+            const compressedVideoUrl = await videoReducer(normalizedVideoUrl);
+            const finalVideoUrl = compressedVideoUrl || normalizedVideoUrl;
 
-        videoFormatter(videoUrl).then(async compressedVideoUrl => {
-          if (compressedVideoUrl) {
-            let compressedVideoThumbnail = await generateVideoThumbnail(
-              compressedVideoUrl,
-            );
+            console.log('📤 Video upload URI:', finalVideoUrl);
 
-            const formData = new FormData();
+            // Ensure the final URI has the correct prefix
+            const uploadUri = finalVideoUrl.startsWith('file://') || finalVideoUrl.startsWith('content://') 
+                ? finalVideoUrl 
+                : `file://${finalVideoUrl}`;
 
-            formData.append('keyName', 'video_thumbnail');
-
-            formData.append('file', {
-              uri: compressedVideoThumbnail,
-              type: 'image/jpg',
-              name: 'image.jpg',
+            // 2. Upload the (compressed) video
+            const videoFormData = new FormData();
+            videoFormData.append('keyName', 'create_post');
+            videoFormData.append('file', {
+                name: `video_${Date.now()}.mp4`,
+                type: 'video/mp4',
+                uri: uploadUri,
             });
 
-            createPostUploadAttachment({token, formData})
-              .unwrap()
-              .then(e => {
-                console.log(e?.data, '999999999');
-                if (e?.error?.data?.status_code) {
-                  autoLogout();
-                }
+            const vidResponse = await createPostUploadAttachment({ token, formData: videoFormData }).unwrap();
+            if (vidResponse?.data?.statusCode === 200) {
+                uploadedFiles.push({
+                    url: vidResponse.data.data.url,
+                    type: 'post',
+                    format: 'video'
+                });
+            } else {
+                throw new Error('Video upload failed');
+            }
 
-                if (e?.error?.status === 'FETCH_ERROR') {
-                  LoginPageErrors('Please check your network');
-                  setLoading(false);
-                  dismissProgressNotification();
-                }
+            // 3. Upload the thumbnail
+            const thumbUri = mediaUris[0];
+            const thumbFormData = new FormData();
+            thumbFormData.append('keyName', 'create_post');
+            thumbFormData.append('file', {
+                name: `thumb_${Date.now()}.jpeg`,
+                type: 'image/jpeg',
+                uri: thumbUri.startsWith('file://') || thumbUri.startsWith('content://') ? thumbUri : `file://${thumbUri}`,
+            });
 
-                if (e?.data?.statusCode === 200) {
-                  dispatch(resetUploadProgress());
-                  // startUpload()
+            const thumbResponse = await createPostUploadAttachment({ token, formData: thumbFormData }).unwrap();
+            if (thumbResponse?.data?.statusCode === 200) {
+                videoThumbnailUrl = thumbResponse.data.data.url;
+            }
+        } else {
+            // Upload images
+            for (let i = 0; i < mediaUris.length; i++) {
+                const uri = mediaUris[i];
+                const fileUri = uri.startsWith('file://') || uri.startsWith('content://') ? uri : `file://${uri}`;
+                
+                const formData = new FormData();
+                formData.append('keyName', 'create_post');
+                formData.append('file', {
+                    name: `photo_${i}.jpeg`,
+                    type: 'image/jpeg',
+                    uri: fileUri,
+                });
 
-                  let preview = e?.data?.data?.url;
-
-                  const formData = new FormData();
-
-                  formData.append('keyName', 'message_attachment');
-
-                  formData.append('file', {
-                    uri: compressedVideoUrl,
-                    type: 'video/mp4',
-                    name: 'attachmentVideo.mp4',
-                  });
-
-                  dispatch(startUpload({previewUrl: e?.data?.data?.url}));
-
-                  createPostUploadAttachment({token, formData})
-                    .unwrap()
-                    .then(async e => {
-                      // Alert.alert('uploading');
-
-                      if (e?.data?.statusCode === 200) {
-                        const videoUrlFromServer = e?.data?.data?.url;
-
-                        let mediaObject = {
-                          postContent: caption.trim(), //Caption data
-
-                          post_content_files: {
-                            url: videoUrlFromServer, //video url in case;
-                            type: 'post',
-                            format: 'video', //Must be changed further
-                          },
-
-                          for_subscribers: forSubscribers, //Change
-
-                          image_preview: {
-                            url: forSubscribers ? base64Image : '', //Base 64
-                            type: 'image',
-                            format: 'png',
-                          },
-
-                          video: {
-                            thumbnail: {
-                              url: preview,
-                              type: 'video_thumbnail',
-                              format: 'image',
-                            },
-                            hasPreview: forSubscribers,
-                            hasThumbnail: true,
-                            hasVideo: true,
-                          },
-
-                          activate_on: isEnabled === true ? date : '', //Schedule timing
-
-                          forcreator: true,
-                          foruser: true,
-                        };
-
-                        if (forSubscribers) {
-                          generateBase64Image(mediaUri).then(e => {
-                            mediaObject.image_preview.url = e;
-
-                            createPost({token, data: mediaObject})
-                              .then(e => {
-                                setLoading(false);
-                                dispatch(resetUploadProgress());
-
-                                if (e?.data?.statusCode) {
-                                  successSnacks(
-                                    'Created your post successfully.',
-                                  );
-
-                                  // console.log(":::::::::::SUBSSTHECREATEDPOST:::::::::::::::", e?.data, "::::::::::::::::::::::::THECREATEDPOST::::::::::::::::::::::");
-
-                                  setCaption('');
-                                  setIsEnabled(false);
-                                  setMediaUri(undefined);
-                                  setLoading(false);
-                                  dismissProgressNotification();
-
-                                  getPostList();
-                                } else {
-                                  console.log('Something went wrong.');
-                                }
-                              })
-                              .catch(e => {
-                                console.log('There was some error.');
-                              });
-                          });
-                        } else {
-                          createPost({token, data: mediaObject})
-                            .then(e => {
-                              setLoading(false);
-                              dispatch(resetUploadProgress());
-
-                              if (e?.data?.statusCode) {
-                                successSnacks(
-                                  'Created your post successfully.',
-                                );
-
-                                // console.log(":::::::::::SUBSSTHECREATEDPOST:::::::::::::::", e?.data, "::::::::::::::::::::::::THECREATEDPOST::::::::::::::::::::::");
-
-                                setCaption('');
-                                setIsEnabled(false);
-                                setMediaUri(undefined);
-                                setLoading(false);
-                                dismissProgressNotification();
-                                // navigation.navigate('home');
-
-                                getPostList();
-                              } else {
-                                console.log('Something went wrong.', e);
-                              }
-                            })
-                            .catch(e => {
-                              console.log('There was some error.');
-                            });
-                        }
-
-                        dispatch(resetUploadProgress());
-                      }
+                const response = await createPostUploadAttachment({ token, formData }).unwrap();
+                
+                if (response?.data?.statusCode === 200) {
+                    uploadedFiles.push({
+                        url: response.data.data.url,
+                        type: 'post',
+                        format: 'image'
                     });
+                } else {
+                    throw new Error('Upload failed for one or more files');
                 }
-              })
-              .catch(e => console.log('88888', e));
-          }
-        });
-      } else {
-        let formData = new FormData();
-
-        await displayNotificationProgressIndicator();
-
-        formData.append('keyName', 'create_post');
-
-        formData.append('file', {
-          name: 'ddfhlf.jpeg',
-          type: 'image/jpeg',
-          uri: `file://${mediaUri}`,
-        });
-
-        RNFS.stat(mediaUri)
-          .then(stat => {
-            console.log(`File size: ${stat.size} bytes`);
-            console.log(`File size: ${(stat.size / 1024).toFixed(2)} KB`);
-            console.log(
-              `File size: ${(stat.size / (1024 * 1024)).toFixed(2)} MB`,
-            );
-          })
-          .catch(error => {
-            console.error('Error getting file size:', error);
-          });
-
-        dispatch(startUpload({previewUrl: `file://${mediaUri}`}));
-        createPostUploadAttachment({token, formData})
-          .unwrap()
-          .then(e => {
-            setLoading(true);
-
-            // Alert.alert('uploaing')
-
-            if (e?.error?.data?.status_code === 401) {
-              autoLogout();
             }
+        }
 
-            if (e?.error?.status === 'FETCH_ERROR') {
-              LoginPageErrors('Please check your network');
-              setLoading(false);
-              dismissProgressNotification();
-            }
+        // All files uploaded, now create the post
+        let imagePreviewUrl = '';
+        const isCurrentlySubOnly = userRole === 'admin' ? false : forSubscribers;
+        if (isCurrentlySubOnly && mediaUris.length > 0) {
+            // Generate preview from the first media item (if video, this is the thumbnail)
+            const firstImageUri = mediaUris[0].startsWith('file://') || mediaUris[0].startsWith('content://') ? mediaUris[0] : `file://${mediaUris[0]}`;
+            imagePreviewUrl = await generateBase64Image(firstImageUri);
+        }
 
-            let mediaObject = {
-              postContent: caption.trim(), //Caption data
-
-              base64Image,
-
-              post_content_files: {
-                //
-                url: e?.data?.data?.url, //video url in case;
-                type: 'post',
-                format: 'image', //Must be changed further
-              },
-
-              for_subscribers: forSubscribers, //Change
-
-              image_preview: {
-                url: base64Image,
-
+        const mediaObject = {
+            postContent: getRawCaption().trim(),
+            post_content_files: uploadedFiles,
+            image: !isMediaVideo ? {
+                hasAspectRatio: true,
+                aspectRatio: {
+                    width: route?.params?.width || 4,
+                    height: route?.params?.height || 5
+                },
+                thumbnail: {
+                    url: isCurrentlySubOnly ? imagePreviewUrl : uploadedFiles[0]?.url,
+                    type: 'image_thumbnail',
+                    format: 'image',
+                },
+                hasThumbnail: true,
+                hasPreview: isCurrentlySubOnly,
+                hasImage: true,
+            } : undefined,
+            video: isMediaVideo ? {
+                thumbnail: {
+                    url: videoThumbnailUrl,
+                    type: 'video_thumbnail',
+                    format: 'image',
+                },
+                hasPreview: isCurrentlySubOnly,
+                hasThumbnail: true,
+                hasVideo: true,
+            } : undefined,
+            image_preview: {
+                url: imagePreviewUrl,
                 type: 'image',
                 format: 'png',
                 mobilePreview: '',
-              },
+            },
+            for_subscribers: isCurrentlySubOnly,
+            activate_on: isEnabled ? date : '',
+            forcreator: userRole === 'admin' ? (visibility === 'all' || visibility === 'creator') : true,
+            foruser: userRole === 'admin' ? (visibility === 'all' || visibility === 'user') : true,
+        };
 
-              image: {
-                thumbnail: {
-                  url: forSubscribers ? base64Image : e?.data?.data?.url, //For subs base 64 Details else normal url
-                  type: 'image_thumbnail',
-                  format: 'image',
-                },
+        console.log('CREATE_POST_PAYLOAD:', JSON.stringify(mediaObject, null, 2));
 
-                hasThumbnail: true,
-
-                hasPreview: forSubscribers,
-
-                hasImage: true,
-
-                hasAspectRatio: true,
-                // hasResolution: "",
-                // hasOrientation: "",
-
-                // orientation: "",
-
-                aspectRatio: {
-                  height: route?.params?.height,
-                  width: route?.params?.width,
-                },
-
-                // resolution: {
-                //   height: "",
-                //   width: "",
-                // },
-              },
-
-              activate_on: isEnabled ? date : '',
-              forcreator: true,
-              foruser: true,
-            };
-
-            if (e?.data?.statusCode) {
-              generateBase64Image(`file://${mediaUri}`).then(e => {
-                setBase64Image(e);
-
-                if (e) {
-                  if (forSubscribers) {
-                    mediaObject.image_preview.url = e;
-                  }
-
-                  createPost({token, data: mediaObject})
-                    .then(e => {
-                      dispatch(resetUploadProgress());
-
-                      setLoading(false);
-
-                      if (e?.error?.data?.status_code === 400) {
-                        dismissProgressNotification();
-                        LoginPageErrors(e?.error?.data?.message);
-                      }
-
-                      if (e?.data?.statusCode === 200) {
-                        successSnacks('Created your post successfully.');
-                        dispatch(
-                          addNewPostToMyProfileCache({newPost: e?.data?.data}),
-                        );
-
-                        // console.log(":::::::::::IMAGECREATEPOST:::::::::::::::", e?.data?.data, "::::::::::::::::::::::::THECREATEDPOST::::::::::::::::::::::");
-
-                        setCaption('');
-                        setIsEnabled(false);
-                        setMediaUri(undefined);
-                        dismissProgressNotification();
-                        // navigation.navigate('home');
-                        getPostList();
-                      } else {
-                        console.log('Something went wrong.');
-                      }
-                    })
-                    .catch(e => console.log('There was error', e));
-                }
-              });
-            } else {
-              console.log('error');
-              setLoading(false);
-            }
-          });
-      }
-    } else {
-      LoginPageErrors('Please select any media');
+        const postResponse = await createPost({ token, data: mediaObject }).unwrap();
+        
+        if (postResponse?.statusCode === 200) {
+            successSnacks('Created your post successfully.');
+            dispatch(addNewPostToMyProfileCache({ newPost: postResponse.data }));
+            
+            // Full state reset
+            setCaption('');
+            setIsEnabled(false);
+            setMediaUris([]);
+            setMediaSelected(false);
+            setVideoUrl(null);
+            setIsMediaVideo(false);
+            setVisibility('all');
+            setForSubscribers(false);
+            setActiveIndex(0);
+            dispatch(resetDateTimePicker());
+            
+            dismissProgressNotification();
+            getPostList();
+        } else {
+            LoginPageErrors('Failed to create post');
+        }
+    } catch (error) {
+        console.error('Post creation error:', error);
+        LoginPageErrors(error.message || 'Something went wrong');
+        dismissProgressNotification();
+    } finally {
+        setLoading(false);
+        dispatch(resetUploadProgress());
     }
   };
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{paddingBottom: 50}}>
-        <View
-          style={{
-            borderWidth: responsiveWidth(0.5),
-            borderRadius: responsiveWidth(3.73),
-            width: responsiveWidth(92),
-          }}>
-          <View style={styles.FollowersSubScribersToggle}>
-            <TouchableOpacity
-              onPress={() => setForSubscribers(!forSubscribers)}
-              style={[
-                styles.Followers,
-                forSubscribers === false
-                  ? {
-                      backgroundColor: '#FFA86B',
-                      borderWidth: responsiveWidth(0.3),
-                      borderRadius: responsiveWidth(2.5),
-                    }
-                  : null,
-              ]}>
-              <Text
-                style={{
-                  fontFamily: 'Rubik-SemiBold',
-                  fontSize: FONT_SIZES[14],
-                  color: '#282828',
-                }}
-                key={'1Followers'}>
-                Followers
-              </Text>
-            </TouchableOpacity>
+    <GestureHandlerRootView style={styles.container} testID="create-post-screen">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{flex: 1}}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} // Adjust this value based on your header height
+      >
+        <ScrollView keyboardDismissMode="on-drag" ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: Platform.OS === 'ios' ? 20 : 40, paddingHorizontal: responsiveWidth(4), paddingTop: responsiveWidth(4)}} keyboardShouldPersistTaps="handled">
+          <View style={{borderWidth: responsiveWidth(0.5), borderRadius: responsiveWidth(3.73), width: responsiveWidth(92)}}>
+            <View style={styles.FollowersSubScribersToggle}>
+              {userRole === 'admin' ? (
+                <>
+                  <TouchableOpacity 
+                    testID="create-post-all-toggle" 
+                    onPress={() => setVisibility('all')} 
+                    style={[styles.visibilityTab, visibility === 'all' ? styles.activeTabStyle : null]}
+                  >
+                    <Text style={styles.tabText}>All</Text>
+                  </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => setForSubscribers(!forSubscribers)}
-              style={[
-                styles.SubScribers,
-                forSubscribers === true
-                  ? {
-                      backgroundColor: '#FFA86B',
-                      borderWidth: responsiveWidth(0.3),
-                      borderRadius: responsiveWidth(2.5),
-                    }
-                  : null,
-              ]}>
-              <Text
-                key={'2SubScribers'}
-                style={{
-                  fontFamily: 'Rubik-SemiBold',
-                  fontSize: FONT_SIZES[14],
-                  color: '#282828',
-                }}>
-                Subscribers
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+                  <TouchableOpacity 
+                    testID="create-post-user-toggle" 
+                    onPress={() => setVisibility('user')} 
+                    style={[styles.visibilityTab, visibility === 'user' ? styles.activeTabStyle : null]}
+                  >
+                    <Text style={styles.tabText}>User</Text>
+                  </TouchableOpacity>
 
-        <View style={styles.textInputContainer}>
-          {mediaUri ? (
-            <View
-              style={[
-                styles.selectImageBox,
-                route?.params && {flexDirection: 'row', alignItems: 'center'},
-                !isMediaVideo
-                  ? {
-                      aspectRatio: `${route?.params?.width}/${route?.params?.height}`,
-                    }
-                  : {aspectRatio: '16/9'},
-              ]}>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{uri: `file://${mediaUri}`}}
-                  resizeMethod="resize"
-                  resizeMode="contain"
-                  style={{height: '100%', width: '100%', resizeMode: 'cover'}}
-                />
-                <TouchableOpacity
-                  onPress={selectMedia}
-                  style={styles.selectMedia}>
-                  <Image
-                    source={require('../../Assets/Images/ChangeProfile.png')}
-                    style={{
-                      height: responsiveWidth(8),
-                      width: responsiveWidth(8),
-                      resizeMode: 'contain',
-                      zIndex: 8,
-                      alignSelf: 'center',
-                      marginRight: responsiveWidth(1),
-                    }}
-                  />
-                </TouchableOpacity>
-              </View>
+                  <TouchableOpacity 
+                    testID="create-post-creator-toggle" 
+                    onPress={() => setVisibility('creator')} 
+                    style={[styles.visibilityTab, visibility === 'creator' ? styles.activeTabStyle : null]}
+                  >
+                    <Text style={styles.tabText}>Creator</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity 
+                    testID="create-post-followers-toggle" 
+                    onPress={() => setForSubscribers(false)} 
+                    style={[styles.Followers, forSubscribers === false ? styles.activeTabStyle : null]}
+                  >
+                    <Text style={styles.tabText}>Followers</Text>
+                  </TouchableOpacity>
 
-              {isMediaVideo && (
-                <TouchableOpacity
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: responsiveWidth(1),
-                    marginTop: responsiveWidth(2),
-                    position: 'absolute',
-                    alignSelf: 'center',
-                  }}
-                  onPress={() => openVideoPreview()}>
-                  <DIcon
-                    name={'play-circle'}
-                    provider={'FontAwesome5'}
-                    color="#fff"
-                    size={WIDTH_SIZES['36']}
-                  />
-                </TouchableOpacity>
+                  <TouchableOpacity 
+                    testID="create-post-subscribers-toggle" 
+                    onPress={() => setForSubscribers(true)} 
+                    style={[styles.SubScribers, forSubscribers === true ? styles.activeTabStyle : null]}
+                  >
+                    <Text style={styles.tabText}>Subscribers</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.selectImageBox}
-              onPress={selectMedia}>
-              <View
-                style={[
-                  styles.imageContainer,
-                  {
-                    marginVertical: WIDTH_SIZES['10'],
-                    marginTop: WIDTH_SIZES['84'],
-                  },
-                ]}>
-                {/* <Image source={require("../../Assets/Images/selectMedia.png")} resizeMethod="resize" resizeMode="contain" style={{ width: "100%" }} /> */}
-                <Upload />
+          </View>
+
+          <View style={styles.textInputContainer}>
+            {mediaUris && mediaUris.length > 0 ? (
+              <View style={styles.carouselContainer}>
+                <Carousel
+                    loop={false}
+                    width={responsiveWidth(92) - 26}
+                    height={isMediaVideo ? (responsiveWidth(92) - 26) * (9/16) : (responsiveWidth(92) - 26) * (305/319)}
+                    autoPlay={false}
+                    data={mediaUris}
+                    onSnapToItem={(index) => setActiveIndex(index)}
+                    renderItem={({ item, index }) => (
+                        <View style={styles.carouselItem}>
+                            <Image 
+                                source={{uri: item.startsWith('file://') ? item : `file://${item}`}} 
+                                resizeMethod="resize" 
+                                resizeMode="cover" 
+                                style={{height: '100%', width: '100%', borderRadius: 10}} 
+                            />
+                            <View style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 10, borderWidth: 2, borderStyle: 'dashed', borderColor: '#000000'}} pointerEvents="none" />
+                            {isMediaVideo && (
+                                <TouchableOpacity 
+                                    testID="create-post-video-preview-btn"
+                                    style={{position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -WIDTH_SIZES['36'] / 2 }, { translateY: -WIDTH_SIZES['36'] / 2 }]}} 
+                                    onPress={() => openVideoPreview()}
+                                >
+                                    <DIcon name={'play-circle'} provider={'FontAwesome5'} color="#fff" size={WIDTH_SIZES['36']} />
+                                </TouchableOpacity>
+                            )}
+                            {!isMediaVideo && (
+                                <View style={styles.imageIndexIndicator}>
+                                    <Text style={styles.imageIndexText}>{index + 1}/{mediaUris.length}</Text>
+                                </View>
+                            )}
+                        </View>
+                    )}
+                />
+                {!isMediaVideo && mediaUris.length > 1 && (
+                <View style={styles.dotsContainer}>
+                  {mediaUris.map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.dot,
+                        i === activeIndex ? styles.activeDot : styles.inactiveDot,
+                      ]}
+                    />
+                  ))}
+                </View>
+                )}
+                <TouchableOpacity testID="create-post-change-media-btn" onPress={selectMedia} style={styles.selectMedia}>
+                  <Image source={require('../../Assets/Images/ChangeProfile.png')} style={{height: responsiveWidth(8), width: responsiveWidth(8), resizeMode: 'contain', zIndex: 8, alignSelf: 'center', marginRight: responsiveWidth(1)}} />
+                </TouchableOpacity>
               </View>
-              <Text
-                style={{
-                  fontFamily: 'Rubik-Medium',
-                  textAlign: 'center',
-                  color: '#282828',
-                  fontSize: 14,
-                  marginBottom: 80,
-                }}>
-                Click to upload your files{' '}
-              </Text>
-            </TouchableOpacity>
-          )}
+            ) : (
+              <TouchableOpacity testID="create-post-select-media-btn" style={styles.selectImageBox} onPress={selectMedia}>
+                <View style={[styles.imageContainer, {marginVertical: WIDTH_SIZES['10'], marginTop: WIDTH_SIZES['84']}]}>
+                  {/* <Image source={require("../../Assets/Images/selectMedia.png")} resizeMethod="resize" resizeMode="contain" style={{ width: "100%" }} /> */}
+                  <Upload />
+                </View>
+                <Text style={{fontFamily: 'Rubik-Medium', textAlign: 'center', color: '#282828', fontSize: 14, marginBottom: 80}}>Click to upload your files </Text>
+              </TouchableOpacity>
+            )}
 
-          <TextInput
-            selectionColor={'#1e1e1e'}
-            cursorColor={'#1e1e1e'}
-            placeholderTextColor={'#7e7e7e'}
-            inputAccessoryViewID={inputAccessoryViewID}
-            value={caption}
-            style={styles.textInputStyle}
-            maxLength={120}
-            placeholder="Write caption here..."
-            multiline
-            onChangeText={x => handleTextInput(x)}
-          />
-          <Text style={styles.charCount}>{`${count}/120`}</Text>
-
-          {Platform.OS === 'ios' && (
-            <InputAccessoryView nativeID={inputAccessoryViewID}>
-              <Pressable
-                onPress={() => Keyboard.dismiss()}
-                style={{alignSelf: 'center', borderRadius: responsiveWidth(2)}}>
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    backgroundColor: '#f2f2f2',
-                    alignSelf: 'flex-end',
-                    padding: responsiveWidth(2),
-                    overflow: 'hidden',
-                  }}>
-                  Done
+            <View style={{position: 'relative', marginTop: 8}}>
+              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <Text style={[styles.textInputStyle, {color: '#1e1e1e'}]}>
+                  {(() => {
+                    let lastIndex = 0;
+                    const parts = [];
+                    const sortedMentions = [...mentions].sort((a, b) => a.start - b.start);
+                    
+                    sortedMentions.forEach((m, i) => {
+                      parts.push(<Text key={`text-${i}`}>{caption.slice(lastIndex, m.start)}</Text>);
+                      parts.push(
+                        <Text key={`mention-${i}`} style={{color: '#FFA86B'}}>
+                          {`@${m.name}`}
+                        </Text>
+                      );
+                      lastIndex = m.start + m.name.length + 1;
+                    });
+                    parts.push(<Text key="last">{caption.slice(lastIndex)}</Text>);
+                    return parts;
+                  })()}
                 </Text>
-              </Pressable>
-            </InputAccessoryView>
+              </View>
+
+              <TextInput
+                testID="create-post-caption-input"
+                ref={textInputRef}
+                selectionColor={'#1e1e1e'}
+                cursorColor={'#1e1e1e'}
+                onFocus={handleTextInputFocus}
+                placeholderTextColor={'#7e7e7e'}
+                inputAccessoryViewID={inputAccessoryViewID}
+                onSelectionChange={(event) => setSelection(event.nativeEvent.selection)}
+                value={caption}
+                style={[styles.textInputStyle, {color: 'transparent', zIndex: 1}]}
+                maxLength={500}
+                placeholder={caption ? "" : "Write caption here..."}
+                multiline
+                autoCorrect={false}
+                spellCheck={false}
+                onChangeText={x => handleTextInput(x)}
+              />
+            </View>
+            <Text style={styles.charCount}>{`${count}/500`}</Text>
+          </View>
+
+          {isEnabled && (
+            <View style={[styles.errorContainer, isEnabled ? {marginVertical: WIDTH_SIZES['24'] + WIDTH_SIZES['2']} : null]}>
+              <Ionicons name="time-outline" size={20} color="green" style={styles.errorIconOld} />
+
+              <Text style={styles.errorText}>
+                Scheduled for {date.toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'})} at {date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})}
+              </Text>
+
+              <DIcon onPress={toggleSwitch} provider={'MaterialIcons'} name={'delete-outline'} size={20} color="#1e1e1e" style={styles.errorIcon} />
+            </View>
           )}
-        </View>
 
-        {isEnabled && (
-          <View
-            style={[
-              styles.errorContainer,
-              isEnabled
-                ? {marginVertical: WIDTH_SIZES['24'] + WIDTH_SIZES['2']}
-                : null,
-            ]}>
-            <Ionicons
-              name="time-outline"
-              size={20}
-              color="green"
-              style={styles.errorIconOld}
-            />
+          {!isEnabled && (
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: WIDTH_SIZES['24']}}>
+              <Text style={{fontFamily: 'Rubik-SemiBold', color: '#282828', fontSize: 16, left: responsiveWidth(1.5)}}>Schedule this Post</Text>
+              <Switch testID="create-post-schedule-switch" trackColor={{false: '#767577', true: '#1e1e1e'}} thumbColor={isEnabled ? '#ffa86b' : '#1e1e1e'} ios_backgroundColor="white" onValueChange={toggleSwitch} value={isEnabled} style={{borderWidth: 1.5, borderColor: '#1e1e1e'}} />
+            </View>
+          )}
 
-            <Text style={styles.errorText}>
-              Scheduled for{' '}
-              {date.toLocaleDateString(undefined, {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}{' '}
-              at{' '}
-              {date.toLocaleTimeString(undefined, {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-
-            <DIcon
-              onPress={toggleSwitch}
-              provider={'MaterialIcons'}
-              name={'delete-outline'}
-              size={20}
-              color="#1e1e1e"
-              style={styles.errorIcon}
-            />
+          <View style={{width: '99%', justifyContent: 'center'}}>
+            <AnimatedButton testID="create-post-submit-btn" title={'Post'} buttonMargin={0} loading={loading} onPress={() => handleSendPost()} disabled={!mediaSelected} />
           </View>
-        )}
 
-        {!isEnabled && (
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 20,
-              marginTop: WIDTH_SIZES['24'],
-            }}>
-            <Text
-              style={{
-                fontFamily: 'Rubik-SemiBold',
-                color: '#282828',
-                fontSize: 16,
-                left: responsiveWidth(1.5),
-              }}>
-              Schedule this Post
-            </Text>
-            <Switch
-              trackColor={{false: '#767577', true: '#1e1e1e'}}
-              thumbColor={isEnabled ? '#ffa86b' : '#1e1e1e'}
-              ios_backgroundColor="white"
-              onValueChange={toggleSwitch}
-              value={isEnabled}
-              style={{borderWidth: 1.5, borderColor: '#1e1e1e'}}
-            />
-          </View>
-        )}
-
-        <View style={{width: '99%', justifyContent: 'center'}}>
-          <AnimatedButton
-            title={'Post'}
-            buttonMargin={0}
-            loading={loading}
-            onPress={() => handleSendPost()}
-            disabled={!mediaSelected}
-          />
-        </View>
-
-        {isEnabled && <DateTimePickerSheet date={date} setDate={setDate} />}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <CreatorSelectorModal 
+        onSelect={handleCreatorSelect} 
+        onClose={() => setMentionSearchQuery('')}
+        initialSearch={mentionSearchQuery} 
+      />
     </GestureHandlerRootView>
   );
 };
@@ -950,21 +939,21 @@ export default CreatePost;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: responsiveWidth(4),
     backgroundColor: '#ffffff',
     flex: 1,
-    paddingTop: responsiveWidth(4),
     flexDirection: 'column',
   },
 
   selectImageBox: {
-    borderWidth: responsiveWidth(0.5),
+    borderWidth: 1.5,
     borderRadius: 10,
     borderStyle: 'dashed',
+    borderColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    width: '100%',
+    width: 319,
+    height: 305,
     position: 'relative',
   },
 
@@ -987,15 +976,45 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(4),
     // height: 275,
   },
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 10,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    zIndex: 10,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: '#000000',
+  },
+  activeDot: {
+    width: 16,
+    backgroundColor: '#FFA86B',
+  },
+  inactiveDot: {
+    width: 6,
+    backgroundColor: '#FFFFFF',
+  },
   textInputStyle: {
     width: '100%',
     paddingLeft: responsiveWidth(2),
+    paddingRight: responsiveWidth(2), // Added paddingRight for symmetry
     fontFamily: 'Rubik-Regular',
-    borderColor: 'red',
     textAlignVertical: 'top',
-    marginTop: 8,
+    marginTop: 0, // Set to 0 here to avoid double margin
+    paddingTop: 0, // Explicitly set padding to 0
+    paddingBottom: 0,
+    paddingVertical: 0,
     fontSize: 14,
     color: '#1e1e1e',
+    lineHeight: 20,
+    includeFontPadding: false,
+    letterSpacing: 0, // Ensure no kerning drift
   },
 
   charCount: {
@@ -1015,22 +1034,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   SubScribers: {
-    flexBasis: '58%',
+    flexBasis: '50%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  visibilityTab: {
+    flexBasis: '33%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeTabStyle: {
+    backgroundColor: '#FFA86B',
+    borderWidth: responsiveWidth(0.3),
+    borderRadius: responsiveWidth(2.5),
+  },
+  tabText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: FONT_SIZES[14],
+    color: '#282828',
+  },
   FollowersSubScribersToggle: {
     alignSelf: 'center',
     flexDirection: 'row',
-    gap: responsiveWidth(2.8),
+    // gap: responsiveWidth(2.8),
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     borderRadius: responsiveWidth(2),
-    // backgroundColor: "#f3f3f3",
     height: 54,
     padding: responsiveWidth(1),
-    width: '90%',
+    width: '100%',
   },
 
   loginButton: {
@@ -1121,13 +1155,48 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   selectMedia: {
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
     position: 'absolute',
     height: 36,
     width: 36,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    top: WIDTH_SIZES['2'],
+    top: WIDTH_SIZES['10'],
+    left: WIDTH_SIZES['10'],
+    zIndex: 99,
   },
+  carouselContainer: {
+    width: '100%',
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  carouselItem: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageIndexIndicator: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(30, 30, 30, 0.73)',
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 40,
+    height: 26,
+    zIndex: 10,
+  },
+  imageIndexText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: 'Rubik-Medium',
+    lineHeight: 12,
+    textAlign: 'center',
+  },
+
 });

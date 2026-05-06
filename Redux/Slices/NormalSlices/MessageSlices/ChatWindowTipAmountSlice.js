@@ -5,7 +5,7 @@ import { resetAll } from '../../../Actions';
 
 const initialState = {
     data: {
-        amount: 0,
+        amount: 10,
     },
 
 };
@@ -15,12 +15,14 @@ const chatWindowTipAmount = createSlice({
     initialState,
     reducers: {
         increaseTipAmount: (state, action) => {
-            state.data.amount = Number(state.data.amount) + 1
+            state.data.amount = state.data.amount < 10 ? 10 : Number(state.data.amount) + 1
         },
 
         decreaseTipAmount: (state, action) => {
-           if(state.data.amount > 0) {
+           if(state.data.amount > 10) {
               state.data.amount = Number(state.data.amount) - 1;
+           } else {
+              state.data.amount = 0;
            }
         },
         customTipAmount: (state, action) => {

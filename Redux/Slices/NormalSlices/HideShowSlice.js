@@ -1,5 +1,5 @@
-import {createSlice} from '@reduxjs/toolkit';
-import {resetAll} from '../../Actions';
+import { createSlice } from '@reduxjs/toolkit';
+import { resetAll } from '../../Actions';
 
 const initialState = {
   visibility: {
@@ -10,7 +10,7 @@ const initialState = {
     chatWindowFullSizedImageModal: false,
     chatWindowAttachmentPreviewModal: false,
     chatWindowInformationModal: false,
-    newMessageRecieved: false,
+    newMessageRecieved: 0,
     chatWindowTipModal: false,
     forgetPassword: false,
     notificationClick: false,
@@ -18,15 +18,18 @@ const initialState = {
     notificationModal: false,
     homeBottomSheet: -1,
     switchBottomSheet: -1,
-    brandBottomSheet: -1,
     chatWindowPreview: -1,
-    detailedBrandBottomSheet: -1,
     postCardType: 'normal',
     tableModal: false,
     brandPreviewModal: false,
     brandLinkSubmitSheet: -1,
     createPostSheet: -1,
     dateTimePicker: -1,
+    dateTimePickerData: {
+      date: new Date().toISOString(),
+      type: 'datetime',
+      status: 'idle', // idle, picking, confirmed
+    },
     wishListSheet: -1,
     transactionSheet: -1,
     hideShowLiveTerms: -1,
@@ -45,6 +48,7 @@ const initialState = {
     postActionBottomSheet: {
       show: -1,
       postId: undefined,
+      postContent: undefined,
     },
 
     profileActionModal: false,
@@ -68,6 +72,11 @@ const initialState = {
     },
 
     verificationInformatin: false,
+
+    discoverFilter: {
+      type: 'all',
+      visible: false,
+    },
 
     whoTippedSheet: {
       show: -1,
@@ -163,23 +172,45 @@ const initialState = {
 
     accountDeleteModal: false,
 
+    isUserOnline: false,
+
     relogin: false,
 
-    postEdit: {
-      show: false,
-      postId: undefined,
-    },
+    timeRequestModal: false,
+
+    fahduFees: 0,
+
+    amount: 0,
+
+    showPostProgress: false,
+
+
 
     profileDescriptionModal: {
       type: undefined,
       show: false,
     },
 
+    callAccepted: false,
+
+    showRechargeModal: false,
+
     alertModal: {
       message: undefined,
       show: false,
       type: false,
     },
+
+    onlineStatus: false,
+
+    unReadChatIcon: false,
+    showOnboarding: false,
+    setupCompleteModal: false,
+    serverMaintenance: false, // Temporary variable for maintenance mode
+    showTabBar: true,
+    latestTip: null,
+    nicheSelectorModal: false,
+    creatorSelectorModal: false,
   },
 };
 
@@ -212,7 +243,7 @@ const hideShowSlice = createSlice({
     },
 
     toggleNewMessageRecieved: (state, action) => {
-      state.visibility.newMessageRecieved = !state.visibility.newMessageRecieved;
+      state.visibility.newMessageRecieved = (state.visibility.newMessageRecieved || 0) + 1;
     },
 
     toggleChatWindowInformationModal: (state, action) => {
@@ -243,12 +274,26 @@ const hideShowSlice = createSlice({
       state.visibility.notificationModal = true;
     },
 
+    toggleShowProgress: (state, action) => {
+      state.visibility.showPostProgress = action.payload.show;
+    },
+
     disableNotificationModal: (state, action) => {
       state.visibility.notificationModal = false;
     },
 
     toggleHomeBottomSheet: (state, action) => {
       state.visibility.homeBottomSheet = action.payload.show;
+    },
+
+    setDiscoverFilter: (state, action) => {
+      if (typeof action.payload.show === 'boolean') {
+        state.visibility.discoverFilter.visible = action.payload.show;
+      }
+
+      if (action.payload.type) {
+        state.visibility.discoverFilter.type = action.payload.type;
+      }
     },
 
     toggleChatWindowPreviewSheet: (state, action) => {
@@ -259,21 +304,18 @@ const hideShowSlice = createSlice({
       state.visibility.wishListSheet = action.payload.show;
     },
 
-    toggleBrandBottomSheet: (state, action) => {
-      state.visibility.brandBottomSheet = action.payload.show;
-    },
-
     toggleTransactionSheet: (state, action) => {
       state.visibility.transactionSheet = action.payload.show;
     },
 
-    toggleDetailedBrandBottomSheet: (state, action) => {
-      state.visibility.detailedBrandBottomSheet = action.payload.show;
+
+    toggleShowRechargeModal: (state, action) => {
+      state.visibility.showRechargeModal = action.payload.show;
     },
 
     togglePostActionBottomSheet: (state, action) => {
       console.log(action.payload.info, ':::::::::::P');
-      state.visibility.postActionBottomSheet = {...action.payload.info};
+      state.visibility.postActionBottomSheet = { ...action.payload.info };
     },
 
     setPostsCardType: (state, action) => {
@@ -288,7 +330,7 @@ const hideShowSlice = createSlice({
       state.visibility.chatWindowFullSizedImageModal = false;
       state.visibility.chatWindowAttachmentPreviewModal = false;
       state.visibility.chatWindowInformationModal = false;
-      state.visibility.newMessageRecieved = false;
+      state.visibility.newMessageRecieved = 0;
       state.visibility.chatWindowTipModal = false;
       state.visibility.logoutModal = false;
       state.visibility.verficationScreen = -1;
@@ -304,8 +346,6 @@ const hideShowSlice = createSlice({
       state.visibility.homeBottomSheet = -1;
       state.visibility.chatWindowPreview = -1;
       state.visibility.switchBottomSheet = -1;
-      state.visibility.brandBottomSheet = -1;
-      state.visibility.detailedBrandBottomSheet = -1;
       state.visibility.brandLinkSubmitSheet = -1;
       state.visibility.createPostSheet = -1;
       state.visibility.dateTimePicker = -1;
@@ -313,18 +353,23 @@ const hideShowSlice = createSlice({
       state.visibility.transactionSheet = -1;
       state.visibility.hideShowLiveTerms = -1;
       state.visibility.hideShowInformationIcon = false;
-      state.visibility.commentBottomSheet = {show: -1, focus: false};
-      state.visibility.postActionBottomSheet = {postId: '', show: -1};
+      state.visibility.commentBottomSheet = { show: -1, focus: false };
+      state.visibility.postActionBottomSheet = { postId: '', show: -1 };
       state.visibility.sendPostTipsModal = {
         show: false,
         postId: '',
       };
-      state.visibility.whoTippedSheet = {show: -1, postId: undefined};
+      state.visibility.whoTippedSheet = { show: -1, postId: undefined };
       state.visibility.otherProfileRatingSheet = -1;
-      state.visibility.twoFAAuthCard = {type: 'authenticator', show: false};
-      state.visibility.authenticatorVia = {email: false, auth: false};
-      state.visibility.disableAuthModal = {show: false};
-      state.visibility.otherProfileLoader = {stateOne: true, stateTwo: true, stateThree: true};
+      state.visibility.twoFAAuthCard = { type: 'authenticator', show: false };
+      state.visibility.authenticatorVia = { email: false, auth: false };
+      state.visibility.disableAuthModal = { show: false };
+      state.visibility.otherProfileLoader = { stateOne: true, stateTwo: true, stateThree: true };
+      state.visibility.dateTimePickerData = {
+        date: new Date().toISOString(),
+        type: 'datetime',
+        status: 'idle',
+      };
     },
 
     resetVerificationScreen: (state, action) => {
@@ -353,6 +398,34 @@ const hideShowSlice = createSlice({
 
     toggleDateTimePicker: (state, action) => {
       state.visibility.dateTimePicker = action.payload.show;
+      if (action.payload.show === 1) {
+        state.visibility.dateTimePickerData.status = 'picking';
+      }
+      if (action.payload.date) {
+        state.visibility.dateTimePickerData.date = action.payload.date;
+      }
+      if (action.payload.type) {
+        state.visibility.dateTimePickerData.type = action.payload.type;
+      }
+    },
+
+    resetDateTimePicker: (state, action) => {
+      state.visibility.dateTimePicker = -1;
+      state.visibility.dateTimePickerData = {
+        date: new Date().toISOString(),
+        type: 'datetime',
+        status: 'idle',
+      };
+    },
+
+    confirmDateTimePicker: (state, action) => {
+      state.visibility.dateTimePicker = -1;
+      state.visibility.dateTimePickerData.status = 'confirmed';
+      state.visibility.dateTimePickerData.date = action.payload.date;
+    },
+
+    setDateTimePickerDate: (state, action) => {
+      state.visibility.dateTimePickerData.date = action.payload.date;
     },
 
     toggleProfileAction: (state, action) => {
@@ -368,11 +441,11 @@ const hideShowSlice = createSlice({
     },
 
     toggleSendPostTipModal: (state, action) => {
-      state.visibility.sendPostTipsModal = {...action.payload.info};
+      state.visibility.sendPostTipsModal = { ...action.payload.info };
     },
 
     toggleLiveStreamTipModal: (state, action) => {
-      state.visibility.liveStreamTipModal = {...action.payload.info};
+      state.visibility.liveStreamTipModal = { ...action.payload.info };
     },
 
     toggleTabBar: (state, action) => {
@@ -400,7 +473,7 @@ const hideShowSlice = createSlice({
     },
 
     toggleOtherProfileActionSheet: (state, action) => {
-      state.visibility.otherProfileActionSheet = {...action.payload.info};
+      state.visibility.otherProfileActionSheet = { ...action.payload.info };
     },
 
     toggleRefreshOtherProfile: (state, action) => {
@@ -412,7 +485,7 @@ const hideShowSlice = createSlice({
     },
 
     toggleCommentBottomSheet: (state, action) => {
-      state.visibility.commentBottomSheet = {...action.payload.info};
+      state.visibility.commentBottomSheet = { ...action.payload.info };
     },
 
     toggleVerificatinInformation: (state, action) => {
@@ -420,7 +493,7 @@ const hideShowSlice = createSlice({
     },
 
     toggleWhoTippedSheet: (state, action) => {
-      state.visibility.whoTippedSheet = {...action.payload.info};
+      state.visibility.whoTippedSheet = { ...action.payload.info };
     },
 
     toggleOtherProfileRatingSheet: (state, action) => {
@@ -428,11 +501,11 @@ const hideShowSlice = createSlice({
     },
 
     toggleTwoFAAuthCard: (state, action) => {
-      state.visibility.twoFAAuthCard = {...action.payload.info};
+      state.visibility.twoFAAuthCard = { ...action.payload.info };
     },
 
     toggleAuthenticatorVia: (state, action) => {
-      state.visibility.authenticatorVia = {...state.visibility.authenticatorVia, ...action.payload.info};
+      state.visibility.authenticatorVia = { ...state.visibility.authenticatorVia, ...action.payload.info };
     },
 
     toggleDisableAuthModal: (state, action) => {
@@ -440,7 +513,7 @@ const hideShowSlice = createSlice({
     },
 
     toggleOtherProfileLoader: (state, action) => {
-      state.visibility.otherProfileLoader = {...action.payload.info};
+      state.visibility.otherProfileLoader = { ...action.payload.info };
     },
 
     toggleHideShowLiveTerms: (state, action) => {
@@ -497,6 +570,10 @@ const hideShowSlice = createSlice({
 
     toggleShowBankDetailsModal: (state, action) => {
       state.visibility.bankDetails = action.payload.show;
+
+      state.visibility.fahduFees = action.payload.fahduFees;
+
+      state.visibility.amount = action.payload.amount;
     },
 
     toggleHelpCenterModal: (state, action) => {
@@ -552,6 +629,7 @@ const hideShowSlice = createSlice({
     toggleCallPriceModal: (state, action) => {
       state.visibility.callPriceModal.show = action.payload.show;
       state.visibility.callPriceModal.type = action.payload.type;
+      state.visibility.callMethodSelector = action.payload.callSelectors;
     },
 
     toggleCallIntiator: (state, action) => {
@@ -578,12 +656,7 @@ const hideShowSlice = createSlice({
       state.visibility.accountDeleteModal = action.payload.show;
     },
 
-    togglePostEditModal: (state, action) => {
-      console.log(action.payload.show, action.payload.postId, ':::');
 
-      state.visibility.postEdit.show = action.payload.show;
-      state.visibility.postEdit.postId = action.payload.postId;
-    },
 
     toggleProfileDescriptionModal: (state, action) => {
       state.visibility.profileDescriptionModal.type = action.payload.type;
@@ -594,14 +667,59 @@ const hideShowSlice = createSlice({
       state.visibility.alertModal.show = false;
     },
 
+    setIsUserOnline: (state, action) => {
+      state.visibility.isUserOnline = action.payload.show;
+    },
+
     toggleReLogin: (state, action) => {
       state.visibility.relogin = action.payload.show;
+    },
+
+    toggleCallAccepted: (state, action) => {
+      state.visibility.callAccepted = action.payload.status;
+    },
+
+    toggleTimeRequestModal: (state, action) => {
+      state.visibility.timeRequestModal = action.payload.show;
+      state.visibility.callPriceModal.show = action.payload.priceModal;
     },
 
     toggleAlertModal: (state, action) => {
       state.visibility.alertModal.message = action.payload.message;
       state.visibility.alertModal.show = action.payload.show;
       state.visibility.alertModal.type = action.payload.type;
+    },
+
+    updateOnlineStatus: (state, action) => {
+      state.visibility.onlineStatus = action.payload.onlineStatus;
+    },
+
+    setUnReadChatIcon: (state, action) => {
+      state.visibility.unReadChatIcon = action.payload.show;
+    },
+
+    toggleShowOnboarding: (state, action) => {
+      state.visibility.showOnboarding = action.payload.show;
+    },
+
+    toggleSetupCompleteModal: (state, action) => {
+      state.visibility.setupCompleteModal = action.payload.show;
+    },
+
+    toggleServerMaintenance: (state, action) => {
+      state.visibility.serverMaintenance = action.payload.show;
+    },
+    setLatestTip: (state, action) => {
+      state.visibility.latestTip = action.payload;
+    },
+    toggleNicheSelectorModal: (state, action) => {
+      state.visibility.nicheSelectorModal = action.payload.show;
+    },
+    setConfirmedNiches: (state, action) => {
+      state.visibility.confirmedNiches = action.payload;
+    },
+    toggleCreatorSelectorModal: (state, action) => {
+      state.visibility.creatorSelectorModal = action.payload.show;
     },
   },
 
@@ -631,7 +749,6 @@ export const {
   toggleConfirmSubscribe,
   toggleTransactionSheet,
   toggleSwitchBottomSheet,
-  toggleDetailedBrandBottomSheet,
   toggleWishListSheet,
   toggleAreYouSureModal,
   toggleAttachmentMediaLoading,
@@ -655,12 +772,14 @@ export const {
   disableNotificationModal,
   toggleHomeBottomSheet,
   setPostsCardType,
-  toggleBrandBottomSheet,
   toggleTableModal,
   toggleBrandPreviewModal,
   toggleBrandLinkSubmitSheet,
   toggleCreatePostBottomSheet,
   toggleDateTimePicker,
+  resetDateTimePicker,
+  confirmDateTimePicker,
+  setDateTimePickerDate,
   toggleForgetPassword,
   toggleIsThisYou,
   toggleConfirmIsThisYou,
@@ -669,6 +788,7 @@ export const {
   togglePostActionBottomSheet,
   toggleInstagrmLinkSubmitModal,
   toggleEmailVerificationModal,
+  toggleCreatorSelectorModal,
   toggleInstagramVerification,
   toggleAreYou,
   toggleAppliedVerify,
@@ -692,6 +812,8 @@ export const {
   toggleCallMethodSelector,
   toggleCallRequestModal,
   toggleCallPriceModal,
+  toggleNicheSelectorModal,
+  setConfirmedNiches,
   toggleCallIntiator,
   toggleCallTimeModal,
   toggleCallTipModal,
@@ -699,9 +821,22 @@ export const {
   toggleLinkingModal,
   toggleProfileDescriptionModal,
   toggleAccountDeleteModal,
-  togglePostEditModal,
+
   toggleAlertModal,
   toggleReLogin,
+  toggleTimeRequestModal,
+  toggleShowRechargeModal,
+  toggleShowProgress,
+  setDiscoverFilter,
   hideAlertModal,
+  setIsUserOnline,
+  toggleCallAccepted,
+  setUnReadChatIcon,
+  updateOnlineStatus,
+  toggleShowOnboarding,
+  toggleSetupCompleteModal,
+  toggleServerMaintenance,
+  toggleTabBar,
+  setLatestTip,
 } = hideShowSlice.actions;
 export default hideShowSlice.reducer;

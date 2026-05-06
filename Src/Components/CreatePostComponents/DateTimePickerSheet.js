@@ -1,22 +1,51 @@
 import {StyleSheet, View, TouchableOpacity, Text, Pressable, ActivityIndicator} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState} from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
 import DatePicker from 'react-native-date-picker';
 import {useDispatch, useSelector} from 'react-redux';
-import {toggleDateTimePicker} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {confirmDateTimePicker, toggleDateTimePicker} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {padios} from '../../../DesiginData/Utility';
 import {Image} from 'expo-image';
 import AnimatedButton from '../AnimatedButton';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import dayjs from 'dayjs';
 
-const DateTimePickerSheet = ({date, setDate, type}) => {
+const DateTimePickerSheet = () => {
   const bottomSheetRef = useRef(null);
+  const insets = useSafeAreaInsets();
 
   const dispatch = useDispatch();
 
   const dateTimeVisibility = useSelector(state => state.hideShow.visibility.dateTimePicker);
+  const {date: dateString, type} = useSelector(state => state.hideShow.visibility.dateTimePickerData);
+  
+  const [tempDate, setTempDate] = useState(new Date(Date.now() + 120000)); // Default to +2 mins
 
   const snapPoints = useMemo(() => ['25%', '50%'], []);
+
+  // Stable limits
+  const currentDate = useMemo(() => new Date(), []);
+  const maxDate = useMemo(() => {
+    return dayjs().subtract(13, 'year').endOf('day').toDate();
+  }, []);
+
+  // Update tempDate when sheet opens
+  React.useEffect(() => {
+    if (dateTimeVisibility === 1) {
+      if (type === 'dob') {
+        const existingDate = new Date(dateString);
+        // If current date in Redux is valid (<= maxDate), use it. Otherwise, default to maxDate.
+        if (existingDate && existingDate.getTime() <= maxDate.getTime()) {
+          setTempDate(existingDate);
+        } else {
+          setTempDate(new Date(maxDate.getTime()));
+        }
+      } else {
+        setTempDate(new Date(Date.now() + 120000));
+      }
+    }
+  }, [dateTimeVisibility, type, dateString, maxDate]);
 
   const handleSheetChanges = useCallback(index => {
     if (index === -1) {
@@ -24,27 +53,51 @@ const DateTimePickerSheet = ({date, setDate, type}) => {
     } else if (index === 1) {
       dispatch(toggleDateTimePicker({show: 1}));
     }
-  }, []);
+  }, [dispatch]);
 
-  // const today = new Date();
-  // const minDate = new Date(
-  //   today.getFullYear() - 16, // Subtract 16 years
-  //   today.getMonth(),
-  //   today.getDate(),
-  // );
+  const renderBackdrop = useCallback(
+    props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.1} />,
+    [],
+  );
 
+  const handleProceed = useCallback(() => {
+    if (type === 'datetime') {
+      if (tempDate.getTime() < Date.now()) {
+        const {LoginPageErrors} = require('../../../Src/Components/ErrorSnacks');
+        LoginPageErrors('Please select a future time');
+        return;
+      }
+    } else if (type === 'dob') {
+      if (tempDate.getTime() > maxDate.getTime()) {
+        const {LoginPageErrors} = require('../../../Src/Components/ErrorSnacks');
+        LoginPageErrors('You must be at least 13 years old');
+        return;
+      }
+    }
+    dispatch(confirmDateTimePicker({date: tempDate.toISOString()}));
+    bottomSheetRef.current.close();
+  }, [tempDate, type, dispatch, maxDate]);
 
-    // Calculate the maximum date (16 years ago from today)
-    const currentDate = new Date();
-    const maxDate = new Date(
-      currentDate.getFullYear() - 16, // Subtract 16 years
-      currentDate.getMonth(),
-      currentDate.getDate()
-    );
+  const handleDateChange = useCallback((newDate) => {
+    if (type === 'dob' && newDate.getTime() > maxDate.getTime()) {
+      // Create a NEW Date reference to force UI update/snap-back
+      setTempDate(new Date(maxDate.getTime()));
+    } else {
+      setTempDate(newDate);
+    }
+  }, [type, maxDate]);
 
   return (
-    <BottomSheet handleIndicatorStyle={{display: 'none'}} snapPoints={snapPoints} ref={bottomSheetRef} index={dateTimeVisibility} onChange={handleSheetChanges} enablePanDownToClose={true} backgroundStyle={{backgroundColor: '#fff'}}>
-      <View style={styles.contentContainer}>
+    <BottomSheet
+      handleIndicatorStyle={{display: 'none'}}
+      snapPoints={snapPoints}
+      ref={bottomSheetRef}
+      index={dateTimeVisibility}
+      onChange={handleSheetChanges}
+      enablePanDownToClose={true}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{backgroundColor: '#fff'}}>
+      <View style={[styles.contentContainer, {paddingBottom: insets.bottom || 20}]}>
         <View style={styles.mainContainer}>
           <View style={styles.textContainer}>
             <Text style={styles.heading}>{type === 'dob' ? 'Date of Birth' : 'Schedule your post'}</Text>
@@ -56,19 +109,19 @@ const DateTimePickerSheet = ({date, setDate, type}) => {
           </TouchableOpacity>
         </View>
 
-    
         <DatePicker
-        date={date}
-        maximumDate={type === 'dob' ? maxDate : null} // Conditional maximum date
-        onDateChange={setDate}
-        style={{ alignSelf: 'center', width: 420 }}
-        mode={type === 'dob' ? 'date' : 'datetime'} // Conditional mode
-        textColor="#282828"
-        theme="light"
-        androidVariant="iosClone"
-      />
+          date={tempDate}
+          minimumDate={type === 'datetime' ? currentDate : null}
+          maximumDate={type === 'dob' ? maxDate : null}
+          onDateChange={handleDateChange}
+          style={{alignSelf: 'center'}}
+          mode={type === 'dob' ? 'date' : 'datetime'}
+          textColor="#282828"
+          theme="light"
+          androidVariant="iosClone"
+        />
         <View style={{width: responsiveWidth(87.5), alignSelf: 'center'}}>
-          <AnimatedButton title={'Proceed'} showOverlay={true} buttonMargin={0} onPress={() => bottomSheetRef.current.close()} />
+          <AnimatedButton title={'Proceed'} showOverlay={true} buttonMargin={0} onPress={handleProceed} />
         </View>
       </View>
     </BottomSheet>
@@ -79,117 +132,24 @@ export default DateTimePickerSheet;
 
 const styles = StyleSheet.create({
   contentContainer: {
+    paddingHorizontal: responsiveWidth(5),
+    paddingTop: 10,
     backgroundColor: '#fff',
-    height: '100%',
-    paddingHorizontal: responsiveWidth(2),
-  },
-  title: {
-    fontFamily: 'Lexend-Medium',
-    textAlign: 'center',
-    color: '#FF9E99',
-    fontSize: responsiveFontSize(2.2),
-  },
-  notePoints: {
-    fontFamily: 'MabryPro-Medium',
-    color: '#282828',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  title: {
-    fontFamily: 'Lexend-Medium',
-    textAlign: 'center',
-    color: '#FF9E99',
-    fontSize: responsiveFontSize(2.5),
-  },
-
-  titleTwo: {
-    fontFamily: 'MabryPro-Regular',
-    textAlign: 'center',
-    color: '#282828',
-    fontSize: responsiveFontSize(2),
-    marginVertical: responsiveWidth(4),
-  },
-  sendTipInputContainer: {
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    width: '70%',
-    borderRadius: responsiveWidth(2),
-    borderColor: '#282828',
-    marginTop: responsiveWidth(4),
-    alignSelf: 'center',
-  },
-  amountInput: {
-    flexBasis: '70%',
-    color: '#282828',
-    fontFamily: 'MabryPro-Regular',
-    fontSize: responsiveFontSize(2.2),
-  },
-
-  loginButton: {
-    borderWidth: 1,
-    paddingHorizontal: responsiveWidth(2),
-    backgroundColor: '#ffa07a',
-    marginTop: responsiveWidth(4),
-    borderRadius: responsiveWidth(2),
-    color: '#282828',
-    textAlign: 'center',
-    fontFamily: 'Lexend-Medium',
-    elevation: 1,
-    fontWeight: '600',
-    width: responsiveWidth(35),
-    height: responsiveWidth(12),
-    textAlignVertical: 'center',
-    alignSelf: 'center',
-    borderTopColor: '#282828',
-    borderLeftColor: '#282828',
-    elevation: 1,
-    fontSize: responsiveFontSize(2.8),
-  },
-  loginButton: {
-    paddingHorizontal: responsiveWidth(2),
-    backgroundColor: '#ffa07a',
-    borderRadius: responsiveWidth(2),
-    color: '#282828',
-    textAlign: 'center',
-    fontFamily: 'MabryPro-Bold',
-    elevation: 1,
-    fontWeight: '600',
-    width: responsiveWidth(32),
-    height: responsiveWidth(10),
-    textAlignVertical: 'center',
-    alignSelf: 'center',
-    borderTopColor: '#282828',
-    borderLeftColor: '#282828',
-    elevation: 1,
-    fontSize: responsiveFontSize(2.4),
-    padding: padios(responsiveWidth(2.6)),
-    overflow: 'hidden',
-    marginTop: responsiveWidth(1),
   },
   mainContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
+    marginBottom: 20,
   },
-  textContainer: {
-    flex: 1, // Allows text to take remaining space
-  },
+  textContainer: {},
   heading: {
-    fontFamily: 'Rubik-SemiBold',
-    fontSize: 18,
-    color: '#1e1e1e',
+    fontSize: responsiveFontSize(2),
+    color: '#000',
+    fontFamily: 'Outfit-Bold',
   },
   description: {
-    fontFamily: 'Rubik-Regular',
-    fontSize: 12,
-    color: '#1e1e1e',
-    marginTop: 5,
-  },
-  closeButton: {
-    padding: 8, // Gives some touchable area around the icon
+    fontSize: responsiveFontSize(1.5),
+    color: '#7C7C7C',
+    fontFamily: 'Outfit-Regular',
   },
 });

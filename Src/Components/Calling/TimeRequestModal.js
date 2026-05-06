@@ -1,23 +1,58 @@
-import React from 'react';
-import {View, Text, StyleSheet, TextInput, TouchableOpacity} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {Dialog} from 'react-native-simple-dialogs';
 import {BlurView} from 'expo-blur';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import Feather from 'react-native-vector-icons/Feather';
 import AnimatedButton from '../../Components/AnimatedButton';
-import {toggleEmailVerificationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useDispatch} from 'react-redux';
-import {FONT_SIZES, nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import {toggleEmailVerificationModal, toggleTimeRequestModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {FONT_SIZES, nTwins, toCapitalized, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import DatePicker from 'react-native-date-picker';
-import {useState} from 'react';
-import dayjs from 'dayjs'; // optional for formatting
+import dayjs from 'dayjs';
+import {useCallRequestMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {chatRoomSuccess, ChatWindowError} from '../ErrorSnacks';
 
-const TimeRequestModal = ({visible = false }) => {
+const TimeRequestModal = ({roomId}) => {
   const dispatch = useDispatch();
 
+  // Initialize with current date/time
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
   const [formattedDate, setFormattedDate] = useState('');
+  const [loading, setLoading] = useState(false);
+  const token = useSelector(state => state.auth.user.token);
+  const {
+    callPriceModal: {type},
+    timeRequestModal: visible,
+  } = useSelector(state => state.hideShow.visibility);
+  const [callRequest] = useCallRequestMutation();
+
+  console.log(type, ':::::');
+
+  const handleClose = () => {
+    dispatch(toggleTimeRequestModal({show: false, priceModal: false}));
+  };
+
+  const handleCallRequest = async () => {
+    setLoading(true);
+
+    console.log(type);
+
+    const {data, error} = await callRequest({token, data: {roomId, type: toCapitalized(type), availability: date}});
+
+    console.log(data, error);
+    if (data?.data === true) {
+      chatRoomSuccess('Call request sent!');
+    }
+
+    if (error) {
+      ChatWindowError(error?.data?.message);
+    }
+    setFormattedDate('');
+    setLoading(false);
+    handleClose();
+  };
 
   return (
     visible && (
@@ -28,7 +63,15 @@ const TimeRequestModal = ({visible = false }) => {
             <Text style={styles.title}>Call Back Availability Date & Time</Text>
 
             {/* Date Time Picker Field */}
-            <TouchableOpacity style={styles.dateTimeInput} onPress={() => setOpen(true)}>
+            <TouchableOpacity
+              style={styles.dateTimeInput}
+              onPress={() => {
+                // Reset to current time if no date has been selected yet
+                if (!formattedDate) {
+                  setDate(new Date());
+                }
+                setOpen(true);
+              }}>
               <Text style={[styles.placeholderText, formattedDate && {color: '#1e1e1e'}]}>{formattedDate ? dayjs(date).format('DD MMM YYYY, hh:mm A') : 'Select date & time'}</Text>
               <Feather name="calendar" size={20} color="#000" />
             </TouchableOpacity>
@@ -36,10 +79,10 @@ const TimeRequestModal = ({visible = false }) => {
             {/* Buttons */}
             <View style={styles.buttonRow}>
               <View style={{width: '48%'}}>
-                <AnimatedButton title={'Save'} buttonMargin={0} showOverlay={false} style={[styles.button, styles.saveButton]} />
+                <AnimatedButton title={'Save'} buttonMargin={0} showOverlay={false} style={[styles.button, styles.saveButton]} loading={loading} onPress={handleCallRequest} />
               </View>
               <View style={{width: '48%'}}>
-                <AnimatedButton title={'Cancel'} buttonMargin={0} showOverlay={false} style={[styles.button, styles.cancelButton]} />
+                <AnimatedButton title={'Cancel'} buttonMargin={0} showOverlay={false} style={[styles.button, styles.cancelButton]} onPress={handleClose} />
               </View>
             </View>
           </View>
@@ -49,11 +92,11 @@ const TimeRequestModal = ({visible = false }) => {
           open={open}
           date={date}
           mode="datetime"
-          minimumDate={new Date()}
+          minimumDate={new Date()} // Prevents selecting past dates
           onConfirm={selectedDate => {
             setOpen(false);
             setDate(selectedDate);
-            setFormattedDate(selectedDate.toISOString()); // ISO format for return
+            setFormattedDate(selectedDate.toISOString());
             console.log('ISO Date:', selectedDate.toISOString());
           }}
           onCancel={() => {
@@ -80,7 +123,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     backgroundColor: '#fff',
     width: nTwins(88, 92),
-    padding: 20,
+    padding: 32,
   },
   content: {
     alignItems: 'center',
@@ -117,7 +160,7 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     height: responsiveHeight(5.91),
-    backgroundColor: '#fff', // Default white, override as needed
+    backgroundColor: '#fff',
   },
   saveButton: {
     backgroundColor: '#FFB377',

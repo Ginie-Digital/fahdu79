@@ -6,7 +6,7 @@ import {useSignUpMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAtt
 import {LoginPageErrors, chatRoomSuccess} from '../../Components/ErrorSnacks';
 import {navigate} from '../../../Navigation/RootNavigation';
 import Back from '../../../Assets/svg/back.svg';
-import InputOverlay from '../../Components/InputOverlay'; // Import InputOverlay
+import InputOverlay from '../../Components/InputOverlay';
 import {useDispatch, useSelector} from 'react-redux';
 import AnimatedButton from '../../Components/AnimatedButton';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -16,12 +16,15 @@ import EmailVerificationModal from './EmailVerificationModal';
 import {toggleEmailVerificationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {setCredentials} from '../../../Redux/Slices/NormalSlices/TempCredentials';
 import ChevronLoader from '../../ChevronLoader';
+
 const SignupPassword = ({route}) => {
+  console.log(route);
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [cShowPassword, cSetShowPassword] = useState(false);
-  const [focusedInput, setFocusedInput] = useState(null); // Tracks the currently focused input
+  const [focusedInput, setFocusedInput] = useState(null);
   const [isPasswordStrong, setIsPasswordStrong] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [signUp] = useSignUpMutation();
@@ -34,8 +37,8 @@ const SignupPassword = ({route}) => {
 
   const [loading, setLoading] = useState(false);
 
-  const passwordInputRef = useRef(null); // Ref for password input
-  const confirmPasswordInputRef = useRef(null); // Ref for confirm password input
+  const passwordInputRef = useRef(null);
+  const confirmPasswordInputRef = useRef(null);
 
   const {link} = useSelector(state => state.deeplink.data.refferal);
 
@@ -48,7 +51,6 @@ const SignupPassword = ({route}) => {
     const spaces = /\s/g;
     const specialCharacter = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/\|=]/;
 
-    // Define password length limits
     const MIN_PASSWORD_LENGTH = 6;
     const MAX_PASSWORD_LENGTH = 64;
 
@@ -85,7 +87,18 @@ const SignupPassword = ({route}) => {
         if (password === confirmPassword) {
           setLoading(true);
 
-          const {data, error} = await signUp({data: {email: route?.params?.email?.trim(), password, agreedTOC: true, onlyBrandsAccess: false, referredDisplayName: link}});
+          // Use referralCode from route params if available, otherwise fallback to deeplink
+          const referralName = route?.params?.referralCode || link;
+
+          const {data, error} = await signUp({
+            data: {
+              email: route?.params?.email?.trim(),
+              password,
+              agreedTOC: true,
+              onlyBrandsAccess: false,
+              referredDisplayName: referralName,
+            },
+          });
 
           console.log(data, error);
 
@@ -97,10 +110,8 @@ const SignupPassword = ({route}) => {
 
           if (data) {
             setLoading(false);
-            // navigate('LoginHome');
             dispatch(toggleEmailVerificationModal({show: true}));
             dispatch(setCredentials({data: {email: route?.params?.email?.trim(), password}}));
-            // chatRoomSuccess("You're signed up, please login");
           }
         } else {
           setLoading(false);
@@ -117,11 +128,11 @@ const SignupPassword = ({route}) => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView testID="signup-password-screen" style={{flex: 1, backgroundColor: '#fff'}}>
       <ChevronLoader show={loading} />
 
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigate('SignupEmail')}>
+        <TouchableOpacity testID="signup-password-back-button" accessibilityLabel="signup-password-back-button" style={styles.backButton} onPress={() => navigate('SignupEmail')}>
           <Back />
         </TouchableOpacity>
         <Text style={styles.heading}>Sign Up</Text>
@@ -131,7 +142,9 @@ const SignupPassword = ({route}) => {
         <View>
           <View style={styles.textInputContainer}>
             <TextInput
-              ref={passwordInputRef} // Ref for this input
+              testID="signup-password-input"
+              accessibilityLabel="signup-password-input"
+              ref={passwordInputRef}
               style={styles.textInputs}
               secureTextEntry={!showPassword}
               onChangeText={handlePassword}
@@ -144,7 +157,7 @@ const SignupPassword = ({route}) => {
               maxLength={64}
               selectionHandleColor={'#ffa86b'}
             />
-            <Pressable style={styles.iconContainer} onPress={() => setShowPassword(prev => !prev)}>
+            <Pressable testID="signup-password-toggle-visibility" accessibilityLabel="signup-password-toggle-visibility" style={styles.iconContainer} onPress={() => setShowPassword(prev => !prev)}>
               {showPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
@@ -173,6 +186,8 @@ const SignupPassword = ({route}) => {
         <View>
           <View style={styles.textInputContainer}>
             <TextInput
+              testID="signup-confirm-password-input"
+              accessibilityLabel="signup-confirm-password-input"
               placeholderTextColor="#B2B2B2"
               placeholder="Enter Confirm Password "
               ref={confirmPasswordInputRef}
@@ -185,7 +200,7 @@ const SignupPassword = ({route}) => {
               cursorColor={'#1e1e1e'}
               selectionHandleColor={'#ffa86b'}
             />
-            <Pressable style={styles.iconContainer} onPress={() => cSetShowPassword(prev => !prev)}>
+            <Pressable testID="signup-confirm-password-toggle-visibility" accessibilityLabel="signup-confirm-password-toggle-visibility" style={styles.iconContainer} onPress={() => cSetShowPassword(prev => !prev)}>
               {cShowPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
@@ -200,9 +215,9 @@ const SignupPassword = ({route}) => {
           )}
         </View>
 
-        <AnimatedButton title={'Sign Up'} onPress={handleSignup} loading={loading} />
+        <AnimatedButton testID="signup-password-submit-button" title={'Sign Up'} onPress={handleSignup} loading={loading} />
 
-        <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => navigate('LoginEmail')}>
+        <TouchableOpacity testID="signup-password-login-link" accessibilityLabel="signup-password-login-link" style={styles.alreadyAccountContainer} onPress={() => navigate('LoginEmail')}>
           <View style={styles.alreadyAccountRow}>
             <Text style={styles.alreadyAccountText}>Do you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Login</Text>
@@ -227,7 +242,6 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
   },
   heading: {
-    // marginTop: responsiveWidth(5),
     fontFamily: 'Rubik-Bold',
     color: '#1e1e1e',
     fontSize: 24,
@@ -242,11 +256,6 @@ const styles = StyleSheet.create({
   subHeadHighlight: {
     fontFamily: 'Rubik-Medium',
     color: '#1e1e1e',
-    fontSize: 14,
-  },
-  subHeadHighlight: {
-    fontFamily: 'Rubik-Medium',
-    color: 'black',
     fontSize: 14,
   },
   fieldName: {
@@ -273,7 +282,6 @@ const styles = StyleSheet.create({
     height: responsiveHeight(6.65),
     borderRadius: responsiveWidth(3.73),
   },
-
   error: {
     fontFamily: 'Rubik-Regular',
     color: 'red',

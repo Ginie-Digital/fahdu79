@@ -1,97 +1,54 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  FlatList,
-  StatusBar,
-  Button,
-  Vibration,
-  Linking,
-  ToastAndroid,
-  PermissionsAndroid,
-  AppState,
-  Platform,
-  ActivityIndicator,
-  Alert,
-  BackHandler,
-} from 'react-native';
-import {useLayoutEffect, useRef} from 'react';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import { StyleSheet, Text, View, Pressable, FlatList, StatusBar, Button, Vibration, Linking, ToastAndroid, PermissionsAndroid, AppState, Platform, ActivityIndicator, Alert, BackHandler, RefreshControl } from 'react-native';
+import { useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ChatRoomAudienceSort from '../Components/ChatRoomAudienceSort';
-import {
-  responsiveFontSize,
-  responsiveHeight,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
+import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import DIcon from '../../DesiginData/DIcons';
 
-import {useSelector, useDispatch} from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
-import {
-  useGetRoomListQuery,
-  useLazyGetRoomListQuery,
-} from '../../Redux/Slices/QuerySlices/roomListSliceApi';
+import { useGetRoomListQuery, useLazyGetRoomListQuery, useLazySearchChatRoomQuery } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
+import { useGetPendingCallsQuery, useGetScheduledCallsQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 
-import {
-  deleteFirst,
-  removeRoomList,
-  setCacheByFilter,
-} from '../../Redux/Slices/NormalSlices/RoomListSlice';
+import { deleteFirst, removeRoomList, setCacheByFilter, clearCache } from '../../Redux/Slices/NormalSlices/RoomListSlice';
 
-import {
-  audienceFilterMap,
-  chatRoomSortMap,
-  WIDTH_SIZES,
-} from '../../DesiginData/Utility';
+import { audienceFilterMap, chatRoomSortMap, getTimeAgo, WIDTH_SIZES } from '../../DesiginData/Utility';
 
-// import ChatRoomSortModal from '../Components/ChatRoomSortModal';
+import { setDefaultSort } from '../../Redux/Slices/NormalSlices/SortSelectedSlice';
 
-import {setDefaultSort} from '../../Redux/Slices/NormalSlices/SortSelectedSlice';
+import { token as memoizedToken } from '../../Redux/Slices/NormalSlices/AuthSlice';
 
-import {token as memoizedToken} from '../../Redux/Slices/NormalSlices/AuthSlice';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {useRoute} from '@react-navigation/native';
-
-import {checkNotificationGranted, disp} from '../../Notificaton';
-import {userIdCreateSelector} from '../../Redux/Slices/NormalSlices/AuthSlice';
+import { checkNotificationGranted, disp } from '../../Notificaton';
+import { userIdCreateSelector } from '../../Redux/Slices/NormalSlices/AuthSlice';
 
 import LinearGradient from 'react-native-linear-gradient';
 
-import {resetCurrentChattingRoom} from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
-import {
-  resetAllModal,
-  setPostsCardType,
-  toggleFloatingViews,
-  toggleHideShowInformationModal,
-  toggleShowChatRoomSelector,
-} from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import { resetCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
+import { resetAllModal, setPostsCardType, setUnReadChatIcon, toggleFloatingViews, toggleHideShowInformationModal, toggleShowChatRoomSelector } from '../../Redux/Slices/NormalSlices/HideShowSlice';
 
-import {autoLogout} from '../../AutoLogout';
-
+import { autoLogout } from '../../AutoLogout';
 import SwitcherSheet from '../Components/HomeComponents/SwitcherSheet';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {navigate} from '../../Navigation/RootNavigation';
-import {firebase} from '@react-native-firebase/messaging';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { navigate } from '../../Navigation/RootNavigation';
+import { getMessaging, requestPermission } from '@react-native-firebase/messaging';
 import Loader from '../Components/Loader';
-import {setDefaultAudience} from '../../Redux/Slices/NormalSlices/AudienceSelectedSlice';
+import { setDefaultAudience } from '../../Redux/Slices/NormalSlices/AudienceSelectedSlice';
 import Verify from '../../Assets/svg/vvv.svg';
 
-import {Image} from 'expo-image';
+import { Image } from 'expo-image';
 import NotificationHeader from '../Components/NotificationHeader';
-import LabelModal from '../Components/LabelModal';
-import {labelColor} from '../../DesiginData/Data';
-import {confirmPasswordReset} from '@react-native-firebase/auth';
+import { labelColor } from '../../DesiginData/Data';
 import LabelEditsModal from '../LabelEditsModal';
 import FloatingButton from './Chatroom/FloatingButton';
-import CombineSelectorModal from './Chatroom/CombineSelectorModal';
+import PulseDot from '../LiveStream/PulseDot';
 import CustomCheckbox from '../Components/CustomCheckbox';
-import {setMassMessageAddToUserList} from '../../Redux/Slices/NormalSlices/MessageSlices/MassMessage';
+import useJoinLiveStream from '../Hook/useJoinLiveStream';
+import { setMassMessageAddToUserList } from '../../Redux/Slices/NormalSlices/MessageSlices/MassMessage';
 
 const getRoomLastChatObject = (array, _id) => {
-  //Array == ChatRoomArray,  _id == Each Chat Id
-
   if (array?.length > 0) {
     const roomIdObjectIndex = array.findIndex(x => x._id === _id);
     return array[roomIdObjectIndex]?.lastMessage;
@@ -99,6 +56,122 @@ const getRoomLastChatObject = (array, _id) => {
     return [];
   }
 };
+
+// ✅ Extracted OUTSIDE the parent component to prevent unmount/remount flicker
+const EachChildContainer = React.memo(({ showSelectorCheckBox, item, index, navigation, currentUserId, lastChatFromRoomList, arrayOfunReadThreadIds, liveUsers, onJoinLiveStream, checkBoxSelectAll, target, dispatch }) => {
+  const simplifiedDataFromApi = useMemo(() => {
+    return {
+      name: item?.recipient?.displayName,
+      chatRoomId: item?._id,
+      profileImageUrl: item?.recipient?.profile_image?.url,
+      id: item?.recipient?._id,
+    };
+  }, [item]);
+
+  // Check if this user is live
+  const isUserLive = liveUsers?.some(liveUser => liveUser.userId === simplifiedDataFromApi.id);
+
+  let lastMessageObject = getRoomLastChatObject(lastChatFromRoomList, simplifiedDataFromApi?.chatRoomId);
+
+  const unreadCount = item?.unreadCounterUser || 0;
+  const lastMessageTime = item?.updatedAt;
+  const isUserOnline = item?.onlineStatus;
+
+  return (
+    <Pressable
+      style={[styles.eachChatContainer, index === 0 ? { marginTop: 0 } : null]}
+      onPress={() => {
+        if (!showSelectorCheckBox) {
+          navigation.navigate('Chats', {
+            chatRoomId: simplifiedDataFromApi?.chatRoomId,
+            name: simplifiedDataFromApi?.name,
+            profileImageUrl: simplifiedDataFromApi?.profileImageUrl,
+            role: item?.recipient?.role,
+            id: simplifiedDataFromApi?.id,
+            label: item?.label,
+          });
+        } else {
+          dispatch(setMassMessageAddToUserList({ _id: simplifiedDataFromApi?.id }));
+        }
+      }}>
+      <View style={{ flexDirection: 'row', gap: responsiveWidth(4), flex: 1 }}>
+        <View style={{ position: 'relative' }}>
+          {isUserLive ? (
+            <Pressable
+              onPress={() => onJoinLiveStream && onJoinLiveStream(simplifiedDataFromApi.id)}
+              style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.95 : 1 }] }]}
+            >
+              <View style={styles.liveOuterBorder}>
+                <View style={styles.profileImageWrapper}>
+                  <Image cachePolicy="memory-disk" placeholderContentFit="cover" placeholder={require('../../Assets/Images/DefaultProfile.jpg')} source={{ uri: item?.recipient?.profile_image?.url }} contentPosition="center" contentFit="cover" resizeMethod="resize" style={styles.profileImage} />
+                </View>
+              </View>
+              <View style={styles.liveBadge}>
+                <PulseDot size={4} color="#FF3B30" />
+                <Text style={styles.liveBadgeText}>Live</Text>
+              </View>
+            </Pressable>
+          ) : (
+            <>
+              <View style={styles.profileImageWrapper}>
+                <Image cachePolicy="memory-disk" placeholderContentFit="cover" placeholder={require('../../Assets/Images/DefaultProfile.jpg')} source={{ uri: item?.recipient?.profile_image?.url }} contentPosition="center" contentFit="cover" resizeMethod="resize" style={styles.profileImage} />
+              </View>
+              <View style={[styles.onlineDot, { backgroundColor: isUserOnline ? '#27C200' : '#E74C3C' }]} />
+            </>
+          )}
+        </View>
+
+        <View style={styles.chatOverViewWrapper}>
+          <View style={styles.upperHalf}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', gap: responsiveWidth(2), flex: 1 }}>
+                <Text style={styles.upperHalfUserNameTitle} numberOfLines={1}>
+                  {simplifiedDataFromApi.name}
+                </Text>
+                {item?.recipient?.role === 'creator' ? (
+                  <View style={{ transform: [{ translateX: responsiveWidth(0.1) }, { translateY: responsiveWidth(0.1) }] }}>
+                    <Verify />
+                  </View>
+                ) : null}
+              </View>
+
+              {lastMessageTime && <Text style={styles.timeText}>{getTimeAgo(lastMessageTime)}</Text>}
+            </View>
+
+            <View style={styles.lowerHalf}>
+              <View style={styles.lowerHalfMessage}>
+                <Text style={styles.messages} numberOfLines={1} ellipsizeMode="tail">
+                  {lastMessageObject?.length === 0 ? 'Loading...' : !lastMessageObject?.hasAttachment ? lastMessageObject?.message : lastMessageObject?.senderId === currentUserId ? 'You have sent attachment' : 'You have recieved attachment'}
+                </Text>
+              </View>
+
+              {unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {item?.label !== 'none' && <View style={[styles.label, { backgroundColor: labelColor[item?.label] }]} />}
+
+      {showSelectorCheckBox && item?.type !== 'none' && (
+        <CustomCheckbox
+          checked={
+            checkBoxSelectAll?.all ||
+            (checkBoxSelectAll?.followers && item?.type === 'follower') ||
+            (checkBoxSelectAll?.subscribers && item?.type === 'subscriber') ||
+            target?.selectedUsers?.includes(simplifiedDataFromApi?.id) ||
+            target?.label?.includes(item?.label)
+          }
+          onToggle={() => dispatch(setMassMessageAddToUserList({ _id: simplifiedDataFromApi?.id }))}
+        />
+      )}
+    </Pressable>
+  );
+});
 
 let monitor = true;
 
@@ -113,71 +186,151 @@ const ChatRoom = () => {
 
   const [notificationAccess, setNotificationAccess] = useState(false);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Search State
+  const [searchResults, setSearchResults] = useState([]);
+  const [triggerSearch, { isLoading: isSearchLoading }] = useLazySearchChatRoomQuery();
+
   const token = useSelector(state => state.auth.user.token);
 
-  const selectedAudinceForFilter = useSelector(
-    state => state.filterBy.selected.audience,
-  );
+  const selectedAudinceForFilter = useSelector(state => state.filterBy.selected.audience);
 
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
 
-  const selectedSortForFilter = useSelector(
-    state => state.sortBy.selected.sort,
-  );
+  const selectedSortForFilter = useSelector(state => state.sortBy.selected.sort);
 
-  const searchString = useSelector(
-    state => state.chatRoomSearchValue.data.searchString,
-  );
+  const searchString = useSelector(state => state.chatRoomSearchValue.data.searchString);
+
+  // Trigger server-side search when searchString changes
+  useEffect(() => {
+    if (searchString?.length > 0) {
+      triggerSearch({ token, searchString })
+        .unwrap()
+        .then(res => {
+          console.log('🔍 Search Results:', res?.data?.rooms?.length);
+          setSearchResults(res?.data?.rooms || []);
+        })
+        .catch(err => {
+          console.error('❌ Search Error:', err);
+          setSearchResults([]);
+        });
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchString, token]);
 
   const [getRoomList] = useLazyGetRoomListQuery();
 
-  //ONline Offline
-
-  const [isOnlineFilterEnabled, setIsOnlineFilterEnabled] = useState(false);
-
-  const showSelectorCheckBox = useSelector(
-    state => state.hideShow.visibility.showChatRoomSelector,
-  );
-
-  const [isOnline, setIsOnline] = useState(false);
-
-  //pages state
+  const showSelectorCheckBox = useSelector(state => state.hideShow.visibility.showChatRoomSelector);
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [totalPages, setTotalPages] = useState(1);
-
-  const [tempRoomList, setTempRoomList] = useState([]);
-
-  const [showTempRoomList, setShowTempRoomList] = useState(false);
+  // Cursor-based pagination state (using refs for instant access in async closures)
+  const nextCursorRef = useRef(null);
+  const hasMoreRef = useRef(true);
+  const [hasMore, setHasMore] = useState(true);
+  const isLoadingMoreRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
 
+  const [apiError, setApiError] = useState(false);
+
   const navigation = useNavigation();
 
-  const {target} = useSelector(state => state.massMessage.data);
+  const { target } = useSelector(state => state.massMessage.data);
 
-  console.log(target.label, '???');
-
-  const visibility = useSelector(
-    state => state.hideShow.visibility.floatingViews,
-  );
+  const visibility = useSelector(state => state.hideShow.visibility.floatingViews);
 
   const lable = useSelector(state => state.sortBy.selected.label);
 
   const role = useSelector(state => state.auth.user.role);
 
+  // Get live users from Redux to highlight in chatroom
+  const liveUsers = useSelector(state => state.liveUsers.liveUsers);
+
+  // Hook for joining live streams
+  const { joinLiveStream } = useJoinLiveStream();
+
+  // Handler to join livestream when clicking on live user's profile pic
+  const handleJoinLiveStream = async (userId) => {
+    const liveUser = liveUsers.find(user => user.userId === userId);
+    if (liveUser?.roomId) {
+      await joinLiveStream(liveUser.roomId, {
+        userId: liveUser.userId,
+        displayName: liveUser.displayName,
+        profileImage: liveUser.profileImage,
+      });
+    }
+  };
+
+  const checkBoxSelectAll = useSelector(state => state.massMessage?.data?.audienceType);
+
+  // ✅ Get online filter from Redux
+  const onlineFilter = useSelector(state => state.sortBy.selected.onlineFilter);
+
+  // Fetch Call Requests for the bottom bar
+  const { data: pendingCallsData } = useGetPendingCallsQuery(token, {
+    skip: role === 'creator',
+    pollingInterval: 30000, // Refresh every 30 seconds
+  });
+  const { data: scheduledCallsData } = useGetScheduledCallsQuery(token, {
+    skip: role === 'creator',
+    pollingInterval: 30000,
+  });
+
+  const pendingCount = pendingCallsData?.data?.metadata?.[0]?.total || 0;
+  const scheduledCount = scheduledCallsData?.data?.metadata?.[0]?.total || 0;
+  const totalCallRequests = Number(pendingCount) + Number(scheduledCount);
+
+  console.log('🌐 Current online filter:', onlineFilter);
+
+  // ✅ Build a combined cache key that reflects BOTH audience and sort filters
+  // e.g. 'none', 'subscribers', 'followers', 'none_read', 'subscribers_unread', 'followers_read', etc.
+  const getCacheKey = useCallback((audienceFilter, sortFilter) => {
+    const audienceKey = audienceFilterMap[audienceFilter] || 'none'; // 'none'|'subscribers'|'followers'
+    if (sortFilter === 2) return audienceKey === 'none' ? 'read' : `${audienceKey}_read`;
+    if (sortFilter === 3) return audienceKey === 'none' ? 'unread' : `${audienceKey}_unread`;
+    return audienceKey; // sort 1 = recent, key is just the audience
+  }, []);
+
+  const currentCacheKey = useMemo(
+    () => getCacheKey(selectedAudinceForFilter, selectedSortForFilter),
+    [selectedAudinceForFilter, selectedSortForFilter, getCacheKey],
+  );
+
+  let dataFromCache = useSelector(state => {
+    const selectedCache = state.roomList.data[currentCacheKey];
+
+    console.log('🗂️ Using cache:', {
+      sortFilter: selectedSortForFilter,
+      audienceFilter: selectedAudinceForFilter,
+      cacheName: currentCacheKey,
+      cacheLength: selectedCache?.length,
+      sampleData: selectedCache?.slice(0, 3).map(x => ({ id: x._id, type: x.type, unread: x.unreadCounterUser })),
+    });
+
+    return selectedCache || [];
+  });
+
+  let arrayOfunReadThreadIds = useSelector(state => state?.unReadThread?.unReadRoomIdArr);
+
+  const ListEndLoader = () => {
+    // Use `hasMore` state (not ref) to guarantee re-render when it changes
+    if (dataFromCache?.length > 0 && hasMore && nextCursorRef.current && searchString === '' && !loading) {
+      return <ActivityIndicator size={'large'} color={'#e7e8ea'} />;
+    }
+    return null;
+  };
+
   let getNotificationPermission = useCallback(async () => {
     if (Platform.Version >= 33) {
-      let x = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      );
+      let x = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
 
       if (x === 'granted') {
         setNotificationAccess(true);
       } else {
         setNotificationAccess(false);
-        massMessageSelectedUsers;
       }
     } else {
       let lowEndDeviceNotificationPermission = await checkNotificationGranted();
@@ -189,11 +342,28 @@ const ChatRoom = () => {
     }
   });
 
-  async function requestUserPermission() {
-    const authorizationStatus = await firebase.messaging().requestPermission();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      // ✅ Reset cursor pagination when leaving screen
+      nextCursorRef.current = null;
+      hasMoreRef.current = true;
+      setHasMore(true);
+      monitor = true;
+      dispatch(toggleHideShowInformationModal({ show: false }));
 
-    if (authorizationStatus) {
-      console.log('Permission status:', authorizationStatus);
+      // ✅ Reset all filters when leaving the chatroom
+      dispatch(setDefaultSort());       // resets sort → Recent, label → none, onlineFilter → all
+      dispatch(setDefaultAudience());   // resets audience tab → All
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  async function requestUserPermission() {
+    const authStatus = await requestPermission(getMessaging());
+
+    if (authStatus) {
+      console.log('Permission status:', authStatus);
     }
   }
 
@@ -209,10 +379,7 @@ const ChatRoom = () => {
   };
 
   useEffect(() => {
-    const subscription = AppState.addEventListener(
-      'change',
-      handlerAppStateChange,
-    );
+    const subscription = AppState.addEventListener('change', handlerAppStateChange);
 
     return () => {
       subscription.remove();
@@ -227,416 +394,382 @@ const ChatRoom = () => {
     }
   }, []);
 
-  /**
-   * @See_in_cache_if_there_is_data_already_present
-   * */
-
-  let dataFromCache = useSelector(
-    state => state.roomList.data[audienceFilterMap[selectedAudinceForFilter]],
-  );
-
-  let arrayOfunReadThreadIds = useSelector(
-    state => state?.unReadThread?.unReadRoomIdArr,
-  );
-
-  console.log(arrayOfunReadThreadIds, '909090');
-
-  /**
-   *
-   * TODO -  run whenever any audience filter changes
-   *
-   * Todo_Learnig - Don't call usequery inside useEffect, running dispatch outside useEffect re-renders entire screen causeing infinite loop
-   *
-   **/
-
-  const ListEndLoader = () => {
-    if (
-      (tempRoomList?.length > 0 || dataFromCache?.length > 0) &&
-      totalPages !== currentPage &&
-      searchString === ''
-    ) {
-      return <ActivityIndicator size={'large'} color={'#e7e8ea'} />;
-    }
-  };
-
   useFocusEffect(
     useCallback(() => {
-      dispatch(setDefaultSort());
-      dispatch(setDefaultAudience());
-      dispatch(toggleHideShowInformationModal({show: false}));
-    }, []),
+      dispatch(toggleHideShowInformationModal({ show: false }));
+
+      // Check if there are any unread messages in the cache
+      // Only hide the unread icon if there are no unread messages
+      const hasUnreadMessages = dataFromCache?.some(room => room.unreadCounterUser > 0);
+      if (!hasUnreadMessages) {
+        dispatch(setUnReadChatIcon({ show: false }));
+      }
+    }, [dataFromCache]),
   );
 
   useEffect(() => {
+    console.log('🔄 Filters changed, resetting state');
     setLoading(true);
-    setTotalPages(1);
-    setCurrentPage(1);
+    nextCursorRef.current = null;
+    hasMoreRef.current = true;
+    setHasMore(true);
     monitor = true;
-    dispatch(removeRoomList());
-    setTempRoomList([]);
-  }, [
-    audienceFilterMap[selectedAudinceForFilter],
-    chatRoomSortMap[selectedSortForFilter],
-  ]);
+  }, [selectedAudinceForFilter, selectedSortForFilter, onlineFilter, lable]);
 
-  console.log('Current page', currentPage, 'Total page', monitor, lable);
+  console.log('📊 Current state:', {
+    cursor: nextCursorRef.current ? '...' + nextCursorRef.current.slice(-20) : null,
+    hasMore,
+    monitor,
+    label: lable,
+    loading,
+    cacheSize: dataFromCache?.length,
+  });
 
+  // ✅ IMPROVED: Better API call handling
   const roomOperations = async () => {
-    console.log(lable, 'BALS');
-    const {data: roomListResponse, error} = await getRoomList({
-      token,
-      page: currentPage,
+    console.log('🔍 roomOperations called:', {
+      selectedSortForFilter,
+      selectedAudinceForFilter,
+      currentPage,
       sortBy: chatRoomSortMap[selectedSortForFilter],
-      label: lable,
       filter: audienceFilterMap[selectedAudinceForFilter],
+      label: lable,
     });
 
-    if (roomListResponse) {
-      if (
-        audienceFilterMap[selectedAudinceForFilter] === 'none' &&
-        chatRoomSortMap[selectedSortForFilter] === 'recent'
-      ) {
-        setShowTempRoomList(false);
+    setApiError(false);
+
+    try {
+      const { data: roomListResponse, error } = await getRoomList({
+        token,
+        cursor: nextCursorRef.current,
+        audience: audienceFilterMap[selectedAudinceForFilter],
+        state: chatRoomSortMap[selectedSortForFilter],
+        label: lable,
+        status: onlineFilter,
+      });
+
+      console.log('📦 API Response:', {
+        success: !!roomListResponse,
+        roomCount: roomListResponse?.data?.rooms?.length,
+        hasMore: roomListResponse?.data?.hasMore,
+        nextCursor: roomListResponse?.data?.nextCursor ? '...exists' : null,
+        error: error?.status,
+      });
+
+      if (roomListResponse) {
+        // ✅ Determine which cache to use — combine audience + sort for unique keys
+        const cacheType = currentCacheKey;
+
+        console.log('💾 Caching to:', cacheType, 'Rooms:', roomListResponse?.data?.rooms?.length);
+
+        // ✅ IMPROVED: Better cache handling
+        const incomingRooms = roomListResponse?.data?.rooms || [];
 
         if (monitor) {
+          // First load - replace cache completely
+          console.log('📝 First load - replacing cache');
           dispatch(
             setCacheByFilter({
-              type: 'none',
-              data: [...roomListResponse?.data?.rooms],
+              type: cacheType,
+              data: incomingRooms,
+              replace: true,
             }),
           );
           monitor = false;
-        } else {
-          if (
-            dataFromCache?.findIndex(
-              x => x?._id === roomListResponse?.data?.rooms[0]?._id,
-            ) === -1
-          ) {
+        } else if (incomingRooms.length > 0) {
+          // Pagination - check for duplicates before adding
+          const currentCache = dataFromCache || [];
+          const firstNewRoomId = incomingRooms[0]?._id;
+
+          if (currentCache.findIndex(x => x?._id === firstNewRoomId) === -1) {
+            console.log('📝 Adding new page to cache');
             dispatch(
               setCacheByFilter({
-                type: 'none',
-                data: [...dataFromCache, ...roomListResponse?.data?.rooms],
+                type: cacheType,
+                data: incomingRooms,
               }),
             );
           } else {
-            // Alert.alert("fuck you")
-            console.log('Same same:::::::::::::::::::::');
+            console.log('⚠️ Duplicate data detected, skipping cache update');
           }
         }
-      } else {
-        setShowTempRoomList(true);
 
-        if (monitor) {
-          setTempRoomList([...roomListResponse?.data?.rooms]);
-          monitor = false;
-        } else {
-          setTempRoomList([...tempRoomList, ...roomListResponse?.data?.rooms]);
-        }
+        // ✅ Update cursor pagination
+        nextCursorRef.current = roomListResponse?.data?.nextCursor || null;
+        hasMoreRef.current = roomListResponse?.data?.hasMore ?? false;
+        setHasMore(roomListResponse?.data?.hasMore ?? false);
+        console.log('📄 Cursor Pagination:', {
+          nextCursor: nextCursorRef.current ? '...exists' : null,
+          hasMore: hasMoreRef.current,
+        });
       }
-    }
 
-    if (roomListResponse?.data?.metadata)
-      setTotalPages(
-        Number(
-          Math.ceil(
-            Number(roomListResponse?.data?.metadata[0]?.total) /
-              Number(roomListResponse?.data?.metadata[0]?.limit),
-          ),
-        ),
-      );
+      if (error?.status === 500) {
+        console.error('❌ API Error 500');
+        setApiError(true);
+      }
+    } catch (err) {
+      console.error('❌ roomOperations error:', err);
+      setApiError(true);
+    }
   };
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
 
+      console.log('👁️ Screen focused, cacheKey:', currentCacheKey);
+
+      // ✅ Always clear current cache and refetch fresh data on filter change
+      // to avoid displaying stale results from a previous label/sort/audience combo
+      console.log('🔄 Refetching fresh data, cacheKey:', currentCacheKey);
+      setLoading(true);
+      nextCursorRef.current = null;
+      hasMoreRef.current = true;
+      setHasMore(true);
+      monitor = true;
+
+      dispatch(clearCache({ cacheType: currentCacheKey }));
+
       roomOperations().then(() => {
-        if (isActive) setLoading(false);
+        if (isActive) {
+          setLoading(false);
+          console.log('✅ Initial load complete');
+        }
       });
 
       return () => {
-        isActive = false; // cleanup if user navigates away before async is done
+        isActive = false;
       };
-    }, [selectedSortForFilter, selectedAudinceForFilter, currentPage]),
+    }, [selectedSortForFilter, selectedAudinceForFilter, lable, onlineFilter, currentCacheKey]),
   );
 
-  // console.log(notificationAccess, "Notification Access");
+  // ✅ Pagination effect removed — cursor-based loading is triggered by fetchNextPage directly
+
 
   const userRole = useSelector(state => state.auth.user.role);
 
   useEffect(() => {
     const backAction = () => {
-      dispatch(toggleShowChatRoomSelector({show: false}));
-
-      dispatch(toggleFloatingViews({show: 'showMessageFloat'}));
+      dispatch(toggleShowChatRoomSelector({ show: false }));
+      dispatch(toggleFloatingViews({ show: 'showMessageFloat' }));
     };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
 
     return () => backHandler.remove();
   }, []);
 
   const fetchNextPage = async () => {
-    console.log('CAlled**************************************************');
+    console.log('📜 Fetch next page triggered');
 
-    if (currentPage >= totalPages) {
-      console.log('Finish');
+    if (isLoadingMoreRef.current) {
+      console.log('✋ Already loading more, skipping');
       return;
     }
 
-    if (dataFromCache?.length <= 0) return;
+    if (!hasMoreRef.current) {
+      console.log('✋ No more data (hasMore=false)');
+      return;
+    }
 
-    if (totalPages > currentPage) {
-      setCurrentPage(currentPage + 1);
+    if (!nextCursorRef.current) {
+      console.log('✋ No cursor available');
+      return;
+    }
+
+    if (dataFromCache?.length <= 0) {
+      console.log('✋ No data in cache');
+      return;
+    }
+
+    console.log('➡️ Loading next cursor batch');
+    isLoadingMoreRef.current = true;
+    try {
+      await roomOperations();
+    } finally {
+      isLoadingMoreRef.current = false;
     }
   };
 
+  // ✅ NEW: Pull to refresh handler
+  const onRefresh = useCallback(async () => {
+    console.log('🔄 Pull to refresh triggered');
+    setRefreshing(true);
+
+    // Clear all caches
+    dispatch(clearCache({ cacheType: 'all' }));
+
+    // Reset cursor pagination
+    nextCursorRef.current = null;
+    hasMoreRef.current = true;
+    setHasMore(true);
+    monitor = true;
+
+    try {
+      await roomOperations();
+      console.log('✅ Refresh complete');
+    } catch (error) {
+      console.error('❌ Refresh error:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [selectedSortForFilter, selectedAudinceForFilter, lable, onlineFilter]);
+
+  // ✅ FIXED: Cache is already keyed by audience+sort (e.g. 'subscribers_unread').
+  //   Label filtering is handled entirely server-side via the API `label` param.
+  //   The cache is replaced (monitor=true) on every filter change, so no stale data bleeds through.
+  //   We do NOT re-filter by label client-side because API response room objects
+  //   may not carry the `label` field consistently, which would incorrectly empty the list.
   const getFilteredData = () => {
-    return showTempRoomList
-      ? tempRoomList
-          ?.filter(
-            x =>
-              x.recipient?.displayName
-                ?.toLowerCase()
-                ?.search(searchString?.toLowerCase()) > -1,
-          )
-          ?.filter(x =>
-            isOnlineFilterEnabled
-              ? isOnline
-                ? x.onlineStatus === true
-                : x.onlineStatus === false
-              : true,
-          )
-      : dataFromCache
-          ?.filter(
-            x =>
-              x.recipient?.displayName
-                ?.toLowerCase()
-                ?.search(searchString?.toLowerCase()) > -1,
-          )
-          ?.filter(x =>
-            isOnlineFilterEnabled
-              ? isOnline
-                ? x.onlineStatus === true
-                : x.onlineStatus === false
-              : true,
-          );
+    let filteredData = dataFromCache || [];
+
+    console.log('🔍 getFilteredData START:', {
+      totalChats: filteredData.length,
+      selectedAudinceForFilter,
+      selectedSortForFilter,
+      label: lable,
+      onlineFilter,
+      searchString,
+      cacheKey: currentCacheKey,
+    });
+
+    // ✅ Online/offline filtering is handled server-side via `status` param
+    // ✅ Label filtering is handled server-side via `label` param
+
+    // Apply search filter
+    if (searchString) {
+      const beforeSearch = filteredData.length;
+      filteredData = filteredData.filter(x => x.recipient?.displayName?.toLowerCase()?.includes(searchString?.toLowerCase()));
+      console.log('🔍 After search filter:', {
+        before: beforeSearch,
+        after: filteredData.length,
+        searchString,
+      });
+    }
+
+    console.log('✅ FINAL filtered data:', filteredData.length);
+    return filteredData;
   };
 
-  useEffect(() => {
-    if (showTempRoomList && tempRoomList?.length) {
-      const sorted = [...tempRoomList].sort((a, b) => {
-        const aHasLabel = a?.label === lable ? 0 : 1;
-        const bHasLabel = b?.label === lable ? 0 : 1;
-        return aHasLabel - bHasLabel;
-      });
+  const EmptyState = () => {
+    let title = 'No chats yet';
+    let message = 'Start a conversation to see your chats here';
+    let iconName = 'message-outline';
 
-      setTempRoomList(sorted);
+    const hasOnlineFilter = onlineFilter !== 'all';
+
+    if (searchString) {
+      title = 'No results found';
+      message = `No chats match "${searchString}"`;
+      iconName = 'magnify';
+    } else if (hasOnlineFilter) {
+      if (onlineFilter === 'online') {
+        title = 'No online users';
+        message = 'No users are currently online';
+      } else if (onlineFilter === 'offline') {
+        title = 'No offline users';
+        message = 'No users are currently offline';
+      }
+      iconName = 'account-network';
+    } else if (selectedSortForFilter === 3) {
+      // Unread messages - FIX: Swap the audience type logic
+      const audienceType = selectedAudinceForFilter === 2 ? ' from subscribers' : selectedAudinceForFilter === 3 ? ' from followers' : '';
+      title = 'All caught up! 🎉';
+      message = `You have no unread messages${audienceType}`;
+      iconName = 'check-all';
+    } else if (selectedSortForFilter === 2) {
+      // Read messages - FIX: Swap the audience type logic
+      const audienceType = selectedAudinceForFilter === 2 ? ' from subscribers' : selectedAudinceForFilter === 3 ? ' from followers' : '';
+      title = 'No read messages';
+      message = `Messages you've read${audienceType} will appear here`;
+      iconName = 'email-open-outline';
+    } else if (selectedAudinceForFilter === 2) {
+      // FIX: 2 = subscribers (not followers)
+      title = 'No subscriber chats';
+      message = 'Chats with your subscribers will appear here';
+      iconName = 'star-outline';
+    } else if (selectedAudinceForFilter === 3) {
+      // FIX: 3 = followers (not subscribers)
+      title = 'No follower chats';
+      message = 'Chats with your followers will appear here';
+      iconName = 'account-heart-outline';
     }
-  }, [lable]);
-
-  const EachChildContainer = props => {
-    console.log('PPP', props?.item?.label);
-
-    const simplifiedDataFromApi = useMemo(() => {
-      return {
-        name: props?.item?.recipient?.displayName,
-        chatRoomId: props?.item?._id,
-        profileImageUrl: props?.item?.recipient?.profile_image?.url,
-        id: props?.item?.recipient?._id,
-      };
-    }, []);
-
-    let lastMessageObject = getRoomLastChatObject(
-      props.lastChatFromRoomList,
-      simplifiedDataFromApi?.chatRoomId,
-    );
 
     return (
-      <>
-        <TouchableOpacity
-          style={[
-            styles.eachChatContainer,
-            props.index === 0 ? {marginTop: 0} : null,
-          ]}
-          onPress={() => {
-            if (!props.showSelectorCheckBox) {
-              props.navigation.navigate('Chats', {
-                chatRoomId: simplifiedDataFromApi?.chatRoomId,
-                name: simplifiedDataFromApi?.name,
-                profileImageUrl: simplifiedDataFromApi?.profileImageUrl,
-                role: props?.item?.recipient?.role,
-                id: simplifiedDataFromApi?.id,
-                label: props?.item?.label,
-              });
-            } else {
-              dispatch(
-                setMassMessageAddToUserList({_id: simplifiedDataFromApi?.id}),
-              );
-            }
-          }}>
-          <View style={{flexDirection: 'row', gap: responsiveWidth(4)}}>
-            <View style={[styles.profileImageWrapper, {position: 'relative'}]}>
-              <Image
-                placeholderContentFit="cover" // Ensures the placeholder covers the entire area
-                placeholder={require('../../Assets/Images/DefaultProfile.jpg')} // Placeholder image
-                source={{uri: props.item?.recipient?.profile_image?.url}} // Actual image URL
-                contentPosition="center" // Centers the content
-                contentFit="cover"
-                resizeMethod="resize"
-                style={styles.profileImage} // Apply styles
-              />
-            </View>
-            <View style={styles.chatOverViewWrapper}>
-              <View style={styles.upperHalf}>
-                <View style={{flexDirection: 'row', gap: responsiveWidth(2)}}>
-                  <Text style={styles.upperHalfUserNameTitle}>
-                    {simplifiedDataFromApi.name}
-                  </Text>
-                  {props?.item?.recipient?.role === 'creator' ? (
-                    <View
-                      style={{
-                        transform: [
-                          {translateX: responsiveWidth(0.1)},
-                          {translateY: responsiveWidth(0.1)},
-                        ],
-                      }}>
-                      <Verify />
-                    </View>
-                  ) : null}
-                </View>
-                <View style={styles.lowerHalf}>
-                  <View style={styles.lowerHalfMessage}>
-                    <Text
-                      style={styles.messages}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {lastMessageObject?.length === 0
-                        ? 'Loading...'
-                        : !lastMessageObject?.hasAttachment
-                        ? lastMessageObject?.message
-                        : lastMessageObject?.senderId === props?.currentUserId
-                        ? 'You have sent attachment'
-                        : 'You have recieved attachment'}
-                    </Text>
-                  </View>
-                  {props?.arrayOfunReadThreadIds?.length > 0 && (
-                    <View
-                      style={[
-                        styles.lowerHalfRest,
-                        props?.arrayOfunReadThreadIds.findIndex(
-                          x => x === props?.item?._id,
-                        ) === -1
-                          ? {backgroundColor: 'transparent'}
-                          : {backgroundColor: '#FF7A5C'},
-                      ]}
-                    />
-                  )}
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {props?.item?.label !== 'none' && (
-            <View
-              style={[
-                styles.label,
-                {backgroundColor: labelColor[props?.item?.label]},
-              ]}
-            />
-          )}
-
-          {props.showSelectorCheckBox && (
-            <CustomCheckbox
-              checked={
-                target?.selectedUsers?.includes(simplifiedDataFromApi?.id) ||
-                target?.label?.includes(props?.item?.label)
-              }
-              onToggle={() =>
-                dispatch(
-                  setMassMessageAddToUserList({_id: simplifiedDataFromApi?.id}),
-                )
-              }
-            />
-          )}
-        </TouchableOpacity>
-      </>
+      <View style={styles.emptyContainer}>
+        <DIcon provider="MaterialCommunityIcons" name={iconName} size={responsiveWidth(20)} color="#CCCCCC" />
+        <Text style={styles.emptyTitle}>{title}</Text>
+        <Text style={styles.emptyMessage}>{message}</Text>
+      </View>
     );
   };
+
+  // ✅ EachChildContainer is now defined OUTSIDE the component (above) to prevent flicker
+
+  const isSearchMode = useSelector(state => state.chatRoomSearchValue.data.isSearchMode);
+
+  // ✅ Memoize the data array so FlatList doesn't see a new reference on every tick
+  const listData = useMemo(() => {
+    return searchString?.length > 0 ? searchResults : getFilteredData();
+  }, [searchString, searchResults, dataFromCache, selectedAudinceForFilter, selectedSortForFilter, onlineFilter, lable]);
 
   return (
     <GestureHandlerRootView style={styles.chatRoomContainer}>
-      {/* <ChatRoomSortModal /> */}
+      <View style={styles.titleMessageWrapper}></View>
 
-      <View style={styles.titleMessageWrapper}>
-        {/* <Text style={styles.titleMessage}>Messages</Text> */}
-      </View>
+      {/* Dynamic Chat Tabs */}
 
-      {loading ? (
+
+      {loading || isSearchLoading ? (
         <Loader />
       ) : (
         <View style={styles.chatlistWrapper}>
           <FlatList
             keyboardDismissMode="on-drag"
-            data={getFilteredData()}
+            data={listData}
+            extraData={[liveUsers, searchResults, checkBoxSelectAll, target]}
             keyExtractor={item => item._id}
-            renderItem={({item, index}) => (
+            renderItem={({ item, index }) => (
               <EachChildContainer
                 showSelectorCheckBox={showSelectorCheckBox}
                 item={item}
                 index={index}
                 navigation={navigation}
                 currentUserId={currentUserId}
-                lastChatFromRoomList={
-                  showTempRoomList ? tempRoomList : dataFromCache
-                }
+                lastChatFromRoomList={listData}
                 arrayOfunReadThreadIds={arrayOfunReadThreadIds}
+                liveUsers={liveUsers}
+                onJoinLiveStream={handleJoinLiveStream}
+                checkBoxSelectAll={checkBoxSelectAll}
+                target={target}
+                dispatch={dispatch}
               />
             )}
             contentContainerStyle={{
               paddingBottom: responsiveWidth(10),
             }}
             showsVerticalScrollIndicator={false}
-            style={{marginBottom: responsiveWidth(1)}}
-            ItemSeparatorComponent={() => (
-              <View
-                style={{
-                  height: 1,
-                  borderTopWidth: responsiveWidth(0.3),
-                  borderColor: '#E9E9E9',
-                }}
-              />
-            )}
+            style={{ marginBottom: responsiveWidth(1) }}
+            ItemSeparatorComponent={() => <View style={{ height: 1, borderTopWidth: responsiveWidth(0.3), borderColor: '#E9E9E9' }} />}
             onEndReached={fetchNextPage}
             onEndReachedThreshold={0.1}
             ListFooterComponent={() => <ListEndLoader />}
-            ListHeaderComponent={() =>
-              !notificationAccess && <NotificationHeader />
-            }
-            // ListHeaderComponent={() => <Button title="le permission" color={'orange'} onPress={() => roomOperations()} />}
+            ListHeaderComponent={() => !notificationAccess && <NotificationHeader />}
+            ListEmptyComponent={() => !loading && <EmptyState />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#FFA86B', '#FF7819']} tintColor="#FFA86B" title="Pull to refresh" titleColor="#999" />}
           />
         </View>
       )}
 
       <SwitcherSheet />
-      <LabelModal
-        setIsOnlineFilterEnabled={setIsOnlineFilterEnabled}
-        isOnlineFilterEnabled={isOnlineFilterEnabled}
-        setIsOnline={setIsOnline}
-        isOnline={isOnline}
-      />
       <LabelEditsModal />
 
-      {visibility === 'showMessageFloat' && role === 'creator' ? (
-        <FloatingButton
-          onPress={() => console.log('Floating button pressed')}
-        />
-      ) : null}
+      {visibility === 'showMessageFloat' && role === 'creator' && !isSearchMode ? <FloatingButton onPress={() => console.log('Floating button pressed')} /> : null}
 
-      <CombineSelectorModal />
+
+
+      {/* Call Requests Bottom Bar - ONLY for User role */}
     </GestureHandlerRootView>
   );
 };
@@ -655,7 +788,9 @@ const styles = StyleSheet.create({
     marginTop: responsiveWidth(1),
   },
 
-  chatlistWrapper: {},
+  chatlistWrapper: {
+    flex: 1,
+  },
 
   eachChatContainer: {
     flexDirection: 'row',
@@ -686,8 +821,42 @@ const styles = StyleSheet.create({
     borderWidth: WIDTH_SIZES[2],
   },
 
+  liveOuterBorder: {
+    borderStyle: 'dashed',
+    borderColor: '#1e1e1e',
+    borderWidth: 2,
+    borderRadius: 32,
+    width: 62,
+    height: 62,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  liveBadge: {
+    position: 'absolute',
+    bottom: -1,
+    left: '50%',
+    transform: [{ translateX: -24 }],
+    width: 48,
+    height: 18,
+    backgroundColor: '#1e1e1e',
+    borderRadius: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#1e1e1e',
+  },
+
+  liveBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: 'Rubik-Medium',
+  },
+
   chatOverViewWrapper: {
-    flexBasis: '75%',
+    flex: 1,
     justifyContent: 'space-around',
   },
 
@@ -700,17 +869,13 @@ const styles = StyleSheet.create({
   upperHalfUserNameTitle: {
     color: '#353535',
     fontSize: responsiveFontSize(2),
-    // letterSpacing: 0.5,
-    // marginTop:responsiveWidth(2),
     fontFamily: 'Rubik-Medium',
   },
 
   lowerHalf: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    flexBasis: '100%',
-    // backgroundColor: 'red',
-    // marginTop:responsiveWidth(4),
+    justifyContent: 'space-between',
+    gap: responsiveWidth(10),
   },
 
   lowerHalfRest: {
@@ -728,27 +893,17 @@ const styles = StyleSheet.create({
   },
 
   lowerHalfMessage: {
-    flexBasis: '100%',
-    // marginLeft: responsiveWidth(),
     paddingHorizontal: responsiveWidth(2),
     flexDirection: 'row',
-    // alignItems: "center",
-    // borderWidth : 1,
-    // marginTop: responsiveWidth(2),
   },
 
   messages: {
-    // paddingHorizontal: responsiveWidth(0.5),
     fontSize: responsiveFontSize(1.7),
     fontFamily: 'Rubik-Regular',
-    flexWrap: 'wrap',
-    color: 'black',
-    borderRadius: responsiveWidth(2),
+    color: '#1e1e1e',
     right: responsiveWidth(2),
-    // bottom:responsiveWidth(3)
+    width: responsiveWidth(55),
   },
-
-  //Temp Bottom Navigation
 
   bottomNavigatinContainer: {
     width: '100%',
@@ -783,5 +938,96 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: WIDTH_SIZES[18],
     borderWidth: WIDTH_SIZES[1.5],
     borderColor: '#1e1e1e',
+  },
+  timeText: {
+    fontSize: responsiveFontSize(1.5),
+    fontFamily: 'Rubik-Regular',
+    color: '#999',
+    marginLeft: responsiveWidth(2),
+    marginBottom: responsiveWidth(2),
+  },
+
+  unreadBadge: {
+    backgroundColor: '#FFA86B',
+    borderRadius: responsiveWidth(50),
+    minWidth: responsiveWidth(4),
+    height: responsiveWidth(4),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: WIDTH_SIZES['1.5'],
+    borderColor: '#FF7819',
+  },
+
+  unreadBadgeText: {
+    color: '#1e1e1e',
+    fontSize: responsiveFontSize(1),
+    fontFamily: 'Rubik-Bold',
+  },
+
+  onlineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderWidth: WIDTH_SIZES['1.5'],
+    borderColor: '#fff',
+    zIndex: 2,
+  },
+
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: responsiveWidth(10),
+  },
+  errorTitle: {
+    fontSize: responsiveFontSize(2.5),
+    fontFamily: 'Rubik-Bold',
+    color: '#1e1e1e',
+    marginTop: responsiveWidth(4),
+    marginBottom: responsiveWidth(2),
+  },
+  errorMessage: {
+    fontSize: responsiveFontSize(1.8),
+    fontFamily: 'Rubik-Regular',
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: responsiveWidth(6),
+    lineHeight: responsiveHeight(3),
+  },
+  retryButton: {
+    backgroundColor: '#FFA86B',
+    paddingHorizontal: responsiveWidth(8),
+    paddingVertical: responsiveWidth(3),
+    borderRadius: responsiveWidth(2),
+    borderWidth: responsiveWidth(0.5),
+    borderColor: '#1e1e1e',
+  },
+  retryButtonText: {
+    fontSize: responsiveFontSize(2),
+    fontFamily: 'Rubik-SemiBold',
+    color: '#1e1e1e',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: responsiveWidth(10),
+    marginTop: responsiveHeight(20),
+  },
+  emptyTitle: {
+    fontSize: responsiveFontSize(2.5),
+    fontFamily: 'Rubik-Bold',
+    color: '#1e1e1e',
+    marginTop: responsiveWidth(4),
+    marginBottom: responsiveWidth(2),
+  },
+  emptyMessage: {
+    fontSize: responsiveFontSize(1.8),
+    fontFamily: 'Rubik-Regular',
+    color: '#999',
+    textAlign: 'center',
   },
 });

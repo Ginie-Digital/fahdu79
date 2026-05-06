@@ -17,7 +17,7 @@ export default function PostProgress() {
 
   const {progress, isUploading, previewUrl, isModalVisible, processing, postIndex} = useSelector(state => state.upload);
 
-  console.log({isModalVisible});
+  const showProgress = useSelector(state => state.hideShow.visibility.showPostProgress);
 
   const displayName = useSelector(state => state.auth.user.currentUserDisplayName);
 
@@ -31,6 +31,8 @@ export default function PostProgress() {
   //   }
   // }, [postIndex]);
 
+  console.log('SHOWPROG', showProgress);
+
   const handleSendPost = () => {
     console.log(postIndex);
 
@@ -41,39 +43,48 @@ export default function PostProgress() {
     dispatch(resetPostIndex());
   };
 
-  return (
-    isModalVisible && (
-      <View style={[styles.container, isUploading || postIndex >= 0 || processing ? {paddingVertical: 18} : null]}>
-        {processing && <ShimmerText>Post is being processed...</ShimmerText>}
-
-        {isUploading && (
-          <View style={styles.row}>
-            <Image source={{uri: previewUrl}} style={styles.image} />
-            <View style={{flex: 1}}>
-              <ShimmerText>{`Uploading to ${displayName}`}</ShimmerText>
-              <Progress.Bar progress={Number(progress) / 100} width={null} height={4} borderRadius={6} color="#FFA86B" borderColor="#eee" unfilledColor="#eee" style={{marginTop: 6}} />
+  if (showProgress) {
+    return (
+      isModalVisible && (
+        <View style={[styles.container, isUploading || postIndex >= 0 || processing ? {paddingVertical: 18} : null]}>
+          {processing && (
+            <View style={styles.row}>
+              {previewUrl && <Image source={{uri: previewUrl}} style={styles.image} />}
+              <View style={{flex: 1}}>
+                <ShimmerText>Post is being processed...</ShimmerText>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {!processing && !isUploading && (
-          <View style={styles.row}>
-            <Image source={profilePic} style={styles.image} />
-            <View style={{flex: 1}}>
-              <Text style={styles.text}>Boom! Your post is up 🚀</Text>
+          {isUploading && (
+            <View style={styles.row}>
+              <Image source={{uri: previewUrl}} style={styles.image} />
+              <View style={{flex: 1}}>
+                <ShimmerText>{`Uploading to ${displayName}`}</ShimmerText>
+                <Progress.Bar progress={Number(progress) / 100} width={null} height={4} borderRadius={6} color="#FFA86B" borderColor="#eee" unfilledColor="#eee" style={{marginTop: 6}} />
+              </View>
             </View>
-            {/* 
+          )}
+
+          {!processing && !isUploading && (
+            <View style={styles.row}>
+              <Image source={profilePic} style={styles.image} />
+              <View style={{flex: 1}}>
+                <Text style={styles.text}>Boom! Your post is up 🚀</Text>
+              </View>
+              {/* 
             <Pressable   style={({pressed}) => [styles.button, {backgroundColor: pressed ? '#FFC399' : '#FFA86B'}]}>
               <Text style={styles.btnText}>See Now</Text>
             </Pressable> */}
-            <View style={styles.button}>
-              <AnimatedButton onPress={handleSendPost} disabled={!Number(postIndex >= 0)} showOverlay={false} title={'See Now'} buttonMargin={0} style={{height: 32, borderRadius: 10}} />
+              <View style={styles.button}>
+                <AnimatedButton onPress={handleSendPost} disabled={!Number(postIndex >= 0)} showOverlay={false} title={'See Now'} buttonMargin={0} style={{height: 32, borderRadius: 10}} />
+              </View>
             </View>
-          </View>
-        )}
-      </View>
-    )
-  );
+          )}
+        </View>
+      )
+    );
+  }
 }
 
 const styles = StyleSheet.create({

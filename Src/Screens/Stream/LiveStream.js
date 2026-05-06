@@ -1,16 +1,16 @@
-import {Image, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View, findNodeHandle, TouchableOpacity, KeyboardAvoidingView, Keyboard, Alert, BackHandler, Animated} from 'react-native';
-import React, {memo, useEffect, useMemo, useRef, useState} from 'react';
-import ZegoExpressEngine, {ZegoRoomConfig, ZegoScenario, ZegoTextureView, ZegoViewMode} from 'zego-express-engine-reactnative';
+import { Image, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View, findNodeHandle, TouchableOpacity, KeyboardAvoidingView, Keyboard, Alert, BackHandler, Animated } from 'react-native';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import ZegoExpressEngine, { ZegoRoomConfig, ZegoScenario, ZegoTextureView, ZegoViewMode } from 'zego-express-engine-reactnative';
 import DIcon from '../../../DesiginData/DIcons';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import LinearGradient from 'react-native-linear-gradient';
-import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {FONT_SIZES, nTwins, nTwinsFont, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {FlatList, ScrollView, TextInput, TouchableWithoutFeedback} from 'react-native-gesture-handler';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { FONT_SIZES, formatIndianNumber, nTwins, nTwinsFont, WIDTH_SIZES } from '../../../DesiginData/Utility';
+import { FlatList, ScrollView, TextInput, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import AddGoalsSheet from './AddGoalsSheet';
-import {useDispatch, useSelector} from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Loader from '../../Components/Loader';
-import {useKeepAwake} from '@sayem314/react-native-keep-awake';
+import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 
 import {
   useCreateLiveStreamMutation,
@@ -23,20 +23,20 @@ import {
   useReJoinMutation,
   useSendMessageLiveStreamMutation,
 } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { token as memoizedToken } from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import axios from 'axios';
-import {toggleAddGoals, toggleLiveStreamTipModal, toggleSendPostTipModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { toggleAddGoals, toggleLiveStreamTipModal, toggleSendPostTipModal, toggleShowRechargeModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import LiveStreamTip from './LiveStreamTip';
-import {navigate} from '../../../Navigation/RootNavigation';
+import { navigate } from '../../../Navigation/RootNavigation';
 import LiveStreamTextInput from './LiveStreamTextInput';
 import GoalsComponent from './GoalsComponent';
-import {addGoalsBeforeStream, pushGoals, resetStreamStates, setSocketConnect, setToAnimate} from '../../../Redux/Slices/NormalSlices/LiveStream/LiveChats';
+import { addGoalsBeforeStream, pushGoals, resetStreamStates, setSocketConnect, setToAnimate } from '../../../Redux/Slices/NormalSlices/LiveStream/LiveChats';
 import Timer from './Timer';
-import {ConfirmDialog, Dialog} from 'react-native-simple-dialogs';
-import {updateWallet} from '../../../Redux/Slices/NormalSlices/Wallet/WalletSlice';
+import { ConfirmDialog, Dialog } from 'react-native-simple-dialogs';
+import { updateWallet } from '../../../Redux/Slices/NormalSlices/Wallet/WalletSlice';
 import LottieView from 'lottie-react-native';
-import {autoLogout} from '../../../AutoLogout';
-import {LoginPageErrors} from '../../Components/ErrorSnacks';
+import { autoLogout } from '../../../AutoLogout';
+import { LoginPageErrors } from '../../Components/ErrorSnacks';
 import w from '../../../Engine';
 import Svgcam from '../../../Assets/svg/cam.svg';
 import Mike from '../../../Assets/svg/mik.svg';
@@ -54,20 +54,24 @@ import Verify from '../../../Assets/svg/vvv.svg';
 import Share from '../../../Assets/svg/shh.svg';
 import Pay from '../../../Assets/svg/pay.svg';
 import Down from '../../../Assets/svg/carterup.svg';
-import {BlurView} from 'expo-blur';
+import { BlurView } from 'expo-blur';
 import ViewContainer from './ViewContainer';
 import LiveStreamComment from './LiveStreamComment';
 import StreamEndModl from './StreamEndModl';
+import MaskedView from '@react-native-masked-view/masked-view';
 import StreamEndedUserModal from './StreamEndedUserModal';
 import HideCommentsButton from './HideCommentsButton';
 import AnimatedButton from '../../Components/AnimatedButton';
 import MuteComponent from './MuteComponent';
+import LowBalanceModal from '../../Components/LowBalanceModal';
+import socketServices from '../../../SocketServices';
+import { AppLog } from '../../../Src/Utils/Logger';
 
 // let isCameraFront = true;
 
 let tokenTimeOut;
 
-const LiveStream = ({route}) => {
+const LiveStream = ({ route }) => {
   const previewViewRef = useRef(null);
 
   const lottieRef = useRef(null);
@@ -112,7 +116,7 @@ const LiveStream = ({route}) => {
 
   const [reJoin] = useReJoinMutation();
 
-  const {chats: falshChats, viewers, toAnimate, socketConnect} = useSelector(state => state.livechats.data);
+  const { chats: falshChats, viewers, toAnimate, socketConnect } = useSelector(state => state.livechats.data);
 
   const [muteLiveStream] = useMuteLiveStreamMutation();
 
@@ -125,7 +129,7 @@ const LiveStream = ({route}) => {
   };
 
   const muteLiveStreamBroadCast = async mute => {
-    const {data, error} = await muteLiveStream({
+    const { data, error } = await muteLiveStream({
       token,
       data: {
         roomId: streamDetails?.roomId,
@@ -151,7 +155,7 @@ const LiveStream = ({route}) => {
   };
 
   const reJoinOnDisconnect = async () => {
-    const {error, data} = await reJoin({token, data: {roomId: route?.params?.data?.isStarting ? streamDetails?.roomId : route?.params?.data?.roomId}});
+    const { error, data } = await reJoin({ token, data: { roomId: route?.params?.data?.isStarting ? streamDetails?.roomId : route?.params?.data?.roomId } });
     if (data) {
       return true;
     }
@@ -166,7 +170,7 @@ const LiveStream = ({route}) => {
       // Alert.alert("You");
 
       reJoinOnDisconnect();
-      dispatch(setSocketConnect({socketConnect: false}));
+      dispatch(setSocketConnect({ socketConnect: false }));
     }
 
     console.log(didMount, socketConnect, '****');
@@ -178,7 +182,7 @@ const LiveStream = ({route}) => {
       timeOut = setTimeout(() => {
         lottieRef.current.pause();
         setIsAnimating(false);
-        dispatch(setToAnimate({toAnimate: false}));
+        dispatch(setToAnimate({ toAnimate: false }));
         setLottieFileUrl(require('../../../Assets/Animation/Animation2.json'));
       }, 3000);
     }
@@ -257,7 +261,7 @@ const LiveStream = ({route}) => {
 
   const [showCommentArea, setShowCommentArea] = useState(false);
 
-  const {currentUserId, currentUserDisplayName, currentUserProfilePicture} = useSelector(state => state.auth.user);
+  const { currentUserId, currentUserDisplayName, currentUserProfilePicture } = useSelector(state => state.auth.user);
 
   const coins = useSelector(state => state.wallet.data.coins);
 
@@ -272,18 +276,18 @@ const LiveStream = ({route}) => {
   const handleCreditDebitPerMinute = async (token, roomId) => {
     console.log(':::::::::::::::::::::CREDIT:::::::::DEBIT:::::::::::::::');
 
-    const {data, error} = await creditDebit({token, roomId});
+    const { data, error } = await creditDebit({ token, roomId });
 
     if (data) {
       console.log(data, 'datacredit');
-      dispatch(updateWallet({coins: data?.data?.balance?.$numberDecimal}));
-      // return;
+      AppLog('STREAM', 'Credit/Debit per minute success', { roomId, balance: data?.data?.balance?.$numberDecimal });
+      dispatch(updateWallet({ coins: data?.data?.balance?.$numberDecimal }));
     }
 
     if (error?.data?.message?.includes('insufficient balance')) {
-      // Alert.alert("hdlo")
-      setShowRechargeModal(true);
-      // return;
+      ZegoExpressEngine.instance().logoutRoom(route?.params?.data?.roomId);
+      dispatch(resetStreamStates());
+      dispatch(toggleShowRechargeModal({ show: true }));
     }
   };
 
@@ -311,7 +315,7 @@ const LiveStream = ({route}) => {
 
   const fethStreamDetails = async () => {
     if (route?.params?.data?.isStarting) {
-      const {data, error} = await createLiveStream({
+      const { data, error } = await createLiveStream({
         token,
         data: {
           all: route?.params?.data?.all,
@@ -336,17 +340,25 @@ const LiveStream = ({route}) => {
 
       console.log(route?.params?.data?.goals, '+++++++++++++');
 
-      dispatch(addGoalsBeforeStream({preStremGoalsArr: route?.params?.data?.goals}));
+      dispatch(addGoalsBeforeStream({ preStremGoalsArr: route?.params?.data?.goals }));
 
       if (data) {
-        setStreamDetails({token: data?.data?.TOKEN, roomId: data?.data?.roomId});
+        AppLog('STREAM', 'Livestream created and started by creator', { roomId: data?.data?.roomId });
+        setStreamDetails({ token: data?.data?.TOKEN, roomId: data?.data?.roomId });
+
+        // Emit start stream to notify other users
+        socketServices.emitStartStream(
+          data?.data?.roomId,
+          currentUserId,
+          currentUserDisplayName
+        );
 
         setLoading(false);
       }
     } else {
       //Jo join karega wo params mein room Id leke aayega idhar keval token fetch karan hai basss
 
-      const {data, error} = await getStreamTokenToJoin({token, roomId: route?.params?.data?.roomId});
+      const { data, error } = await getStreamTokenToJoin({ token, roomId: route?.params?.data?.roomId });
 
       if (error?.status === 'FETCH_ERROR') {
         LoginPageErrors('Please check your network');
@@ -369,9 +381,10 @@ const LiveStream = ({route}) => {
       }
 
       if (data) {
-        setStreamDetails({token: data?.data?.TOKEN, roomId: route?.params?.data?.roomId});
+        AppLog('STREAM', 'User joined livestream successfully', { roomId: route?.params?.data?.roomId });
+        setStreamDetails({ token: data?.data?.TOKEN, roomId: route?.params?.data?.roomId });
         setLoading(false);
-        dispatch(addGoalsBeforeStream({preStremGoalsArr: data?.data?.goals}));
+        dispatch(addGoalsBeforeStream({ preStremGoalsArr: data?.data?.goals }));
       }
     }
   };
@@ -379,10 +392,13 @@ const LiveStream = ({route}) => {
     if (route?.params?.data?.isStarting) {
       console.log(streamDetails?.roomId);
 
-      const {error, data} = await endLiveStream({token, data: {roomId: streamDetails?.roomId}});
+      const { error, data } = await endLiveStream({ token, data: { roomId: streamDetails?.roomId } });
 
       if (data?.statusCode === 200) {
-        console.log('Closing creator livestream:::::{{{{{{{{{');
+        console.log('Closing creator livestream:::::{{{{{{{{{{');
+
+        // Emit end stream to notify other users
+        socketServices.emitEndStream(streamDetails?.roomId, currentUserId);
 
         await ZegoExpressEngine.instance().stopPreview();
         await ZegoExpressEngine.instance().logoutRoom(streamDetails.roomId);
@@ -390,10 +406,10 @@ const LiveStream = ({route}) => {
         dispatch(resetStreamStates());
         clearTimeout(tokenTimeOut);
         setLoading(false);
-        navigate('afterlivestreamend', {data: data?.data});
+        navigate('afterlivestreamend', { data: data?.data });
       }
     } else {
-      const {error, data} = await leaveLiveStream({
+      const { error, data } = await leaveLiveStream({
         token,
         data: {
           roomId: route?.params?.data?.roomId,
@@ -411,12 +427,13 @@ const LiveStream = ({route}) => {
         navigate('home');
       }
     }
+    AppLog('STREAM', 'Exiting livestream', { roomId: route?.params?.data?.isStarting ? streamDetails?.roomId : route?.params?.data?.roomId, isStarting: route?.params?.data?.isStarting });
   };
 
   const handleRenewToken = async () => {
     console.log('RENEW 🥳');
 
-    const {data, error} = await userRenewToken({token, roomId: route?.params?.data?.roomId});
+    const { data, error } = await userRenewToken({ token, roomId: route?.params?.data?.roomId });
 
     console.log(error, ':::BALANCE:::::::');
 
@@ -438,9 +455,9 @@ const LiveStream = ({route}) => {
     try {
       console.log('Fetching coiun,.....');
 
-      let {data} = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'}, timeout: 10000});
+      let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 10000 });
 
-      dispatch(updateWallet({coins: data?.data}));
+      dispatch(updateWallet({ coins: data?.data }));
     } catch (e) {
       console.log('Get Coin Error ', e);
     }
@@ -487,6 +504,9 @@ const LiveStream = ({route}) => {
       engine.on('roomStateUpdate', (roomID, state, errorCode, extendedData) => {
         // Room connection status callback. After a user logs in to a room, when the room connection status changes (for example, the room is disconnected or login authentication fails), the SDK triggers this callback to send a notification.
         console.log(roomID, state, errorCode, extendedData, `roomStateUpdate* ${Platform.OS}`);
+        if (errorCode !== 0) {
+          AppLog('ZEGO_ERROR', 'Room state update error', { roomID, state, errorCode, extendedData });
+        }
       });
 
       engine.on('roomUserUpdate', (roomID, updateType, userList) => {
@@ -513,7 +533,7 @@ const LiveStream = ({route}) => {
             try {
               let token = await handleRenewToken();
 
-              console.log({token});
+              console.log({ token });
 
               // Check if token is null or undefined before proceeding
               if (!token) {
@@ -573,6 +593,7 @@ const LiveStream = ({route}) => {
           },
           roomConfig,
         );
+        AppLog('STREAM', 'Logging into ZEGO room for stream', { roomId: streamDetails?.roomId });
       }
 
       if (previewViewRef.current) {
@@ -612,9 +633,19 @@ const LiveStream = ({route}) => {
 
   console.log('MUTEEEEE', route?.params?.data?.isStarting, isInMute);
 
+  const handleClick = () => {
+    console.log('hjello');
+    ZegoExpressEngine.instance().logoutRoom(route?.params?.data?.roomId);
+    dispatch(toggleShowRechargeModal({ show: false }));
+    dispatch(resetStreamStates());
+    clearTimeout(tokenTimeOut);
+    navigate('chooseWallet');
+    return;
+  };
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{flex: 1, position: 'relative'}}>
+      <SafeAreaView style={{ flex: 1, position: 'relative' }}>
         <View style={styles.contianer}>
           {showCommentArea && <LiveStreamTextInput roomId={route?.params?.data?.isStarting ? streamDetails?.roomId : route?.params?.data?.roomId} setShowCommentArea={setShowCommentArea} />}
 
@@ -644,12 +675,12 @@ const LiveStream = ({route}) => {
               />
 
               <View style={[styles.boxGoal]}>
-                <Text style={{color: '#00000090', fontFamily: 'MabryPro-Bold', fontSize: responsiveFontSize(4)}}>Goal Completed</Text>
+                <Text style={{ color: '#00000090', fontFamily: 'Rubik-Bold', fontSize: responsiveFontSize(4) }}>Goal Completed</Text>
               </View>
             </>
           )}
 
-          <ZegoTextureView ref={previewViewRef} style={{flex: 1}} />
+          <ZegoTextureView ref={previewViewRef} style={{ flex: 1 }} />
 
           {!route?.params?.data?.isStarting && <MuteComponent />}
 
@@ -657,9 +688,9 @@ const LiveStream = ({route}) => {
             <View style={styles.streamControllerContainer}>
               <View style={styles.upperCC}>
                 <View style={styles.upperInformation}>
-                  <View style={{width: responsiveWidth(40), flexDirection: 'row'}}>
-                    <Pressable style={[styles.profileImageContainer, {position: 'relative'}]}>
-                      <Image source={{uri: route?.params?.data?.isStarting ? currentUserProfilePicture : route?.params?.data?.creatorInfo?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
+                  <View style={{ width: responsiveWidth(40), flexDirection: 'row' }}>
+                    <Pressable style={[styles.profileImageContainer, { position: 'relative' }]}>
+                      <Image source={{ uri: route?.params?.data?.isStarting ? currentUserProfilePicture : route?.params?.data?.creatorInfo?.profile_image?.url }} resizeMethod="resize" style={styles.profileImage} />
 
                       {/* Verification Badge */}
                       <View
@@ -670,18 +701,18 @@ const LiveStream = ({route}) => {
                           bottom: responsiveWidth(7.6),
                           right: 0,
                         }}>
-                        <Image source={require('../../../Assets/Images/verify.png')} resizeMode="contain" style={{width: '100%', height: '100%'}} />
+                        <Image source={require('../../../Assets/Images/verify.png')} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
                       </View>
                     </Pressable>
 
-                    <View style={{flexDirection: 'column', marginLeft: responsiveWidth(3.2), marginTop: responsiveWidth(3.4), gap: 3}}>
+                    <View style={{ flexDirection: 'column', marginLeft: responsiveWidth(3.2), marginTop: responsiveWidth(3.4), gap: 3 }}>
                       <View style={styles.headerInformation}>
                         <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
                           {route?.params?.data?.isStarting ? currentUserDisplayName : route?.params?.data?.creatorInfo?.displayName}
                         </Text>
                       </View>
 
-                      <View style={{flexDirection: 'row', width: responsiveWidth(39), justifyContent: 'space-between'}}>
+                      <View style={{ flexDirection: 'row', width: responsiveWidth(39), justifyContent: 'space-between' }}>
                         <ViewContainer views={viewers} />
                         <Timer />
                       </View>
@@ -699,11 +730,11 @@ const LiveStream = ({route}) => {
                     }}>
                     {route?.params?.data?.isStarting ? (
                       <Pressable onPress={() => setModalVisible(true)} style={styles.button}>
-                        {({pressed}) => <Image source={pressed ? require('../../../Assets/Images/greyCross.png') : require('../../../Assets/Images/liveCross.png')} style={styles.crossIcon} resizeMode="contain" />}
+                        {({ pressed }) => <Image source={pressed ? require('../../../Assets/Images/greyCross.png') : require('../../../Assets/Images/liveCross.png')} style={styles.crossIcon} resizeMode="contain" />}
                       </Pressable>
                     ) : (
-                      <View style={[styles.button, {backgroundColor: '#FFE1CC'}]}>
-                        <Pressable style={{width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center'}} onPress={() => handleSpeaker()}>
+                      <View style={[styles.button, { backgroundColor: '#FFE1CC' }]}>
+                        <Pressable style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }} onPress={() => handleSpeaker()}>
                           {!isSpeakerInMute ? (
                             <Image source={require('../../../Assets/Images/unMutedSpeaker.png')} style={styles.crossIcon} resizeMode="contain" />
                           ) : (
@@ -716,7 +747,7 @@ const LiveStream = ({route}) => {
                     {route?.params?.data?.isStarting ? (
                       <Pressable onPress={toggleDrop}>
                         {drop ? (
-                          <View style={[styles.button, {backgroundColor: '#FFE1CC'}]}>
+                          <View style={[styles.button, { backgroundColor: '#FFE1CC' }]}>
                             <Image
                               source={require('../../../Assets/Images/liveUp.png')} // Update with your actual path
                               style={styles.crossIcon}
@@ -724,7 +755,7 @@ const LiveStream = ({route}) => {
                             />
                           </View>
                         ) : (
-                          <View style={[styles.button, {backgroundColor: '#FFE1CC'}]}>
+                          <View style={[styles.button, { backgroundColor: '#FFE1CC' }]}>
                             <Image
                               source={require('../../../Assets/Images/liveDown.png')} // Update with your actual path
                               style={styles.crossIcon}
@@ -745,9 +776,9 @@ const LiveStream = ({route}) => {
                   </View>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 4}}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   {toggle && (
-                    <View style={[styles.verticalCC, {marginLeft: Platform.OS === 'ios' ? responsiveWidth(84) : responsiveWidth(83)}]}>
+                    <View style={[styles.verticalCC, { marginLeft: Platform.OS === 'ios' ? responsiveWidth(84) : responsiveWidth(83) }]}>
                       {route?.params?.data?.isStarting && (
                         // <Pressable style={[styles.box, {backgroundColor: 'transparent', height: responsiveWidth(12)}]} onPress={() => handleCamera()}>
                         //   {/* <DIcon provider={"FontAwesome6"} name={"camera-rotate"} size={nTwins(5.5, 5.5)} color={isCameraFront ? "#fff" : "#ffa07a"} /> */}
@@ -767,7 +798,7 @@ const LiveStream = ({route}) => {
                       )}
 
                       {/* <Animated.View style = {[styles.box, {height : 100, width : 100}, { backgroundColor: borderAnimation.interpolate({ inputRange: [0, 1], outputRange: ['white', '#FAF444'] }) }]}>
-                        
+
                     </Animated.View> */}
 
                       {route?.params?.data?.isStarting ? (
@@ -798,7 +829,7 @@ const LiveStream = ({route}) => {
                           )}
                         </>
                       ) : (
-                        <Pressable style={[styles.box, {backgroundColor: 'transparent', height: responsiveWidth(12), marginTop: responsiveWidth(2)}]} onPress={() => handleSpeaker()}>
+                        <Pressable style={[styles.box, { backgroundColor: 'transparent', height: responsiveWidth(12), marginTop: responsiveWidth(2) }]} onPress={() => handleSpeaker()}>
                           <DIcon provider={'Octicons'} name={!isSpeakerInMute ? 'unmute' : 'mute'} size={nTwins(6, 6)} color={isSpeakerInMute ? '#ffa07a' : '#fff'} />
                         </Pressable>
                       )}
@@ -811,71 +842,100 @@ const LiveStream = ({route}) => {
                   <>
                     <View
                       style={{
-                        maxHeight: responsiveWidth(80),
+                        maxHeight: responsiveWidth(50),
                         marginTop: responsiveWidth(6),
                         display: isCommentsHidden ? 'none' : 'flex',
                       }}>
-                      <FlatList
-                        data={[...falshChats].reverse()}
-                        renderItem={({item}) => <LiveStreamComment isStarting={route?.params?.data?.isStarting} item={item} currentUserDisplayName={currentUserDisplayName} />}
-                        contentContainerStyle={{gap: WIDTH_SIZES[8], paddingHorizontal: 0}}
-                        showsVerticalScrollIndicator={false}
-                        inverted
+                      <MaskedView
+                        style={{ height: '100%' }}
+                        maskElement={
+                          <LinearGradient
+                            style={{ flex: 1 }}
+                            colors={['transparent', 'black']}
+                            locations={[0, 0.2]}
+                          />
+                        }
+                      >
+                        <FlatList
+                          data={[...falshChats].reverse()}
+                          renderItem={({ item }) => <LiveStreamComment isStarting={route?.params?.data?.isStarting} item={item} currentUserDisplayName={currentUserDisplayName} />}
+                          contentContainerStyle={{ gap: WIDTH_SIZES[8], paddingHorizontal: 0 }}
+                          showsVerticalScrollIndicator={false}
+                          inverted
                         // style={{ alignSelf: 'flex-start'}}
-                      />
+                        />
+                      </MaskedView>
                     </View>
 
-                    <View style={{flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between'}}>
-                      <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                      <View style={{ marginTop: responsiveWidth(4) }}>
                         <HideCommentsButton isHidden={isCommentsHidden} toggleComments={() => setIsCommentsHidden(!isCommentsHidden)} />
                       </View>
-                      {!route?.params?.data?.doUserSubscribed && !route?.params?.data?.isStarting ? (
-                        <View style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'flex-end'}}>
-                          <View style={{alignItems: 'center', justifyContent: 'space-between'}}>
-                            <View style={{marginBottom: responsiveWidth(2)}}>
-                              {!route?.params?.data?.isStarting && (
-                                <View
-                                  style={{
-                                    gap: responsiveWidth(3),
-                                    borderWidth: responsiveWidth(0.5),
-                                    flexDirection: 'row',
-                                    backgroundColor: 'white',
-                                    paddingVertical: responsiveWidth(1),
-                                    paddingHorizontal: responsiveWidth(4),
-                                    borderRadius: responsiveWidth(5),
-                                    alignItems: 'center',
-                                  }}>
-                                  <Wall />
-                                  <Text style={[styles.text, {color: '#1e1e1e', fontSize: FONT_SIZES[14], fontFamily: 'Rubk-Medium'}]}>{coins}</Text>
-                                </View>
-                              )}
+
+                      <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'flex-end' }}>
+                        {/* WALLET — ALWAYS SHOW */}
+                        {!route?.params?.data?.isStarting && (
+                          <View style={{ marginBottom: responsiveWidth(2) }}>
+                            <View
+                              style={{
+                                gap: responsiveWidth(3),
+                                borderWidth: responsiveWidth(0.5),
+                                flexDirection: 'row',
+                                backgroundColor: 'white',
+                                paddingVertical: responsiveWidth(1),
+                                paddingHorizontal: responsiveWidth(4),
+                                borderRadius: responsiveWidth(5),
+                                alignItems: 'center',
+                              }}>
+                              <Wall />
+                              <Text
+                                style={[
+                                  styles.text,
+                                  {
+                                    color: '#1e1e1e',
+                                    fontSize: FONT_SIZES[14],
+                                    fontFamily: 'Rubk-Medium',
+                                  },
+                                ]}>
+                                {formatIndianNumber(coins)}
+                              </Text>
                             </View>
                           </View>
-                          <View>
-                            <Pressable
-                              style={[styles.box, styles.subscribe]}
-                              onPress={() => {
-                                handleTerminateLiveStream().then(() => {
-                                  navigate('subscribeCreator', {
-                                    name: route?.params?.data?.creatorInfo?.displayName,
-                                    profileImageUrl: route?.params?.data?.creatorInfo?.profile_image?.url,
-                                    role: 'creator',
-                                    id: route?.params?.data?.creatorInfo?._id,
-                                  });
+                        )}
+
+                        {/* SUBSCRIBE — CONDITIONAL */}
+                        {!route?.params?.data?.doUserSubscribed && !route?.params?.data?.isStarting && (
+                          <Pressable
+                            style={[styles.box, styles.subscribe]}
+                            onPress={() => {
+                              handleTerminateLiveStream().then(() => {
+                                navigate('subscribeCreator', {
+                                  name: route?.params?.data?.creatorInfo?.displayName,
+                                  profileImageUrl: route?.params?.data?.creatorInfo?.profile_image?.url,
+                                  role: 'creator',
+                                  id: route?.params?.data?.creatorInfo?._id,
                                 });
-                              }}>
-                              <Text style={[styles.text, {color: '#000', fontFamily: 'Rubik-Medium', fontSize: responsiveFontSize(1.7)}]}>Subscribe</Text>
-                            </Pressable>
-                          </View>
-                        </View>
-                      ) : (
-                        <View style={[styles.box, {backgroundColor: 'transparent', height: WIDTH_SIZES[84]}]} />
-                      )}
+                              });
+                            }}>
+                            <Text
+                              style={[
+                                styles.text,
+                                {
+                                  color: '#000',
+                                  fontFamily: 'Rubik-Medium',
+                                  fontSize: responsiveFontSize(1.7),
+                                },
+                              ]}>
+                              Subscribe
+                            </Text>
+                          </Pressable>
+                        )}
+                      </View>
                     </View>
                   </>
                 )}
 
-                {!showCommentArea && <GoalsComponent />}
+                {!showCommentArea && <GoalsComponent isStarting={route?.params?.data?.isStarting} />}
 
                 {!showCommentArea && (
                   <View
@@ -928,7 +988,7 @@ const LiveStream = ({route}) => {
                       </Pressable>
                       <View>
                         {!route?.params?.data?.isStarting ? (
-                          <Pressable style={styles.sendCoinBottm} onPress={() => dispatch(toggleLiveStreamTipModal({info: {show: true, roomId: route?.params?.data?.roomId}}))}>
+                          <Pressable style={styles.sendCoinBottm} onPress={() => dispatch(toggleLiveStreamTipModal({ info: { show: true, roomId: route?.params?.data?.roomId } }))}>
                             {/* <Ionicons name="wallet-outline" size={responsiveWidth(6)} color="black" /> */}
 
                             <Image
@@ -943,7 +1003,7 @@ const LiveStream = ({route}) => {
                             />
                           </Pressable>
                         ) : (
-                          <Pressable style={styles.sendCoinBottm} onPress={() => dispatch(toggleAddGoals({show: 1}))}>
+                          <Pressable style={styles.sendCoinBottm} onPress={() => dispatch(toggleAddGoals({ show: 1 }))}>
                             <Image
                               source={require('../../../Assets/Images/Goals.png')}
                               style={{
@@ -971,22 +1031,7 @@ const LiveStream = ({route}) => {
       </SafeAreaView>
       <StreamEndModl visible={modalVisible} onYesPress={streamEndModalHandleEndStream} onNoPress={() => setModalVisible(false)} />
       <StreamEndedUserModal visible={liveStreamEndModal} onPress={streamHasEndedModalOkay} />
-      <Dialog visible={showRechargeModal} dialogStyle={{borderRadius: responsiveWidth(1)}} onTouchOutside={() => console.log('fuck')}>
-        <View style={{borderRadius: responsiveWidth(2)}}>
-          <Text style={[styles.text, {fontSize: responsiveFontSize(2), alignSelf: 'center', textAlign: 'center'}]}>Insufficient balance, please recharge and join again.</Text>
-
-          <TouchableOpacity
-            onPress={() => {
-              ZegoExpressEngine.instance().logoutRoom(route?.params?.data?.roomId);
-              dispatch(resetStreamStates());
-              clearTimeout(tokenTimeOut);
-              navigate('home');
-              return;
-            }}>
-            <Text style={[styles.text, {fontFamily: 'MabryPro-Bold', alignSelf: 'center', marginTop: responsiveWidth(8), fontSize: responsiveFontSize(2), color: '#ffa07a'}]}>OK</Text>
-          </TouchableOpacity>
-        </View>
-      </Dialog>
+      <LowBalanceModal fromLiveStram={true} onPress={handleClick} />
     </SafeAreaProvider>
   );
 };
@@ -1073,6 +1118,9 @@ const styles = StyleSheet.create({
     width: responsiveWidth(20),
     // borderWidth : 1,
     lineHeight: responsiveFontSize(2.6),
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   box: {
     // padding: responsiveWidth(1),
@@ -1115,13 +1163,13 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    fontFamily: 'MabryPro-Medium',
+    fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.8),
     color: '#fff',
   },
 
   commentText: {
-    fontFamily: 'MabryPro-Regular',
+    fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.6),
     color: '#fff',
     maxWidth: responsiveWidth(50),
@@ -1133,7 +1181,7 @@ const styles = StyleSheet.create({
   },
 
   textInputDummy: {
-    fontFamily: 'MabryPro-Medium',
+    fontFamily: 'Rubik-Medium',
     backgroundColor: '#fff',
     borderTopLeftRadius: responsiveWidth(2),
     borderBottomLeftRadius: responsiveWidth(2),

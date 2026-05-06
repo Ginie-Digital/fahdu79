@@ -49,9 +49,6 @@ export const useMessageNavigation = (
         if (!chatRoomObject || Object.keys(chatRoomObject).length === 0) {
           const { data, error } = await getRoomList({
             token,
-            page: 1,
-            sortBy: "recent",
-            filter: "none",
           });
 
           if (data) {

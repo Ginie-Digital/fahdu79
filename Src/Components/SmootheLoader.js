@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Text, ActivityIndicator, View, StyleSheet } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Easing } from "react-native-reanimated";
 
-const SmoothLoader = ({ loading, title }) => {
+const SmoothLoader = ({ loading, title, textStyle: customTextStyle }) => {
   const opacityText = useSharedValue(loading ? 0 : 1);
   const opacityLoader = useSharedValue(loading ? 1 : 0);
   const rotateValue = useSharedValue(0);
@@ -28,15 +28,17 @@ const SmoothLoader = ({ loading, title }) => {
     opacity: opacityText.value,
   }));
 
-  const loaderStyle = useAnimatedStyle(() => ({
-    opacity: opacityLoader.value,
-    transform: [{ rotate: `${rotateValue.value}deg` }],
-  }));
+  const loaderStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacityLoader.value,
+      transform: [{ rotate: `${rotateValue.value}deg` }],
+    };
+  });
 
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.absoluteCenter, textStyle]}>
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, customTextStyle]}>{title}</Text>
       </Animated.View>
       <Animated.View style={[styles.absoluteCenter, loaderStyle]}>
         <ActivityIndicator size="small" color="#282828" />

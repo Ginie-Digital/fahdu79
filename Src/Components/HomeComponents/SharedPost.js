@@ -1,57 +1,33 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Dimensions,
-  Pressable,
-} from 'react-native';
+import {StyleSheet, Text, View, TouchableOpacity, Dimensions, Pressable} from 'react-native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {
-  responsiveWidth,
-  responsiveFontSize,
-  responsiveHeight,
-} from 'react-native-responsive-dimensions';
+import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
 import DIcon from '../../../DesiginData/DIcons';
 import Moment from 'react-moment';
 
 import {Gesture} from 'react-native-gesture-handler';
 import {GestureDetector} from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, {runOnJS, useAnimatedStyle, useSharedValue, withSpring} from 'react-native-reanimated';
 import {useNavigation, useNavigationState} from '@react-navigation/native';
 import {
   useGetPostDetailsMutation,
   useLazyGetAllCommentsQuery,
-  useLazyGetSelfLikeQuery,
-  useLazyIsValidFollowQuery,
-  useLikeApiMutation,
+  useLikeApiMutation
 } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
 import {
-  setCurrentVideoPlayId,
   toggleCommentBottomSheet,
   toggleLoadingComments,
   togglePostActionBottomSheet,
   toggleSendPostTipModal,
-  toggleWhoTippedSheet,
+  toggleWhoTippedSheet
 } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import Pinchable from 'react-native-pinchable';
 import {LoginPageErrors} from '../ErrorSnacks';
-import {
-  savePostComments,
-  setCurrentCommentDetails,
-} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
-import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import {savePostComments, setCurrentCommentDetails} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import {autoLogout} from '../../../AutoLogout';
-import {likeDislikePost} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import Heart from '../../../Assets/svg/heart.svg';
 import Fill from '../../../Assets/svg/fillh.svg';
 import Comment from '../../../Assets/svg/comm.svg';
@@ -61,27 +37,19 @@ import Paisa from '../../../Assets/svg/paisa.svg';
 import Share from '../../../Assets/svg/sharepost.svg';
 import share from 'react-native-share';
 import {Image} from 'expo-image';
+import MentionText from '../MentionText';
 import {WIDTH_SIZES} from '../../../DesiginData/Utility';
 
-const handlePostActionHandler = async (
-  postId,
-  image,
-  displayName,
-  description,
-) => {
-  console.log(postId, image, displayName, '{}{}{}{}');
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
+const handlePostActionHandler = async (postId, image, displayName, description) => {
   try {
+    const postLink = `https://app.fahdu.com/post/${postId}`;
     let x = await share.open({
-      url: link,
+      url: postLink,
     });
-
     if (x.success) {
-      chatRoomSuccess('Shared successfully!');
-    }
-
-    if (x.dismissedAction) {
-      console.log('Did not share!');
+      // chatRoomSuccess('Shared successfully!');
     }
   } catch (e) {
     console.log(e?.message);
@@ -91,109 +59,67 @@ const handlePostActionHandler = async (
 let timer;
 
 const SharedPost = ({route}) => {
-  // console.log(item?.has_liked);
-
-  // console.log("Username", item?.createdBy?.displayName, "LikeCount", item?.count?.likes, item?.has_liked)
-
-  const screenName = useNavigationState(
-    state => state.routes[state.index].name,
-  );
-
-  console.log(screenName);
-
+  const screenName = useNavigationState(state => state.routes[state.index].name);
   const dispatch = useDispatch();
-
-  const [showHeart, setShowHeart] = useState(false);
-
-  const [doLiked, setDoLiked] = useState(item?.has_liked);
-
-  const heartSize = useSharedValue(0);
-
-  const heartDisplay = useSharedValue('none');
-
-  const currentUserInfo = useSelector(state => state.auth.user);
-
-  const [likeApi] = useLikeApiMutation();
-
-  const token = useSelector(state => state.auth.user.token);
-
-  const [likeCount, setLikeCount] = useState(item?.count?.likes);
-
-  const [commentCount, setCommentCounts] = useState(item?.count?.comments);
+  const navigation = useNavigation();
 
   const [item, setItem] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [doLiked, setDoLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCounts] = useState(0);
 
-  const [loading, setLoading] = useState(false);
+  const heartSize = useSharedValue(0);
+  const heartDisplay = useSharedValue('none');
 
-  const [getAllComments] = useLazyGetAllCommentsQuery();
-
-  const [getPostDetails] = useGetPostDetailsMutation();
-
+  const token = useSelector(state => state.auth.user.token);
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
 
-  const handleGoToOthersProfile = (displayName, userId) => {
-    console.log('Calling two times::::::::::');
+  const [likeApi] = useLikeApiMutation();
+  const [getAllComments] = useLazyGetAllCommentsQuery();
+  const [getPostDetails] = useGetPostDetailsMutation();
 
-    navigate('othersProfile', {
-      userName: displayName,
-      userId: userId,
-      role: 'creator',
-    });
+  const handleGoToOthersProfile = (displayName, userId) => {
+    if (currentUserId !== userId) {
+      navigate('othersProfile', {
+        userName: displayName,
+        userId: userId,
+        role: 'creator',
+      });
+    } else {
+      navigate('profile');
+    }
   };
 
   const handleGetPostDetails = async () => {
     setLoading(true);
-    const {data, error} = await getPostDetails({
-      token,
-      data: {postId: route?.params?.postId},
-    });
-
-    if (data.message === 'You must follow or subscribe the creator.') {
-      console.log('898989', data?.data?.displayName);
-
-      setLoading(true);
-
-      if (currentUserId !== data?.data?._id) {
-        navigate('othersProfile', {
-          userName: data?.data?.displayName,
-          userId: data?.data?._id,
-          role: 'creator',
-        });
-
-        return;
-      } else {
-        navigate('profile');
-      }
-    }
+    const {data, error} = await getPostDetails({token, data: {postId: route?.params?.postId}});
 
     if (data) {
-      setItem(data?.data);
-      setLikeCount(data?.data?.count?.likes);
+      const postData = data?.data;
+      setItem(postData);
+      setDoLiked(postData?.has_liked);
+      setLikeCount(postData?.count?.likes);
+      setCommentCounts(postData?.count?.comments);
       setLoading(false);
     }
 
     if (error) {
       console.log(error, 'ERRROR');
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     handleGetPostDetails();
-  }, []);
+  }, [route?.params?.postId]);
 
   const handleOpenCommentSheet = async (id, focus) => {
     dispatch(toggleLoadingComments({show: true}));
-
     dispatch(toggleCommentBottomSheet({info: {show: 1, focus}}));
-
     const {data, error} = await getAllComments({token, _id: id});
 
-    console.log(data?.data?.comments, data?.data);
-
-    console.log('Comments errors', error);
-
     if (error) {
-      console.log(error);
       LoginPageErrors(error.message);
     }
 
@@ -204,17 +130,13 @@ const SharedPost = ({route}) => {
     }
   };
 
-  const toggleIndex = () => {};
-
-  const navigation = useNavigation();
-
   function sendLike() {
     if (doLiked) {
       setDoLiked(false);
-      setLikeCount(likeCount => likeCount - 1);
+      setLikeCount(prev => prev - 1);
     } else {
       setDoLiked(true);
-      setLikeCount(likeCount => likeCount + 1);
+      setLikeCount(prev => prev + 1);
     }
 
     clearTimeout(timer);
@@ -222,41 +144,27 @@ const SharedPost = ({route}) => {
   }
 
   function executeServer() {
-    console.log('Eexcute Once ...*******************************');
     likeApi({token, data: {postId: item?._id}}).then(e => {
-      console.log(e?.data?.message);
-      if (e?.data?.message?.search('dis') === -1) {
-        // dispatch(likeDislikePost({type: 'INC', index}));
-      } else {
-        // dispatch(likeDislikePost({type: 'DEC', index}));
-      }
-
-      if (e?.error) {
-        LoginPageErrors(e?.error?.data?.message);
-
-        if (e?.error?.data?.status_code === 401) {
-          autoLogout();
-        }
-
-        if (e?.error?.status === 'FETCH_ERROR') {
-          LoginPageErrors('Please check your network');
-        }
-      }
+      // Logic for background sync if needed
     });
   }
 
-  const tap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onStart(() => {
-      console.log('Yay, double tap!');
-      heartSize.value = 100;
-      heartDisplay.value = 'flex';
-      runOnJS(toggleIndex)(true);
-    });
+  const toggleIndex = () => {};
+
+  const tap = useMemo(
+    () =>
+      Gesture.Tap()
+        .numberOfTaps(2)
+        .onStart(() => {
+          heartSize.value = 100;
+          heartDisplay.value = 'flex';
+          runOnJS(toggleIndex)(true);
+        }),
+    [],
+  );
 
   const animatedStyles = useAnimatedStyle(() => ({
     position: 'absolute',
-
     zIndex: 3,
     alignSelf: 'center',
     width: withSpring(heartSize.value, {duration: 600}, isFinished => {
@@ -273,7 +181,6 @@ const SharedPost = ({route}) => {
   }));
 
   const handleCoinClicks = useCallback(() => {
-    console.log(item?._id);
     if (screenName === 'myProfileNormalPost') {
       dispatch(toggleWhoTippedSheet({info: {show: 1, postId: item?._id}}));
     } else {
@@ -281,148 +188,106 @@ const SharedPost = ({route}) => {
     }
   }, [screenName, item?._id]);
 
-  if (!loading) {
-    if (item?.post_content_files) {
-      if (item?.post_content_files?.[0]?.format === 'video') {
-        return (
-          <View style={{backgroundColor: '#fff', flex: 1}}>
-            <View
-              style={[
-                styles.cardContainer,
-                {paddingTop: 0, borderColor: '#282828'},
-              ]}
-              key={item?._id}>
-              <View style={[styles.imageContainer, {aspectRatio: 2 / 3}]}>
-                <Image
-                  source={{uri: item?.video?.thumbnail?.url}}
-                  style={styles.videoImage}
-                />
+  if (loading) {
+    return (
+      <View style={[styles.cardContainer, {justifyContent: 'center', alignItems: 'center', flex: 1}]}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
-                <GestureDetector gesture={tap}>
-                  <LinearGradient
-                    colors={[
-                      '#00000065',
-                      'transparent',
-                      'transparent',
-                      'transparent',
-                      'transparent',
-                      'transparent',
-                      '#00000060',
-                      '#00000070',
-                    ]}
-                    style={styles.overLayContainer}>
-                    <View
-                      style={[
-                        styles.cardHeaderWrapper,
-                        {
-                          paddingHorizontal: responsiveWidth(2),
-                          paddingTop: responsiveWidth(1),
-                        },
-                      ]}>
-                      <View style={styles.headerLeftWrapper}>
-                        <View style={styles.headerLeftContentContainer}>
-                          <Pressable
-                            style={[
-                              styles.profileImageContainer,
-                              {borderColor: 'white', borderWidth: 1},
-                            ]}
-                            onPress={() =>
-                              handleGoToOthersProfile(
-                                item?.createdBy?.displayName,
-                                item?.createdBy?._id,
-                              )
-                            }>
-                            <Image
-                              allowDownscaling
-                              placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
-                              source={{
-                                uri: item?.createdBy?.profile_image?.url,
-                              }}
-                              resizeMethod="resize"
-                              style={styles.profileImage}
-                            />
-                          </Pressable>
+  const isLocked = !item?.post_content_files || item?.post_content_files.length === 0;
 
-                          <View style={{flexDirection: 'column'}}>
-                            <Pressable
-                              style={styles.headerInformation}
-                              onPress={() =>
-                                handleGoToOthersProfile(
-                                  item?.createdBy?.displayName,
-                                )
-                              }>
-                              <View
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  gap: responsiveWidth(1),
-                                }}>
-                                <Text
-                                  style={[styles.userName, {color: '#fff'}]}
-                                  numberOfLines={1}
-                                  ellipsizeMode="tail">
-                                  {item?.createdBy?.displayName}
-                                </Text>
-                                {item?.createdBy?.role === 'creator' ? (
-                                  <View style={{}}>
-                                    <Verify />
-                                  </View>
-                                ) : null}
-                              </View>
-                            </Pressable>
-                            <Moment
-                              style={[styles.timiming, {color: '#fff'}]}
-                              element={Text}
-                              fromNow>
-                              {item?.createdAt}
-                            </Moment>
-                          </View>
-                        </View>
+  return (
+    <View style={{backgroundColor: '#fff', flex: 1}}>
+      <View style={[styles.cardContainer]} key={item?._id}>
+        {/* Header Section */}
+        <View style={{paddingHorizontal: responsiveWidth(2)}}>
+          <View style={styles.cardHeaderWrapper}>
+            <View style={styles.headerLeftWrapper}>
+              <View style={styles.headerLeftContentContainer}>
+                <Pressable style={styles.profileImageContainer} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName, item?.createdBy?._id)}>
+                  <Image allowDownscaling placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
+                </Pressable>
+
+                <View>
+                  <View style={{flexDirection: 'column'}}>
+                    <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName, item?.createdBy?._id)}>
+                      <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
+                        <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                          {item?.createdBy?.displayName}
+                        </Text>
+                        {item?.createdBy?.role === 'creator' && <Verify />}
                       </View>
-                      {item?.pinned && (
-                        <View
-                          style={{
-                            marginLeft: responsiveWidth(30),
-                            transform: [{rotate: '25deg'}],
-                          }}>
-                          <DIcon
-                            provider={'Ionicons'}
-                            name={'pin'}
-                            size={responsiveWidth(6)}
-                            color={'#fff'}
-                          />
-                        </View>
-                      )}
-                      <DIcon
-                        provider={'Entypo'}
-                        name={'dots-three-vertical'}
-                        size={responsiveWidth(5)}
-                        color="#fff"
-                        onPress={() =>
-                          dispatch(
-                            togglePostActionBottomSheet({
-                              info: {
-                                show: 1,
-                                postId: item?._id,
-                                userId: item?.createdBy?._id,
-                              },
-                            }),
-                          )
-                        }
-                      />
-                    </View>
+                    </Pressable>
+                    <Moment style={styles.timiming} element={Text} fromNow>
+                      {item?.createdAt}
+                    </Moment>
+                  </View>
+                </View>
+              </View>
+            </View>
+            <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={responsiveWidth(5)} onPress={() => dispatch(togglePostActionBottomSheet({info: {show: 1, postId: item?._id, userId: item?.createdBy?._id}}))} />
+          </View>
+          <View style={styles.cardTextWrapper}>
+            {item?.postContent ? (
+              <MentionText content={item?.postContent} style={styles.cardText} />
+            ) : null}
+          </View>
+        </View>
 
-                    <View style={styles.playAndDescription}>
-                      <Text
-                        style={styles.videoPostDescription}
-                        numberOfLines={2}>
-                        {item?.postContent}
-                      </Text>
+        {/* Media Content Section */}
+        <View style={[styles.imageContainer]}>
+          {isLocked ? (
+            /* Locked State */
+            <View style={{width: '100%', position: 'relative'}} id={item?._id?.toString()}>
+              <Image
+                cachePolicy="memory-disk"
+                placeholderContentFit="cover"
+                blurRadius={6}
+                placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
+                source={!item?.image_preview?.[0]?.url ? require('../../../Assets/Images/blur.jpg') : {uri: item?.image_preview?.[0]?.url}}
+                contentFit="cover"
+                style={{
+                  width: '100%',
+                  height: undefined,
+                  aspectRatio: 1 / 1,
+                }}
+                id={item?._id?.toString()}
+              />
+
+              <View style={styles.subPlaceHolder}>
+                <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" style={{alignSelf: 'center', marginBottom: responsiveWidth(2)}} size={responsiveWidth(8)} />
+                <Text style={[styles.subscribeMessage, {fontSize: responsiveFontSize(2)}]}>{`Unlock Exclusive Content`}</Text>
+
+                <TouchableOpacity
+                  style={styles.subscribeBox}
+                  onPress={() =>
+                    navigate('subscribeCreator', {
+                      name: item?.createdBy?.displayName,
+                      profileImageUrl: item?.createdBy?.profile_image?.url,
+                      role: item?.createdBy?.role,
+                      id: item?.createdBy?._id,
+                    })
+                  }>
+                  <Text style={[styles.subscribeMessage]}>
+                    SUBSCRIBE
+                    <Text style={[styles.subscribeMessage, {color: '#ffa07a'}]}> NOW</Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            /* Unlocked State (Video or Image) */
+            <GestureDetector gesture={tap}>
+              <View style={{width: '100%', position: 'relative'}} key={item?._id?.toString()} id={item?._id?.toString()}>
+                {item?.post_content_files?.[0]?.format === 'video' ? (
+                  /* Video Thumbnail with Play Button */
+                  <View style={{width: '100%', aspectRatio: 2 / 3}}>
+                    <Image source={{uri: item?.video?.thumbnail?.url}} style={styles.videoImage} />
+                    <LinearGradient colors={['#00000065', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#00000060', '#00000070']} style={styles.overLayContainer}>
                       <TouchableOpacity
-                        style={{
-                          right: responsiveWidth(40),
-                          bottom: responsiveWidth(60),
-                        }}
+                        style={{position: 'absolute', top: '45%', alignSelf: 'center'}}
                         onPress={() =>
                           navigation.navigate('homevideoplayer', {
                             videoUrl: item?.post_content_files?.[0]?.url,
@@ -439,679 +304,48 @@ const SharedPost = ({route}) => {
                         }>
                         <Play />
                       </TouchableOpacity>
-                    </View>
-                  </LinearGradient>
-                </GestureDetector>
-                {/* <View  style = {{width : 30, height : 30, borderWidth : 1, position : 'absolute' }} /> */}
-                <Animated.Image
-                  source={require('../../../Assets/Images/heart.png')}
-                  style={animatedStyles}
-                />
-              </View>
-
-              <View
-                style={{
-                  paddingHorizontal: responsiveWidth(5),
-                  borderColor: 'red',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: responsiveWidth(4),
-                }}>
-                <View
-                  style={{
-                    width: responsiveWidth(70),
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    gap: responsiveWidth(4),
-                  }}>
-                  <View
+                    </LinearGradient>
+                  </View>
+                ) : (
+                  /* Single Image */
+                  <Image
+                    source={item?.post_content_files?.[0]?.url}
+                    placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
+                    contentFit="cover"
                     style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <TouchableOpacity onPress={() => sendLike()}>
-                      {doLiked ? <Fill /> : <Heart />}
-                    </TouchableOpacity>
-
-                    <Text style={styles.likeCommentText}>
-                      {likeCount === 0 ? null : likeCount}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <TouchableOpacity
-                      onPress={() => handleOpenCommentSheet(item?._id, false)}>
-                      <Comment />
-                    </TouchableOpacity>
-
-                    <Text style={styles.likeCommentText}>
-                      {commentCount === 0 ? null : commentCount}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <TouchableOpacity
-                      style={{width: 20, height: 20}}
-                      onPress={() =>
-                        handlePostActionHandler(
-                          item?._id,
-                          item?.createdBy?.profile_image?.url,
-                          item?.createdBy?.displayName,
-                          item?.postContent,
-                        )
-                      }>
-                      <Image
-                        cachePolicy="memory-disk"
-                        source={require('../../../Assets/Images/share.png')}
-                        contentFit="contain"
-                        style={{flex: 1}}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {item?.createdBy?.role !== 'admin' && (
-                  <TouchableOpacity onPress={() => handleCoinClicks()}>
-                    <Paisa />
-                  </TouchableOpacity>
-                )}
-              </View>
-              <View
-                style={{
-                  paddingHorizontal: responsiveWidth(2),
-                  borderColor: 'red',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: responsiveWidth(1),
-                }}>
-                <View
-                  style={{
-                    width: responsiveWidth(40),
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={{
-                        height: responsiveWidth(8),
-                        width: responsiveWidth(8),
-                        borderRadius: responsiveWidth(4),
-                        marginLeft: WIDTH_SIZES['10'],
-                        borderWidth: 1,
-                        borderColor: '#282828',
-                        alignSelf: 'center',
-                        overflow: 'hidden', // ensures image doesn't overflow the circular container
-                      }}>
-                      <Image
-                        source={
-                          !item?.createdBy?.profile_image?.url
-                            ? require('../../../Assets/Images/DefaultProfile.jpg')
-                            : {uri: item?.createdBy?.profile_image?.url}
-                        }
-                        style={{
-                          height: '100%',
-                          width: '100%',
-                          resizeMode: 'cover',
-                        }}
-                      />
-                    </View>
-
-                    <Text
-                      onPress={() => handleOpenCommentSheet(item?._id, true)}
-                      style={[
-                        styles.addCommentsText,
-                        {
-                          marginLeft: responsiveWidth(2),
-                          fontFamily: 'Rubik-Regular',
-                          color: '#B4B4B4',
-                        },
-                      ]}>
-                      Add a Comment
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        );
-      } else {
-        return (
-          <View style={{backgroundColor: '#fff', flex: 1}}>
-            <View style={[styles.cardContainer]} key={item?._id}>
-              <View
-                style={{
-                  paddingHorizontal: responsiveWidth(2),
-                  borderColor: 'red',
-                }}>
-                <View style={styles.cardHeaderWrapper}>
-                  <View style={styles.cardHeaderWrapper}>
-                    <View
-                      style={[
-                        styles.headerLeftWrapper,
-                        {marginLeft: responsiveWidth(3)},
-                      ]}>
-                      <View style={[styles.headerLeftContentContainer]}>
-                        <Pressable
-                          style={styles.profileImageContainer}
-                          onPress={() =>
-                            handleGoToOthersProfile(
-                              item?.createdBy?.displayName,
-                              item?.createdBy?._id,
-                            )
-                          }>
-                          <Image
-                            allowDownscaling
-                            placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
-                            source={{uri: item?.createdBy?.profile_image?.url}}
-                            resizeMethod="resize"
-                            style={styles.profileImage}
-                          />
-                        </Pressable>
-
-                        <View style={{flexDirection: 'column'}}>
-                          <Pressable
-                            style={styles.headerInformation}
-                            onPress={() =>
-                              handleGoToOthersProfile(
-                                item?.createdBy?.displayName,
-                                item?.createdBy?._id,
-                              )
-                            }>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: responsiveWidth(1),
-                              }}>
-                              <Text
-                                style={styles.userName}
-                                numberOfLines={1}
-                                ellipsizeMode="tail">
-                                {item?.createdBy?.displayName}
-                              </Text>
-                              {item?.createdBy?.role === 'creator' ? (
-                                <View style={{}}>
-                                  <Verify />
-                                </View>
-                              ) : null}
-                            </View>
-                          </Pressable>
-                          <Moment
-                            style={styles.timiming}
-                            element={Text}
-                            fromNow>
-                            {item?.createdAt}
-                          </Moment>
-                        </View>
-                      </View>
-                    </View>
-                    {item?.pinned && (
-                      <View
-                        style={{
-                          marginLeft: responsiveWidth(35),
-                          transform: [{rotate: '25deg'}],
-                        }}>
-                        {/* <DIcon provider={"Ionicons"} name={"pin"} size={responsiveWidth(6)} color={"#282828"} /> */}
-                      </View>
-                    )}
-                    {/* <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={responsiveWidth(5)} onPress={() => dispatch(togglePostActionBottomSheet({info: {show: 1, postId: item?._id, userId: item?.createdBy?._id}}))} /> */}
-                  </View>
-                  {item?.pinned && (
-                    <View
-                      style={{
-                        marginLeft: responsiveWidth(30),
-                        transform: [{rotate: '25deg'}],
-                      }}>
-                      <DIcon
-                        provider={'Ionicons'}
-                        name={'pin'}
-                        size={responsiveWidth(6)}
-                        color={'#282828'}
-                      />
-                    </View>
-                  )}
-                  <DIcon
-                    provider={'Entypo'}
-                    name={'dots-three-vertical'}
-                    size={responsiveWidth(5)}
-                    onPress={() =>
-                      dispatch(
-                        togglePostActionBottomSheet({
-                          info: {
-                            show: 1,
-                            postId: item?._id,
-                            userId: item?.createdBy?._id,
-                          },
-                        }),
-                      )
-                    }
-                  />
-                </View>
-                <View style={styles.cardTextWrapper}>
-                  {item?.postContent ? (
-                    <Text style={styles.cardText}>{item?.postContent}</Text>
-                  ) : null}
-                </View>
-              </View>
-
-              <View style={[styles.imageContainer]}>
-                <GestureDetector gesture={tap}>
-                  <View
-                    style={{width: '100%', position: 'relative'}}
-                    key={item?._id?.toString()}
-                    id={item?._id?.toString()}>
-                    <Image
-                      source={item?.post_content_files?.[0]?.url}
-                      placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
-                      contentFit="cover"
-                      style={{
-                        width: '100%',
-                        height: undefined,
-                        aspectRatio: item?.image?.hasAspectRatio
-                          ? Number(item?.image?.aspectRatio?.width) /
-                            Number(item?.image?.aspectRatio?.height)
-                          : 1 / 1,
-                      }}
-                      key={item?._id?.toString()}
-                      id={item?._id?.toString()}
-                      allowDownscaling
-                    />
-                  </View>
-                </GestureDetector>
-
-                <Animated.Image
-                  source={require('../../../Assets/Images/heart.png')}
-                  style={animatedStyles}
-                />
-              </View>
-
-              <View
-                style={{
-                  paddingHorizontal: responsiveWidth(5),
-                  borderColor: 'red',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: responsiveWidth(4),
-                }}>
-                <View
-                  style={{
-                    width: responsiveWidth(70),
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    gap: responsiveWidth(4),
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <TouchableOpacity onPress={() => sendLike()}>
-                      {doLiked ? <Fill /> : <Heart />}
-                    </TouchableOpacity>
-
-                    <Text style={styles.likeCommentText}>
-                      {likeCount === 0 ? null : likeCount}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <TouchableOpacity
-                      onPress={() => handleOpenCommentSheet(item?._id, false)}>
-                      <Comment />
-                    </TouchableOpacity>
-
-                    <Text style={styles.likeCommentText}>
-                      {commentCount === 0 ? null : commentCount}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <TouchableOpacity
-                      style={{width: 20, height: 20}}
-                      onPress={() =>
-                        handlePostActionHandler(
-                          item?._id,
-                          item?.createdBy?.profile_image?.url,
-                          item?.createdBy?.displayName,
-                          item?.postContent,
-                        )
-                      }>
-                      <Image
-                        cachePolicy="memory-disk"
-                        source={require('../../../Assets/Images/share.png')}
-                        contentFit="contain"
-                        style={{flex: 1}}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {item?.createdBy?.role !== 'admin' && (
-                  <TouchableOpacity onPress={() => handleCoinClicks()}>
-                    <Paisa />
-                  </TouchableOpacity>
-                )}
-              </View>
-              <View
-                style={{
-                  paddingHorizontal: responsiveWidth(2),
-                  borderColor: 'red',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: responsiveWidth(1),
-                }}>
-                <View
-                  style={{
-                    width: responsiveWidth(40),
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: responsiveWidth(1),
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={{
-                        height: responsiveWidth(8),
-                        width: responsiveWidth(8),
-                        borderRadius: responsiveWidth(4),
-                        marginLeft: WIDTH_SIZES['10'],
-                        borderWidth: 1,
-                        borderColor: '#282828',
-                        alignSelf: 'center',
-                        overflow: 'hidden', // ensures image doesn't overflow the circular container
-                      }}>
-                      <Image
-                        source={
-                          !item?.createdBy?.profile_image?.url
-                            ? require('../../../Assets/Images/DefaultProfile.jpg')
-                            : {uri: item?.createdBy?.profile_image?.url}
-                        }
-                        style={{
-                          height: '100%',
-                          width: '100%',
-                          resizeMode: 'cover',
-                        }}
-                      />
-                    </View>
-
-                    <Text
-                      onPress={() => handleOpenCommentSheet(item?._id, true)}
-                      style={[
-                        styles.addCommentsText,
-                        {
-                          marginLeft: responsiveWidth(2),
-                          fontFamily: 'Rubik-Regular',
-                          color: '#B4B4B4',
-                        },
-                      ]}>
-                      Add a Comment
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        );
-      }
-    } else {
-      return (
-        <View style={{backgroundColor: '#fff', flex: 1}}>
-          <View style={[styles.cardContainer]} key={item?._id}>
-            <View
-              style={{
-                paddingHorizontal: responsiveWidth(2),
-                borderColor: 'red',
-              }}>
-              <View style={styles.cardHeaderWrapper}>
-                <View style={styles.headerLeftWrapper}>
-                  <View style={styles.headerLeftContentContainer}>
-                    <Pressable
-                      style={styles.profileImageContainer}
-                      onPress={() =>
-                        handleGoToOthersProfile(
-                          item?.createdBy?.displayName,
-                          item?.createdBy?._id,
-                        )
-                      }>
-                      <Image
-                        source={
-                          !item?.createdBy?.profile_image?.url
-                            ? require('../../../Assets/Images/DefaultProfile.jpg')
-                            : {uri: item?.createdBy?.profile_image?.url}
-                        }
-                        resizeMethod="resize"
-                        style={styles.profileImage}
-                      />
-                    </Pressable>
-
-                    {/* {item?.createdBy?.role === "creator" ? (
-                  <View style={{ position: "absolute", transform: [{ translateX: responsiveWidth(6.2) }, { translateY: responsiveWidth(-4) }] }}>
-                    <DIcon provider={"MaterialIcons"} name={"verified"} color="#FFA07A" size={responsiveWidth(4)} />
-                  </View>
-                ) : null} */}
-
-                    <Pressable
-                      style={styles.headerInformation}
-                      onPress={() =>
-                        handleGoToOthersProfile(
-                          item?.createdBy?.displayName,
-                          item?.createdBy?._id,
-                        )
-                      }>
-                      <View style={{flexDirection: 'row'}}>
-                        <Text
-                          style={styles.userName}
-                          numberOfLines={1}
-                          ellipsizeMode="tail">
-                          {item?.createdBy?.displayName}
-                        </Text>
-                        {item?.createdBy?.role === 'creator' ? (
-                          <View>
-                            <Verify />
-                          </View>
-                        ) : null}
-                      </View>
-                    </Pressable>
-                  </View>
-                </View>
-                {item?.pinned && (
-                  <View
-                    style={{
-                      marginLeft: responsiveWidth(30),
-                      transform: [{rotate: '25deg'}],
-                    }}>
-                    <DIcon
-                      provider={'Ionicons'}
-                      name={'pin'}
-                      size={responsiveWidth(6)}
-                      color={'#282828'}
-                    />
-                  </View>
-                )}
-                <DIcon
-                  provider={'Entypo'}
-                  name={'dots-three-vertical'}
-                  size={responsiveWidth(5)}
-                  onPress={() =>
-                    dispatch(
-                      togglePostActionBottomSheet({
-                        info: {
-                          show: 1,
-                          postId: item?._id,
-                          userId: item?.createdBy?._id,
-                        },
-                      }),
-                    )
-                  }
-                />
-              </View>
-              <View style={styles.cardTextWrapper}>
-                {item?.postContent ? (
-                  <Text style={styles.cardText}>{item?.postContent}</Text>
-                ) : null}
-              </View>
-            </View>
-
-            <View style={[styles.imageContainer]}>
-              <View
-                style={{width: '100%', position: 'relative'}}
-                key={item?._id?.toString()}
-                id={item?._id?.toString()}>
-                <Image
-                  blurRadius={20}
-                  source={
-                    !item?.image_preview?.[0]?.url
-                      ? require('../../../Assets/Images/blur.jpg')
-                      : {uri: item?.image_preview?.[0]?.url}
-                  }
-                  contentFit="cover"
-                  style={{
-                    width: '100%',
-                    height: undefined,
-                    aspectRatio: item?.image?.hasAspectRatio
-                      ? Number(item?.image?.aspectRatio?.width) /
-                        Number(item?.image?.aspectRatio?.height)
-                      : 1 / 1,
-                  }}
-                  key={item?._id?.toString()}
-                  id={item?._id?.toString()}
-                />
-
-                <View style={styles.subPlaceHolder}>
-                  <DIcon
-                    provider={'SimpleLineIcons'}
-                    name={'lock'}
-                    color="#fff"
-                    style={{
-                      alignSelf: 'center',
-                      marginBottom: responsiveWidth(2),
+                      width: '100%',
+                      height: undefined,
+                      aspectRatio: item?.image?.hasAspectRatio ? Number(item?.image?.aspectRatio?.width) / Number(item?.image?.aspectRatio?.height) : 1 / 1,
                     }}
-                    size={responsiveWidth(8)}
+                    allowDownscaling
                   />
-                  <Text
-                    style={[
-                      styles.subscribeMessage,
-                      {fontSize: responsiveFontSize(2)},
-                    ]}>{`Unlock Exclusive Content`}</Text>
-
-                  <TouchableOpacity
-                    style={styles.subscribeBox}
-                    onPress={() =>
-                      navigate('subscribeCreator', {
-                        name: item?.createdBy?.displayName,
-                        profileImageUrl: item?.createdBy?.profile_image?.url,
-                        role: item?.createdBy?.role,
-                        id: item?.createdBy?._id,
-                      })
-                    }>
-                    <Text style={[styles.subscribeMessage]}>
-                      SUBSCRIBE
-                      <Text
-                        style={[styles.subscribeMessage, {color: '#ffa07a'}]}>
-                        {' '}
-                        NOW
-                      </Text>
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                )}
+                <Animated.Image source={require('../../../Assets/Images/heart.png')} style={animatedStyles} />
               </View>
-            </View>
+            </GestureDetector>
+          )}
+        </View>
 
-            <View
-              style={{
-                paddingHorizontal: responsiveWidth(5),
-                borderColor: 'red',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingVertical: responsiveWidth(4),
-              }}>
-              <View
-                style={{
-                  width: responsiveWidth(70),
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  gap: responsiveWidth(4),
-                }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: responsiveWidth(1),
-                    alignItems: 'center',
-                  }}>
-                  <TouchableOpacity onPress={() => sendLike()}>
-                    {doLiked ? <Fill /> : <Heart />}
-                  </TouchableOpacity>
-
-                  <Text style={styles.likeCommentText}>
-                    {item?.count?.likes}
-                  </Text>
+        {/* Engagement Section (Only if NOT locked) */}
+        {!isLocked && (
+          <>
+            <View style={{paddingHorizontal: responsiveWidth(5), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(4)}}>
+              <View style={{width: responsiveWidth(70), flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: responsiveWidth(4)}}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => sendLike()}>{doLiked ? <Fill /> : <Heart />}</TouchableOpacity>
+                  <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
                 </View>
 
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: responsiveWidth(1),
-                    alignItems: 'center',
-                  }}>
-                  <TouchableOpacity
-                    onPress={() => handleOpenCommentSheet(item?._id, false)}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
                     <Comment />
                   </TouchableOpacity>
-
-                  <Text style={styles.likeCommentText}>
-                    {commentCount === 0 ? null : commentCount}
-                  </Text>
+                  <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
                 </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: responsiveWidth(1),
-                    alignItems: 'center',
-                  }}>
-                  <TouchableOpacity
-                    onPress={() => handleOpenCommentSheet(item?._id, false)}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <TouchableOpacity style={{width: 20, height: 20}} onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
                     <Share />
                   </TouchableOpacity>
-
-                  {/* <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text> */}
                 </View>
               </View>
 
@@ -1122,76 +356,27 @@ const SharedPost = ({route}) => {
               )}
             </View>
 
-            <View
-              style={{
-                paddingHorizontal: responsiveWidth(2),
-                borderColor: 'red',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingVertical: responsiveWidth(1),
-              }}>
-              <View
-                style={{
-                  width: responsiveWidth(40),
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: responsiveWidth(1),
-                    alignItems: 'center',
-                  }}>
-                  <View
-                    style={{
-                      height: responsiveWidth(8),
-                      width: responsiveWidth(8),
-                      borderRadius: responsiveWidth(4),
-                      marginLeft: WIDTH_SIZES['10'],
-                      borderWidth: 1,
-                      borderColor: '#282828',
-                      alignSelf: 'center',
-                      overflow: 'hidden', // ensures image doesn't overflow the circular container
-                    }}>
+            {/* Comment Preview Input */}
+            <View style={{paddingHorizontal: responsiveWidth(2), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(1)}}>
+              <View style={{width: responsiveWidth(40), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <View style={styles.previewCommentProfileContainer}>
                     <Image
-                      source={
-                        !item?.createdBy?.profile_image?.url
-                          ? require('../../../Assets/Images/DefaultProfile.jpg')
-                          : {uri: item?.createdBy?.profile_image?.url}
-                      }
-                      style={{
-                        height: '100%',
-                        width: '100%',
-                        resizeMode: 'cover',
-                      }}
+                      source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}}
+                      style={styles.previewCommentProfileImage}
                     />
                   </View>
-
-                  <Text
-                    onPress={() =>
-                      LoginPageErrors('You must subscribe to comment')
-                    }
-                    style={[
-                      styles.addCommentsText,
-                      {
-                        marginLeft: responsiveWidth(2),
-                        fontFamily: 'MabryPro-Regular',
-                      },
-                    ]}>
-                    Add a Comments...
+                  <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={styles.addCommentsText}>
+                    Add a Comment
                   </Text>
                 </View>
               </View>
             </View>
-          </View>
-        </View>
-      );
-    }
-  } else {
-    return <Text>Loading</Text>;
-  }
+          </>
+        )}
+      </View>
+    </View>
+  );
 };
 
 export default memo(SharedPost);
@@ -1200,32 +385,26 @@ const styles = StyleSheet.create({
   cardContainer: {
     borderBottomColor: '#E9E9E9',
     overflow: 'hidden',
-    // marginTop: responsiveHeight(1.6),
     marginBottom: responsiveHeight(1),
     backgroundColor: 'white',
     width: '100%',
   },
-
   cardHeaderWrapper: {
     justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
-    // borderWidth : 1,
     borderColor: 'blue',
   },
-
   headerLeftWrapper: {
     height: responsiveWidth(12),
     justifyContent: 'center',
-    // borderWidth : 1,
     flexBasis: '50%',
   },
   headerLeftContentContainer: {
     height: '100%',
-    borderColor: 'blue',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: responsiveWidth(6),
+    gap: responsiveWidth(5.33),
   },
   profileImageContainer: {
     borderColor: '#1e1e1e',
@@ -1233,14 +412,11 @@ const styles = StyleSheet.create({
     width: responsiveWidth(11.2),
     borderRadius: responsiveWidth(10),
     overflow: 'hidden',
-    borderRadius: responsiveWidth(10),
-    position: 'relative',
-    // left: responsiveWidth(3.5),
+    left: responsiveWidth(2.5),
     borderWidth: responsiveWidth(0.5),
   },
   profileImage: {
     width: '100%',
-    resizeMode: 'cover',
     height: '100%',
   },
   userName: {
@@ -1249,32 +425,18 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
     lineHeight: 19,
   },
-  status: {
-    fontSize: responsiveFontSize(1.6),
-    letterSpacing: 0.5,
-    color: '#1e1e1e',
-    fontFamily: 'Rubik-Regular',
-  },
   cardTextWrapper: {
     flex: 1,
     marginLeft: responsiveWidth(2),
     paddingHorizontal: responsiveWidth(1),
     paddingVertical: responsiveWidth(1.5),
-    // width: responsiveWidth(90),
     height: 'auto',
-  },
-  cardImageContainer: {
-    paddingVertical: responsiveWidth(2),
-    borderWidth: 1,
-    width: '100%',
-    paddingHorizontal: responsiveWidth(4),
   },
   cardText: {
     color: '#1e1e1e',
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.72),
     marginVertical: 8,
-    // backgroundColor : 'red',
     paddingLeft: responsiveWidth(1.2),
   },
   imageContainer: {
@@ -1300,18 +462,18 @@ const styles = StyleSheet.create({
   subscribeMessage: {
     fontFamily: 'Rubik-Bold',
     color: 'white',
-
     textAlign: 'center',
-
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
   },
   subPlaceHolder: {
     position: 'absolute',
-    top: '30%',
-    alignSelf: 'center',
-    width: '100%',
-    padding: responsiveWidth(2),
-    // borderWidth : 1
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   subscribeBox: {
     borderWidth: 2,
@@ -1323,12 +485,10 @@ const styles = StyleSheet.create({
     padding: responsiveWidth(2),
     borderRadius: responsiveWidth(2),
   },
-
   videoImage: {
     flex: 1,
     width: '100%',
   },
-
   overLayContainer: {
     position: 'absolute',
     top: 0,
@@ -1338,46 +498,25 @@ const styles = StyleSheet.create({
     display: 'flex',
     opacity: 0.9,
   },
-
-  playAndDescription: {
-    marginTop: 'auto',
+  previewCommentProfileContainer: {
+    height: responsiveWidth(8),
+    width: responsiveWidth(8),
+    borderRadius: responsiveWidth(4),
+    marginLeft: WIDTH_SIZES['10'],
+    borderWidth: 1,
+    borderColor: '#282828',
     alignSelf: 'center',
-    marginBottom: responsiveWidth(6),
+    overflow: 'hidden',
+  },
+  previewCommentProfileImage: {
+    height: '100%',
     width: '100%',
-    color: '#fff',
-    paddingHorizontal: responsiveWidth(2),
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  videoPostDescription: {
-    color: 'white',
-    fontFamily: 'Rubik-Medium',
-    width: responsiveWidth(60),
-    fontFamily: 'Rubik-Regular',
-    fontSize: responsiveFontSize(1.72),
-  },
-  iconContainer: {
-    height: 19,
-    width: 5,
-    marginRight: 12,
-  },
-  verifyContainer: {
-    width: 15,
-    height: 14.32,
-  },
-  bottomIconContainer: {
-    width: 20,
-    height: 20,
-    // backgroundColor : '#fff'
-  },
-  coinContainer: {
-    width: 23,
-    height: 23,
+    resizeMode: 'cover',
   },
   addCommentsText: {
-    color: '#b2b2b2',
+    color: '#B4B4B4',
+    marginLeft: responsiveWidth(2),
+    fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.5),
-    fontFamily: 'Rubik-Medium',
   },
 });

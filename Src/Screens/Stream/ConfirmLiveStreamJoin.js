@@ -1,20 +1,20 @@
-import {StyleSheet, Text, View, Pressable, ScrollView} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
-import {FONT_SIZES, padios, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
+import { FONT_SIZES, padios, WIDTH_SIZES } from '../../../DesiginData/Utility';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import axios from 'axios';
-import {useSelector} from 'react-redux';
-import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
-import {navigate} from '../../../Navigation/RootNavigation';
+import { useSelector } from 'react-redux';
+import { token as memoizedToken } from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { navigate } from '../../../Navigation/RootNavigation';
 import DIcon from '../../../DesiginData/DIcons';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import Back from '../../../Assets/svg/back.svg';
 import Verify from '../../../Assets/svg/veribig.svg';
-import {Image} from 'expo-image';
+import { Image } from 'expo-image';
 import AnimatedButton from '../../Components/AnimatedButton';
-const ConfirmLiveStreamJoin = ({route}) => {
+const ConfirmLiveStreamJoin = ({ route }) => {
   console.log(route?.params?.data?.creatorInfo, route?.params?.roomId);
 
   const token = useSelector(state => state.auth.user.token);
@@ -29,7 +29,7 @@ const ConfirmLiveStreamJoin = ({route}) => {
     try {
       setFetchingCoins(true);
 
-      let {data} = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'}, timeout: 10000});
+      let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 10000 });
 
       setCoins(data?.data);
 
@@ -54,7 +54,7 @@ const ConfirmLiveStreamJoin = ({route}) => {
   const handleButton = () => {
     if (canJoin) {
       console.log('join');
-      navigate('livestream', {data: {goals: route?.params?.data?.goals, isStarting: false, creatorInfo: route?.params?.data?.creatorInfo, roomId: route?.params?.roomId, doUserSubscribed: route?.params?.data?.subscribed}});
+      navigate('livestream', { data: { goals: route?.params?.data?.goals, isStarting: false, creatorInfo: route?.params?.data?.creatorInfo, roomId: route?.params?.roomId, doUserSubscribed: route?.params?.data?.subscribed } });
     } else {
       console.log('recharge');
       navigate('wallet');
@@ -65,7 +65,7 @@ const ConfirmLiveStreamJoin = ({route}) => {
     <SafeAreaView style={styles.flexOne}>
       <ScrollView>
         <View style={[styles.flexOne, styles.container]}>
-          <View style={{flexDirection: 'row', marginTop: responsiveWidth(2)}}>{/* <Text style={styles.titleText}> Livestream</Text> */}</View>
+          <View style={{ flexDirection: 'row', marginTop: responsiveWidth(2) }}>{/* <Text style={styles.titleText}> Livestream</Text> */}</View>
           {/* <View style={{marginTop: Platform.OS === 'ios' ? responsiveWidth(-4) : responsiveWidth(4)}}>
           <View style={styles.outerBigBox}>
             <View style={[styles.outerBigBox, {height: responsiveWidth(30), width: responsiveWidth(30)}]}>
@@ -84,8 +84,10 @@ const ConfirmLiveStreamJoin = ({route}) => {
           <View style={styles.containerImg}>
             {/* Outer Dashed Border */}
             <View style={styles.outerBorder}>
-              {/* Image Container */}
-              <Image source={{uri: route?.params?.data?.creatorInfo?.profile_image?.url}} style={styles.image} contentFit="cover" />
+              <View style={styles.innerBorder}>
+                {/* Image Container */}
+                <Image source={{ uri: route?.params?.data?.creatorInfo?.profile_image?.url }} style={styles.image} contentFit="cover" />
+              </View>
             </View>
 
             {/* Verification Badge */}
@@ -94,16 +96,16 @@ const ConfirmLiveStreamJoin = ({route}) => {
             </View>
           </View>
 
-          <Text style={[styles.title, {marginTop: WIDTH_SIZES[16], fontSize: responsiveFontSize(2.3)}]}>
-            Join <Text style={{fontFamily: 'Rubik-Bold'}}>{route?.params?.data?.creatorInfo?.displayName}'s</Text> Livestreem
+          <Text style={[styles.title, { marginTop: WIDTH_SIZES[16], fontSize: responsiveFontSize(2.3) }]}>
+            Join <Text style={{ fontFamily: 'Rubik-Bold' }}>{route?.params?.data?.creatorInfo?.displayName}'s</Text> Livestream
           </Text>
 
-          <View style={{marginTop: WIDTH_SIZES[32]}}>
-            <View style={[styles.card, {backgroundColor: '#FFF6F0', borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), borderColor: 'black', flexDirection: 'column'}]}>
-              <View style={[styles.card, {borderStyle: 'dashed'}]}>
+          <View style={{ marginTop: WIDTH_SIZES[32] }}>
+            <View style={[styles.card, { backgroundColor: '#FFF6F0', borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), borderColor: 'black', flexDirection: 'column' }]}>
+              <View style={[styles.card, { borderStyle: 'dashed' }]}>
                 <View style={styles.cardLeftView}>
                   <Text style={styles.heading}>Fee Details</Text>
-                  {/* 
+                  {/*
                 <View style={styles.eachDetailWrapper}>
                   <View
                     style={{
@@ -131,7 +133,7 @@ const ConfirmLiveStreamJoin = ({route}) => {
                     </View>
                   </View>
 
-                  <Text style={[styles.description, {color: '#1E1E1E', left: responsiveWidth(55)}]}>*Live/Minute</Text>
+                  <Text style={[styles.description, { color: '#1E1E1E', left: responsiveWidth(55) }]}>*Live/Minute</Text>
 
                   {/* <View style={styles.eachDetailWrapper}>
                   <View
@@ -160,13 +162,13 @@ const ConfirmLiveStreamJoin = ({route}) => {
                     </View>
                   </View>
 
-                  <Text style={[styles.description, {color: '#1E1E1E', left: responsiveWidth(55)}]}>*Live/Minute</Text>
+                  <Text style={[styles.description, { color: '#1E1E1E', left: responsiveWidth(55) }]}>*Live/Minute</Text>
                 </View>
               </View>
             </View>
           </View>
 
-          <View style={[styles.card, {borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), backgroundColor: '#FFF6F0', flexDirection: 'column', marginTop: responsiveWidth(8)}]}>
+          <View style={[styles.card, { borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), backgroundColor: '#FFF6F0', flexDirection: 'column', marginTop: responsiveWidth(8) }]}>
             <View style={[styles.card, {}]}>
               <View style={styles.cardLeftView}>
                 <Text style={styles.heading}>My Wallet</Text>
@@ -196,7 +198,7 @@ const ConfirmLiveStreamJoin = ({route}) => {
                 <View style={styles.containerSub}>
                   <Text style={styles.text}>Coins</Text>
                   <View style={styles.rightSection}>
-                    <Text style={styles.amount}>{coins}</Text>
+                    <Text style={styles.amount}>{Math.trunc(coins || 0).toLocaleString('en-IN')}</Text>
                     <Paisa />
                   </View>
                 </View>
@@ -212,11 +214,11 @@ const ConfirmLiveStreamJoin = ({route}) => {
           <View style={[styles.loginButton, {backgroundColor: 'black', position: 'absolute', marginTop: responsiveWidth(3), left: responsiveWidth(1.5), top: responsiveWidth(1.5)}]}></View>
         </View> */}
 
-          <View style={{width: '84%'}}>
+          <View style={{ width: '84%' }}>
             <AnimatedButton title={'Join Now'} onPress={handleButton} disabled={fetchingCoins} />
           </View>
 
-          <View style={{height: 100}} />
+          <View style={{ height: 100 }} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -358,15 +360,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   outerBorder: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    borderWidth: 2,
+    width: 110,
+    height: 110,
+    borderRadius: 24,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: 'black',
+    borderColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+  },
+  innerBorder: {
+    width: 90,
+    height: 90,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderStyle: 'solid',
+    borderColor: '#1e1e1e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   image: {
     width: '100%',

@@ -1,19 +1,19 @@
-import {StyleSheet, View, Pressable, Animated, Easing} from 'react-native';
-import React, {useEffect, useState, useRef} from 'react';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {useSelector} from 'react-redux';
-import {Image, ImageBackground} from 'expo-image';
-import {WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {useLazyJoinLiveStreamQuery, useLazyLiveStatusQuery, useLazyOnlineStatusQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {navigate} from '../../../Navigation/RootNavigation';
-import {LoginPageErrors} from '../ErrorSnacks';
+import { StyleSheet, View, Pressable, Animated, Easing } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { responsiveWidth } from 'react-native-responsive-dimensions';
+import { useSelector } from 'react-redux';
+import { Image, ImageBackground } from 'expo-image';
+import { WIDTH_SIZES } from '../../../DesiginData/Utility';
+import { useLazyJoinLiveStreamQuery, useLazyLiveStatusQuery, useLazyOnlineStatusQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { navigate } from '../../../Navigation/RootNavigation';
+import { LoginPageErrors } from '../ErrorSnacks';
 
-const OtherProfilePicture = ({displayName, userId}) => {
+const OtherProfilePicture = ({ displayName, userId }) => {
 
 
-  console.log("DISP", )
+  console.log("DISP",)
 
-  const {profileDetails: userProfileDetails} = useSelector(state => state.profileFeedCache.data);
+  const { profileDetails: userProfileDetails } = useSelector(state => state.profileFeedCache.data);
 
 
   const token = useSelector(state => state.auth.user.token);
@@ -32,7 +32,7 @@ const OtherProfilePicture = ({displayName, userId}) => {
 
   async function userStatusHandler(displayName) {
     try {
-      const response = await onlineStatus({token, displayName});
+      const response = await onlineStatus({ token, displayName });
       if (response.data?.statusCode === 200) {
         setIsOnline(response.data?.data?.status);
       }
@@ -43,7 +43,7 @@ const OtherProfilePicture = ({displayName, userId}) => {
 
   async function liveStatusHandler(userId) {
     try {
-      const {data: statusData, error: statusError} = await liveStatus({
+      const { data: statusData, error: statusError } = await liveStatus({
         token,
         userId,
       });
@@ -71,7 +71,7 @@ const OtherProfilePicture = ({displayName, userId}) => {
     if (!roomId || !isLive) return;
 
     setLoading(true);
-    const {error, data} = await joinLiveStream({token, roomId});
+    const { error, data } = await joinLiveStream({ token, roomId });
 
     if (error?.data?.statusCode === 400) {
       LoginPageErrors('Hey!, Livestream has ended');
@@ -80,7 +80,7 @@ const OtherProfilePicture = ({displayName, userId}) => {
     }
 
     setLoading(false);
-    navigate('confirmlivestreamjoin', {data: data?.data, roomId});
+    navigate('confirmlivestreamjoin', { data: data?.data, roomId });
   };
 
   // 🔥 Animate border when live
@@ -103,17 +103,17 @@ const OtherProfilePicture = ({displayName, userId}) => {
   }, [isLive]);
 
   useEffect(() => {
-      console.log({userProfileDetails : userProfileDetails})
+    console.log({ userProfileDetails: userProfileDetails })
 
-    if(userProfileDetails) {
+    if (userProfileDetails && userId && userId !== 'undefined' && displayName && displayName !== 'undefined') {
       liveStatusHandler(userId);
       userStatusHandler(displayName)
     }
 
-  }, [displayName, userId]);
+  }, [displayName, userId, userProfileDetails]);
 
 
-  
+
 
 
   const rotateInterpolation = rotation.interpolate({
@@ -124,31 +124,33 @@ const OtherProfilePicture = ({displayName, userId}) => {
   return (
     <>
       {/* Cover Image */}
-      <View style={{width: '100%', justifyContent: 'center', alignItems: 'center'}}>
+      <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
         <ImageBackground key={userProfileDetails?.cover_photo?.url} placeholder={require('../../../Assets/Images/CoverDefault.jpeg')} source={userProfileDetails?.cover_photo?.url} style={styles.coverStyle} />
       </View>
 
-      {/* Rotating dashed border */}
-      {isLive && <Animated.View style={[styles.rotatingBorder, {transform: [{rotate: rotateInterpolation}]}]} />}
+      {/* Rotating dashed border - only show if displayName and userId exist */}
+      {isLive && displayName && userId && <Animated.View style={[styles.rotatingBorder, { transform: [{ rotate: rotateInterpolation }] }]} />}
 
       {/* Profile Image (static, above border) */}
       <Pressable onPress={() => handleJoin(liveRoomId)} style={styles.profilePictureWrapper}>
         <Image placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={userProfileDetails?.profile_image?.url} style={styles.profilePicture} resizeMethod="resize" contentFit="contain" />
       </Pressable>
 
-      {/* Online/Offline dot */}
-      <View
-        style={{
-          width: 13,
-          height: 13,
-          borderRadius: responsiveWidth(20),
-          backgroundColor: isOnline === 'online' ? '#00E532' : '#FF4539',
-          borderColor: '#1e1e1e',
-          borderWidth: WIDTH_SIZES['1.5'],
-          left: '24%',
-          top: '5%',
-        }}
-      />
+      {/* Online/Offline dot - only show if displayName and userId exist */}
+      {displayName && userId && (
+        <View
+          style={{
+            width: 13,
+            height: 13,
+            borderRadius: responsiveWidth(20),
+            backgroundColor: isOnline === 'online' ? '#00E532' : '#FF4539',
+            borderColor: '#1e1e1e',
+            borderWidth: WIDTH_SIZES['1.5'],
+            left: '24%',
+            top: '5%',
+          }}
+        />
+      )}
     </>
   );
 };

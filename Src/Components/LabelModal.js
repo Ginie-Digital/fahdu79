@@ -1,7 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {View, Text, StyleSheet, Pressable, Platform, Image, Dimensions, TouchableOpacity} from 'react-native';
-import {Dialog} from 'react-native-simple-dialogs';
-import AnimatedButton from '../Components/AnimatedButton';
+import {View, Text, StyleSheet, Pressable, Platform, Image, Dimensions, TouchableOpacity, ScrollView, Animated} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
 import {useDispatch, useSelector} from 'react-redux';
@@ -9,38 +8,51 @@ import {toggleBankDetailsModal, toggleChatRoomLabelEdit, toggleChatRoomModal, to
 import {WINDOW_WIDTH} from '@gorhom/bottom-sheet';
 import {FONT_SIZES, WIDTH_SIZES} from '../../DesiginData/Utility';
 import CustomCheckbox from './CustomCheckbox';
-import {resetLabel, setLabel, setSelectedSort} from '../../Redux/Slices/NormalSlices/SortSelectedSlice';
+import {resetLabel, setLabel, setSelectedSort, setOnlineFilter} from '../../Redux/Slices/NormalSlices/SortSelectedSlice';
 import {sortByLabel} from '../../Redux/Slices/NormalSlices/RoomListSlice';
 import {useLabelList} from '../Hook/useLabelList';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import {triggerImpactLight} from '../Utils/Haptics';
 
-const LabelModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, setIsOnline, isOnline}) => {
+const LabelModal = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const token = useSelector(state => state.auth.user.token);
-  const [contentHeight, setContentHeight] = useState(0);
 
   const visible = useSelector(state => state.hideShow.visibility.chatRoomSortModal);
-
   const lable = useSelector(state => state.sortBy.selected.label);
+  const currentOnlineFilter = useSelector(state => state.sortBy.selected.onlineFilter);
+
+  // Local state for label selection before hitting 'Done'
+  const [currentLabelName, setCurrentLabelName] = useState('none');
+
+  const [contentHeight, setContentHeight] = useState(0);
+
+  const slideAnim = useRef(new Animated.Value(600)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      slideAnim.setValue(600);
+    }
+  }, [visible]);
 
   const {labelList, getAllLabelNamesHandler} = useLabelList(token);
 
-  console.log(labelList, 'LABLELIST');
-
   // Height calculations
-  const buttonHeight = 50; // Approximate height of the button
-  const padding = 32; // Dialog padding
-  const minModalHeight = 400; // Minimum height you want for the modal
-  const maxModalHeight = Dimensions.get('window').height * 0.8; // Maximum height (80% of screen)
+  const buttonHeight = 64; // Footer height matching styles.resetDoneRow
+  const maxModalHeight = Dimensions.get('window').height * 0.8;
 
   const handleContentLayout = event => {
     const {height} = event.nativeEvent.layout;
     setContentHeight(height);
-  };
-
-  const calculateModalHeight = () => {
-    const totalHeight = contentHeight + buttonHeight + padding * 2;
-    return Math.min(Math.max(totalHeight, minModalHeight), maxModalHeight);
   };
 
   const [filters, setFilters] = useState({
@@ -59,22 +71,21 @@ const LabelModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, setIsOnlin
    */
 
   const [updatesFilter, setUpdateFilter] = useState({
-    recent: false,
     old: false,
     new: false,
   });
 
-  const [currentUpdateId, setCurrentUpdateId] = useState(0);
+  const [currentUpdateId, setCurrentUpdateId] = useState(1);
 
   const current = useSelector(state => state.sortBy.selected.sort);
 
   function toggleUpdatedCheckbox(key) {
-    setCurrentUpdateId(key);
+    const newId = currentUpdateId === key ? 1 : key; // Toggle off if clicked again
+    setCurrentUpdateId(newId);
 
     setUpdateFilter({
-      recent: key === 1 ? true : false,
-      old: key === 2 ? true : false,
-      new: key === 3 ? true : false,
+      old: newId === 2,
+      new: newId === 3,
     });
   }
 
@@ -82,97 +93,116 @@ const LabelModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, setIsOnlin
     setCurrentUpdateId(current);
 
     setUpdateFilter({
-      recent: current === 1 ? true : false,
-      old: current === 2 ? true : false,
-      new: current === 3 ? true : false,
+      old: current === 2,
+      new: current === 3,
     });
-  }, []);
+  }, [current]);
 
   /**
    * @ONLINE_OFFLINE_STATE
    */
 
   const [onlineState, setOnlineState] = useState({
-    all: false,
     online: false,
     offline: false,
   });
 
-  const [currentStatusId, setCurrentStatusId] = useState(0);
+  const [currentStatusId, setCurrentStatusId] = useState(1);
 
   function toggleUpdateStatus(key) {
-    setCurrentStatusId(key);
+    const newId = currentStatusId === key ? 1 : key; // Toggle off if clicked again
+    setCurrentStatusId(newId);
 
-    console.log(key);
+    console.log('🎯 Status filter changed:', newId);
 
     setOnlineState({
-      all: key === 1 ? true : false,
-      online: key === 2 ? true : false,
-      offline: key === 3 ? true : false,
+      online: newId === 2,
+      offline: newId === 3,
     });
   }
 
-  useEffect(() => {
-    if (isOnlineFilterEnabled) {
-      setOnlineState({
-        all: false,
-        online: isOnline ? true : false,
-        offline: isOnline ? false : true,
-      });
-    } else {
-      setOnlineState({
-        all: true,
-        online: false,
-        offline: false,
-      });
-    }
-  }, []);
-
+  // ✅ Initialize from Redux state
   useEffect(() => {
     if (visible) {
-      console.log('VISIBLE', visible);
+      console.log('📱 Modal opened, current filter:', currentOnlineFilter);
+
+      // Restore state from Redux
+      setCurrentLabelName(lable);
+
+      if (currentOnlineFilter === 'all') {
+        setCurrentStatusId(1);
+        setOnlineState({online: false, offline: false});
+      } else if (currentOnlineFilter === 'online') {
+        setCurrentStatusId(2);
+        setOnlineState({online: true, offline: false});
+      } else if (currentOnlineFilter === 'offline') {
+        setCurrentStatusId(3);
+        setOnlineState({online: false, offline: true});
+      }
+
       getAllLabelNamesHandler();
     }
   }, [visible]);
 
   const handleDone = () => {
-    console.log('updateing labgel', currentUpdateId);
+    triggerImpactLight();
+    console.log('✅ Applying filters:', {
+      sort: currentUpdateId,
+      onlineStatus: currentStatusId,
+      label: lable,
+    });
 
+    // ✅ Update sort filter
     dispatch(setSelectedSort({sortNumber: currentUpdateId}));
 
+    // ✅ NEW: Update online filter in Redux
+    let onlineFilterValue = 'all';
+    if (currentStatusId === 2) {
+      onlineFilterValue = 'online';
+    } else if (currentStatusId === 3) {
+      onlineFilterValue = 'offline';
+    }
+
+    console.log('💾 Saving online filter:', onlineFilterValue);
+    dispatch(setOnlineFilter({filter: onlineFilterValue}));
+
+    // ✅ Update label in Redux
+    dispatch(setLabel({label: currentLabelName}));
+    
+    dispatch(sortByLabel({data: currentLabelName}));
     dispatch(toggleChatRoomModal());
-
-    if (currentStatusId === 1) {
-      setIsOnlineFilterEnabled(false);
-    }
-
-    if (currentStatusId === 2 || currentStatusId === 3) {
-      setIsOnlineFilterEnabled(true);
-      setIsOnline(currentStatusId === 2 ? true : false);
-    }
-
-    dispatch(sortByLabel({data: lable}));
   };
 
   const handleReset = () => {
-    console.log('Reset');
+    triggerImpactLight();
+    console.log('🔄 Reset filters');
+
+    // Trigger rotation animation
+    rotateAnim.setValue(0);
+    Animated.timing(rotateAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+
+    // Reset to defaults
+    setCurrentUpdateId(1);
     setUpdateFilter({
-      recent: true,
       old: false,
       new: false,
     });
 
+    setCurrentStatusId(1);
     setOnlineState({
-      all: true,
       online: false,
       offline: false,
     });
 
-    dispatch(resetLabel());
+    setCurrentLabelName('none');
   };
 
   const handlePress = () => {
-    console.log('hello');
+    console.log('✏️ Edit labels');
 
     dispatch(toggleChatRoomModal());
 
@@ -185,115 +215,92 @@ const LabelModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, setIsOnlin
     visible && (
       <View style={styles.overlay}>
         <BlurView intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={[styles.dialog, {height: calculateModalHeight() + 300}]} contentStyle={{padding: 0, backgroundColor: '#fff'}} onTouchOutside={() => dispatch(toggleChatRoomModal())}>
-          <View style={[styles.section, {paddingVertical: 0, paddingBottom: WIDTH_SIZES[16], paddingTop: 0}]}>
-            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: WIDTH_SIZES[16]}}>
-              <Text style={[styles.heading, {marginBottom: 0}]}>LABELS</Text>
-              <TouchableOpacity onPress={handlePress}>
-                <Text style={styles.edit}>Edit</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#BBBBFE'}]} />
-                <Text style={styles.label}>Purple</Text>
-              </View>
-
-              <CustomCheckbox checked={lable === 'LABEL1'} onToggle={() => dispatch(setLabel({label: 'LABEL1'}))} />
-            </View>
-            <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#FBF7A6'}]} />
-                <Text style={styles.label}>Yellow</Text>
-              </View>
-
-              <CustomCheckbox checked={lable === 'LABEL2'} onToggle={() => dispatch(setLabel({label: 'LABEL2'}))} />
-            </View>
-            <View style={styles.rowLast}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#98FF98'}]} />
-                <Text style={styles.label}>Green</Text>
-              </View>
-
-              <CustomCheckbox checked={lable === 'LABEL3'} onToggle={() => dispatch(setLabel({label: 'LABEL3'}))} />
-            </View> */}
-
-            {labelList.map((label, index) => (
-              <View
-                key={label.id}
-                style={[
-                  styles.row,
-                  index === labelList.length - 1 && styles.rowLast, // optional last-row styling
-                ]}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                  <View style={[styles.icon, {backgroundColor: label.color}]} />
-                  <Text style={styles.label}>{label.name}</Text>
+        <Pressable style={styles.touchOutside} onPress={() => dispatch(toggleChatRoomModal())} />
+        <Animated.View style={[styles.dialog, {transform: [{translateY: slideAnim}]}]}>
+          <ScrollView bounces={false} style={{paddingTop: 16}} showsVerticalScrollIndicator={false}>
+            <View onLayout={handleContentLayout}>
+              <View style={[styles.section, {paddingVertical: 0, paddingBottom: WIDTH_SIZES[16], paddingTop: 0}]}>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: WIDTH_SIZES[16]}}>
+                  <Text style={[styles.heading, {marginBottom: 0}]}>LABELS</Text>
+                  <TouchableOpacity onPress={handlePress}>
+                    <Text style={styles.edit}>Edit</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <CustomCheckbox checked={lable === label.labelName} onToggle={() => dispatch(setLabel({label: label.labelName}))} />
-              </View>
-            ))}
-          </View>
+                {labelList.map((label, index) => (
+                  <View key={label.id} style={[styles.row, index === labelList.length - 1 && styles.rowLast]}>
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                      <View style={[styles.icon, {backgroundColor: label.color}]} />
+                      <Text style={styles.label}>{label.name}</Text>
+                    </View>
 
-          {/* Updates */}
-          <View style={styles.section}>
-            <Text style={styles.heading}>UPDATES</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Recent</Text>
-              <CustomCheckbox checked={updatesFilter.recent} onToggle={() => toggleUpdatedCheckbox(1)} />
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Old</Text>
-              <CustomCheckbox checked={updatesFilter.old} onToggle={() => toggleUpdatedCheckbox(2)} />
-            </View>
-            <View style={styles.rowLast}>
-              <Text style={styles.label}>New</Text>
-              <CustomCheckbox checked={updatesFilter.new} onToggle={() => toggleUpdatedCheckbox(3)} />
-            </View>
-          </View>
-
-          {/* Status */}
-          <View style={[styles.section, {borderBottomWidth: 0}]}>
-            <Text style={styles.heading}>STATUS</Text>
-
-            <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#48CAE4'}]} />
-                <Text style={styles.label}>All</Text>
+                    <CustomCheckbox checked={currentLabelName === label.labelName} onToggle={() => setCurrentLabelName(currentLabelName === label.labelName ? 'none' : label.labelName)} />
+                  </View>
+                ))}
               </View>
 
-              <CustomCheckbox checked={onlineState.all} onToggle={() => toggleUpdateStatus(1)} />
-            </View>
-
-            <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#2FD159'}]} />
-                <Text style={styles.label}>Online</Text>
+              {/* States */}
+              <View style={styles.section}>
+                <Text style={styles.heading}>STATES</Text>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Read</Text>
+                  <CustomCheckbox checked={updatesFilter.old} onToggle={() => toggleUpdatedCheckbox(2)} />
+                </View>
+                <View style={styles.rowLast}>
+                  <Text style={styles.label}>Unread</Text>
+                  <CustomCheckbox checked={updatesFilter.new} onToggle={() => toggleUpdatedCheckbox(3)} />
+                </View>
               </View>
 
-              <CustomCheckbox checked={onlineState.online} onToggle={() => toggleUpdateStatus(2)} />
-            </View>
+              {/* Status */}
+              <View style={[styles.section, {borderBottomWidth: 0, paddingBottom: 32}]}>
+                <Text style={styles.heading}>STATUS</Text>
 
-            <View style={styles.rowLast}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#FF4539'}]} />
-                <Text style={styles.label}>Offline</Text>
+                <View style={styles.row}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#2FD159'}]} />
+                    <Text style={styles.label}>Online</Text>
+                  </View>
+
+                  <CustomCheckbox checked={onlineState.online} onToggle={() => toggleUpdateStatus(2)} />
+                </View>
+
+                <View style={styles.rowLast}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#FF4539'}]} />
+                    <Text style={styles.label}>Offline</Text>
+                  </View>
+
+                  <CustomCheckbox checked={onlineState.offline} onToggle={() => toggleUpdateStatus(3)} />
+                </View>
               </View>
+            </View>
+          </ScrollView>
 
-              <CustomCheckbox checked={onlineState.offline} onToggle={() => toggleUpdateStatus(3)} />
+          <SafeAreaView edges={['bottom']} style={{backgroundColor: '#fff'}}>
+            <View style={styles.resetDoneRow}>
+              <Pressable onPress={handleReset} style={[styles.resetButton, {flexDirection: 'row', alignItems: 'center', gap: 8}]}>
+                <Animated.View
+                  style={{
+                    transform: [
+                      {
+                        rotate: rotateAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg'],
+                        }),
+                      },
+                    ],
+                  }}>
+                  <Icon name="refresh" size={16} color="#1e1e1e" />
+                </Animated.View>
+                <Text style={styles.resetText}>Reset</Text>
+              </Pressable>
+              <Pressable onPress={handleDone} style={styles.doneButton}>
+                <Text style={styles.doneText}>Done</Text>
+              </Pressable>
             </View>
-          </View>
-
-          <View style={{width: '100%', alignSelf: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: WIDTH_SIZES[32]}}>
-            <View style={{flexBasis: '44%'}}>
-              <AnimatedButton title={'Reset'} onPress={() => handleReset()} buttonMargin={Platform.OS === 'android' ? 0 : 0} style={{backgroundColor: '#fff'}} showOverlay={false} highlightOnPress={true} highlightColor="#FFF3EB" />
-            </View>
-            <View style={{flexBasis: '44%'}}>
-              <AnimatedButton title={'Done'} onPress={() => handleDone()} buttonMargin={Platform.OS === 'android' ? 0 : 0} loading={loading} showOverlay={false} highlightOnPress={true} highlightColor="#FFC399" />
-            </View>
-          </View>
-        </Dialog>
+          </SafeAreaView>
+        </Animated.View>
       </View>
     )
   );
@@ -303,19 +310,22 @@ const styles = StyleSheet.create({
   dialog: {
     borderTopLeftRadius: responsiveWidth(5.33),
     borderTopRightRadius: responsiveWidth(5.33),
-    alignSelf: 'center',
-    paddingTop: 32,
     backgroundColor: '#fff',
     width: WINDOW_WIDTH,
     position: 'absolute',
-    bottom: -30,
-    zIndex: 1,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 16,
+    maxHeight: Dimensions.get('window').height * 0.8,
+  },
+  touchOutside: {
+    flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 999,
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -362,6 +372,42 @@ const styles = StyleSheet.create({
     borderWidth: WIDTH_SIZES[1.5],
     borderColor: '#1e1e1e',
     borderRadius: responsiveWidth(30),
+  },
+  resetDoneRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: WIDTH_SIZES[16],
+    height: 64,
+    backgroundColor: '#fff',
+  },
+  doneButton: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    borderRadius: 66,
+    paddingHorizontal: 16,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 52,
+  },
+  resetButton: {
+    paddingHorizontal: 16,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resetText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#1e1e1e',
+    fontSize: FONT_SIZES[16],
+  },
+  doneText: {
+    fontFamily: 'Rubik-SemiBold',
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
 

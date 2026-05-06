@@ -95,12 +95,12 @@ const ForgetPassword = ({route}) => {
   const {isKeyboardVisible} = useKeyboardHook();
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView testID="forgot-password-screen" style={{flex: 1, backgroundColor: '#fff'}}>
       
       { loading && <ChevronLoader/> }
 
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigate('LoginHome')}>
+        <TouchableOpacity testID="forgot-password-back-button" accessibilityLabel="forgot-password-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
           <Back />
         </TouchableOpacity>
         {isEmailStep ? (
@@ -111,7 +111,7 @@ const ForgetPassword = ({route}) => {
 
             <View>
               <View style={styles.textInputContainer}>
-                <TextInput selectionColor={selectionTwin()}
+                <TextInput testID="forgot-password-email-input" accessibilityLabel="forgot-password-email-input" selectionColor={selectionTwin()}
                 
                 selectionHandleColor={'#ffa86b'}
                 
@@ -130,14 +130,14 @@ const ForgetPassword = ({route}) => {
           <>
             <Text style={styles.heading}>OTP Verification</Text>
             <Text style={styles.subHead}>Enter the verification code we just sent on your email address.</Text>
-            <OTPTextView containerStyle={styles.otpContainer} handleTextChange={setOtp} inputCount={4} keyboardType="number-pad" offTintColor={'#FF7F50'} textInputStyle={styles.otpInput} tintColor={'#1e1e1e'} />
+            <OTPTextView testID="forgot-password-otp-input" accessibilityLabel="forgot-password-otp-input" containerStyle={styles.otpContainer} handleTextChange={setOtp} inputCount={4} keyboardType="number-pad" offTintColor={'#FF7F50'} textInputStyle={styles.otpInput} tintColor={'#1e1e1e'} />
           </>
         )}
 
-        <AnimatedButton onPress={isEmailStep ? handleVerification : handleOtpVerification} title={isEmailStep ? 'Send Code' : 'Verify'} loading={loading} />
+        <AnimatedButton testID="forgot-password-submit-button" onPress={isEmailStep ? handleVerification : handleOtpVerification} title={isEmailStep ? 'Send Code' : 'Verify'} loading={loading} />
 
         {!isEmailStep && (
-          <TouchableOpacity style={styles.alreadyAccountContainer} onPress={handleResendOtp}>
+          <TouchableOpacity testID="forgot-password-resend-link" accessibilityLabel="forgot-password-resend-link" style={styles.alreadyAccountContainer} onPress={handleResendOtp}>
             <View style={styles.alreadyAccountRow}>
               <Text style={styles.alreadyAccountText}> Didn't receive the code? </Text>
               <Text style={styles.forgotTextTitle}>Resend</Text>

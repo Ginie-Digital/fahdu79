@@ -1,5 +1,5 @@
-import {StyleSheet, Text, View, TextInput, ActivityIndicator, TouchableOpacity, Image, Pressable, Platform} from 'react-native';
-import React, {useState} from 'react';
+import {StyleSheet, Text, View, TextInput, ActivityIndicator, TouchableOpacity, Image, Pressable, Platform, Animated, Easing} from 'react-native';
+import React, {useState, useRef} from 'react';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
 import DIcon from '../../../DesiginData/DIcons';
@@ -13,12 +13,12 @@ import {useKeyboard} from '@react-native-community/hooks';
 import {ChatWindowError, LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
 
 import {autoLogout} from '../../../AutoLogout';
-import {toggleSendPostTipModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {padios} from '../../../DesiginData/Utility';
+import {toggleSendPostTipModal, toggleShowRechargeModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {padios, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import {useNavigationState} from '@react-navigation/native';
-import {FlatList} from 'react-native-gesture-handler';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import AnimatedButton from '../AnimatedButton';
+import { triggerImpactHeavy, triggerImpactLight, triggerImpactMedium } from '../../Utils/Haptics';
 
 const PostTipModal = () => {
   const keyboard = useKeyboard();
@@ -34,15 +34,37 @@ const PostTipModal = () => {
   const [sendPostTip] = useSendPostTipMutation();
 
   const token = useSelector(state => state.auth.user.token);
+  
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
 
-  const [plusClick, setPlusClick] = useState(false);
-
-  const [minusClick, setMinusClick] = useState(false);
-
-  const [fastPayClick, setFastPayClick] = useState({click: false, id: 0});
+  const startShake = () => {
+    triggerImpactMedium();
+    Animated.sequence([
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const handleSendTipAmount = () => {
-    if (tipAmount > 0) {
+    if (tipAmount >= 10) {
       if (tipAmount <= 10000) {
         setLoading(true);
         sendPostTip({token, data: {amount: tipAmount, postId: modal?.postId, type: 'POST'}})
@@ -51,19 +73,23 @@ const PostTipModal = () => {
 
             if (e?.error?.status === 403) {
               LoginPageErrors(e?.error?.data?.message);
-              dispatch(customTipAmount({amount: 0}));
+              dispatch(customTipAmount({amount: 10}));
               setLoading(false);
               return;
             }
 
-            if (e?.error?.data?.status_code === 401) {
+            if (e?.error?.data?.status_code === 2044) {
               autoLogout();
             } else if (e?.error?.data?.message?.search('insufficient') >= 0) {
-              ChatWindowError('Insufficient number of coins');
-              dispatch(customTipAmount({amount: 0}));
+              dispatch(customTipAmount({amount: 10}));
+              dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
+              dispatch(customTipAmount({amount: 10}));
               setLoading(false);
+              setTimeout(() => {
+                dispatch(toggleShowRechargeModal({show: true}));
+              }, 500);
             } else {
-              dispatch(customTipAmount({amount: 0}));
+              dispatch(customTipAmount({amount: 10}));
               dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
               setLoading(false);
 
@@ -76,17 +102,16 @@ const PostTipModal = () => {
           .catch(e => {
             console.log('There was error while sending tip', e);
             ChatWindowError('There was error while sending tip');
-            dispatch(customTipAmount({amount: 0}));
+            dispatch(customTipAmount({amount: 10}));
             setLoading(false);
           });
       } else {
         ChatWindowError('The max tip amount is 10,000');
       }
     } else {
-      ChatWindowError('Please Add More Coins');
+      ChatWindowError('Minimum tip amount is 10');
+      startShake();
     }
-
-    setLoading(false);
   };
 
   if (modal?.show) {
@@ -97,100 +122,113 @@ const PostTipModal = () => {
         animationInTiming={150}
         animationOutTiming={150}
         onRequestClose={() => {
-          dispatch(customTipAmount({amount: 0}));
+          dispatch(customTipAmount({amount: 10}));
           dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
         }}
         transparent={true}
         isVisible={modal?.show}
         backdropColor="#00000060"
+        avoidKeyboard={true}
         onBackButtonPress={() => {
-          dispatch(customTipAmount({amount: 0}));
+          dispatch(customTipAmount({amount: 10}));
           dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
         }}
         onBackdropPress={() => {
-          dispatch(customTipAmount({amount: 0}));
+          dispatch(customTipAmount({amount: 10}));
           dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
         }}
         style={{
-          flex: 1,
+          margin: 0,
+          justifyContent: 'flex-end',
         }}>
         <View
           style={[
             styles.modalInnerWrapper,
-            keyboard.keyboardShown
-              ? {
-                  height: Platform.OS === 'ios' ? responsiveWidth(150) + keyboard.keyboardHeight : responsiveWidth(95) + keyboard.keyboardHeight,
-                }
-              : {height: responsiveWidth(95)},
+            {paddingBottom: Platform.OS === 'ios' ? 40 : 20},
           ]}>
-          <View style={styles.notch} />
-          <View style={{right: responsiveWidth(28)}}>
+          <View style={styles.headerRow}>
             <Text style={styles.sendTipText}>Send Tip</Text>
+            <TouchableOpacity onPress={() => {
+            dispatch(customTipAmount({amount: 10}));
+              dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
+            }}>
+              <DIcon provider={'Entypo'} name={'cross'} color={'#000'} size={responsiveFontSize(3.5)} />
+            </TouchableOpacity>
           </View>
           <View style={styles.tipContainer}>
             <View style={styles.tipCounterContainer}>
               <View style={styles.sendTipInputContainer}>
-                <View style={{marginLeft: responsiveWidth(2)}}>
+                {tipAmount >= 0 && tipAmount < 10 && (
+                  <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: '#EAEAEA', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
+                    <Text style={{fontSize: 10, color: '#666', fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
+                  </Animated.View>
+                )}
+                <View style={styles.leftAction}>
                   <Paisa />
                 </View>
-                <TextInput placeholder="0" maxLength={5} value={String(tipAmount)} style={styles.amountInput} onChangeText={x => dispatch(customTipAmount({amount: x.replace(/[^0-9]/g, '')}))} keyboardType="numeric" />
-
-                <Pressable onPressIn={() => setMinusClick(true)} onPressOut={() => setMinusClick(false)} style={{position: 'relative'}} onPress={() => dispatch(decreaseTipAmount())}>
-                  <View style={[styles.plusMinusButton, {position: 'absolute', backgroundColor: '#282828', transform: [{translateX: responsiveWidth(0.3)}, {translateY: responsiveWidth(0.3)}]}]} />
-                  <View style={[styles.plusMinusButton, {backgroundColor: '#ff6961'}, minusClick && {backgroundColor: '#FFCCCC'}]}>
-                    <DIcon provider={'Entypo'} name={'minus'} />
-                  </View>
-                </Pressable>
-                <Pressable onPressIn={() => setPlusClick(true)} onPressOut={() => setPlusClick(false)} style={{position: 'relative'}} onPress={() => dispatch(increaseTipAmount())}>
-                  <View style={[styles.plusMinusButton, {position: 'absolute', backgroundColor: '#282828', transform: [{translateX: responsiveWidth(0.3)}, {translateY: responsiveWidth(0.3)}]}]} />
-                  <View style={[styles.plusMinusButton, {backgroundColor: '#bafca2'}, plusClick && {backgroundColor: '#CCFFD7'}]}>
-                    <DIcon provider={'Entypo'} name={'plus'} />
-                  </View>
-                </Pressable>
+                <TextInput
+                  placeholder="0"
+                  maxLength={5}
+                  value={String(tipAmount)}
+                  style={styles.amountInput}
+                  onChangeText={x => dispatch(customTipAmount({amount: x.replace(/[^0-9]/g, '')}))}
+                  keyboardType="numeric"
+                  showsVerticalScrollIndicator={false}
+                />
+                <View style={styles.rightAction}>
+                  <TouchableOpacity 
+                    style={styles.plusMinusButton} 
+                    onPress={() => {
+                      dispatch(decreaseTipAmount());
+                      triggerImpactHeavy();
+                    }}>
+                    <View style={[styles.plusMinusButtonInside, {backgroundColor: '#ff6961'}]}>
+                      <DIcon provider={'Entypo'} name={'minus'} size={18} />
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.plusMinusButton} 
+                    onPress={() => {
+                      dispatch(increaseTipAmount());
+                      triggerImpactHeavy();
+                    }}>
+                    <View style={[styles.plusMinusButtonInside, {backgroundColor: '#bafca2'}]}>
+                      <DIcon provider={'Entypo'} name={'plus'} size={18} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(2.5), marginTop: responsiveWidth(4), right: responsiveWidth(12)}}>
-              <Pressable onPressIn={() => setFastPayClick({click: true, id: 0})} onPressOut={() => setFastPayClick({click: false, id: 0})} onPress={() => dispatch(customTipAmount({amount: 10}))}>
-                <View
-                  style={[
-                    fastPayClick.click && fastPayClick.id === 0 && {backgroundColor: '#FFA86B'},
-                    {gap: responsiveWidth(2), flexDirection: 'row', borderWidth: responsiveWidth(0.3), width: responsiveWidth(17), alignItems: 'center', justifyContent: 'center', borderRadius: responsiveWidth(4), padding: responsiveWidth(1), width: responsiveWidth(25)},
-                  ]}>
+            <View style={{flexDirection: 'row', gap: responsiveWidth(2.5), marginTop: responsiveWidth(4), justifyContent: 'center', width: responsiveWidth(80), alignSelf: 'center'}}>
+              {[10, 20, 50].map(amount => (
+                <Pressable
+                  key={amount}
+                  onPress={() => {
+                    dispatch(customTipAmount({amount}));
+                    triggerImpactHeavy();
+                  }}
+                  style={({pressed}) => ({
+                    flexDirection: 'row',
+                    gap: responsiveWidth(2),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: responsiveWidth(0.3),
+                    borderRadius: responsiveWidth(4),
+                    padding: responsiveWidth(1),
+                    width: responsiveWidth(25),
+                    backgroundColor: pressed ? '#FFA86B' : 'transparent',
+                  })}>
                   <Paisa />
-                  <Text style={{color: 'black'}}>10</Text>
-                </View>
-              </Pressable>
-
-              <Pressable onPressIn={() => setFastPayClick({click: true, id: 1})} onPressOut={() => setFastPayClick({click: false, id: 1})} onPress={() => dispatch(customTipAmount({amount: 20}))}>
-                <View
-                  style={[
-                    fastPayClick.click && fastPayClick.id === 1 && {backgroundColor: '#FFA86B'},
-                    {gap: responsiveWidth(2), flexDirection: 'row', borderWidth: responsiveWidth(0.3), width: responsiveWidth(17), alignItems: 'center', justifyContent: 'center', borderRadius: responsiveWidth(4), padding: responsiveWidth(1), width: responsiveWidth(25)},
-                  ]}>
-                  <Paisa />
-                  <Text style={{color: 'black'}}>20</Text>
-                </View>
-              </Pressable>
-
-              <Pressable onPressIn={() => setFastPayClick({click: true, id: 2})} onPressOut={() => setFastPayClick({click: false, id: 2})} onPress={() => dispatch(customTipAmount({amount: 50}))}>
-                <View
-                  style={[
-                    fastPayClick.click && fastPayClick.id === 2 && {backgroundColor: '#FFA86B'},
-                    {gap: responsiveWidth(2), flexDirection: 'row', borderWidth: responsiveWidth(0.3), width: responsiveWidth(17), alignItems: 'center', justifyContent: 'center', borderRadius: responsiveWidth(4), padding: responsiveWidth(1), width: responsiveWidth(25)},
-                  ]}>
-                  <Paisa />
-                  <Text style={{color: 'black'}}>50</Text>
-                </View>
-              </Pressable>
-
-              
+                  <Text style={{color: 'black'}}>{amount}</Text>
+                </Pressable>
+              ))}
             </View>
             {/* <View style={{ position: "relative", alignSelf: "center" }}>
             <Text style={[styles.loginButton, { backgroundColor: "#282828", position: "absolute", alignSelf: "center", transform: [{ translateX: 2 }, { translateY: 2 }] }]} />
             <Pressable onPress={() => handleSendTipAmount()}>{!loading ? <Text style={[styles.loginButton]}>Pay</Text> : <ActivityIndicator size={"small"} color={"#282828"} style={styles.loginButton} />}</Pressable>
           </View> */}
 
-            <View style={{width: 325, alignSelf: 'center'}}>
+            <View style={{width: responsiveWidth(78), alignSelf: 'center', marginTop: responsiveWidth(6)}}>
               <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} />
             </View>
           </View>
@@ -203,16 +241,12 @@ const PostTipModal = () => {
 const styles = StyleSheet.create({
   modalInnerWrapper: {
     width: responsiveWidth(100),
-    backgroundColor: '#fffdf6',
+    backgroundColor: '#fff',
     alignSelf: 'center',
-    borderTopLeftRadius: responsiveWidth(3),
-    borderTopRightRadius: responsiveWidth(3),
-    padding: responsiveWidth(4),
-    paddingTop: responsiveWidth(5),
-    paddingHorizontal: responsiveWidth(4),
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 16,
     alignItems: 'center',
-    marginLeft: responsiveWidth(1),
-    marginTop: responsiveWidth(150),
   },
   previewModalImageWrapper: {
     flexBasis: '35%',
@@ -224,18 +258,18 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: responsiveWidth(2),
   },
-  notch: {
-    borderTopColor: '#000',
-    borderTopWidth: responsiveWidth(0.8),
-    width: responsiveWidth(10),
-    borderRadius: responsiveWidth(1),
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 24,
+    marginBottom: responsiveWidth(2),
   },
   sendTipText: {
-    textAlign: 'center',
     fontFamily: 'Rubik-Bold',
     color: 'black',
     fontSize: responsiveFontSize(2.3),
-    marginTop: responsiveWidth(5),
   },
   loginButton: {
     paddingHorizontal: responsiveWidth(2),
@@ -272,7 +306,7 @@ const styles = StyleSheet.create({
   },
   tipContainer: {
     marginTop: responsiveWidth(1),
-    width: responsiveWidth(55),
+    width: responsiveWidth(80),
   },
   tipCounterContainer: {
     flexDirection: 'row',
@@ -281,7 +315,12 @@ const styles = StyleSheet.create({
     marginTop: responsiveWidth(4),
   },
   plusMinusButton: {
-    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+    zIndex: 2,
+    elevation: 2,
+  },
+  plusMinusButtonInside: {
+    borderWidth: WIDTH_SIZES[1.5],
     height: responsiveWidth(9),
     width: responsiveWidth(9),
     justifyContent: 'center',
@@ -289,24 +328,42 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(2),
     borderColor: '#282828',
   },
-  sendTipInputContainer: {
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  leftAction: {
+    width: 'auto',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: responsiveWidth(5),
+  },
+  rightAction: {
+    width: responsiveWidth(25),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: responsiveWidth(1),
+  },
+  sendTipInputContainer: {
+    borderWidth: WIDTH_SIZES[1.5],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     width: responsiveWidth(80),
-    borderRadius: responsiveWidth(2),
     borderColor: '#282828',
-    right: responsiveWidth(12),
     height: responsiveWidth(14),
     borderRadius: responsiveWidth(3),
+    backgroundColor: '#FFFFFF', 
+    overflow: 'hidden', 
+    zIndex: 1,
+    elevation: 1,
+    alignSelf: 'center',
   },
   amountInput: {
-    flexBasis: '50%',
+    flex: 1,
+    textAlign: 'left',
     color: '#282828',
     fontFamily: 'MabryPro-Regular',
     fontSize: responsiveFontSize(2.2),
-    padding: Platform.OS === 'ios' ? responsiveWidth(3) : responsiveWidth(0),
+    paddingLeft: responsiveWidth(3),
+    paddingVertical: Platform.OS === 'ios' ? responsiveWidth(3) : 0,
   },
 });
 export default PostTipModal;

@@ -1,12 +1,7 @@
 import notifee, {AuthorizationStatus} from '@notifee/react-native';
-import {
-  AndroidColor,
-  AndroidImportance,
-  AndroidStyle,
-  AndroidLaunchActivityFlag,
-} from '@notifee/react-native/dist/types/NotificationAndroid';
-// import {Alert} from 'react-native';
-// import Sound from 'react-native-sound';
+import {AndroidColor, AndroidImportance, AndroidStyle, AndroidLaunchActivityFlag} from '@notifee/react-native/dist/types/NotificationAndroid';
+import {Alert} from 'react-native';
+
 
 export async function onDisplayNotification(data) {
   // Request permissions (required for iOS)
@@ -25,10 +20,10 @@ export async function onDisplayNotification(data) {
     title: data?.username,
     body: `${data?.message}`,
     data: {
-      roomId: data?.roomId,
-      userName: data?.username,
-      type: data?.channel,
-      profile_image: data?.profile_image,
+      roomId: String(data?.roomId || ''),
+      userName: String(data?.username || ''),
+      type: String(data?.channel || ''),
+      profile_image: String(data?.profile_image || ''),
     },
     subtitle: data?.subtitle,
     android: {
@@ -79,8 +74,8 @@ export async function liveStreamNotification(data) {
       attachments: data.profile_image ? [{url: data.profile_image}] : [],
     },
     data: {
-      roomId: data.roomId,
-      link: data.link,
+      roomId: String(data.roomId || ''),
+      link: String(data.link || ''),
       type: 'livestream',
     },
   });
@@ -113,7 +108,7 @@ export const showPostInteractionNotification = async data => {
     body: data?.content?.style?.body,
 
     data: {
-      link: data?.content?.misc?.link,
+      link: String(data?.content?.misc?.link || ''),
     },
 
     android: {
@@ -128,10 +123,7 @@ export const showPostInteractionNotification = async data => {
       color: '#E8210C',
       smallIcon: 'icon_notification',
       timestamp: Date.now(),
-      style: {
-        type: AndroidStyle.BIGPICTURE,
-        picture: data?.content?.style?.bigPicture,
-      },
+      style: {type: AndroidStyle.BIGPICTURE, picture: data?.content?.style?.bigPicture},
       pressAction: {
         id: 'default',
         launchActivity: 'default',
@@ -140,49 +132,9 @@ export const showPostInteractionNotification = async data => {
     },
 
     ios: {
-      attachments: [
-        {
-          url: data?.content?.style?.bigPicture,
-        },
-      ],
-    },
-  });
-
-  await notifee.displayNotification({
-    title: data?.content?.style?.title,
-    subtitle: data?.content?.style?.subtitle,
-    body: data?.content?.style?.body,
-    data: {
-      link: data?.content?.misc?.link,
-    },
-    android: {
-      largeIcon: data?.content?.style?.largeIcon,
-      vibrationPattern: data?.content?.style?.vibration,
-      groupId: String(data?.content?.style?.groupID),
-      circularLargeIcon: true,
-      showTimestamp: true,
-      channelId,
-      colorized: true,
-      color: '#E8210C',
-      smallIcon: 'icon_notification',
-      timestamp: Date.now(),
-      style: {
-        type: AndroidStyle.BIGPICTURE,
-        picture: data?.content?.style?.bigPicture,
-      },
-      pressAction: {
-        id: 'default',
-        launchActivity: 'default',
-        launchActivityFlags: [AndroidLaunchActivityFlag.SINGLE_TOP],
-      },
-    },
-
-    ios: {
-      attachments: [
-        {
-          url: data?.content?.style?.bigPicture,
-        },
-      ],
+      attachments: data?.content?.style?.bigPicture 
+        ? [{ url: String(data.content.style.bigPicture) }] 
+        : [],
     },
   });
 };
@@ -208,9 +160,9 @@ export const disp = async data => {
     title: data?.username,
     body: `${data?.message}`,
     data: {
-      roomId: data?.roomId,
-      userName: data?.username,
-      type: data?.type,
+      roomId: String(data?.roomId || ''),
+      userName: String(data?.username || ''),
+      type: String(data?.type || ''),
     },
     subtitle: data?.subtitle,
     android: {
@@ -281,9 +233,7 @@ export async function showOthersCategoryNotification(remoteMessage) {
     // No Alert here — use console for debug
     console.log('📨 showOthersCategoryNotification:', remoteMessage);
 
-    const data = remoteMessage?.data?.content
-      ? JSON.parse(remoteMessage.data.content)
-      : remoteMessage?.content || {};
+    const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
 
     const {
       style: {title, subtitle, body, largeIcon, vibration, groupID},
@@ -301,7 +251,7 @@ export async function showOthersCategoryNotification(remoteMessage) {
     await notifee.displayNotification({
       title: `${title ?? ''} ${subtitle ?? ''}`,
       body: body ?? '',
-      data: {link},
+      data: {link: String(link || '')},
       android: {
         channelId,
         smallIcon: 'ic_launcher',
@@ -324,9 +274,7 @@ export async function showSubscriptionNotification(remoteMessage) {
   try {
     console.log('📨 showSubscriptionNotification:', remoteMessage);
 
-    const data = remoteMessage?.data?.content
-      ? JSON.parse(remoteMessage.data.content)
-      : remoteMessage?.content || {};
+    const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
 
     console.log('ZOR', data);
 
@@ -346,7 +294,7 @@ export async function showSubscriptionNotification(remoteMessage) {
     await notifee.displayNotification({
       title: `${title ?? ''} ${subtitle ?? ''}`,
       body: body ?? '',
-      data: {link, type: 'subscription'},
+      data: {link: String(link || ''), type: 'subscription'},
       android: {
         channelId,
         smallIcon: 'ic_launcher',
@@ -369,3 +317,254 @@ export async function showSubscriptionNotification(remoteMessage) {
     console.log('❌ Error displaying subscription notification:', error);
   }
 }
+
+export async function showCallRequestNotification(remoteMessage) {
+  try {
+    console.log('📨 showSubscriptionNotification:', remoteMessage);
+
+    const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
+
+    const {
+      style: {title, subtitle, body, largeIcon, vibration, groupID},
+      misc: {link},
+    } = data;
+
+    // ✅ Create channel (required)
+    const channelId = await notifee.createChannel({
+      id: 'subscription',
+      name: 'Subscription Updates',
+      importance: AndroidImportance.HIGH,
+    });
+
+    // ✅ Display with BIGPICTURE style
+    await notifee.displayNotification({
+      title: `${title ?? ''} ${subtitle ?? ''}`,
+      body: body ?? '',
+      data: {link: String(link || ''), type: 'subscription'},
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        groupId: groupID || 'subscription_group',
+        colorized: true,
+        color: '#E8210C',
+        pressAction: {
+          id: 'default',
+          launchActivity: 'default',
+        },
+        largeIcon,
+        vibrationPattern: vibration || [100, 200, 100],
+        importance: AndroidImportance.HIGH,
+        showTimestamp: true,
+      },
+    });
+
+    console.log('✅ Subscription notification displayed');
+  } catch (error) {
+    console.log('❌ Error displaying subscription notification:', error);
+  }
+}
+
+// export async function showCallRelatedNotification(remoteMessage) {
+//   try {
+//     console.log('📨 showCallRelatedNotification:', remoteMessage);
+
+//     const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
+
+//     console.log('ZOR', data);
+
+//     // FIX: Remove the style destructuring - properties are directly in data
+//     const {title, subtitle, body, profile_image: largeIcon, roomId, callType, username, sender_id, sender_role, channel} = data;
+
+//     // ✅ Create channel (required)
+//     const channelId = await notifee.createChannel({
+//       id: 'call_request',
+//       name: 'Call Requests',
+//       importance: AndroidImportance.HIGH,
+//     });
+
+//     // ✅ Display notification
+//     await notifee.displayNotification({
+//       title: subtitle,
+//       body: title,
+//       data: {
+//         roomId,
+//         callType,
+//         sender_id,
+//         sender_role,
+//         type: 'call_request',
+//       },
+//       android: {
+//         channelId,
+//         smallIcon: 'ic_launcher',
+//         groupId: channel || 'call_request_group',
+//         colorized: true,
+//         color: '#E8210C',
+//         pressAction: {
+//           id: 'default',
+//           launchActivity: 'default',
+//         },
+//         largeIcon: largeIcon || undefined, // Only set if exists
+//         vibrationPattern: [300, 500, 300, 500], // Call-like vibration
+//         importance: AndroidImportance.HIGH,
+//         showTimestamp: true,
+//       },
+//     });
+
+//     console.log('✅ Call notification displayed');
+//   } catch (error) {
+//     console.log('❌ Error displaying call notification:', error);
+//   }
+// }
+
+export async function showCallRelatedNotification(remoteMessage) {
+  try {
+    const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
+
+    const {title, subtitle, profile_image: largeIcon, roomId, callType, username, sender_id, sender_role, channel} = data;
+
+    const CALL_GROUP_ID = 'CALL_NOTIFICATIONS_GROUP';
+
+    const channelId = await notifee.createChannel({
+      id: 'call_request',
+      name: 'Call Requests',
+      importance: AndroidImportance.HIGH,
+    });
+
+    // ✅ MAIN call notification
+    await notifee.displayNotification({
+      title: subtitle,
+      body: title,
+      data: {
+        roomId: String(roomId || ''),
+        callType: String(callType || ''),
+        sender_id: String(sender_id || ''),
+        sender_role: String(sender_role || ''),
+        type: 'call_request',
+      },
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        groupId: CALL_GROUP_ID,
+        largeIcon: largeIcon || undefined,
+        vibrationPattern: [300, 500, 300, 500],
+        importance: AndroidImportance.HIGH,
+        showTimestamp: true,
+        pressAction: {
+          id: 'default',
+          launchActivity: 'default',
+        },
+      },
+    });
+
+    // ✅ GROUP SUMMARY
+    await notifee.displayNotification({
+      title: 'Incoming Calls',
+      body: 'You have multiple call requests',
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        groupId: CALL_GROUP_ID,
+        groupSummary: true,
+      },
+    });
+
+    console.log('✅ Grouped call notification displayed');
+  } catch (error) {
+    console.log('❌ Error displaying call notification:', error);
+  }
+}
+
+export async function showCallReminderNotification(remoteMessage) {
+  try {
+    const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
+
+    const {title, subtitle, profile_image: largeIcon, roomId, callType, username, sender_id, sender_role, channel} = data;
+
+    const channelId = await notifee.createChannel({
+      id: 'call_reminder',
+      name: 'Call Reminders',
+      importance: AndroidImportance.HIGH,
+      sound: 'fahdu_default_sound',
+    });
+
+    await notifee.displayNotification({
+      title: title,
+      body: subtitle,
+      data: {
+        roomId: String(roomId || ''),
+        callType: String(callType || ''),
+        sender_id: String(sender_id || ''),
+        sender_role: String(sender_role || ''),
+        type: 'call_reminder', 
+        userName: String(username || ''),
+        profile_image: String(largeIcon || '')
+      },
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        largeIcon: largeIcon || undefined,
+        importance: AndroidImportance.HIGH,
+        showTimestamp: true,
+        pressAction: {
+          id: 'default',
+          launchActivity: 'default',
+        },
+      },
+    });
+
+    console.log('✅ Call Reminder notification displayed');
+  } catch (error) {
+    console.log('❌ Error displaying call reminder notification:', error);
+  }
+}
+
+export async function showMentionNotification(remoteMessage) {
+  try {
+    console.log('📨 showMentionNotification:', remoteMessage);
+
+    const data = remoteMessage?.data?.content ? JSON.parse(remoteMessage.data.content) : remoteMessage?.content || {};
+
+    const {
+      style: {title, subtitle, body, largeIcon, vibration, groupID, bigPicture},
+      misc: {link},
+    } = data;
+
+    // Create channel
+    const channelId = await notifee.createChannel({
+      id: 'mentions',
+      name: 'Mentions',
+      importance: AndroidImportance.HIGH,
+    });
+
+    // Display notification
+    await notifee.displayNotification({
+      title: title || 'New Mention',
+      body: body || subtitle || '',
+      data: {
+        link: String(link || ''),
+        type: 'mention',
+      },
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        largeIcon: largeIcon || undefined,
+        groupId: groupID || 'mentions_group',
+        pressAction: {
+          id: 'default',
+          launchActivity: 'default',
+        },
+        style: bigPicture ? { type: AndroidStyle.BIGPICTURE, picture: bigPicture } : undefined,
+        vibrationPattern: vibration || [50, 100, 50, 100],
+        importance: AndroidImportance.HIGH,
+      },
+      ios: {
+        attachments: bigPicture ? [{ url: String(bigPicture) }] : [],
+      },
+    });
+
+    console.log('✅ Mention notification displayed');
+  } catch (error) {
+    console.log('❌ Error displaying mention notification:', error);
+  }
+}
+

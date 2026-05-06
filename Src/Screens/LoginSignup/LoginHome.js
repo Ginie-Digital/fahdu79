@@ -1,41 +1,18 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  Platform,
-  TouchableOpacity,
-  Pressable,
-  ScrollView,
-} from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
-
-import {useDispatch, useSelector} from 'react-redux';
-import {googleSignIn, signOutGoogle, appleSignIn} from '../../../OAuth';
-import {
-  currentUserInformation,
-  enableNotificationModal,
-  setPostsCardType,
-  toggleVerficationScreen,
-} from '../../../Redux/Slices/NormalSlices/AuthSlice';
-import {
-  setSharedCampaignId,
-  setUserFromCampaignLink,
-  setYlyticInstagramUserId,
-} from '../../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
-import {
-  responsiveWidth,
-  responsiveFontSize,
-  responsiveHeight,
-} from 'react-native-responsive-dimensions';
+import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, Pressable, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { googleSignIn, signOutGoogle, appleSignIn } from '../../../OAuth';
+import { currentUserInformation, enableNotificationModal, setPostsCardType, toggleVerficationScreen } from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { setSharedCampaignId, setUserFromCampaignLink, setYlyticInstagramUserId } from '../../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
+import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
 import Authenticator from '../../Components/LoginComponent/Authenticator';
 import Seprator from '../../Components/Seprator';
-import {navigate} from '../../../Navigation/RootNavigation';
-import {LoginPageErrors} from '../../Components/ErrorSnacks';
-import {nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import { navigate } from '../../../Navigation/RootNavigation';
+import { LoginPageErrors } from '../../Components/ErrorSnacks';
+import { nTwins, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import ChevronLoader from '../../ChevronLoader';
 import AlertBox from '../../AlertBox';
-import {toggleAlertModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { toggleAlertModal, toggleShowOnboarding } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
 const LoginHome = () => {
   const dispatcher = useDispatch();
@@ -71,6 +48,7 @@ const LoginHome = () => {
         suspended: data?.data?.user?.suspended,
       }),
     );
+    dispatcher(toggleShowOnboarding({ show: data?.data?.user?.showOnboardingCard ?? false }));
   }, []);
 
   const GoogleLogin = async () => {
@@ -80,54 +58,34 @@ const LoginHome = () => {
     } else if (data?.statusCode === 202) {
       setAuthToken(data?.data?.authToken);
       setType(data?.data?.email);
-      dispatcher(toggleVerficationScreen({show: 1}));
+      dispatcher(toggleVerficationScreen({ show: 1 }));
     } else if (data?.statusCode === 409) {
-      dispatch(
-        toggleAlertModal({
-          message: 'Account Not Connected',
-          type: false,
-          show: true,
-        }),
-      );
+      dispatch(toggleAlertModal({ message: 'Account Not Connected', type: false, show: true }));
       signOutGoogle();
     } else {
-      dispatch(
-        toggleAlertModal({
-          message: 'Something Went Wrong, Please Try Again',
-          type: false,
-          show: true,
-        }),
-      );
+      dispatch(toggleAlertModal({ message: 'Something Went Wrong, Please Try Again', type: false, show: true }));
     }
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#fff'}}>
+    <View testID="login-home-screen" style={{ flex: 1, backgroundColor: '#fff' }}>
       {loader && <ChevronLoader />}
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.centeredContent}>
-          <Image
-            source={require('../../../Assets/Images/HomeShow.png')}
-            style={styles.image}
-          />
+          <Image source={require('../../../Assets/Images/HomeShow.png')} style={styles.image} />
           <View style={styles.textWrapper}>
             <Text style={styles.headingText}>Your Gateway to Earnings</Text>
-            <Text
-              numberOfLines={2}
-              adjustsFontSizeToFit={true}
-              style={styles.descriptionText}>
+            <Text numberOfLines={2} adjustsFontSizeToFit={true} style={styles.descriptionText}>
               Join Fahdu today & enjoy innovative content {'\n'}
               monetization tools and resources.
             </Text>
           </View>
 
-          <View
-            style={[
-              styles.buttonWrapper,
-              Platform.OS === 'ios' ? styles.newLogin : null,
-            ]}>
+          <View style={[styles.buttonWrapper, Platform.OS === 'ios' ? styles.newLogin : null]}>
             <Pressable
+              testID="google-login-button"
+              accessibilityLabel="google-login-button"
               onPressIn={() => setSocialButton(true)}
               onPressOut={() => setSocialButton(false)}
               onPress={async () => {
@@ -137,26 +95,16 @@ const LoginHome = () => {
 
                 setLoader(false);
               }}>
-              <View
-                style={[
-                  styles.googleButton,
-                  socialButton && {backgroundColor: '#1e1e1e'},
-                ]}>
-                <Image
-                  source={require('../../../Assets/Images/googleIcons.png')}
-                  style={styles.icon}
-                />
+              <View style={[styles.googleButton, socialButton && { backgroundColor: '#1e1e1e' }]}>
+                <Image source={require('../../../Assets/Images/googleIcons.png')} style={styles.icon} />
 
-                <Text
-                  style={[styles.buttonText, socialButton && {color: '#fff'}]}>
-                  {Platform.OS === 'android'
-                    ? 'Continue with Google'
-                    : 'Google'}
-                </Text>
+                <Text style={[styles.buttonText, socialButton && { color: '#fff' }]}>{Platform.OS === 'android' ? 'Continue with Google' : 'Google'}</Text>
               </View>
             </Pressable>
             {Platform.OS === 'ios' && (
               <Pressable
+                testID="apple-login-button"
+                accessibilityLabel="apple-login-button"
                 onPressIn={() => setSocialButtonTwo(true)}
                 onPressOut={() => setSocialButtonTwo(false)}
                 onPress={async () => {
@@ -167,22 +115,9 @@ const LoginHome = () => {
 
                   setLoader(false);
                 }}>
-                <View
-                  style={[
-                    styles.appleButton,
-                    socialButtonTwo && {backgroundColor: '#1e1e1e'},
-                  ]}>
-                  <Image
-                    source={require('../../../Assets/Images/appleIcons.png')}
-                    style={[styles.icon, {width: 17}]}
-                  />
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      socialButtonTwo && {color: '#fff'},
-                    ]}>
-                    Apple
-                  </Text>
+                <View style={[styles.appleButton, socialButtonTwo && { backgroundColor: '#1e1e1e' }]}>
+                  <Image source={require('../../../Assets/Images/appleIcons.png')} style={[styles.icon, { width: 17 }]} />
+                  <Text style={[styles.buttonText, socialButtonTwo && { color: '#fff' }]}>Apple</Text>
                 </View>
               </Pressable>
             )}
@@ -190,36 +125,23 @@ const LoginHome = () => {
 
           <Seprator />
           <Pressable
+            testID="login-button"
+            accessibilityLabel="login-button"
             onPressIn={() => setLoginPress(true)}
             onPressOut={() => setLoginPress(false)}
             onPress={() => {
               navigate('LoginEmail');
             }}>
-            <View
-              style={[
-                styles.emailButton,
-                loginPress === true && {backgroundColor: '#fff'},
-              ]}>
+            <View style={[styles.emailButton, loginPress === true && { backgroundColor: '#fff' }]}>
               <Text style={styles.emailButtonText}>Login</Text>
             </View>
           </Pressable>
-          <Pressable
-            onPressIn={() => setSignupPress(true)}
-            onPressOut={() => setSignupPress(false)}
-            onPress={() => navigate('SignupEmail')}>
-            <View
-              style={[
-                styles.signupButton,
-                signupPress === true && {backgroundColor: '#FFA86B'},
-              ]}>
+          <Pressable testID="signup-button" accessibilityLabel="signup-button" onPressIn={() => setSignupPress(true)} onPressOut={() => setSignupPress(false)} onPress={() => navigate('SignupEmail')}>
+            <View style={[styles.signupButton, signupPress === true && { backgroundColor: '#FFA86B' }]}>
               <Text style={styles.signupButtonText}>Sign Up</Text>
             </View>
           </Pressable>
-          <Authenticator
-            authToken={authToken}
-            type={type}
-            afterLoginProcess={afterLoginProcess}
-          />
+          <Authenticator authToken={authToken} type={type} afterLoginProcess={afterLoginProcess} />
         </View>
       </ScrollView>
     </View>

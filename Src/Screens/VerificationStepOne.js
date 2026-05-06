@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, TextInput, Pl, TouchableOpacity, Pressable, FlatList, ActivityIndicator, Platform} from 'react-native';
+import {StyleSheet, Text, View, TextInput, TouchableOpacity, Pressable, FlatList, ActivityIndicator, Platform} from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -6,13 +6,12 @@ import {LoginPageErrors, chatRoomSuccess} from '../Components/ErrorSnacks';
 import {useCoverUpdateProfileMutation, useLazyCheckUserNameAvailabilityQuery, useLazyGetNoOnceQuery, useLazyGetUserDocQuery, useLazyInstaVerifyQuery, useLazyUserProfileQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
 import {autoLogout} from '../../AutoLogout';
-import {toggleDateTimePicker, toggleInstagramVerification, toggleIsThisYou, toggleVerificatinInformation} from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import {toggleDateTimePicker, toggleInstagramVerification, toggleIsThisYou, toggleVerificatinInformation, toggleNicheSelectorModal, setConfirmedNiches} from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import {GestureHandlerRootView, ScrollView} from 'react-native-gesture-handler';
-import DateTimePickerSheet from '../Components/CreatePostComponents/DateTimePickerSheet';
 import dayjs from 'dayjs';
 import Loader from '../Components/Loader';
 import MyProfilePicture from '../Components/MyProfile/MyProfilePicture';
-import {nTwins, padios} from '../../DesiginData/Utility';
+import {formatNiche, nTwins, padios} from '../../DesiginData/Utility';
 import useKeyboardHook from '../CustomHooks/useKeyboardHook';
 import InputOverlay from '../Components/InputOverlay';
 import {Image} from 'expo-image';
@@ -21,7 +20,7 @@ import GetVerifiedInstagram from './LoginSignup/GetVerifiedInstagram';
 import VerifiedModal from '../Components/Verification/VerifiedModal';
 import VerificationInformation from '../Components/Verification/VerificationInformation';
 
-const options = ['Health & Wellness', 'Lifestyle', 'Education & Career', 'Business & Finance', 'Technology', 'Culinary', 'Photography & Videography', 'Personal Development', 'Travel', 'Entertainment', 'Astrology'];
+const options = ['Health & Wellness', 'Lifestyle', 'Education & Career', 'Culinary', 'Personal Development', 'Travel', 'Entertainment', 'Astrology', 'Dating Expert'];
 
 const VerificationStepOne = ({route}) => {
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
@@ -49,7 +48,7 @@ const VerificationStepOne = ({route}) => {
   useEffect(() => {
     const currentDate = new Date();
     const maxDate = new Date(
-      currentDate.getFullYear() - 16, // Subtract 16 years
+      currentDate.getFullYear() - 13, // Subtract 13 years
       currentDate.getMonth(),
       currentDate.getDate(),
     );
@@ -69,15 +68,10 @@ const VerificationStepOne = ({route}) => {
     }
 
     setSelectedItems(updatedSelection);
-
-    // **Close dropdown automatically when 3 items are selected**
-    if (updatedSelection.length === 3) {
-      setDropdownVisible(false);
-    }
   };
 
   const handleDropdownPress = () => {
-    setDropdownVisible(!dropdownVisible);
+    dispatch(toggleNicheSelectorModal({show: true}));
   };
 
   // Separate Component for Bubble View
@@ -87,7 +81,11 @@ const VerificationStepOne = ({route}) => {
         {selectedItems.map(item => (
           <View key={item} style={styles.bubble}>
             <Text style={styles.bubbleText}>{item}</Text>
-            <Pressable onPress={() => setSelectedItems(prev => prev.filter(i => i !== item))}>
+            <Pressable onPress={() => {
+                const updated = selectedItems.filter(i => i !== item);
+                setSelectedItems(updated);
+                dispatch(setConfirmedNiches(updated));
+            }}>
               <Text style={styles.close}>×</Text>
             </Pressable>
           </View>
@@ -123,10 +121,16 @@ const VerificationStepOne = ({route}) => {
   const dispatch = useDispatch();
 
   const {currentUserProfilePicture, currentUserCoverPicture} = useSelector(state => state.auth.user);
+  const {status: dateTimePickerStatus, date: globalDateString} = useSelector(state => state.hideShow.visibility.dateTimePickerData);
+  const confirmedNiches = useSelector(state => state.hideShow.visibility.confirmedNiches);
 
   const [showVerifiedModal, setShowVerifiedModal] = useState(false);
 
-  // const showVerifiedModal = useSelector(state => state.hideShow.visibility.appliedVerify);
+  useEffect(() => {
+    if (confirmedNiches) {
+        setSelectedItems(confirmedNiches);
+    }
+  }, [confirmedNiches]);
 
   React.useEffect(() => {
     async function getSettingProfile() {
@@ -140,7 +144,10 @@ const VerificationStepOne = ({route}) => {
 
       setDob(data?.DOB);
 
-      setSelected([...userDetail?.data?.data?.niche]);
+      const formattedNiches = userDetail?.data?.data?.niche?.map(n => formatNiche(n)) || [];
+      setSelected(formattedNiches);
+      // setSelectedItems(formattedNiches);
+      // dispatch(setConfirmedNiches(formattedNiches));
 
       setFullName(data?.fullName); //Editable
 
@@ -174,8 +181,6 @@ const VerificationStepOne = ({route}) => {
           return;
         }
 
-        // console.log(error?.data, "::::")
-
         if (error?.data?.statusCode !== 400) {
           LoginPageErrors(error?.data?.message);
         } else {
@@ -185,7 +190,7 @@ const VerificationStepOne = ({route}) => {
         setLoading(false);
       }
 
-      if (error?.status === 401) {
+      if (error?.status === 2044) {
         autoLogout();
       }
     }
@@ -193,27 +198,19 @@ const VerificationStepOne = ({route}) => {
     getUserDocHandler();
   }, [token]);
 
-  console.log(profileStatus);
-
   useEffect(() => {
-    if (route?.params?.dob) {
-      setDob(route?.params?.dob);
+    if (dateTimePickerStatus === 'confirmed') {
+      const confirmedDate = new Date(globalDateString);
+      setDate(confirmedDate);
+      setDob(dayjs(confirmedDate).format('DD-MM-YYYY'));
     }
-  }, [route]);
+  }, [dateTimePickerStatus, globalDateString]);
 
   useEffect(() => {
-    if (mounted) {
-      setMounted(false);
-    } else {
-      setDob(dayjs(date).format('DD-MM-YYYY'));
-    }
-  }, [date]);
-
-  useEffect(() => {
-    if (profileStatus === 'SENT') {
+    if (profileStatus === 'SENT' && rejectionReason.length === 0) {
       setShowVerifiedModal(true);
     }
-  }, [profileStatus]);
+  }, [profileStatus, rejectionReason]);
 
   useEffect(() => {
     if (showVerifiedModal) {
@@ -223,9 +220,7 @@ const VerificationStepOne = ({route}) => {
     }
   }, [showVerifiedModal]);
 
-  const updateProfileHandler = async () => {
-    console.log('full name', fullName);
-
+  const updateProfileHandler = useCallback(async () => {
     if (!fullName.trim()) {
       return LoginPageErrors('Please enter full name');
     }
@@ -234,8 +229,14 @@ const VerificationStepOne = ({route}) => {
       return LoginPageErrors('Please enter username');
     }
 
-    if (!dob.trim()) {
+    if (!dob || !dob.trim()) {
       return LoginPageErrors('Please enter DOB');
+    }
+
+    const birthDate = dayjs(dob, 'DD-MM-YYYY');
+    const age = dayjs().diff(birthDate, 'year');
+    if (age < 13) {
+      return LoginPageErrors('You must be at least 13 years old');
     }
 
     if (selectedItems.length === 0) {
@@ -251,8 +252,6 @@ const VerificationStepOne = ({route}) => {
 
     try {
       const {data: userNameData, error: userNameError} = await checkUserNameAvailability({token, displayName: fahduUserName});
-
-      console.log(userNameData?.data, '+++++++++++++++++++++++++');
 
       if (userNameError) {
         return LoginPageErrors('Error checking username availability');
@@ -276,7 +275,7 @@ const VerificationStepOne = ({route}) => {
       console.error('Unexpected error:', error);
       LoginPageErrors('Something went wrong, please try again later');
     }
-  };
+  }, [fullName, fahduUserName, dob, selectedItems, currentUserCoverPicture, currentUserProfilePicture, token, dispatch, checkUserNameAvailability]);
 
   if (loading) {
     return <Loader />;
@@ -361,7 +360,7 @@ const VerificationStepOne = ({route}) => {
             alignSelf: 'center',
             marginTop: 6,
           }}
-          onPress={() => dispatch(toggleDateTimePicker({show: 1}))}>
+          onPress={() => dispatch(toggleDateTimePicker({show: 1, type: 'dob', date: date ? date.toISOString() : new Date().toISOString()}))}>
           <View style={styles.textInputContainer}>
             <TextInput
               pointerEvents="none"
@@ -377,7 +376,7 @@ const VerificationStepOne = ({route}) => {
               value={dob}
             />
 
-            <TouchableOpacity style={styles.calenderContainer}>
+            <TouchableOpacity style={styles.calenderContainer} onPress={() => dispatch(toggleDateTimePicker({show: 1, type: 'dob', date: date ? date.toISOString() : new Date().toISOString()}))}>
               <Image source={require('../../Assets/Images/calenderdob.png')} contentFit="contain" style={{flex: 1}} />
             </TouchableOpacity>
           </View>
@@ -393,7 +392,8 @@ const VerificationStepOne = ({route}) => {
             borderRadius: responsiveWidth(3),
             width: responsiveWidth(91),
             alignSelf: 'center',
-          }}>
+          }}
+          onPress={() => handleDropdownPress()}>
           <View style={styles.textInputContainer}>
             <TextInput
               pointerEvents="none"
@@ -413,31 +413,8 @@ const VerificationStepOne = ({route}) => {
           </View>
         </Pressable>
 
-        <View style={[styles.nicheContainer, selectedItems.length >= 3 && {borderWidth: 0}]}>
-          {selectedItems.length > 2 || !dropdownVisible ? (
-            <BubbleView selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
-          ) : (
-            dropdownVisible &&
-            selectedItems.length < 3 && (
-              <FlatList
-                data={options}
-                keyExtractor={item => item}
-                renderItem={({item}) => (
-                  <Pressable style={[styles.item, selectedItems.includes(item) ? styles.selectedItem : styles.defaultItem]} onPress={() => toggleSelection(item)}>
-                    <Text style={[styles.text, selectedItems.includes(item) && styles.selectedText]}>{item}</Text>
-                  </Pressable>
-                )}
-                contentContainerStyle={{
-                  borderWidth: 1, // ✅ Apply border here
-                  overflow: 'hidden',
-                  borderRadius: 20,
-                }}
-                bounces={false}
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={false}
-              />
-            )
-          )}
+        <View style={selectedItems.length > 0 ? styles.nicheContainer : { marginBottom: responsiveWidth(4) }}>
+          <BubbleView selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
         </View>
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
@@ -447,10 +424,7 @@ const VerificationStepOne = ({route}) => {
         <View style={{height: responsiveWidth(16)}} />
       </KeyboardAwareScrollView>
 
-      {/* jabb modal open hoga toh verificationiNofrmoation nai dikhna chahiye */}
-
       {!showVerifiedModal && <VerificationInformation agreeModal={agreeModal} setAgreeModal={setAgreeModal} />}
-      <DateTimePickerSheet onScreen={'profileEdit'} date={date} setDate={setDate} type={'dob'} />
       <GetVerifiedInstagram transferObject={transferObject} setShowVerifiedModal={setShowVerifiedModal} />
       <VerifiedModal visible={showVerifiedModal} />
     </GestureHandlerRootView>
@@ -470,136 +444,8 @@ const styles = StyleSheet.create({
     color: '#282828',
     fontSize: responsiveFontSize(2.1),
     lineHeight: 20,
-    // marginVertical : 5
     marginTop: 24,
-    // marginBottom : 12
   },
-
-  titleSetPrice: {
-    fontSize: responsiveFontSize(1.8),
-    // backgroundColor: "#e3dff2",
-    height: '90%',
-    borderRadius: responsiveWidth(2),
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    // flexBasis: "55%",
-    left: responsiveWidth(2),
-    fontFamily: 'Rubik-Regular',
-    overflow: 'hidden',
-    lineHeight: Platform.OS === 'ios' ? 44 : 22,
-  },
-  propertyTitle: {
-    flexDirection: 'row',
-  },
-  inputStyle: {
-    // flex: 1,
-    width: responsiveWidth(80),
-    height: responsiveWidth(12),
-    padding: 0,
-    paddingLeft: 5,
-    fontFamily: 'Rubik-Regular',
-    marginLeft: responsiveWidth(2),
-    fontSize: responsiveFontSize(1.5),
-    color: '#282828',
-    // paddingRight: responsiveWidth(1),
-  },
-  description: {
-    fontFamily: 'Rubik-Regular',
-    fontSize: responsiveFontSize(1.8),
-    color: '#282828',
-    // left: responsiveWidth(5),
-  },
-  loginButton: {
-    paddingHorizontal: responsiveWidth(2),
-    backgroundColor: '#C5FFD2',
-    borderRadius: responsiveWidth(4),
-    color: '#282828',
-    borderBottomWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.7),
-    borderRightWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.7),
-    borderTopWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.3),
-    borderLeftWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.3),
-    borderWidth: Platform.OS == 'ios' ? responsiveWidth(0.5) : null,
-    right: responsiveWidth(5),
-    textAlign: 'center',
-    fontFamily: 'Rubik-Medium',
-    elevation: 1,
-    fontWeight: '600',
-    width: responsiveWidth(83),
-    height: responsiveWidth(13),
-    textAlignVertical: 'center',
-    alignSelf: 'center',
-    borderTopColor: '#282828',
-    borderLeftColor: '#282828',
-    elevation: 1,
-    fontSize: responsiveFontSize(2.4),
-    padding: padios(responsiveWidth(2.6)),
-    overflow: 'hidden',
-    marginTop: responsiveWidth(4),
-  },
-  login: {
-    paddingHorizontal: responsiveWidth(2),
-    backgroundColor: '#FFA86B',
-    borderRadius: responsiveWidth(4),
-    color: '#282828',
-
-    borderBottomWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.7),
-    borderRightWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.7),
-    borderTopWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.3),
-    borderLeftWidth: Platform.OS == 'ios' ? null : responsiveWidth(0.3),
-    borderWidth: Platform.OS == 'ios' ? responsiveWidth(0.5) : null,
-    right: responsiveWidth(1),
-    textAlign: 'center',
-    fontFamily: 'Rubik-Medium',
-    elevation: 1,
-    fontWeight: '600',
-    width: responsiveWidth(53),
-    height: responsiveWidth(13),
-    textAlignVertical: 'center',
-    alignSelf: 'center',
-    borderTopColor: '#282828',
-    borderLeftColor: '#282828',
-    elevation: 1,
-    fontSize: responsiveFontSize(2),
-    padding: Platform.OS == 'ios' ? responsiveWidth(3) : responsiveWidth(1),
-    overflow: 'hidden',
-    marginTop: responsiveWidth(4),
-  },
-  loginTwo: {
-    paddingHorizontal: responsiveWidth(2),
-    backgroundColor: 'black',
-    top: responsiveWidth(1),
-    borderRadius: responsiveWidth(4),
-    position: 'absolute',
-    width: responsiveWidth(90),
-    color: '#282828',
-    borderBottomWidth: responsiveWidth(0.7),
-    borderRightWidth: responsiveWidth(0.7),
-    borderTopWidth: responsiveWidth(0.3),
-    borderLeftWidth: responsiveWidth(0.3),
-    right: responsiveWidth(1),
-    textAlign: 'center',
-    fontFamily: 'Rubik-Bold',
-    elevation: 1,
-    fontWeight: '600',
-    width: responsiveWidth(53),
-    height: responsiveWidth(13),
-    textAlignVertical: 'center',
-    alignSelf: 'center',
-    borderTopColor: '#282828',
-    borderLeftColor: '#282828',
-    elevation: 1,
-    fontSize: responsiveFontSize(2),
-    padding: padios(responsiveWidth(2.6)),
-    overflow: 'hidden',
-    marginTop: responsiveWidth(4),
-  },
-  rejectionMessage: {
-    fontFamily: 'Rubik-Medium',
-    paddingLeft: responsiveWidth(3),
-    marginVertical: responsiveWidth(1),
-    color: '#FF6961',
-  },
-
   textInputContainer: {
     borderWidth: 1.5,
     flexDirection: 'row',
@@ -623,64 +469,20 @@ const styles = StyleSheet.create({
     height: 19,
     width: 19,
   },
-
   nicheContainer: {
-    // borderWidth: 1.5,
     borderColor: '#282828',
     marginTop: 4,
     borderRadius: responsiveWidth(4),
     backgroundColor: '#fff',
     width: responsiveWidth(91),
     alignSelf: 'center',
-    // maxHeight: 200,
     overflow: 'hidden',
-  },
-  nicheContainerTwo: {
-    borderColor: '#282828',
-    marginTop: 4,
-    borderRadius: responsiveWidth(4),
-    backgroundColor: '#fff',
-    width: responsiveWidth(91),
-    alignSelf: 'center',
-    // maxHeight: 200,
-    overflow: 'hidden',
-  },
-
-  item: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderTopWidth: 1,
-    // backgroundColor : 'blue',
-    width: '99.9%',
-    alignSelf: 'center',
-  },
-  defaultItem: {
-    borderTopColor: '#EAEAEA',
-    borderBottomColor: '#EAEAEA',
-  },
-  selectedItem: {
-    borderTopColor: '#FFA86B',
-    borderBottomColor: '#FFA86B',
-    borderBottomWidth: 1,
-    borderTopWidth: 1,
-    backgroundColor: '#FFF3EB',
-  },
-
-  text: {
-    fontSize: responsiveFontSize(2.1),
-    color: '#1e1e1e',
-  },
-  selectedText: {
-    fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
   },
   bubbleContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // Allows wrapping when width exceeds container
+    flexWrap: 'wrap',
     padding: 8,
     paddingLeft: 0,
-    // backgroundColor: 'red',
   },
   bubble: {
     flexDirection: 'row',
@@ -719,12 +521,5 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.48),
     color: 'red',
     flexShrink: 1,
-  },
-  iconContainer: {
-    height: 40,
-    width: 35,
-  },
-  blurBackground: {
-    ...StyleSheet.absoluteFillObject,
   },
 });

@@ -3,14 +3,16 @@ import React from "react";
 import { responsiveFontSize, responsiveWidth } from "react-native-responsive-dimensions";
 import ProgressBar from "react-native-progress/Bar";
 import { useDispatch } from "react-redux";
-import { toggleWishListSheet } from "../../../Redux/Slices/NormalSlices/HideShowSlice";
+import { setWishListDonationInfo } from "../../../Redux/Slices/NormalSlices/OtherProfile/WishListDonateSheetSlice";
+import { useNavigation } from "@react-navigation/native";
 
 const WishListCard = ({ item, setDonateData, pressDisabled }) => {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
 
   const handleDonation = () => {
-    setDonateData(item);
-    dispatch(toggleWishListSheet({ show: 1 }));
+    dispatch(setWishListDonationInfo({ donationInfo: item }));
+    navigation.navigate("wishListDonateScreen");
   };
 
   return (
@@ -27,7 +29,7 @@ const WishListCard = ({ item, setDonateData, pressDisabled }) => {
         <View style={styles.cardBottomViewUpper}>
           <Text style={styles.smallTexts}>Fund Raised</Text>
           <Text style={[styles.smallTexts, { flexDirection: "row", }]}>
-            {item?.totalCollected}/{item?.listedCoinsRequired}
+            {Number(item?.totalCollected).toLocaleString('en-IN')}/{Number(item?.listedCoinsRequired).toLocaleString('en-IN')}
             <Image source={require("../../../Assets/Images/Coin.png")} style={{ height: responsiveWidth(3.5), width: responsiveWidth(3.5), resizeMode: "contain", alignSelf: "center", marginRight: responsiveWidth(1) }} />
           </Text>
         </View>

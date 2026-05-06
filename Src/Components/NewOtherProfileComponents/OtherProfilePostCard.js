@@ -1,51 +1,19 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Dimensions,
-  Pressable,
-} from 'react-native';
+import {StyleSheet, Text, View, TouchableOpacity, Dimensions, Pressable} from 'react-native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {
-  responsiveWidth,
-  responsiveFontSize,
-  responsiveHeight,
-} from 'react-native-responsive-dimensions';
+import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
 import DIcon from '../../../DesiginData/DIcons';
 import Moment from 'react-moment';
 
 import {Gesture} from 'react-native-gesture-handler';
 import {GestureDetector} from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, {runOnJS, useAnimatedStyle, useSharedValue, withSpring} from 'react-native-reanimated';
 import {useNavigation, useNavigationState} from '@react-navigation/native';
-import {
-  useLazyGetAllCommentsQuery,
-  useLazyGetSelfLikeQuery,
-  useLazyIsValidFollowQuery,
-  useLikeApiMutation,
-} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useLazyGetAllCommentsQuery, useLazyGetSelfLikeQuery, useLazyIsValidFollowQuery, useLikeApiMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
-import {
-  setCurrentVideoPlayId,
-  toggleCommentBottomSheet,
-  toggleLoadingComments,
-  togglePostActionBottomSheet,
-  toggleSendPostTipModal,
-  toggleWhoTippedSheet,
-} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {setCurrentVideoPlayId, toggleCommentBottomSheet, toggleLoadingComments, togglePostActionBottomSheet, toggleSendPostTipModal, toggleWhoTippedSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import Pinchable from 'react-native-pinchable';
 import {LoginPageErrors} from '../ErrorSnacks';
-import {
-  savePostComments,
-  setCurrentCommentDetails,
-  setTotalPages,
-} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
+import {savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
@@ -59,24 +27,21 @@ import Play from '../../../Assets/svg/play.svg';
 import Verify from '../../../Assets/svg/vvv.svg';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import Share from '../../../Assets/svg/sharepost.svg';
-
 import {Image} from 'expo-image';
 import {WIDTH_SIZES} from '../../../DesiginData/Utility';
+import Carousel from 'react-native-reanimated-carousel';
+import MentionText from '../MentionText';
 import share from 'react-native-share';
 
 let timer;
 
-const handlePostActionHandler = async (
-  postId,
-  image,
-  displayName,
-  description,
-) => {
+const handlePostActionHandler = async (postId, image, displayName, description) => {
   console.log(postId, image, displayName, '{}{}{}{}');
-
   try {
+    const postLink = `https://app.fahdu.com/post/${postId}`;
+
     let x = await share.open({
-      url: link,
+      url: postLink,
     });
 
     if (x.success) {
@@ -92,15 +57,14 @@ const handlePostActionHandler = async (
 };
 
 const PostCards = ({item, index}) => {
-  console.log(item?.has_liked);
+  const [activeSlide, setActiveSlide] = useState(0);
+  // console.log(item?.has_liked);
 
   // console.log("Username", item?.createdBy?.displayName, "LikeCount", item?.count?.likes, item?.has_liked)
 
-  const screenName = useNavigationState(
-    state => state.routes[state.index].name,
-  );
+  const screenName = useNavigationState(state => state.routes[state.index].name);
 
-  console.log(screenName);
+  // console.log(screenName);
 
   const dispatch = useDispatch();
 
@@ -175,7 +139,7 @@ const PostCards = ({item, index}) => {
           if (error) {
             LoginPageErrors(error?.data?.message);
 
-            if (error?.data?.status_code === 401) {
+            if (error?.data?.status_code === 2044) {
               autoLogout();
             }
 
@@ -217,7 +181,7 @@ const PostCards = ({item, index}) => {
       if (e?.error) {
         LoginPageErrors(e?.error?.data?.message);
 
-        if (e?.error?.data?.status_code === 401) {
+        if (e?.error?.data?.status_code === 2044) {
           autoLogout();
         }
 
@@ -228,7 +192,7 @@ const PostCards = ({item, index}) => {
     });
   }
 
-  const tap = Gesture.Tap().numberOfTaps(2);
+  const tap = useMemo(() => Gesture.Tap().numberOfTaps(2), []);
 
   const animatedStyles = useAnimatedStyle(() => ({
     position: 'absolute',
@@ -253,11 +217,13 @@ const PostCards = ({item, index}) => {
       navigation.navigate('othersProfile', {
         userName: item?.createdBy?.displayName,
         userId: item?.createdBy?._id,
+        role: item?.createdBy?.role, // Added role
+        profile_image: item?.createdBy?.profile_image, // Passing other potentially useful data
       });
     } else {
-      console.log('Get fuck out of here...');
+      console.log('Same user profile click ignored');
     }
-  }, [item]);
+  }, [item, currentUserInfo]);
 
   const handleCoinClicks = useCallback(() => {
     console.log(item?._id);
@@ -271,142 +237,56 @@ const PostCards = ({item, index}) => {
   if (item?.post_content_files) {
     if (item?.post_content_files?.[0]?.format === 'video') {
       return (
-        <View
-          style={[
-            styles.cardContainer,
-            {paddingTop: 0, borderColor: '#282828'},
-          ]}
-          key={item?._id}>
+        <View style={[styles.cardContainer, {paddingTop: 0, borderColor: '#282828'}]} key={item?._id}>
           <View style={[styles.imageContainer, {aspectRatio: 2 / 3}]}>
-            <Image
-              source={{uri: item?.video?.thumbnail?.url}}
-              style={styles.videoImage}
-            />
+            <Image source={{uri: item?.video?.thumbnail?.url}} style={styles.videoImage} />
 
             <GestureDetector gesture={tap}>
-              <LinearGradient
-                colors={[
-                  '#00000065',
-                  'transparent',
-                  'transparent',
-                  'transparent',
-                  'transparent',
-                  'transparent',
-                  '#00000060',
-                  '#00000070',
-                ]}
-                style={styles.overLayContainer}>
-                <View
-                  style={[
-                    styles.cardHeaderWrapper,
-                    {
-                      paddingHorizontal: responsiveWidth(2),
-                      paddingTop: responsiveWidth(1),
-                    },
-                  ]}>
+              <LinearGradient colors={['#00000065', 'transparent', 'transparent', 'transparent', 'transparent', 'transparent', '#00000060', '#00000070']} style={styles.overLayContainer}>
+                <View style={[styles.cardHeaderWrapper, {paddingHorizontal: responsiveWidth(2), paddingTop: responsiveWidth(1)}]}>
                   <View style={styles.headerLeftWrapper}>
-                    <View style={styles.headerLeftContentContainer}>
-                      <Pressable
-                        style={[
-                          styles.profileImageContainer,
-                          {borderColor: 'white', borderWidth: 1},
-                        ]}
-                        onPress={() =>
-                          handleGoToOthersProfile(item?.createdBy?.displayName)
-                        }>
-                        <Image
-                          allowDownscaling
-                          placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
-                          source={{uri: item?.createdBy?.profile_image?.url}}
-                          resizeMethod="resize"
-                          style={styles.profileImage}
-                        />
-                      </Pressable>
+                  <View style={styles.headerLeftContentContainer}>
+                    <Pressable style={styles.profileImageContainer} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                      <Image allowDownscaling placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
+                    </Pressable>
 
-                      {/* {item?.createdBy?.role === "creator" ? (
-                        <View style={{ position: "absolute", transform: [{ translateX: responsiveWidth(6.2) }, { translateY: responsiveWidth(-4) }] }}>
-                          <DIcon provider={"MaterialIcons"} name={"verified"} color="#FFA07A" size={responsiveWidth(4)} />
-                        </View>
-                      ) : null} */}
-
-                      <View style={{flexDirection: 'column'}}>
-                        <Pressable
-                          style={styles.headerInformation}
-                          onPress={() =>
-                            handleGoToOthersProfile(
-                              item?.createdBy?.displayName,
-                            )
-                          }>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: responsiveWidth(1),
-                            }}>
-                            <Text
-                              style={[styles.userName, {color: '#fff'}]}
-                              numberOfLines={1}
-                              ellipsizeMode="tail">
+                    <View>
+                      <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                        <View style={{flexDirection: 'column'}}>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
+                            <Text style={[styles.userName, {color: '#fff'}]} numberOfLines={1} ellipsizeMode="tail">
                               {item?.createdBy?.displayName}
                             </Text>
-                            {item?.createdBy?.role === 'creator' ? (
-                              <View style={{}}>
+                            {item?.createdBy?.role === 'creator' && (
+                              <View style={styles.verifyContainer}>
                                 <Verify />
                               </View>
-                            ) : null}
+                            )}
                           </View>
-                        </Pressable>
-                        <Moment
-                          style={[styles.timiming, {color: '#fff'}]}
-                          element={Text}
-                          fromNow>
-                          {item?.createdAt}
-                        </Moment>
-                      </View>
+                          <Moment style={[styles.timiming, {color: '#fff'}]} element={Text} fromNow>
+                            {item?.createdAt}
+                          </Moment>
+                        </View>
+                      </Pressable>
                     </View>
                   </View>
+                  </View>
                   {item?.pinned && (
-                    <View
-                      style={{
-                        marginLeft: responsiveWidth(30),
-                        transform: [{rotate: '25deg'}],
-                      }}>
-                      <DIcon
-                        provider={'Ionicons'}
-                        name={'pin'}
-                        size={responsiveWidth(6)}
-                        color={'#fff'}
-                      />
+                    <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
+                      <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={'#fff'} />
                     </View>
                   )}
-                  <DIcon
-                    provider={'Entypo'}
-                    name={'dots-three-vertical'}
-                    size={responsiveWidth(5)}
-                    color="#fff"
-                    onPress={() =>
-                      dispatch(
-                        togglePostActionBottomSheet({
-                          info: {
-                            show: 1,
-                            postId: item?._id,
-                            userId: item?.createdBy?._id,
-                          },
-                        }),
-                      )
-                    }
-                  />
+                  <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={responsiveWidth(5)} color="#fff" onPress={() => dispatch(togglePostActionBottomSheet({info: {show: 1, postId: item?._id, userId: item?.createdBy?._id}}))} />
                 </View>
 
                 <View style={styles.playAndDescription}>
-                  <Text style={styles.videoPostDescription} numberOfLines={2}>
-                    {item?.postContent}
-                  </Text>
+                  <MentionText 
+                    content={item?.postContent} 
+                    style={styles.videoPostDescription} 
+                    numberOfLines={2} 
+                  />
                   <TouchableOpacity
-                    style={{
-                      right: responsiveWidth(40),
-                      bottom: responsiveWidth(60),
-                    }}
+                    style={{right: responsiveWidth(40), bottom: responsiveWidth(60)}}
                     onPress={() =>
                       navigation.navigate('homevideoplayer', {
                         videoUrl: item?.post_content_files?.[0]?.url,
@@ -429,75 +309,24 @@ const PostCards = ({item, index}) => {
             {/* <View  style = {{width : 30, height : 30, borderWidth : 1, position : 'absolute' }} /> */}
           </View>
 
-          <View
-            style={{
-              paddingHorizontal: responsiveWidth(5),
-              borderColor: 'red',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: responsiveWidth(4),
-            }}>
-            <View
-              style={{
-                width: responsiveWidth(70),
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                gap: responsiveWidth(4),
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity onPress={() => sendLike()}>
-                  {doLiked ? <Fill /> : <Heart />}
-                </TouchableOpacity>
+          <View style={{paddingHorizontal: responsiveWidth(5), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(4)}}>
+            <View style={{width: responsiveWidth(70), flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: responsiveWidth(4)}}>
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                <TouchableOpacity onPress={() => sendLike()}>{doLiked ? <Fill /> : <Heart />}</TouchableOpacity>
 
-                <Text style={styles.likeCommentText}>
-                  {likeCount === 0 ? null : likeCount}
-                </Text>
+                <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
               </View>
 
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity
-                  onPress={() => handleOpenCommentSheet(item?._id, false)}>
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
                   <Comment />
                 </TouchableOpacity>
 
-                <Text style={styles.likeCommentText}>
-                  {commentCount === 0 ? null : commentCount}
-                </Text>
+                <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
               </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity
-                  style={{width: 20, height: 20}}
-                  onPress={() =>
-                    handlePostActionHandler(
-                      item?._id,
-                      item?.createdBy?.profile_image?.url,
-                      item?.createdBy?.displayName,
-                      item?.postContent,
-                    )
-                  }>
-                  <Image
-                    cachePolicy="memory-disk"
-                    source={require('../../../Assets/Images/share.png')}
-                    contentFit="contain"
-                    style={{flex: 1}}
-                  />
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                <TouchableOpacity style={{width: 20, height: 20}} onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1}} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -508,28 +337,9 @@ const PostCards = ({item, index}) => {
               </TouchableOpacity>
             )}
           </View>
-          <View
-            style={{
-              paddingHorizontal: responsiveWidth(2),
-              borderColor: 'red',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: responsiveWidth(1),
-            }}>
-            <View
-              style={{
-                width: responsiveWidth(40),
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
+          <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(1)}}>
+            <View style={{width: responsiveWidth(40), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
                 <View
                   style={{
                     height: responsiveWidth(8),
@@ -542,11 +352,7 @@ const PostCards = ({item, index}) => {
                     overflow: 'hidden', // ensures image doesn't overflow the circular container
                   }}>
                   <Image
-                    source={
-                      !item?.createdBy?.profile_image?.url
-                        ? require('../../../Assets/Images/DefaultProfile.jpg')
-                        : {uri: item?.createdBy?.profile_image?.url}
-                    }
+                    source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}}
                     style={{
                       height: '100%',
                       width: '100%',
@@ -555,16 +361,7 @@ const PostCards = ({item, index}) => {
                   />
                 </View>
 
-                <Text
-                  onPress={() => handleOpenCommentSheet(item?._id, true)}
-                  style={[
-                    styles.addCommentsText,
-                    {
-                      marginLeft: responsiveWidth(2),
-                      fontFamily: 'Rubik-Regular',
-                      color: '#B4B4B4',
-                    },
-                  ]}>
+                <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(2), fontFamily: 'Rubik-Regular', color: '#B4B4B4'}]}>
                   Add a Comment
                 </Text>
               </View>
@@ -575,8 +372,7 @@ const PostCards = ({item, index}) => {
     } else {
       return (
         <View style={[styles.cardContainer]} key={item?._id}>
-          <View
-            style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red'}}>
+          <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red'}}>
             <View style={styles.cardHeaderWrapper}>
               {/* <View style={styles.headerLeftWrapper}>
                 <View style={styles.headerLeftContentContainer}>
@@ -602,201 +398,141 @@ const PostCards = ({item, index}) => {
                 </View>
               </View> */}
               <View style={styles.cardHeaderWrapper}>
-                <View
-                  style={[
-                    styles.headerLeftWrapper,
-                    {marginLeft: responsiveWidth(3)},
-                  ]}>
-                  <View style={[styles.headerLeftContentContainer]}>
-                    <Pressable
-                      style={styles.profileImageContainer}
-                      onPress={() =>
-                        handleGoToOthersProfile(item?.createdBy?.displayName)
-                      }>
-                      <Image
-                        allowDownscaling
-                        placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
-                        source={{uri: item?.createdBy?.profile_image?.url}}
-                        resizeMethod="resize"
-                        style={styles.profileImage}
-                      />
+                <View style={styles.headerLeftWrapper}>
+                  <View style={styles.headerLeftContentContainer}>
+                    <Pressable style={styles.profileImageContainer} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                      <Image allowDownscaling placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
                     </Pressable>
 
-                    <View style={{flexDirection: 'column'}}>
-                      <Pressable
-                        style={styles.headerInformation}
-                        onPress={() =>
-                          handleGoToOthersProfile(item?.createdBy?.displayName)
-                        }>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: responsiveWidth(1),
-                          }}>
-                          <Text
-                            style={styles.userName}
-                            numberOfLines={1}
-                            ellipsizeMode="tail">
-                            {item?.createdBy?.displayName}
-                          </Text>
-                          {item?.createdBy?.role === 'creator' ? (
-                            <View style={{}}>
-                              <Verify />
-                            </View>
-                          ) : null}
+                    <View>
+                      <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                        <View style={{flexDirection: 'column'}}>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
+                            <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                              {item?.createdBy?.displayName}
+                            </Text>
+                            {item?.createdBy?.role === 'creator' && (
+                              <View style={styles.verifyContainer}>
+                                <Verify />
+                              </View>
+                            )}
+                          </View>
+                          <Moment style={styles.timiming} element={Text} fromNow>
+                            {item?.createdAt}
+                          </Moment>
                         </View>
                       </Pressable>
-                      <Moment style={styles.timiming} element={Text} fromNow>
-                        {item?.createdAt}
-                      </Moment>
                     </View>
                   </View>
                 </View>
-                {item?.pinned && (
-                  <View
-                    style={{
-                      marginLeft: responsiveWidth(35),
-                      transform: [{rotate: '25deg'}],
-                    }}>
-                    {/* <DIcon provider={"Ionicons"} name={"pin"} size={responsiveWidth(6)} color={"#282828"} /> */}
-                  </View>
-                )}
-                {/* <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={responsiveWidth(5)} onPress={() => dispatch(togglePostActionBottomSheet({info: {show: 1, postId: item?._id, userId: item?.createdBy?._id}}))} /> */}
               </View>
               {item?.pinned && (
-                <View
-                  style={{
-                    marginLeft: responsiveWidth(30),
-                    transform: [{rotate: '25deg'}],
-                  }}>
-                  <DIcon
-                    provider={'Ionicons'}
-                    name={'pin'}
-                    size={responsiveWidth(6)}
-                    color={'#282828'}
-                  />
+                <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
+                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={'#282828'} />
                 </View>
               )}
-              <DIcon
-                provider={'Entypo'}
-                name={'dots-three-vertical'}
-                size={responsiveWidth(5)}
-                onPress={() =>
-                  dispatch(
-                    togglePostActionBottomSheet({
-                      info: {
-                        show: 1,
-                        postId: item?._id,
-                        userId: item?.createdBy?._id,
-                      },
-                    }),
-                  )
-                }
-              />
+              <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={responsiveWidth(5)} onPress={() => dispatch(togglePostActionBottomSheet({info: {show: 1, postId: item?._id, userId: item?.createdBy?._id}}))} />
             </View>
             <View style={styles.cardTextWrapper}>
               {item?.postContent ? (
-                <Text style={styles.cardText}>{item?.postContent}</Text>
+                <MentionText content={item?.postContent} style={styles.cardText} />
               ) : null}
             </View>
           </View>
 
           <View style={[styles.imageContainer]}>
-            <GestureDetector gesture={tap}>
-              <View
-                style={{width: '100%', position: 'relative'}}
-                key={item?._id?.toString()}
-                id={item?._id?.toString()}>
-                <Image
-                  source={item?.post_content_files?.[0]?.url}
-                  placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
-                  contentFit="cover"
-                  style={{
-                    width: '100%',
-                    height: undefined,
-                    aspectRatio: item?.image?.hasAspectRatio
-                      ? Number(item?.image?.aspectRatio?.width) /
-                        Number(item?.image?.aspectRatio?.height)
-                      : 1 / 1,
+            {item?.post_content_files?.length > 1 ? (
+              <View style={{width: '100%', position: 'relative'}}>
+                <Carousel
+                  loop={false}
+                  width={Dimensions.get('window').width}
+                  height={
+                    item?.image?.hasAspectRatio
+                      ? Dimensions.get('window').width / (Number(item?.image?.aspectRatio?.width) / Number(item?.image?.aspectRatio?.height))
+                      : Dimensions.get('window').width * 1.25
+                  }
+                  autoPlay={false}
+                  data={item?.post_content_files}
+                  scrollAnimationDuration={300}
+                  onSnapToItem={index => setActiveSlide(index)}
+                  onConfigurePanGesture={(g) => {
+                    g.activeOffsetX([-20, 20]);
+                    g.failOffsetY([-5, 5]);
                   }}
-                  key={item?._id?.toString()}
-                  id={item?._id?.toString()}
-                  allowDownscaling
+                  renderItem={({item: file}) => (
+                    <GestureDetector gesture={tap}>
+                      <Pinchable style={{width: '100%', height: '100%'}} id={item?._id?.toString() + file.url}>
+                        <Image
+                          cachePolicy="memory-disk"
+                          placeholderContentFit="cover"
+                          placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
+                          source={{uri: file.url}}
+                          contentFit="cover"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                          }}
+                        />
+                      </Pinchable>
+                    </GestureDetector>
+                  )}
                 />
+                <View style={styles.paginationBadge}>
+                  <Text style={styles.paginationText}>
+                    {activeSlide + 1}/{item?.post_content_files?.length}
+                  </Text>
+                </View>
+                <View style={styles.dotsContainer}>
+                  {item?.post_content_files?.map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.dot,
+                        i === activeSlide ? styles.activeDot : styles.inactiveDot,
+                      ]}
+                    />
+                  ))}
+                </View>
               </View>
-            </GestureDetector>
+            ) : (
+              <GestureDetector gesture={tap}>
+                <View style={{width: '100%', position: 'relative'}} key={item?._id?.toString()} id={item?._id?.toString()}>
+                  <Image
+                    source={item?.post_content_files?.[0]?.url}
+                    placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
+                    contentFit="cover"
+                    style={{
+                      width: '100%',
+                      height: undefined,
+                      aspectRatio: item?.image?.hasAspectRatio ? Number(item?.image?.aspectRatio?.width) / Number(item?.image?.aspectRatio?.height) : 1 / 1,
+                    }}
+                    key={item?._id?.toString()}
+                    id={item?._id?.toString()}
+                    allowDownscaling
+                  />
+                </View>
+              </GestureDetector>
+            )}
           </View>
 
-          <View
-            style={{
-              paddingHorizontal: responsiveWidth(5),
-              borderColor: 'red',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: responsiveWidth(4),
-            }}>
-            <View
-              style={{
-                width: responsiveWidth(70),
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                gap: responsiveWidth(4),
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity onPress={() => sendLike()}>
-                  {doLiked ? <Fill /> : <Heart />}
-                </TouchableOpacity>
+          <View style={{paddingHorizontal: responsiveWidth(5), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(4)}}>
+            <View style={{width: responsiveWidth(70), flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: responsiveWidth(4)}}>
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                <TouchableOpacity onPress={() => sendLike()}>{doLiked ? <Fill /> : <Heart />}</TouchableOpacity>
 
-                <Text style={styles.likeCommentText}>
-                  {likeCount === 0 ? null : likeCount}
-                </Text>
+                <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
               </View>
 
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity
-                  onPress={() => handleOpenCommentSheet(item?._id, false)}>
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
                   <Comment />
                 </TouchableOpacity>
 
-                <Text style={styles.likeCommentText}>
-                  {commentCount === 0 ? null : commentCount}
-                </Text>
+                <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
               </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity
-                  style={{width: 20, height: 20}}
-                  onPress={() =>
-                    handlePostActionHandler(
-                      item?._id,
-                      item?.createdBy?.profile_image?.url,
-                      item?.createdBy?.displayName,
-                      item?.postContent,
-                    )
-                  }>
-                  <Image
-                    cachePolicy="memory-disk"
-                    source={require('../../../Assets/Images/share.png')}
-                    contentFit="contain"
-                    style={{flex: 1}}
-                  />
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                <TouchableOpacity style={{width: 20, height: 20}} onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1}} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -807,28 +543,9 @@ const PostCards = ({item, index}) => {
               </TouchableOpacity>
             )}
           </View>
-          <View
-            style={{
-              paddingHorizontal: responsiveWidth(2),
-              borderColor: 'red',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: responsiveWidth(1),
-            }}>
-            <View
-              style={{
-                width: responsiveWidth(40),
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  gap: responsiveWidth(1),
-                  alignItems: 'center',
-                }}>
+          <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(1)}}>
+            <View style={{width: responsiveWidth(40), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+              <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
                 <View
                   style={{
                     height: responsiveWidth(8),
@@ -841,11 +558,7 @@ const PostCards = ({item, index}) => {
                     overflow: 'hidden', // ensures image doesn't overflow the circular container
                   }}>
                   <Image
-                    source={
-                      !item?.createdBy?.profile_image?.url
-                        ? require('../../../Assets/Images/DefaultProfile.jpg')
-                        : {uri: item?.createdBy?.profile_image?.url}
-                    }
+                    source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}}
                     style={{
                       height: '100%',
                       width: '100%',
@@ -854,16 +567,7 @@ const PostCards = ({item, index}) => {
                   />
                 </View>
 
-                <Text
-                  onPress={() => handleOpenCommentSheet(item?._id, true)}
-                  style={[
-                    styles.addCommentsText,
-                    {
-                      marginLeft: responsiveWidth(2),
-                      fontFamily: 'Rubik-Regular',
-                      color: '#B4B4B4',
-                    },
-                  ]}>
+                <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(2), fontFamily: 'Rubik-Regular', color: '#B4B4B4'}]}>
                   Add a Comment
                 </Text>
               </View>
@@ -876,140 +580,67 @@ const PostCards = ({item, index}) => {
   } else {
     return (
       <View style={[styles.cardContainer]} key={item?._id}>
-        <View
-          style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red'}}>
+        <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red'}}>
           <View style={styles.cardHeaderWrapper}>
             <View style={styles.headerLeftWrapper}>
-              <View style={styles.headerLeftContentContainer}>
-                <Pressable
-                  style={styles.profileImageContainer}
-                  onPress={() =>
-                    handleGoToOthersProfile(item?.createdBy?.displayName)
-                  }>
-                  <Image
-                    source={
-                      !item?.createdBy?.profile_image?.url
-                        ? require('../../../Assets/Images/DefaultProfile.jpg')
-                        : {uri: item?.createdBy?.profile_image?.url}
-                    }
-                    resizeMethod="resize"
-                    style={styles.profileImage}
-                  />
-                </Pressable>
+            <View style={styles.headerLeftContentContainer}>
+              <Pressable style={styles.profileImageContainer} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                <Image source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
+              </Pressable>
 
-                {/* {item?.createdBy?.role === "creator" ? (
-                  <View style={{ position: "absolute", transform: [{ translateX: responsiveWidth(6.2) }, { translateY: responsiveWidth(-4) }] }}>
-                    <DIcon provider={"MaterialIcons"} name={"verified"} color="#FFA07A" size={responsiveWidth(4)} />
-                  </View>
-                ) : null} */}
-
-                <View style={{flexDirection: 'column'}}>
-                  <Pressable
-                    style={styles.headerInformation}
-                    onPress={() =>
-                      handleGoToOthersProfile(item?.createdBy?.displayName)
-                    }>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: responsiveWidth(1),
-                      }}>
-                      <Text
-                        style={styles.userName}
-                        numberOfLines={1}
-                        ellipsizeMode="tail">
+              <View>
+                <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                  <View style={{flexDirection: 'column'}}>
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
+                      <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
                         {item?.createdBy?.displayName}
                       </Text>
-                      {item?.createdBy?.role === 'creator' ? (
-                        <View style={{}}>
+                      {item?.createdBy?.role === 'creator' && (
+                        <View style={styles.verifyContainer}>
                           <Verify />
                         </View>
-                      ) : null}
+                      )}
                     </View>
-                  </Pressable>
-                  <Moment style={styles.timiming} element={Text} fromNow>
-                    {item?.createdAt}
-                  </Moment>
-                </View>
+                    <Moment style={styles.timiming} element={Text} fromNow>
+                      {item?.createdAt}
+                    </Moment>
+                  </View>
+                </Pressable>
               </View>
             </View>
+            </View>
             {item?.pinned && (
-              <View
-                style={{
-                  marginLeft: responsiveWidth(30),
-                  transform: [{rotate: '25deg'}],
-                }}>
-                <DIcon
-                  provider={'Ionicons'}
-                  name={'pin'}
-                  size={responsiveWidth(6)}
-                  color={'#282828'}
-                />
+              <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
+                <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={'#282828'} />
               </View>
             )}
-            <DIcon
-              provider={'Entypo'}
-              name={'dots-three-vertical'}
-              size={responsiveWidth(5)}
-              onPress={() =>
-                dispatch(
-                  togglePostActionBottomSheet({
-                    info: {
-                      show: 1,
-                      postId: item?._id,
-                      userId: item?.createdBy?._id,
-                    },
-                  }),
-                )
-              }
-            />
+            <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={responsiveWidth(5)} onPress={() => dispatch(togglePostActionBottomSheet({info: {show: 1, postId: item?._id, userId: item?.createdBy?._id}}))} />
           </View>
           <View style={styles.cardTextWrapper}>
             {item?.postContent ? (
-              <Text style={styles.cardText}>{item?.postContent}</Text>
+              <MentionText content={item?.postContent} style={styles.cardText} />
             ) : null}
           </View>
         </View>
 
         <View style={[styles.imageContainer]}>
-          <View
-            style={{width: '100%', position: 'relative'}}
-            key={item?._id?.toString()}
-            id={item?._id?.toString()}>
+          <View style={{width: '100%', position: 'relative'}} key={item?._id?.toString()} id={item?._id?.toString()}>
             <Image
               blurRadius={20}
-              source={
-                !item?.image_preview?.[0]?.url
-                  ? require('../../../Assets/Images/blur.jpg')
-                  : {uri: item?.image_preview?.[0]?.url}
-              }
+              source={!item?.image_preview?.[0]?.url ? require('../../../Assets/Images/blur.jpg') : {uri: item?.image_preview?.[0]?.url}}
               contentFit="cover"
               style={{
                 width: '100%',
                 height: undefined,
-                aspectRatio: item?.image?.hasAspectRatio
-                  ? Number(item?.image?.aspectRatio?.width) /
-                    Number(item?.image?.aspectRatio?.height)
-                  : 1 / 1,
+                aspectRatio: item?.image?.hasAspectRatio ? Number(item?.image?.aspectRatio?.width) / Number(item?.image?.aspectRatio?.height) : 1 / 1,
               }}
               key={item?._id?.toString()}
               id={item?._id?.toString()}
             />
 
             <View style={styles.subPlaceHolder}>
-              <DIcon
-                provider={'SimpleLineIcons'}
-                name={'lock'}
-                color="#fff"
-                style={{alignSelf: 'center', marginBottom: responsiveWidth(2)}}
-                size={responsiveWidth(8)}
-              />
-              <Text
-                style={[
-                  styles.subscribeMessage,
-                  {fontSize: responsiveFontSize(2)},
-                ]}>{`Unlock Exclusive Content`}</Text>
+              <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" style={{alignSelf: 'center', marginBottom: responsiveWidth(2)}} size={responsiveWidth(8)} />
+              <Text style={[styles.subscribeMessage, {fontSize: responsiveFontSize(2)}]}>{`Unlock Exclusive Content`}</Text>
 
               <TouchableOpacity
                 style={styles.subscribeBox}
@@ -1023,75 +654,13 @@ const PostCards = ({item, index}) => {
                 }>
                 <Text style={[styles.subscribeMessage]}>
                   SUBSCRIBE
-                  <Text style={[styles.subscribeMessage, {color: '#ffa07a'}]}>
-                    {' '}
-                    NOW
-                  </Text>
+                  <Text style={[styles.subscribeMessage, {color: '#ffa07a'}]}> NOW</Text>
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* <View style={{paddingHorizontal: responsiveWidth(5), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(4)}}>
-          <View style={{width: responsiveWidth(70), flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: responsiveWidth(4)}}>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <TouchableOpacity onPress={() => sendLike()}>{doLiked ? <Fill /> : <Heart />}</TouchableOpacity>
-
-              <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
-            </View>
-
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
-                <Comment />
-              </TouchableOpacity>
-
-              <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
-            </View>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <TouchableOpacity style={{width: 20, height: 20}} onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
-                <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1}} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {item?.createdBy?.role !== 'admin' && (
-            <TouchableOpacity onPress={() => handleCoinClicks()}>
-              <Paisa />
-            </TouchableOpacity>
-          )}
-        </View> */}
-        {/* 
-        <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(1)}}>
-          <View style={{width: responsiveWidth(40), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <View
-                style={{
-                  height: responsiveWidth(8),
-                  width: responsiveWidth(8),
-                  borderRadius: responsiveWidth(4),
-                  marginLeft: WIDTH_SIZES['10'],
-                  borderWidth: 1,
-                  borderColor: '#282828',
-                  alignSelf: 'center',
-                  overflow: 'hidden', // ensures image doesn't overflow the circular container
-                }}>
-                <Image
-                  source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}}
-                  style={{
-                    height: '100%',
-                    width: '100%',
-                    resizeMode: 'cover',
-                  }}
-                />
-              </View>
-
-              <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(2), fontFamily: 'Rubik-Regular', color: '#B4B4B4'}]}>
-                Add a Comment
-              </Text>
-            </View>
-          </View>
-        </View> */}
       </View>
     );
   }
@@ -1128,7 +697,7 @@ const styles = StyleSheet.create({
     borderColor: 'blue',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: responsiveWidth(6),
+    gap: responsiveWidth(5.33),
   },
   profileImageContainer: {
     borderColor: '#1e1e1e',
@@ -1136,9 +705,8 @@ const styles = StyleSheet.create({
     width: responsiveWidth(11.2),
     borderRadius: responsiveWidth(10),
     overflow: 'hidden',
-    borderRadius: responsiveWidth(10),
     position: 'relative',
-    // left: responsiveWidth(3.5),
+    left: responsiveWidth(2.5),
     borderWidth: responsiveWidth(0.5),
   },
   profileImage: {
@@ -1192,6 +760,51 @@ const styles = StyleSheet.create({
     color: '#1e1e1e',
     fontSize: responsiveFontSize(1.97),
     fontFamily: 'Rubik-Medium',
+  },
+  paginationBadge: {
+    position: 'absolute',
+    top: responsiveWidth(2.5),
+    right: responsiveWidth(3.5),
+    backgroundColor: 'rgba(30, 30, 30, 0.73)',
+    paddingHorizontal: responsiveWidth(3),
+    paddingVertical: responsiveWidth(1.2),
+    borderRadius: responsiveWidth(3.5),
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: responsiveWidth(10),
+    zIndex: 10,
+  },
+  paginationText: {
+    color: '#FFFFFF',
+    fontFamily: 'Rubik-Medium',
+    fontSize: responsiveFontSize(1.3),
+    textAlign: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 12,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    zIndex: 10,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: '#000000',
+  },
+  activeDot: {
+    width: 16,
+    backgroundColor: '#FFA86B',
+  },
+  inactiveDot: {
+    width: 6,
+    backgroundColor: '#FFFFFF',
   },
   timiming: {
     fontSize: responsiveFontSize(1.23),

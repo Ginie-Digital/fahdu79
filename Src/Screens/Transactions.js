@@ -54,7 +54,7 @@
 //         setDisableUpload(false);
 //       }
 
-//       if (error?.data?.status_code === 401) {
+//       if (error?.data?.status_code === 2044) {
 //         autoLogout();
 //       }
 
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Medium',
   },
 
-    loadingText: {
+  loadingText: {
     color: '#1e1e1e',
     marginTop: 16,
     fontSize: 16,

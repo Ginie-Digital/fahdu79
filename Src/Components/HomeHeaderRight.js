@@ -17,7 +17,9 @@ const HomeHeaderRight = () => {
   const postCardType = useSelector(state => state.hideShow.visibility.postCardType);
 
   const handleHomeBottomSheetOpener = type => {
+    console.log('[BS_DEBUG][HeaderRight] handleHomeBottomSheetOpener called, type =', type);
     if (type === '3Bars') {
+      console.log('[BS_DEBUG][HeaderRight] Dispatching createPostSheet=-1, homeBottomSheet=1');
       dispatch(toggleCreatePostBottomSheet({show: -1}));
       dispatch(toggleHomeBottomSheet({show: 1}));
     }

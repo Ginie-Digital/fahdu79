@@ -142,7 +142,7 @@ const WishListPreviewModal = () => {
         return 0;
       }
 
-      if (e?.error?.data?.status_code === 401) {
+      if (e?.error?.data?.status_code === 2044) {
         autoLogout();
       }
 
@@ -420,11 +420,10 @@ const WishListPreviewModal = () => {
                 <View style={{flexDirection: 'row'}}>
                   <Text style={styles.amountStyle}>
                     {amountTwo
-                      ? (Number(amountTwo) * 1.1).toLocaleString('en-IN', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
+                      ? Math.floor(Number(amountTwo) * 1.1).toLocaleString('en-IN', {
+                          maximumFractionDigits: 0,
                         })
-                      : '0.00'}
+                      : '0'}
                   </Text>
 
                   <Image
@@ -447,11 +446,10 @@ const WishListPreviewModal = () => {
                 <View style={{flexDirection: 'row'}}>
                   <Text style={styles.amountStyle}>
                     {amountTwo
-                      ? ((10 / 100) * Number(amountTwo)).toLocaleString('en-IN', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
+                      ? Math.floor((10 / 100) * Number(amountTwo)).toLocaleString('en-IN', {
+                          maximumFractionDigits: 0,
                         })
-                      : '0.00'}
+                      : '0'}
                   </Text>
 
                   <Image
@@ -474,11 +472,10 @@ const WishListPreviewModal = () => {
                 <View style={{flexDirection: 'row'}}>
                   <Text style={styles.amountStyle}>
                     {amountTwo
-                      ? Number(amountTwo).toLocaleString('en-IN', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
+                      ? Math.floor(Number(amountTwo)).toLocaleString('en-IN', {
+                          maximumFractionDigits: 0,
                         })
-                      : '0.00'}
+                      : '0'}
                   </Text>
                   <Image
                     source={require('../../../Assets/Images/Coins2.png')}

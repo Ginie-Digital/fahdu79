@@ -1,197 +1,274 @@
-import {StyleSheet, Text, View, FlatList, Pressable, Platform, TouchableOpacity, useWindowDimensions} from 'react-native';
-import React, {memo, useCallback, useMemo, useState, useRef, useEffect} from 'react';
-import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
-import RBSheet from 'react-native-raw-bottom-sheet';
-import {useFocusEffect} from '@react-navigation/native';
-import {Image} from 'expo-image';
-import AnimatedButton from '../AnimatedButton';
+import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Platform, ScrollView} from 'react-native';
+import React, {useMemo, useCallback, useRef, useState, useEffect, memo} from 'react';
+import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
+import {BottomSheetBackdrop, BottomSheetModal, BottomSheetView, BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {useDispatch} from 'react-redux';
 import {navigate} from '../../../Navigation/RootNavigation';
-import {ChatWindowError} from '../ErrorSnacks';
-import { WIDTH_SIZES } from '../../../DesiginData/Utility';
+import Tik from '../../../Assets/svg/tiklive.svg';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  withRepeat,
+  runOnJS,
+} from 'react-native-reanimated';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+
+const EligibilityItem = memo(({icon, title, description}) => (
+  <View style={styles.termItemRow}>
+    <View style={styles.iconContainer}>
+      <Ionicons name={icon} size={20} color="#FFA86B" />
+    </View>
+    <View style={{flex: 1}}>
+      <Text style={styles.termTitle}>{title}</Text>
+      <Text style={styles.termDescription}>{description}</Text>
+    </View>
+  </View>
+));
 
 const VerificationInformation = ({agreeModal, setAgreeModal}) => {
-  const {height} = useWindowDimensions();
-  const [showError, setShowError] = useState(false);
-  const refRBSheet = useRef();
-  const [contentHeight, setContentHeight] = useState(0);
+  const insets = useSafeAreaInsets();
+  const [isChecked, setIsChecked] = useState(false);
+  const [isItalicState, setIsItalicState] = useState(false);
+
+  const bottomSheetModalRef = useRef(null);
+  const isAgreedRef = useRef(false);
+  const dispatch = useDispatch();
+
+  // Animation Values
+  const shakeOffset = useSharedValue(0);
+  const buttonScale = useSharedValue(1);
+  const buttonOpacity = useSharedValue(1);
+
+  const triggerShake = useCallback(() => {
+    setIsItalicState(true);
+    buttonOpacity.value = withSequence(withTiming(0.6, {duration: 150}), withTiming(1, {duration: 150}));
+    shakeOffset.value = withSequence(
+      withTiming(-10, {duration: 50}),
+      withRepeat(withTiming(10, {duration: 50}), 5, true),
+      withTiming(0, {duration: 50}, (finished) => {
+        if (finished) runOnJS(setIsItalicState)(false);
+      })
+    );
+  }, [buttonOpacity, shakeOffset]);
+
+  const handleButtonPress = useCallback(() => {
+    const hapticOptions = {enableVibrateFallback: true, ignoreAndroidSystemSettings: false};
+
+    if (isChecked) {
+      isAgreedRef.current = true;
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+      setAgreeModal(false);
+    } else {
+      ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
+      triggerShake();
+    }
+  }, [isChecked, setAgreeModal, triggerShake]);
+
+  const animatedTextStyle = useAnimatedStyle(() => ({
+    transform: [{translateX: shakeOffset.value}],
+    fontStyle: isItalicState ? 'italic' : 'normal',
+  }));
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{scale: buttonScale.value}],
+    opacity: buttonOpacity.value,
+  }));
+
+  const handlePresentModalPress = useCallback(() => {
+    requestAnimationFrame(() => bottomSheetModalRef.current?.present());
+  }, []);
+
+  const onBackPress = useCallback(() => {
+    if (bottomSheetModalRef.current) {
+        // We don't want them to close this modal via back button if it's mandatory
+        // But if we want to allow it, we can navigate home
+        navigate('home');
+        return true;
+    }
+    return false;
+  }, []);
+
+  const backHandlerRef = useRef(null);
 
   useEffect(() => {
     if (agreeModal) {
-      refRBSheet.current.open();
+      isAgreedRef.current = false;
+      setIsChecked(false);
+      handlePresentModalPress();
+      backHandlerRef.current = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     } else {
-      refRBSheet.current.close();
+      bottomSheetModalRef.current?.dismiss();
+      backHandlerRef.current?.remove();
+      backHandlerRef.current = null;
     }
-  }, [agreeModal]);
+    return () => {
+      backHandlerRef.current?.remove();
+      backHandlerRef.current = null;
+    };
+  }, [agreeModal, handlePresentModalPress, onBackPress]);
 
-  const [checked, setChecked] = useState(false);
+  const renderBackdrop = useCallback(props => (
+    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+  ), []);
 
-  const handleIAgree = () => {
-    if (!checked) {
-      setShowError(true);
-    } else {
-      setShowError(false);
-      setAgreeModal(false);
-    }
-  };
-
-  const InformationText = ({item, index}) => {
-    return (
-      <View style={{flexDirection: 'row'}}>
-        <Text style={styles.modalInfoText}>{index + 1 + '. '}</Text>
-        <Text style={styles.modalInfoText}>{item}</Text>
-      </View>
-    );
-  };
-
-  const onContentLayout = (event) => {
-    const { height } = event.nativeEvent.layout;
-    setContentHeight(height);
-  };
+  const snapPoints = useMemo(() => ['60%'], []);
 
   return (
-    <RBSheet
-      ref={refRBSheet}
-      useNativeDriver={true}
-      customStyles={{
-        wrapper: {
-          backgroundColor: '#00000090',
-        },
-        container: {
-          height: contentHeight + WIDTH_SIZES[84], // Add some padding or additional height if needed
-          backgroundColor: '#fff',
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          padding: 2,
-        },
-      }}
-      closeOnPressBack={false}
-      closeOnPressMask={false}
-      customModalProps={{
-        animationType: 'slide',
-        statusBarTranslucent: true,
-      }}
-      draggable={false}
-      customAvoidingViewProps={{
-        enabled: false,
+    <BottomSheetModal
+      ref={bottomSheetModalRef}
+      index={agreeModal ? 0 : -1}
+      snapPoints={snapPoints}
+      enablePanDownToClose={false} // Eligibility is usually mandatory to acknowledge
+      enableContentPanningGesture={false} // Prevents sheet from dragging via content, allowing scroll view to work
+      enableDynamicSizing={false}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={styles.modalBackground}
+      handleIndicatorStyle={styles.indicator}
+      onDismiss={() => {
+        if (!isAgreedRef.current) {
+          navigate('home');
+        }
+        setAgreeModal(false);
       }}>
-      <View style={{borderRadius: responsiveWidth(2), paddingTop: responsiveWidth(8), paddingHorizontal: responsiveWidth(6)}} onLayout={onContentLayout}>
-        <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: responsiveWidth(4)}}>
-          <Text style={[{fontFamily: 'Rubik-Bold', fontSize: 21, alignSelf: 'flex-start', color: '#1E1E1E'}]}>Eligibility</Text>
+      
+      <BottomSheetView style={{flex: 1}}>
+        {/* FIXED HEADER */}
+        <View style={styles.headerContainer}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
+            <Text style={styles.headerText}>Eligibility</Text>
+            <TouchableOpacity onPress={() => navigate('home')} style={styles.closeIcon}>
+              <Ionicons name="close" size={24} color="#1e1e1e" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.subHeaderText}>Please ensure you meet the following criteria to apply for verification:</Text>
+        </View>
 
-          <Pressable style={styles.iconContainer} onPress={() => navigate('home')}>
-            <Image source={require('../../../Assets/Images/Crosss.png')} contentFit="contain" style={{flex: 1}} />
+        {/* SCROLLABLE CONTENT */}
+        <BottomSheetScrollView 
+           style={{flex: 1}} 
+           contentContainerStyle={styles.scrollContent} 
+           showsVerticalScrollIndicator={true}
+        >
+          <EligibilityItem icon="stats-chart-outline" title="Follower Count" description="You should have a minimum of 5K followers on Instagram." />
+          <EligibilityItem icon="globe-outline" title="Public Profile" description="Your Instagram account should be public." />
+          <EligibilityItem icon="shield-checkmark-outline" title="Authenticity" description="Your Instagram account should not be a 'Fan Page' or 'Meme Page'." />
+        </BottomSheetScrollView>
+
+        {/* PINNED FOOTER */}
+        <View style={[styles.footer, {paddingBottom: insets.bottom + 16}]}>
+          <View style={styles.checkboxWrapper}>
+            <TouchableOpacity 
+              activeOpacity={0.7}
+              style={[styles.checkbox, isChecked && styles.checkedCheckbox]} 
+              onPress={() => setIsChecked(!isChecked)}>
+              {isChecked && <Tik />}
+            </TouchableOpacity>
+            <Animated.Text onPress={() => setIsChecked(!isChecked)} style={[styles.acceptAllText, animatedTextStyle]}>
+              Accept All.
+            </Animated.Text>
+          </View>
+
+          <Pressable 
+            onPress={handleButtonPress}
+            onPressIn={() => (buttonScale.value = withTiming(0.95))}
+            onPressOut={() => (buttonScale.value = withTiming(1))}
+            style={styles.doneButton}>
+            <Animated.View style={[styles.buttonContent, animatedButtonStyle]}>
+              <Text style={styles.doneText}>I Agree</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{marginLeft: 6}} />
+            </Animated.View>
           </Pressable>
         </View>
-
-        <View style={{alignItems: 'center'}}>
-          <FlatList
-            data={['You should have minimum of 5K followers on Instagram.', 'Your Instagram account should be public.', 'Your Instagram account should not be a\n“Fan Page” or “Meme Page”.']}
-            renderItem={({item, index}) => <InformationText item={item} index={index} />}
-            scrollEnabled={false}
-            contentContainerStyle={{padding: 2}}
-            ItemSeparatorComponent={() => <View style={{marginVertical: 6}} />}
-          />
-
-          <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginVertical: responsiveWidth(4)}} onPress={() => setChecked(!checked)} activeOpacity={0.8}>
-            {/* Custom Checkbox */}
-            <View
-              style={{
-                borderColor: '#1e1e1e',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 8,
-              }}>
-              {checked ? (
-                <Pressable style={[{height: 18, width: 18}]} onPress={() => setChecked(prev => !prev)}>
-                  <Image source={require('../../../Assets/Images/check.png')} contentFit="contain" style={{flex: 1}} />
-                </Pressable>
-              ) : (
-                <Pressable style={[{height: 18, width: 18}]} onPress={() => setChecked(prev => !prev)}>
-                  <Image source={require('../../../Assets/Images/uncheck.png')} contentFit="contain" style={{flex: 1}} />
-                </Pressable>
-              )}
-            </View>
-
-            <Text
-              style={{
-                fontFamily: 'Rubik-SemiBold',
-                color: '#1e1e1e',
-                fontSize: responsiveFontSize(1.9),
-                fontWeight: 'bold',
-              }}>
-              Accept All.
-            </Text>
-
-            {showError && !checked && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>*Please accept to proceed</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <View style={{width: responsiveWidth(87.5)}}>
-            <AnimatedButton title={'I Agree'} showOverlay={true} buttonMargin={0} onPress={handleIAgree} />
-          </View>
-        </View>
-      </View>
-    </RBSheet>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 };
 
-export default memo(VerificationInformation);
-
 const styles = StyleSheet.create({
-  modalInnerWrapper: {
-    // height: responsiveWidth(50),
-    width: responsiveWidth(80),
-    backgroundColor: '#fff',
-    alignSelf: 'center',
-    marginLeft: responsiveWidth(2),
-    marginTop: responsiveHeight(35),
-    borderRadius: responsiveWidth(10),
-    borderWidth: 1,
-    borderColor: '#282828',
-    paddingVertical: responsiveWidth(2),
+  modalBackground: {backgroundColor: '#fffef9'},
+  indicator: {backgroundColor: '#1e1e1e', width: 40},
+  headerContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-
-  eachSortByModalListText: {
-    fontSize: responsiveFontSize(2),
-    color: '#282828',
-
-    fontFamily: 'MabryPro-Bold',
+  scrollContent: {
+    paddingHorizontal: 24, 
+    paddingTop: 16, 
+    paddingBottom: 20,
+    flexGrow: 1, // Ensures scroll view stretches on Android
   },
-  eachSortModalList: {
-    flexDirection: 'row',
-    gap: responsiveWidth(5),
-    alignItems: 'center',
-    marginVertical: responsiveWidth(3),
-  },
-
-  dialog: {
-    borderWidth: responsiveWidth(0.5),
-    top: responsiveWidth(50),
-  },
-  iconContainer: {
-    // marginRight: responsiveWidth(4),
-    height: 12,
-    width: 12,
-  },
-  modalInfoText: {
-    fontFamily: 'Rubik-Regular',
-    lineHeight: 18,
+  headerText: {
+    fontFamily: 'Rubik-Bold',
+    fontSize: responsiveFontSize(2.6),
     color: '#1e1e1e',
-    fontSize: responsiveFontSize(1.9),
   },
-  errorContainer: {
+  closeIcon: {
+    padding: 4,
+  },
+  subHeaderText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#555',
+    fontSize: responsiveFontSize(1.7),
+    lineHeight: responsiveFontSize(2.4),
+    marginBottom: 10,
+  },
+  termItemRow: { flexDirection: 'row', marginTop: 22, alignItems: 'flex-start' },
+  iconContainer: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  termTitle: { color: '#1e1e1e', fontFamily: 'Rubik-Bold', fontSize: responsiveFontSize(1.9), marginBottom: 4 },
+  termDescription: { color: '#666', fontFamily: 'Rubik-Medium', fontSize: responsiveFontSize(1.6), lineHeight: responsiveFontSize(2.2) },
+  
+  footer: {
     flexDirection: 'row',
-    borderRadius: responsiveWidth(2),
-    marginLeft: 90,
-    alignSelf: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    backgroundColor: '#fffef9',
   },
-  errorText: {
-    fontFamily: 'Rubik-Regular',
-    fontSize: responsiveFontSize(1.48),
-    color: 'red',
-    flexShrink: 1,
+  checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1.5,
+    borderRadius: 5,
+    borderColor: '#1e1e1e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkedCheckbox: { backgroundColor: '#FFA86B', borderColor: '#FFA86B' },
+  acceptAllText: {
+    color: '#1e1e1e',
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: responsiveFontSize(1.7),
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  doneButton: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 100,
+    paddingHorizontal: 16,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 100,
+  },
+  buttonContent: { flexDirection: 'row', alignItems: 'center' },
+  doneText: {
+    fontFamily: 'Rubik-SemiBold',
+    color: '#FFFFFF',
+    fontSize: responsiveFontSize(1.6),
+    includeFontPadding: false,
   },
 });
+
+export default memo(VerificationInformation);

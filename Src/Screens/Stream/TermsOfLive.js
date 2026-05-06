@@ -1,317 +1,248 @@
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Text,
-  Image,
-  Pressable,
-  BackHandler,
-  Platform,
-  useWindowDimensions,
-} from 'react-native';
-import React, {
-  useMemo,
-  useCallback,
-  useRef,
-  useState,
-  useEffect,
-  memo,
-} from 'react';
-import {
-  responsiveWidth,
-  responsiveFontSize,
-} from 'react-native-responsive-dimensions';
-import {BottomSheetBackdrop, BottomSheetModal} from '@gorhom/bottom-sheet';
+import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Platform} from 'react-native';
+import React, {useMemo, useCallback, useRef, useState, useEffect, memo} from 'react';
+import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
+import {BottomSheetBackdrop, BottomSheetModal, BottomSheetView, BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleHideShowLiveTerms} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {
-  useFocusEffect,
-  useNavigation,
-  useNavigationState,
-} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Tik from '../../../Assets/svg/tiklive.svg';
-import Kanta from '../../../Assets/svg/kant.svg';
-import AnimatedButton from '../../Components/AnimatedButton';
-import {LoginPageErrors} from '../../Components/ErrorSnacks';
-import {SafeAreaView} from 'react-native-safe-area-context'; // Import SafeAreaView
-import {WIDTH_SIZES} from '../../../DesiginData/Utility';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  withRepeat,
+  runOnJS,
+} from 'react-native-reanimated';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+
+const TermItem = memo(({icon, title, description}) => (
+  <View style={styles.termItemRow}>
+    <View style={styles.iconContainer}>
+      <Ionicons name={icon} size={20} color="#FFA86B" />
+    </View>
+    <View style={{flex: 1}}>
+      <Text style={styles.termTitle}>{title}</Text>
+      <Text style={styles.termDescription}>{description}</Text>
+    </View>
+  </View>
+));
 
 const TermsOfLive = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [isChecked, setIsChecked] = useState(false);
-  const [contentHeight, setContentHeight] = useState(0);
+  const [isItalicState, setIsItalicState] = useState(false);
 
-  const screenName = useNavigationState(
-    state => state.routes[state.index].name,
-  );
   const bottomSheetModalRef = useRef(null);
-  const liveTermsHideShow = useSelector(
-    state => state.hideShow.visibility.hideShowLiveTerms,
-  );
+  const liveTermsHideShow = useSelector(state => state.hideShow.visibility.hideShowLiveTerms);
   const dispatch = useDispatch();
-  const {height} = useWindowDimensions();
 
-  const snapPoints = useMemo(() => ['62%', '65%', '65%'], []);
+  // Animation Values
+  const shakeOffset = useSharedValue(0);
+  const buttonScale = useSharedValue(1);
+  const buttonOpacity = useSharedValue(1);
 
-  const handleSheetChanges = useCallback(index => {
-    if (index === -1) {
-      dispatch(toggleHideShowLiveTerms({show: -1}));
-    }
+  const triggerShake = useCallback(() => {
+    setIsItalicState(true);
+    buttonOpacity.value = withSequence(withTiming(0.6, {duration: 150}), withTiming(1, {duration: 150}));
+    shakeOffset.value = withSequence(
+      withTiming(-10, {duration: 50}),
+      withRepeat(withTiming(10, {duration: 50}), 5, true),
+      withTiming(0, {duration: 50}, (finished) => {
+        if (finished) runOnJS(setIsItalicState)(false);
+      })
+    );
   }, []);
+
+  const handleButtonPress = useCallback(() => {
+    const hapticOptions = {enableVibrateFallback: true, ignoreAndroidSystemSettings: false};
+
+    if (isChecked) {
+      ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+      dispatch(toggleHideShowLiveTerms({show: -1}));
+      setTimeout(() => navigation.navigate('beforeStreamScreen'), 500);
+    } else {
+      ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
+      triggerShake();
+    }
+  }, [isChecked, dispatch, navigation, triggerShake]);
+
+  const animatedTextStyle = useAnimatedStyle(() => ({
+    transform: [{translateX: shakeOffset.value}],
+    fontStyle: isItalicState ? 'italic' : 'normal',
+  }));
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{scale: buttonScale.value}],
+    opacity: buttonOpacity.value,
+  }));
 
   const handlePresentModalPress = useCallback(() => {
-    bottomSheetModalRef.current?.present();
+    requestAnimationFrame(() => bottomSheetModalRef.current?.present());
   }, []);
 
-  const onBackPress = () => {
+  const onBackPress = useCallback(() => {
     if (bottomSheetModalRef.current) {
       bottomSheetModalRef.current?.close();
       return true;
     }
-  };
+    return false;
+  }, []);
 
-  const handleButtonPress = () => {
-    if (isChecked) {
-      dispatch(toggleHideShowLiveTerms({show: -1}));
-
-      // Add delay before navigating (e.g., 1 second)
-      setTimeout(() => {
-        navigation.navigate('beforeStreamScreen');
-      }, 1000); // 1000ms = 1s delay
-    } else {
-      LoginPageErrors('Kindly accept the terms');
-    }
-  };
-
-  useEffect(() => {
-    setIsChecked(false);
-    if (bottomSheetModalRef.current && liveTermsHideShow === -1) {
-      bottomSheetModalRef.current.close();
-    } else {
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        onBackPress,
-      );
-
-      return () => {
-        backHandler.remove();
-      };
-    }
-  }, [liveTermsHideShow]);
-
-  const renderBackdrop = useCallback(
-    props => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={1}
-      />
-    ),
-    [],
-  );
+  const backHandlerRef = useRef(null);
 
   useEffect(() => {
     if (liveTermsHideShow === 1) {
+      setIsChecked(false);
       handlePresentModalPress();
+      backHandlerRef.current = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    } else {
+      bottomSheetModalRef.current?.dismiss();
+      backHandlerRef.current?.remove();
+      backHandlerRef.current = null;
     }
-  }, [liveTermsHideShow]);
+    return () => {
+      backHandlerRef.current?.remove();
+      backHandlerRef.current = null;
+    };
+  }, [liveTermsHideShow, handlePresentModalPress, onBackPress]);
 
-  const onContentLayout = event => {
-    const {height} = event.nativeEvent.layout;
-    setContentHeight(height);
-  };
+  const renderBackdrop = useCallback(props => (
+    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
+  ), []);
 
-  const TermItem = ({index, title, description}) => (
-    <View
-      style={{
-        flexDirection: 'row',
-        marginTop:
-          Platform.OS === 'ios' ? responsiveWidth(4) : responsiveWidth(2),
-      }}>
-      <Text
-        style={{
-          color: '#1e1e1e',
-          fontFamily: 'Rubik-SemiBold',
-          fontSize: responsiveWidth(3.4),
-        }}>
-        {index}.{' '}
-      </Text>
-      <Text
-        style={{
-          color: '#1e1e1e',
-          fontFamily: 'Rubik-Regular',
-          fontSize: responsiveWidth(3.4),
-        }}>
-        <Text
-          style={{
-            color: '#1e1e1e',
-            fontFamily: 'Rubik-SemiBold',
-            fontSize: responsiveWidth(3.4),
-          }}>
-          {title}:{' '}
-        </Text>
-        {description}
-      </Text>
-    </View>
-  );
+  // Snap points are safer than dynamic sizing for content that might scroll
+  const snapPoints = useMemo(() => ['65%'], []);
 
-  if (liveTermsHideShow === 1) {
-    return (
-      <BottomSheetModal
-        keyboardBehavior="interactive"
-        backdropComponent={renderBackdrop}
-        ref={bottomSheetModalRef}
-        index={liveTermsHideShow}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={true}
-        backgroundStyle={{backgroundColor: '#fffef9'}}
-        style={{
-          borderWidth: responsiveWidth(0.7),
-          borderRadius: responsiveWidth(4.7),
-        }}>
-        <SafeAreaView edges={['bottom']} style={{flex: 1}}>
-          <View
-            style={[
-              styles.contentContainer,
-              {height: contentHeight + WIDTH_SIZES[136]},
-            ]}
-            onLayout={onContentLayout}>
-            <View
-              style={{
-                flexDirection: 'row',
-                width: responsiveWidth(85),
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
-              <Text style={styles.text}>Start Livestream</Text>
-              <TouchableOpacity
-                onPress={() => bottomSheetModalRef.current?.close()}>
-                <Kanta />
-              </TouchableOpacity>
-            </View>
+  return (
+    <BottomSheetModal
+      ref={bottomSheetModalRef}
+      index={liveTermsHideShow === 1 ? 0 : -1}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      enableDynamicSizing={false}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={styles.modalBackground}
+      handleIndicatorStyle={styles.indicator}
+      onDismiss={() => dispatch(toggleHideShowLiveTerms({show: -1}))}>
+      
+      {/* Container must have flex: 1 to show children */}
+      <BottomSheetView style={{ flex: 1 }}>
+        
+        {/* ScrollView must have flex: 1 to occupy space above footer */}
+        <BottomSheetScrollView 
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+        >
+          <Text style={styles.headerText}>Go Live Guidelines</Text>
+          <Text style={styles.subHeaderText}>Keep our community safe by following these simple rules:</Text>
 
-            <Text
-              style={[
-                styles.heading,
-                {
-                  marginTop:
-                    Platform.OS === 'ios'
-                      ? responsiveWidth(4)
-                      : responsiveWidth(2),
-                },
-              ]}>
-              Before you begin your broadcast, we want to remind you of our
-              Terms of Service.
-            </Text>
+          <TermItem icon="heart" title="Respect Others" description="Do not engage in hate speech, nudity, bullying, or harassment of any kind." />
+          <TermItem icon="shield-checkmark" title="Be Authentic" description="Do not misrepresent yourself or your content." />
+          <TermItem icon="document-text" title="Respect Intellectual Property" description="Do not use copyrighted material without permission." />
+        </BottomSheetScrollView>
 
-            <Text
-              style={[
-                styles.headingTwo,
-                {
-                  marginTop:
-                    Platform.OS === 'ios'
-                      ? responsiveWidth(2)
-                      : responsiveWidth(3),
-                  lineHeight: 20,
-                },
-              ]}>
-              These guidelines ensure that all users can enjoy the app in a safe
-              and respectful environment.
-            </Text>
-
-            <TermItem
-              index={1}
-              title="Respect Others"
-              description="Do not engage in hate speech, nudity, bullying, or harassment of any kind."
-            />
-            <TermItem
-              index={2}
-              title="Be Authentic"
-              description="Do not misrepresent yourself or your content."
-            />
-            <TermItem
-              index={3}
-              title="Respect Intellectual Property"
-              description="Do not use copyrighted material without permission."
-            />
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: responsiveWidth(4),
-              }}>
-              {/* <Checkbox checked={isChecked} onPress={() => console.log('h')} /> */}
-
-              <TouchableOpacity
-                style={[styles.checkbox, isChecked && styles.checkedCheckbox]}
-                onPress={() => setIsChecked(!isChecked)}>
-                {isChecked && <Tik />}
-              </TouchableOpacity>
-
-              <Text
-                onPress={() => setIsChecked(!isChecked)}
-                style={{
-                  color: '#1e1e1e',
-                  fontFamily: 'Rubik-SemiBold',
-                  top: responsiveWidth(1),
-                  fontSize: responsiveWidth(3.4),
-                }}>
-                Accept All.
-              </Text>
-            </View>
-
-            <AnimatedButton title={'I Agree'} onPress={handleButtonPress} />
+        {/* PINNED FOOTER */}
+        <View style={[styles.footer, {paddingBottom: insets.bottom + 16}]}>
+          <View style={styles.checkboxWrapper}>
+            <TouchableOpacity 
+              activeOpacity={0.7}
+              style={[styles.checkbox, isChecked && styles.checkedCheckbox]} 
+              onPress={() => setIsChecked(!isChecked)}>
+              {isChecked && <Tik />}
+            </TouchableOpacity>
+            <Animated.Text onPress={() => setIsChecked(!isChecked)} style={[styles.acceptAllText, animatedTextStyle]}>
+              Accept All.
+            </Animated.Text>
           </View>
-        </SafeAreaView>
-      </BottomSheetModal>
-    );
-  }
+
+          <Pressable 
+            onPress={handleButtonPress}
+            onPressIn={() => (buttonScale.value = withTiming(0.95))}
+            onPressOut={() => (buttonScale.value = withTiming(1))}
+            style={styles.doneButton}>
+            <Animated.View style={[styles.buttonContent, animatedButtonStyle]}>
+              <Text style={styles.doneText}>I Agree</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{marginLeft: 6}} />
+            </Animated.View>
+          </Pressable>
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
 };
 
-export default memo(TermsOfLive);
-
 const styles = StyleSheet.create({
-  contentContainer: {
-    backgroundColor: '#fffef9',
-    paddingHorizontal: responsiveWidth(4),
-    paddingBottom: responsiveWidth(4),
-    marginBottom: responsiveWidth(6),
-    marginTop: Platform.OS === 'ios' ? responsiveWidth(4) : null,
-  },
-  text: {
+  modalBackground: { backgroundColor: '#fffef9' },
+  indicator: { backgroundColor: '#1e1e1e', width: 40 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20 },
+  headerText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.5),
     color: '#1e1e1e',
+    marginBottom: 8,
   },
+  subHeaderText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#282828',
+    fontSize: responsiveFontSize(1.7),
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  termItemRow: { flexDirection: 'row', marginTop: 20, alignItems: 'flex-start' },
+  iconContainer: { width: 28, height: 28, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  termTitle: { color: '#1e1e1e', fontFamily: 'Rubik-SemiBold', fontSize: responsiveWidth(3.8), marginBottom: 2 },
+  termDescription: { color: '#555', fontFamily: 'Rubik-Regular', fontSize: responsiveWidth(3.4), lineHeight: 20 },
+  
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    backgroundColor: '#fffef9',
+  },
+  checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
-    width: 17,
-    height: 17,
+    width: 20,
+    height: 20,
     borderWidth: 1.5,
-    borderRadius: responsiveWidth(1.1),
+    borderRadius: 5,
     borderColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
-    marginTop: responsiveWidth(2),
   },
-  checkedCheckbox: {
-    backgroundColor: '#FFA86B',
-    height: 17,
-    width: 17,
-  },
-  heading: {
+  checkedCheckbox: { backgroundColor: '#FFA86B', borderColor: '#FFA86B' },
+  acceptAllText: {
+    color: '#1e1e1e',
     fontFamily: 'Rubik-SemiBold',
-    color: '#282828',
-    fontSize: responsiveFontSize(1.8),
-    textAlign: 'left',
-  },
-  headingTwo: {
-    fontFamily: 'Rubik-Medium',
-    color: '#282828',
     fontSize: responsiveFontSize(1.7),
-    textAlign: 'left',
-    marginTop: responsiveWidth(2),
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  doneButton: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 100,
+    paddingHorizontal: 16,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 100,
+  },
+  buttonContent: { flexDirection: 'row', alignItems: 'center' },
+  doneText: {
+    fontFamily: 'Rubik-SemiBold',
+    color: '#FFFFFF',
+    fontSize: responsiveFontSize(1.6),
+    includeFontPadding: false,
   },
 });
+
+export default memo(TermsOfLive);

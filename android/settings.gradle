@@ -13,17 +13,6 @@ id("expo-autolinking-settings")
 }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand(expoAutolinking.rnConfigCommand) }
 
-dependencyResolutionManagement {
-  repositories {
-    google()
-    mavenCentral()
-    
-    // For ffmpeg-kit-react-native AAR files
-    flatDir {
-      dirs new File(rootDir, "../node_modules/ffmpeg-kit-react-native/android/libs")
-    }
-  }
-}
 
 
 rootProject.name = 'Fahdu'

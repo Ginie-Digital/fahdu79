@@ -12,7 +12,7 @@ import {TextInput} from 'react-native-gesture-handler';
 import {toggleAppliedVerify, toggleBankDetailsModal, toggleTransferModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useSaveBankDetailsMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
-import {LoginPageErrors} from '../../Components/ErrorSnacks';
+import {CommonSuccess, LoginPageErrors} from '../../Components/ErrorSnacks';
 
 const MoneyTransferModal = ({visible, formDetails}) => {
   console.log(formDetails, '::::{{}{}{}');
@@ -45,6 +45,12 @@ const MoneyTransferModal = ({visible, formDetails}) => {
         confirmAccountNo: formDetails.accountNumber,
         IFSC: formDetails.ifscCode,
         PAN: formDetails.pan,
+        email: formDetails.email,
+        phone: formDetails.phone,
+        address: formDetails.address,
+        city: formDetails.city,
+        state: formDetails.state,
+        pincode: formDetails.postalCode,
       },
     })
       .then(e => {
@@ -58,10 +64,9 @@ const MoneyTransferModal = ({visible, formDetails}) => {
 
         dispatch(toggleTransferModal({show: false}));
 
-        setTimeout(() => {
-          dispatch(toggleAppliedVerify({show: true}));
-        }, 500)
-        
+        CommonSuccess('Bank Details Saved Successfully!');
+
+        navigate('home');
       })
       .catch(e => {
         console.log('Error while submitting form', e);

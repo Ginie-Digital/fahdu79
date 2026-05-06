@@ -16,8 +16,11 @@ const AnimatedButton = ({
   disabled = false,
   highlightOnPress = false, // true/false to enable overlay
   highlightColor = 'rgba(255,165,0,0.2)', // overlay color
+  testID, // Added for automation testing
+  disabledStyle,
+  textStyle,
+  disableAnimation = false,
 }) => {
-  const shadowOpacity = useSharedValue(0.3);
   const translateY = useSharedValue(2);
   const translateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
@@ -33,10 +36,11 @@ const AnimatedButton = ({
   }));
 
   const handlePressIn = () => {
-    if (!loading) {
-      shadowOpacity.value = withSpring(0, {damping: 10, stiffness: 100});
-      translateY.value = withSpring(7);
-      translateX.value = withSpring(3.5);
+    if (!loading && !disabled) {
+      if (!disableAnimation) {
+        translateY.value = withSpring(7);
+        translateX.value = withSpring(3.5);
+      }
       setShowWhite(true);
 
       if (highlightOnPress) overlayOpacity.value = withTiming(1, {duration: 150});
@@ -44,10 +48,11 @@ const AnimatedButton = ({
   };
 
   const handlePressOut = () => {
-    if (!loading) {
-      shadowOpacity.value = withSpring(0.6, {damping: 10, stiffness: 100});
-      translateY.value = withSpring(2);
-      translateX.value = withSpring(0);
+    if (!loading && !disabled) {
+      if (!disableAnimation) {
+        translateY.value = withSpring(2);
+        translateX.value = withSpring(0);
+      }
       onPress && onPress();
       setShowWhite(false);
 
@@ -56,16 +61,16 @@ const AnimatedButton = ({
   };
 
   return (
-    <Pressable style={{marginTop: responsiveWidth(buttonMargin)}} onPressIn={handlePressIn} onPressOut={handlePressOut} disabled={loading || disabled}>
+    <Pressable testID={testID} style={{marginTop: responsiveWidth(buttonMargin)}} onPressIn={handlePressIn} onPressOut={handlePressOut} disabled={loading || disabled}>
       {showOverlay && !disabled && <View style={[styles.overlayButton, overlayStyle]} />}
 
       <Animated.View style={[styles.buttonContainer, animatedTransform]}>
-        <Animated.View style={[styles.button, style, disabled && {backgroundColor: '#CBCBCB'}, !showOverlay && showWhite && {backgroundColor: '#fff'}]}>
+        <View style={[styles.button, style, disabled && (disabledStyle || {backgroundColor: '#CBCBCB'}), !showOverlay && showWhite && {backgroundColor: '#fff'}]}>
           {/* Highlight overlay */}
           {highlightOnPress && <Animated.View style={[styles.highlightOverlay, {backgroundColor: highlightColor}, animatedOverlayStyle]} />}
 
-          <SmoothLoader loading={loading} title={title} />
-        </Animated.View>
+          <SmoothLoader loading={loading} title={title} textStyle={textStyle} />
+        </View>
       </Animated.View>
     </Pressable>
   );

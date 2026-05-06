@@ -1,23 +1,7 @@
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Text,
-  Image,
-  Pressable,
-  BackHandler,
-  ActivityIndicator,
-  Keyboard,
-} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Text, Image, Pressable, BackHandler, ActivityIndicator, Keyboard} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {
-  responsiveWidth,
-  responsiveFontSize,
-} from 'react-native-responsive-dimensions';
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
+import BottomSheet, {BottomSheetBackdrop, BottomSheetTextInput} from '@gorhom/bottom-sheet';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleWishListSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import DIcon from '../../../DesiginData/DIcons';
@@ -31,9 +15,7 @@ import {useWishListDonationMutation} from '../../../Redux/Slices/QuerySlices/cha
 const StarBottomSheet = ({donateData}) => {
   const bottomSheetRef = useRef(null);
 
-  const wishListBottomSheetVisibility = useSelector(
-    state => state.hideShow.visibility.wishListSheet,
-  );
+  const wishListBottomSheetVisibility = useSelector(state => state.hideShow.visibility.wishListSheet);
 
   const dispatch = useDispatch();
 
@@ -57,23 +39,15 @@ const StarBottomSheet = ({donateData}) => {
   };
 
   useEffect(() => {
-    // Safety check in case ref isn't ready yet
-    if (!bottomSheetRef.current) return;
-
     if (wishListBottomSheetVisibility === -1) {
-      // Close the sheet when hidden
       bottomSheetRef.current.close();
-      return; // stop here (don’t attach a listener)
+    } else {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => {
+        subscription.remove();
+      };
     }
-
-    // Add back button handler only when sheet is open
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      onBackPress,
-    );
-
-    // Cleanup listener when visibility changes or component unmounts
-    return () => backHandler.remove();
   }, [wishListBottomSheetVisibility]);
 
   const token = useSelector(state => state.auth.user.token);
@@ -84,16 +58,7 @@ const StarBottomSheet = ({donateData}) => {
     }
   };
 
-  const renderBackdrop = useCallback(
-    props => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={1}
-      />
-    ),
-    [],
-  );
+  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
 
   const [wishListDonation] = useWishListDonationMutation();
 
@@ -108,14 +73,11 @@ const StarBottomSheet = ({donateData}) => {
 
         setLoading(true);
 
-        wishListDonation({
-          token,
-          data: {wishlistItem: donateData?._id, amount},
-        }).then(e => {
+        wishListDonation({token, data: {wishlistItem: donateData?._id, amount}}).then(e => {
           if (e?.error?.status === 'FETCH_ERROR') {
             LoginPageErrors('Please check your network');
           } else {
-            if (e?.error?.data?.status_code === 401) {
+            if (e?.error?.data?.status_code === 2044) {
               setLoading(false);
               autoLogout();
               bottomSheetRef.current.close();
@@ -145,30 +107,14 @@ const StarBottomSheet = ({donateData}) => {
 
   if (Object.keys(donateData)?.length > 0) {
     return (
-      <BottomSheet
-        backdropComponent={renderBackdrop}
-        ref={bottomSheetRef}
-        index={wishListBottomSheetVisibility}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={true}
-        backgroundStyle={{backgroundColor: '#fffef9'}}>
+      <BottomSheet backdropComponent={renderBackdrop} ref={bottomSheetRef} index={wishListBottomSheetVisibility} snapPoints={snapPoints} onChange={handleSheetChanges} enablePanDownToClose={true} backgroundStyle={{backgroundColor: '#fffef9'}}>
         <View style={styles.contentContainer}>
           <Text style={styles.title}>Rate User</Text>
         </View>
       </BottomSheet>
     );
   } else {
-    return (
-      <BottomSheet
-        backdropComponent={renderBackdrop}
-        ref={bottomSheetRef}
-        index={wishListBottomSheetVisibility}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={true}
-        backgroundStyle={{backgroundColor: '#fffef9'}}></BottomSheet>
-    );
+    return <BottomSheet backdropComponent={renderBackdrop} ref={bottomSheetRef} index={wishListBottomSheetVisibility} snapPoints={snapPoints} onChange={handleSheetChanges} enablePanDownToClose={true} backgroundStyle={{backgroundColor: '#fffef9'}}></BottomSheet>;
   }
 };
 

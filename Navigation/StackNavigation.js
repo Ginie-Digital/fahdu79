@@ -1,8 +1,8 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 const Stack = createNativeStackNavigator();
 
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 import ChatWindow from '../Src/Screens/ChatWindow';
 import HeaderLeft from '../Src/Components/ChatWindowComponents/HeaderLeft';
 import ChatWindowRightHeader from '../Src/Components/ChatWindowComponents/ChatWindowRightHeader';
@@ -10,7 +10,6 @@ import NotificationScreen from '../Src/Screens/NotificationScreen';
 
 import TabNavigation from './TabNavigation';
 import About from '../Src/Screens/About';
-import DetailedDashboard from '../Src/Screens/DetailedDashboard';
 
 import CreatePost from '../Src/Screens/CreatePost';
 import CropViewScreen from '../Src/Screens/ CropViewScreen';
@@ -37,23 +36,23 @@ import VerificationStepOne from '../Src/Screens/VerificationStepOne';
 import OtherProfileNew from '../Src/Screens/OtherProfileNew';
 import ManageRevenueRefferal from '../Src/Screens/ManageRevenueRefferal';
 import ManageRevenueDashboard from '../Src/Screens/ManageRevenueDashboard';
-import ManageRevenueDashboardHeaderRight from '../Src/Components/ManageRevenueComponents/ManageRevenueDashboardHeaderRight';
 import ManageRevenueFeeSetup from '../Src/Screens/ManageRevenueFeeSetup';
+import ManageRevenueFeeSetupPricing from '../Src/Screens/ManageRevenueFeeSetupPricing';
 import ManageRevenueSubscriptionFeeSetup from '../Src/Screens/ManageRevenueSubscriptionFeeSetup';
 import Wallet from '../Src/Screens/Wallet';
 import HomeVideoPlayer from '../Src/Components/HomeComponents/HomeVideoPlayer';
 import BlockList from '../Src/Screens/BlockList';
 import TwoFALanding from '../Src/Components/2FA/TwoFALanding';
 import TwoFAAppAuth from '../Src/Components/2FA/TwoFAAppAuth';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeVideoBack from '../Src/Components/HomeComponents/HomeVideoBack';
 import Google from '../Src/Screens/Google';
-import {nTwinsFont} from '../DesiginData/Utility';
+import { nTwinsFont } from '../DesiginData/Utility';
 import Management from '../Src/Screens/Account/Management';
 import DeleteAccount from '../Src/Screens/Account/DeleteAccount';
 import License from '../Src/Screens/Account/License';
 import TestPurchase from '../TestPurchase';
-import {Platform, View} from 'react-native';
+import { Platform, View } from 'react-native';
 import LiveStream from '../Src/Screens/Stream/LiveStream';
 import BeforeStream from '../Src/Screens/Stream/BeforeStream';
 import ConfirmLiveStreamJoin from '../Src/Screens/Stream/ConfirmLiveStreamJoin';
@@ -62,22 +61,22 @@ import AllMyPosts from '../Src/Components/MyProfile/AllMyPosts';
 import Testify from '../Testify';
 import HeaderCenteredTitle from '../Src/Components/HeaderCenteredTitle';
 import AddSvg from '../AddSvg';
-import {shareLink} from '../Src/Components/NewOtherProfileComponents/UpperOtherProfile';
+import { shareLink } from '../Src/Components/NewOtherProfileComponents/UpperOtherProfile';
 import LoginHome from '../Src/Screens/LoginSignup/LoginHome';
 import LoginEmail from '../Src/Screens/LoginSignup/LoginEmail';
 import LoginPassword from '../Src/Screens/LoginSignup/LoginPassword';
 import SignupEmail from '../Src/Screens/LoginSignup/SignupEmail';
 import SignupPassword from '../Src/Screens/LoginSignup/SignupPassword';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Back from '../Src/Components/Back/Back';
 import ForgetPassword from '../Src/Components/LoginComponent/ForgetPassword';
 import EditProfiler from '../Src/Components/EditProfile';
-import {responsiveFontSize} from 'react-native-responsive-dimensions';
+import { responsiveFontSize } from 'react-native-responsive-dimensions';
 import Details from '../Src/Screens/revenue/Details';
 import CreatorSearch from '../Src/CreatorSearch';
 import DIcon from '../DesiginData/DIcons';
 
-import {Image} from 'expo-image';
+import { Image } from 'expo-image';
 import FeeSetupInfoRight from '../Src/Components/FeeSetupInfoRight';
 import ScheduleContents from '../Src/Screens/ScheduleContents';
 import UserInfoForm from '../Src/Screens/HelpCenter/UserInfoForm';
@@ -85,10 +84,27 @@ import MassMessageMedia from '../Src/Screens/MassMessageMedia';
 import SharedPost from '../Src/Components/HomeComponents/SharedPost';
 import WalletRechargeScreen from '../Src/WalletRechargeScreen';
 import CallScreen from '../Src/Components/Calling/CallScreen';
-import IncomingCallScreen from '../Src/Components/Calling/IncomingCallScreen';
 import CFPayments from '../Src/Cashfree/CFPayments';
 import PhonePe from '../Src/Cashfree/PhonePe';
 import ChevronLoader from '../Src/ChevronLoader';
+import VideoCallScreen from '../Src/Components/Calling/VideoCallScreen';
+import { navigate } from './RootNavigation';
+import { HeaderBackButton } from '@react-navigation/elements';
+import WishlistPayoutFinal from '../Src/Components/PostComponents/WishlistPayoutFinal';
+import WishlistPayoutSuccess from '../Src/Components/PostComponents/WishlistPayoutSuccess';
+
+import { OnboardingNavigator } from './OnboardingNavigator';
+import OtherProfileReels from '../Src/Components/NewOtherProfileComponents/OtherProfileReels';
+import FilterScreen from '../Src/Screens/FilterScreen';
+import CallRequestsScreen from '../Src/Screens/CallRequests/CallRequestsScreen';
+import SelectDuration from '../Src/Screens/CallRequests/SelectDuration';
+import ScheduleCallScreen from '../Src/Screens/CallRequests/ScheduleCallScreen';
+import IncomingCallScreen from '../Src/Components/Calling/IncomingCalll';
+import EditPostScreen from '../Src/Screens/EditPostScreen';
+import WishListDonateScreen from '../Src/Screens/WishListDonateScreen';
+import ChatMediaPreviewScreen from '../Src/Screens/ChatMediaPreviewScreen';
+import CompleteDetailsScreen from '../Src/Screens/CompleteDetailsScreen';
+import FeedbackScreen from '../Src/Screens/FeedbackScreen';
 
 const StackNavigation = () => {
   //Redux Work
@@ -96,12 +112,13 @@ const StackNavigation = () => {
 
   const agreed = useSelector(state => state.auth.user.licenseAgreed);
 
-  const {shareLink: profileLink} = useSelector(state => state.profileFeedCache.data);
+  const { shareLink: profileLink } = useSelector(state => state.profileFeedCache.data);
+
+  const showOnboarding = useSelector(state => state.hideShow.visibility.showOnboarding);
 
   return (
     <SafeAreaProvider>
       <Stack.Navigator
-        initialRouteName="LoginHome"
         screenOptions={{
           orientation: 'portrait',
           headerTitleAlign: 'center',
@@ -170,18 +187,19 @@ const StackNavigation = () => {
               component={Invites}
               options={{
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 headerShown: false,
               }}
             />
           </>
         ) : !agreed ? (
-          <Stack.Screen name="license" component={License} options={{headerShown: false}} />
+          <Stack.Screen name="license" component={License} options={{ headerShown: false }} />
         ) : (
           <>
             {/* {agreed ? <Stack.Screen name="license" component={License} options={{ headerShown: false }} />} */}
 
-            <Stack.Screen name="chatRoomTab" component={TabNavigation} options={{headerShown: false}} />
+            <Stack.Screen name="chatRoomTab" component={showOnboarding ? OnboardingNavigator : TabNavigation} options={{ headerShown: false }} />
+
 
             <Stack.Screen
               name="settingsPage"
@@ -193,8 +211,25 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: 'white'},
+                headerStyle: { backgroundColor: 'white' },
                 headerTintColor: '#1e1e1e',
+                headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="feedback"
+              component={FeedbackScreen}
+              options={{
+                title: 'Feedback',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: responsiveFontSize(2.7),
+                },
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: 'white' },
+                headerTintColor: '#1e1e1e',
+                animation: 'slide_from_right',
                 headerBackTitleVisible: false,
               }}
             />
@@ -202,7 +237,7 @@ const StackNavigation = () => {
             <Stack.Screen
               name="changePassword"
               component={ChangePassword}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: route.params.title,
                 headerShown: false,
                 headerTitleStyle: {
@@ -210,7 +245,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -220,7 +255,7 @@ const StackNavigation = () => {
             <Stack.Screen
               name="userInfoForm"
               component={UserInfoForm}
-              options={({route}) => ({
+              options={({ route }) => ({
                 headerShown: false,
               })}
             />
@@ -235,7 +270,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -248,7 +283,7 @@ const StackNavigation = () => {
               options={{
                 headerTitle: 'Notifications',
                 // headerLeft: () => <HeaderCenteredTitle title="Notifications" />,
-                headerTitleStyle: {fontFamily: 'Rubik-Medium'},
+                headerTitleStyle: { fontFamily: 'Rubik-Medium' },
                 headerShadowVisible: false,
                 headerStyle: {
                   backgroundColor: '#fff',
@@ -259,14 +294,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="blocklist"
               component={BlockList}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: 'Blocklist',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -276,14 +311,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="beforeStreamScreen"
               component={BeforeStream}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: 'Stream Settings',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -300,7 +335,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -317,7 +352,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -334,7 +369,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -357,38 +392,68 @@ const StackNavigation = () => {
               options={{
                 headerTitle: '',
                 header: () => <HeaderLeft />,
-                // headerRight: () => {
-                //   if (firstUserRole === "creator" && secondUserRole === "creator") {
-                //     return <ChatWindowRightHeader />;
-                //   } else if (firstUserRole !== "creator") {
-                //     return <ChatWindowRightHeader />;
-                //   }
-                // },
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 headerShadowVisible: false,
+                // Add these to ensure smooth transition
+                animation: 'slide_from_right', // Consistent animation
+                headerBackTitleVisible: false,
+                // This prevents the header from animating separately
+                headerTransparent: false,
+                gestureEnabled: true,
               }}
             />
 
-            <Stack.Screen name="Notification" component={NotificationScreen} options={{headerShadowVisible: false, headerStyle: {backgroundColor: '#fff'}}} />
-
-            <Stack.Screen name="About" component={About} options={{headerShadowVisible: false, headerShown: false}} />
+            <Stack.Screen
+              name="CallRequests"
+              component={CallRequestsScreen}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right',
+                gestureEnabled: true,
+              }}
+            />
 
             <Stack.Screen
-              name="DetailedDashboard"
-              component={DetailedDashboard}
+              name="SelectDuration"
+              component={SelectDuration}
               options={{
-                title: 'Campaigns',
+                headerShown: false,
+                animation: 'slide_from_right',
+                gestureEnabled: true,
+              }}
+            />
+
+            <Stack.Screen
+              name="ChatMediaPreview"
+              component={ChatMediaPreviewScreen}
+              options={{
+                headerShown: false,
+                animation: 'fade',
+                gestureEnabled: true,
+              }}
+            />
+
+            <Stack.Screen
+              name="ScheduleCallScreen"
+              component={ScheduleCallScreen}
+              options={{
+                title: 'Schedule Call',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: responsiveFontSize(2.2),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff9f5' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
               }}
             />
+
+            <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShadowVisible: false, headerStyle: { backgroundColor: '#fff' } }} />
+
+            <Stack.Screen name="About" component={About} options={{ headerShadowVisible: false, headerShown: false }} />
+
 
             <Stack.Screen
               name="createpostpage"
@@ -498,7 +563,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 // headerRight: () => <TransactionHeaderRight />,
                 headerTintColor: '#1e1e1e',
@@ -517,7 +582,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_bottom',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -530,7 +595,7 @@ const StackNavigation = () => {
               options={{
                 headerShown: false,
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerRight: () => <TransactionHeaderRight />,
                 headerTintColor: '#1e1e1e',
@@ -552,24 +617,25 @@ const StackNavigation = () => {
               options={{
                 title: 'Payment Gateway',
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
-                headerBackTitleVisible: false,
+                headerBackTitle: '',
+                headerLeft: props => <HeaderBackButton {...props} labelVisible={false} backTitle="" onPress={() => navigate('home')} />,
               }}
             />
 
             <Stack.Screen
               name="webView"
               component={WebView}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -579,14 +645,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="editprofiler"
               component={EditProfiler}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -596,14 +662,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="linkAccount"
               component={LinkAccount}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -613,14 +679,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="twoFALanding"
               component={TwoFALanding}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: '2FA',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -630,14 +696,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="deleteaccount"
               component={DeleteAccount}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: 'Account Deletion',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_bottom',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -647,14 +713,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="accountmanagement"
               component={Management}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: 'Manage Account',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -664,14 +730,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="twoFAAppAuth"
               component={TwoFAAppAuth}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: 'Security',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -681,14 +747,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="fsPage"
               component={FollowersSubscribersPage}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -698,14 +764,14 @@ const StackNavigation = () => {
             <Stack.Screen
               name="scheduled"
               component={ScheduleContents}
-              options={({route}) => ({
+              options={({ route }) => ({
                 title: 'Scheduled Contents',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -718,9 +784,9 @@ const StackNavigation = () => {
               options={{
                 title: 'Posts',
 
-                headerTitleStyle: {fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3)},
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3) },
 
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 headerShadowVisible: false,
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
@@ -733,8 +799,35 @@ const StackNavigation = () => {
               component={SharedPost}
               options={{
                 title: 'Posts',
-                headerTitleStyle: {fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3)},
-                headerStyle: {backgroundColor: '#fff'},
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: responsiveFontSize(2.7),
+                },
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: '#fff' },
+                animation: 'slide_from_right',
+                headerTintColor: '#1e1e1e',
+                headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="completeDetails"
+              component={CompleteDetailsScreen}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen
+              name="allmyposts"
+              component={AllMyPosts}
+              options={{
+                title: 'Posts',
+
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3) },
+
+                headerStyle: { backgroundColor: '#fff' },
                 headerShadowVisible: false,
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
@@ -743,15 +836,42 @@ const StackNavigation = () => {
             />
 
             <Stack.Screen
-              name="allmyposts"
-              component={AllMyPosts}
+              name="editPostScreen"
+              component={EditPostScreen}
               options={{
-                title: 'Posts',
-
-                headerTitleStyle: {fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3)},
-
-                headerStyle: {backgroundColor: '#fff'},
+                title: 'Edit Description',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: responsiveFontSize(2.7),
+                },
                 headerShadowVisible: false,
+                headerStyle: { backgroundColor: '#fff' },
+                animation: 'slide_from_right',
+                headerTintColor: '#1e1e1e',
+                headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="otherProfileReels"
+              component={OtherProfileReels}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_bottom',
+              }}
+            />
+
+            <Stack.Screen
+              name="filterScreen"
+              component={FilterScreen}
+              options={{
+                title: 'Apply Filter',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: responsiveFontSize(2.7),
+                },
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -779,7 +899,7 @@ const StackNavigation = () => {
             <Stack.Screen
               name="livestream"
               component={LiveStream}
-              options={({navigation}) => ({
+              options={({ navigation }) => ({
                 headerShown: false,
                 gestureEnabled: false,
               })}
@@ -788,25 +908,16 @@ const StackNavigation = () => {
             <Stack.Screen
               name="callScreen"
               component={CallScreen}
-              options={({navigation}) => ({
+              options={({ navigation }) => ({
                 headerShown: false,
                 gestureEnabled: false,
               })}
             />
 
             <Stack.Screen
-              name="cfPayment"
-              component={Platform.OS === 'android' ? CFPayments : TestPurchase}
-              options={({navigation}) => ({
-                headerShown: false,
-                gestureEnabled: false,
-              })}
-            />
-
-            <Stack.Screen
-              name="pPPayment"
-              component={PhonePe}
-              options={({navigation}) => ({
+              name="videoCallScreen"
+              component={VideoCallScreen}
+              options={({ navigation }) => ({
                 headerShown: false,
                 gestureEnabled: false,
               })}
@@ -815,7 +926,27 @@ const StackNavigation = () => {
             <Stack.Screen
               name="incomingCall"
               component={IncomingCallScreen}
-              options={({navigation}) => ({
+              options={({ navigation }) => ({
+                headerShown: false,
+                gestureEnabled: false,
+                presentation: 'fullScreenModal',
+                animation: 'slide_from_bottom',
+              })}
+            />
+
+            <Stack.Screen
+              name="cfPayment"
+              component={Platform.OS === 'android' ? CFPayments : TestPurchase}
+              options={({ navigation }) => ({
+                headerShown: false,
+                gestureEnabled: false,
+              })}
+            />
+
+            <Stack.Screen
+              name="pPPayment"
+              component={Platform.OS === 'android' ? PhonePe : TestPurchase}
+              options={({ navigation }) => ({
                 headerShown: false,
                 gestureEnabled: false,
               })}
@@ -826,9 +957,9 @@ const StackNavigation = () => {
               component={OtherProfileNew}
               options={{
                 headerTitle: 'Profile',
-                headerTitleStyle: {fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3)},
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: responsiveFontSize(2.7), fontSize: nTwinsFont(2, 2.3) },
                 // headerLeft: () => <HeaderLeftOtherProfile />,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 headerShadowVisible: false,
                 animation: 'simple_push',
                 headerTintColor: '#1e1e1e',
@@ -864,7 +995,24 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
+                animation: 'slide_from_right',
+                headerTintColor: '#1e1e1e',
+                headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="wishlistpayoutfinal"
+              component={WishlistPayoutFinal}
+              options={{
+                title: 'Payout Request',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: responsiveFontSize(2.7),
+                },
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -881,7 +1029,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -889,8 +1037,34 @@ const StackNavigation = () => {
             />
 
             <Stack.Screen
+              name="wishlistSuccessPayout"
+              component={WishlistPayoutSuccess}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
               name="mrFeeSetup"
               component={ManageRevenueFeeSetup}
+              options={{
+                title: 'Auto Messages',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: responsiveFontSize(2.7),
+                },
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: '#fff' },
+                animation: 'slide_from_right',
+                headerTintColor: '#1e1e1e',
+                headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="ManageRevenueFeeSetupPricing"
+              component={ManageRevenueFeeSetupPricing}
               options={{
                 title: 'Fee Setup',
                 headerTitleStyle: {
@@ -898,7 +1072,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -924,7 +1098,7 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
@@ -941,10 +1115,19 @@ const StackNavigation = () => {
                   fontSize: responsiveFontSize(2.7),
                 },
                 headerShadowVisible: false,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',
                 headerTintColor: '#1e1e1e',
                 headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="wishListDonateScreen"
+              component={WishListDonateScreen}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_bottom',
               }}
             />
           </>

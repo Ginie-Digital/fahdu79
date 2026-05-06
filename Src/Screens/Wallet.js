@@ -1,25 +1,25 @@
 // WalletScreen.js
 
-import React, {useCallback, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator} from 'react-native';
-import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator } from 'react-native';
+import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
 import WalletSVG from '../../Assets/svg/WalletIcon.svg';
 import AnimatedNumber from '../Components/AnimatedNumber';
 import PackageBox from '../Components/PackageBox';
 import axios from 'axios';
-import {useDispatch, useSelector} from 'react-redux';
-import {useGetPaymentTokenMutation, useLazyGetWalletPackQuery, usePaymentCheckOutPhonePeMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {FONT_SIZES, nTwins, WIDTH_SIZES} from '../../DesiginData/Utility';
-import {usePaymentCheckOutMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {CFEnvironment, CFSession, CFPaymentModes, CFThemeBuilder, CFPaymentComponentBuilder, CFDropCheckoutPayment} from 'cashfree-pg-api-contract';
+import { useDispatch, useSelector } from 'react-redux';
+import { useGetPaymentTokenMutation, useLazyGetWalletPackQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { FONT_SIZES, nTwins, WIDTH_SIZES } from '../../DesiginData/Utility';
+import { usePaymentCheckOutMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { CFEnvironment, CFSession, CFPaymentModes, CFThemeBuilder, CFPaymentComponentBuilder, CFDropCheckoutPayment } from 'cashfree-pg-api-contract';
 
-import {CFErrorResponse, CFPaymentGatewayService} from 'react-native-cashfree-pg-sdk';
-import {toggleWalletLoader} from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useFocusEffect, useIsFocused, useNavigation} from '@react-navigation/native';
-import {chatRoomSuccess} from '../Components/ErrorSnacks';
-import {navigate} from '../../Navigation/RootNavigation';
+const { CFPaymentGatewayService } = Platform.OS === 'android' ? require('react-native-cashfree-pg-sdk') : { CFPaymentGatewayService: null };
+import { toggleWalletLoader } from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import { chatRoomSuccess } from '../Components/ErrorSnacks';
+import { navigate } from '../../Navigation/RootNavigation';
 
-const WalletScreen = ({route}) => {
+const WalletScreen = ({ route }) => {
   const token = useSelector(state => state.auth.user.token);
 
   const method = route?.params?.method;
@@ -36,8 +36,6 @@ const WalletScreen = ({route}) => {
 
   const [paymentCheckOut] = usePaymentCheckOutMutation();
 
-  const [paymentCheckOutPhonePe] = usePaymentCheckOutPhonePeMutation();
-
   const [responseText, setResponseText] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -49,8 +47,8 @@ const WalletScreen = ({route}) => {
   const navigation = useNavigation();
 
   async function getUserCoins() {
-    let {data} = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {
-      headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+    let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       timeout: 10000,
     });
 
@@ -60,27 +58,31 @@ const WalletScreen = ({route}) => {
   useEffect(() => {
     let timeoutId;
 
-    CFPaymentGatewayService.setCallback({
-      onVerify: orderID => {
-        setResponseText('orderId is :' + orderID);
-        dispatch(toggleWalletLoader({packId: null}));
+    if (CFPaymentGatewayService) {
+      CFPaymentGatewayService.setCallback({
+        onVerify: orderID => {
+          setResponseText('orderId is :' + orderID);
+          dispatch(toggleWalletLoader({ packId: null }));
 
-        timeoutId = setTimeout(() => {
-          getUserCoins();
-        }, 1000);
-      },
-      onError: (error, orderID) => {
-        setResponseText('exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID);
-        dispatch(toggleWalletLoader({packId: null}));
+          timeoutId = setTimeout(() => {
+            getUserCoins();
+          }, 1000);
+        },
+        onError: (error, orderID) => {
+          setResponseText('exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID);
+          dispatch(toggleWalletLoader({ packId: null }));
 
-        timeoutId = setTimeout(() => {
-          getUserCoins();
-        }, 1000);
-      },
-    });
+          timeoutId = setTimeout(() => {
+            getUserCoins();
+          }, 1000);
+        },
+      });
+    }
 
     return () => {
-      CFPaymentGatewayService.removeCallback();
+      if (CFPaymentGatewayService) {
+        CFPaymentGatewayService.removeCallback();
+      }
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
@@ -90,13 +92,13 @@ const WalletScreen = ({route}) => {
   const checkoutPayment = async packId => {
     console.log('Selected method:', packId);
 
-    dispatch(toggleWalletLoader({packId}));
+    dispatch(toggleWalletLoader({ packId }));
 
     // setLoading(true);
     try {
       const response = await getPaymentToken({
         token,
-        data: {packId},
+        data: { packId },
       });
 
       console.log(response);
@@ -113,52 +115,29 @@ const WalletScreen = ({route}) => {
 
       const dropPayment = new CFDropCheckoutPayment(session, paymentModes, theme);
 
-      CFPaymentGatewayService.doPayment(dropPayment);
+      if (CFPaymentGatewayService) {
+        CFPaymentGatewayService.doPayment(dropPayment);
+      }
     } catch (error) {
       setLoading(false);
       console.error('Payment Error:', error);
     }
-
-    // let response;
-
-    // if (method === 'PhonePe') {
-    //   response = await paymentCheckOutPhonePe({
-    //     token,
-    //     data: { packId },
-    //   });
-    // } else {
-    //   response = await paymentCheckOut({
-    //     token,
-    //     data: { packId },
-    //   });
-    // }
-
-    // const { data, error } = response;
-
-    // if (error) {
-    //   console.log('Checkout error:', error);
-    //   return;
-    // }
-
-    // if (data?.data?.link) {
-    //   Linking.openURL(data.data.link);
-    // }
-
-    // if(method === 'PhonePe') {
-
-    // } else {
-    //   console.log("xxx")
-    // }
   };
 
   const fetchPack = async () => {
     const os = Platform.OS;
+    console.log('📱 Platform.OS detected:', os);
+    
+    const { data, error } = await getWalletPack({ token, os });
 
-    const {data} = await getWalletPack({token, os});
+    console.log('📦 Wallet Pack Response:', {
+      success: !!data,
+      packs: data?.data?.packs,
+      fullData: data,
+      error
+    });
 
-    console.log(data?.data?.packs);
-
-    setPackages(data?.data?.packs);
+    setPackages(data?.data?.packs || []);
   };
 
   useEffect(() => {
@@ -176,9 +155,27 @@ const WalletScreen = ({route}) => {
     );
   }
 
+  const limitedPackages = packages?.slice(0, 5) || [];
+
+  const getOfferData = item => {
+    const name = item?.name?.toLowerCase() || '';
+    const discount = item?.discount || 0;
+
+    let isFahdu = false;
+    if (name.includes('fahdu') || (name.includes('fukrey') && (item?.cost || item?.amount) > 8000)) {
+      isFahdu = true;
+    }
+
+    if (discount === 0) return null;
+
+    return {text: `+${discount}% EXTRA`, isFahdu};
+  };
+
+  const offerData = (item) => getOfferData(item);
+
   return (
     <View style={styles.container}>
-      <View style={[styles.overlay, {height: walletHeight}]} />
+      <View style={[styles.overlay, { height: walletHeight }]} />
       <View style={styles.walletCard} onLayout={event => setWalletHeight(event.nativeEvent.layout.height)}>
         <View style={styles.walletHeader}>
           <Text style={styles.walletText}>Total Balance</Text>
@@ -192,17 +189,26 @@ const WalletScreen = ({route}) => {
           <WalletSVG />
         </View>
       </View>
-
       <View style={styles.textContainer}>
         <Text style={styles.title}>Choose Package</Text>
         <Text style={styles.subtitle}>Select the package that suits your needs</Text>
       </View>
-
       {/* Packages Grid */}
       <FlatList
-        data={packages}
-        renderItem={({item, index}) => <PackageBox item={item} index={index} isLastItem={index === packages.length - 1 && packages.length % 2 !== 0} handler={checkoutPayment} />}
-        numColumns={2}
+        data={limitedPackages}
+        renderItem={({ item, index }) => {
+          const data = offerData(item);
+          return (
+            <PackageBox 
+              item={item} 
+              index={index} 
+              isLastItem={index === limitedPackages.length - 1 && limitedPackages.length % 2 !== 0} 
+              handler={checkoutPayment} 
+              offerText={data?.text}
+              isFahdu={data?.isFahdu}
+            />
+          );
+        }}        numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.packagesList}
         showsVerticalScrollIndicator={false}
@@ -220,9 +226,9 @@ const WalletScreen = ({route}) => {
               marginBottom: 40,
               width: '100%',
             }}>
-            <Text style={{fontSize: FONT_SIZES['12'], color: '#1e1e1e', fontFamily: 'Rubik-Regular'}}>Have questions about refund?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('webView', {title: 'Refund Policy', type: 'refund'})}>
-              <Text style={{fontSize: FONT_SIZES['14'], fontFamily: 'Rubik-Bold', color: '#1e1e1e'}}>Read Policy</Text>
+            <Text style={{ fontSize: FONT_SIZES['12'], color: '#1e1e1e', fontFamily: 'Rubik-Regular' }}>Have questions about refund?</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('webView', { title: 'Refund Policy', type: 'refund' })}>
+              <Text style={{ fontSize: FONT_SIZES['14'], fontFamily: 'Rubik-Bold', color: '#1e1e1e' }}>Read Policy</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -236,7 +242,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: responsiveWidth(5),
-    // paddingTop: responsiveWidth(8),
   },
   walletCard: {
     backgroundColor: '#FFA86B',
@@ -272,7 +277,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: responsiveWidth(2),
   },
-
   overlay: {
     width: '100%',
     borderRadius: responsiveWidth(4),
@@ -282,7 +286,6 @@ const styles = StyleSheet.create({
     top: '0.80%',
     borderWidth: responsiveWidth(0.4),
   },
-
   textContainer: {
     paddingVertical: 15,
     paddingHorizontal: responsiveWidth(1.8),

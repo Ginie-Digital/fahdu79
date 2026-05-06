@@ -1,4 +1,4 @@
-import {configureStore, combineReducers} from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import persistReducer from 'redux-persist/es/persistReducer';
 
 //Importin my Rducers (Normal)
@@ -43,13 +43,14 @@ import massMessageReducer from '../Slices/NormalSlices/MessageSlices/MassMessage
 import chipsReducer from '../Slices/NormalSlices/MessageSlices/MassMessageChips';
 import callReducer from '../Slices/NormalSlices/Call/CallSlice';
 import uploadReducer from '../Slices/NormalSlices/UploadSlice';
+import liveUsersReducer from '../Slices/NormalSlices/LiveUsersSlice';
 
 //Import my Reducer (Query)
-import {roomListApi} from '../Slices/QuerySlices/roomListSliceApi';
+import { roomListApi } from '../Slices/QuerySlices/roomListSliceApi';
 
-import {chatWindowAttachmentApi} from '../Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { chatWindowAttachmentApi } from '../Slices/QuerySlices/chatWindowAttachmentSliceApi';
 
-import {audioVideoApi} from '../Slices/QuerySlices/audioVideoSlice';
+import { audioVideoApi } from '../Slices/QuerySlices/audioVideoSlice';
 
 import reduxStorage from '../../MMKVConfig';
 
@@ -61,13 +62,8 @@ const persistConfig = {
   timeout: 2000,
   key: 'root',
   storage: reduxStorage,
-  blacklist: [
-    'livechats',
-    'stories',
-    'wallet',
-    'profileFeedCache',
-    'myProfileFeedCache',
-  ],
+  whitelist: ['auth'],
+  blacklist: ['livechats', 'stories', 'wallet', 'profileFeedCache', 'myProfileFeedCache'],
 };
 
 const combined_reducer = combineReducers({
@@ -112,6 +108,7 @@ const combined_reducer = combineReducers({
   chips: chipsReducer,
   call: callReducer,
   upload: uploadReducer,
+  liveUsers: liveUsersReducer,
   [roomListApi.reducerPath]: roomListApi.reducer,
   [chatWindowAttachmentApi.reducerPath]: chatWindowAttachmentApi.reducer,
   [audioVideoApi.reducerPath]: audioVideoApi.reducer,

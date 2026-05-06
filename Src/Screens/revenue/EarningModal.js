@@ -118,7 +118,7 @@ const EarningModal = ({visible, balance}) => {
       setLoading(false);
       dispatch(toggleConfirmBankDetails({show: false}));
       setTimeout(() => {
-        dispatch(toggleShowBankDetailsModal({show: true}));
+        dispatch(toggleShowBankDetailsModal({show: true, fahduFees: withdrawData?.Fahdu_Fees, amount: withdrawData?.Withdrawal_Balance}));
       }, 500);
     } else {
       setLoading(false);

@@ -1,17 +1,18 @@
-import {Platform} from 'react-native';
-import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
+import { Platform } from 'react-native';
+import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 
-import {OpenGraphParser} from '@sleiv/react-native-opengraph-parser';
+import { OpenGraphParser } from '@sleiv/react-native-opengraph-parser';
 
-import {Dimensions} from 'react-native';
+import { Dimensions } from 'react-native';
 import axios from 'axios';
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export const validEmail = email => {
   var re = /\S+@\S+\.\S+/;
   return re.test(email);
 };
 
+// ✅ CORRECT
 export const audienceFilterMap = {
   1: 'none',
   2: 'subscribers',
@@ -20,7 +21,7 @@ export const audienceFilterMap = {
 
 export const chatRoomSortMap = {
   1: 'recent',
-  2: 'old',
+  2: 'read',
   3: 'unread',
 };
 
@@ -209,28 +210,28 @@ export const validateEmail = email => {
 
   // Check 1: Ensure email is not empty
   if (!email || email.trim() === '') {
-    return {isValid: false, message: 'Email cannot be empty.'};
+    return { isValid: false, message: 'Email cannot be empty.' };
   }
 
   // Check 2: Ensure email is within the maximum length
   if (email.length > MAX_EMAIL_LENGTH) {
-    return {isValid: false, message: `Email cannot exceed ${MAX_EMAIL_LENGTH} characters.`};
+    return { isValid: false, message: `Email cannot exceed ${MAX_EMAIL_LENGTH} characters.` };
   }
 
   // Check 3: Ensure email contains exactly one "@" symbol
   const atSymbolCount = (email.match(/@/g) || []).length;
   if (atSymbolCount !== 1) {
-    return {isValid: false, message: 'Email must contain exactly one "@" symbol.'};
+    return { isValid: false, message: 'Email must contain exactly one "@" symbol.' };
   }
 
   // Check 4: Ensure email does not contain spaces
   if (/\s/.test(email)) {
-    return {isValid: false, message: 'Email cannot contain spaces.'};
+    return { isValid: false, message: 'Email cannot contain spaces.' };
   }
 
   // Check 5: Ensure email does not contain `%` or `&`
   if (email.includes('%') || email.includes('&')) {
-    return {isValid: false, message: 'Email cannot contain "%" or "&".'};
+    return { isValid: false, message: 'Email cannot contain "%" or "&".' };
   }
 
   // Check 6: Validate standard email format (e.g., user@example.com)
@@ -240,11 +241,11 @@ export const validateEmail = email => {
   const ipEmailRegex = /^[a-zA-Z0-9]+([._-][a-zA-Z0-9]+)*@\[(\d{1,3}\.){3}\d{1,3}\]$/;
 
   if (!standardEmailRegex.test(email) && !ipEmailRegex.test(email)) {
-    return {isValid: false, message: 'Please enter a valid email address.'};
+    return { isValid: false, message: 'Please enter a valid email address.' };
   }
 
   // If all checks pass
-  return {isValid: true, message: 'Email is valid.'};
+  return { isValid: true, message: 'Email is valid.' };
 };
 
 /**
@@ -286,6 +287,7 @@ const WIDTH_SIZES = {
   8: responsiveWidth(2.13),
   9: responsiveWidth(2.4),
   10: responsiveWidth(2.67),
+  11: responsiveWidth(2.93),
   12: responsiveWidth(3.2),
   14: responsiveWidth(3.73),
   16: responsiveWidth(4.27),
@@ -306,7 +308,7 @@ const WIDTH_SIZES = {
   345: responsiveWidth(92),
 };
 
-export {FONT_SIZES, WIDTH_SIZES};
+export { FONT_SIZES, WIDTH_SIZES };
 
 export function extractUsernameFromDeepLink(url) {
   try {
@@ -374,7 +376,7 @@ export function isVersionGreaterOrEqual(v1, v2) {
 export const joinLivestream = async (token, roomId) => {
   console.log('TOKEN', token);
   try {
-    const response = await axios.get(`https://api.fahdu.in/api/stream/livestream/join?roomId=${roomId}`, {
+    const response = await axios.get(`https://api.fahdu.com/api/stream/livestream/join?roomId=${roomId}`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
@@ -388,10 +390,51 @@ export const joinLivestream = async (token, roomId) => {
       return error.response.data;
     } else if (error.request) {
       // Request was made but no response received
-      return {error: 'No response from server'};
+      return { error: 'No response from server' };
     } else {
       // Something else went wrong
-      return {error: error.message};
+      return { error: error.message };
     }
   }
+};
+
+export function toCapitalized(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export const getTimeAgo = timestamp => {
+  const now = new Date();
+  const messageTime = new Date(timestamp);
+  const diffInSeconds = Math.floor((now - messageTime) / 1000);
+
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+  // For older messages, show date
+  return messageTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+/**
+ * Formats a number according to the Indian numbering system (e.g., 1,00,000).
+ * @param {number|string} number - The number to format.
+ * @returns {string} - The formatted number string with commas.
+ */
+export const formatIndianNumber = (number) => {
+  if (number === null || number === undefined) return '0';
+  const num = Math.floor(Number(number));
+  if (isNaN(num)) return '0';
+  
+  return num.toLocaleString('en-IN');
+};
+/**
+ * Formats a niche string from API format (CamelCase) to Display format (Space separated).
+ * @param {string} niche - The niche string to format.
+ * @returns {string} - The formatted niche string.
+ */
+export const formatNiche = (niche) => {
+  if (!niche) return '';
+  if (niche === 'DatingExpert') return 'Dating Expert';
+  return niche;
 };

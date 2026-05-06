@@ -4,6 +4,7 @@ import { resetAll } from '../../../Actions';
 const initialState = {
     data: {
         searchString: "",
+        isSearchMode: false,
     },
 
 };
@@ -17,6 +18,9 @@ const chatRoomSearchValueSlice = createSlice({
         },
         clearSearchString : (state, action) => {
             state.data.searchString = ""
+        },
+        setIsSearchMode : (state, action) => {
+            state.data.isSearchMode = action.payload;
         }
     },
     extraReducers(builder) {
@@ -26,5 +30,5 @@ const chatRoomSearchValueSlice = createSlice({
       }
 });
 
-export const { insertSearchString, clearSearchString } = chatRoomSearchValueSlice.actions;
+export const { insertSearchString, clearSearchString, setIsSearchMode } = chatRoomSearchValueSlice.actions;
 export default chatRoomSearchValueSlice.reducer;

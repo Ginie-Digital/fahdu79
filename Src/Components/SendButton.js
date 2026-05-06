@@ -1,38 +1,67 @@
-import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, Text, View } from 'react-native';
-import { responsiveWidth } from 'react-native-responsive-dimensions';
+import React from 'react';
+import {TouchableOpacity, Text, View, Animated} from 'react-native';
+import {responsiveWidth} from 'react-native-responsive-dimensions';
+import Icon from 'react-native-vector-icons/Feather'; // Using Feather for the outlined paper plane look
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 
-const SendButton = ({ handleOnclick, disableSendButton, userRole, secondUserRole }) => {
-  const [dots, setDots] = useState('');
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
-  useEffect(() => {
+const SendButton = ({handleOnclick, disableSendButton, userRole, secondUserRole}) => {
+  const spinValue = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
     if (disableSendButton) {
-      const interval = setInterval(() => {
-        setDots((prev) => (prev.length < 3 ? prev + '.' : ''));
-      }, 200); // Faster animation (every 300ms)
-      return () => clearInterval(interval);
+      spinValue.setValue(0);
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ).start();
     } else {
-      setDots('');
+      spinValue.setValue(0);
     }
   }, [disableSendButton]);
 
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const onSendPress = () => {
+    ReactNativeHapticFeedback.trigger("rigid", hapticOptions);
+    handleOnclick();
+  };
+
   return (
-    <TouchableOpacity 
-      onPress={handleOnclick} 
-      disabled={disableSendButton} 
+    <TouchableOpacity
+      onPress={onSendPress}
+      disabled={disableSendButton}
       style={[
-        userRole === 'creator' && secondUserRole !== 'creator' ? { marginLeft: responsiveWidth(5) } : null,
-        disableSendButton && { opacity: 0.5 } // Slightly faded when disabled
-      ]}
-    >
-      <Text style={{ 
-        fontSize: 16, 
-        color: '#1e1e1e', 
-        fontFamily: 'Rubik-SemiBold',
-        marginTop : 1
-      }}>
-        {disableSendButton ? `Send${dots}` : 'Send'}
-      </Text>
+        {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: 40,
+          height: 40,
+          backgroundColor: '#FFA86B',
+          borderWidth: 1.36,
+          borderColor: '#1E1E1E',
+          borderRadius: 20,
+        },
+        userRole === 'creator' && secondUserRole !== 'creator' ? {marginLeft: responsiveWidth(5)} : null,
+      ]}>
+      {disableSendButton ? (
+        <Animated.View style={{transform: [{rotate: spin}]}}>
+          <Icon name="refresh-cw" size={18} color="#1E1E1E" />
+        </Animated.View>
+      ) : (
+        <Icon name="send" size={18} color="#1E1E1E" style={{ marginLeft: -2, marginTop: 2 }} />
+      )}
     </TouchableOpacity>
   );
 };

@@ -4,6 +4,7 @@ import {resetAll} from '../../Actions';
 const initialState = {
   user: {
     token: undefined,
+    apnToken: undefined,
     currentUserId: undefined,
     currentUserFullName: undefined,
     currentUserDisplayName: undefined,
@@ -60,6 +61,11 @@ const authSlice = createSlice({
     updateCoverProfilePicture: (state, action) => {
       state.user.currentUserCoverPicture = action.payload.coverUrl;
       state.user.currentUserProfilePicture = action.payload.profileUrl;
+    },
+
+    updateApnToken: (state, action) => {
+      console.log('GOTAPN', action.payload.token);
+      state.user.apnToken = action.payload.token;
     },
 
     updateDisplayName: (state, action) => {
@@ -134,9 +140,7 @@ const authSlice = createSlice({
     },
 
     updateDescription: (state, action) => {
-
-
-      console.log(action.payload, "UPdate description")
+      console.log(action.payload, 'UPdate description');
 
       const {videoCall_info, audioCall_info, chat_info, liveStream_info} = action.payload;
 
@@ -177,7 +181,8 @@ export const {
   setAboutUser,
   updateEditProfile,
   setAllDescriptions,
-  updateDescription
+  updateDescription,
+  updateApnToken,
 } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -1,23 +1,23 @@
-import {StyleSheet, Text, View, SectionList, TouchableOpacity, FlatList, Image, Platform, Pressable} from 'react-native';
-import {token as memoizedToken} from '../../Redux/Slices/NormalSlices/AuthSlice';
-import React, {memo, useCallback, useEffect, useState} from 'react';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
+import { StyleSheet, Text, View, SectionList, TouchableOpacity, FlatList, Image, Platform, Pressable } from 'react-native';
+import { token as memoizedToken } from '../../Redux/Slices/NormalSlices/AuthSlice';
+import React, { memo, useCallback, useEffect, useState } from 'react';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import MyProfilePicture from '../Components/MyProfile/MyProfilePicture';
-import {useLazyCreatorProfileQuery, useLazyGetFSDQuery, useLazyGetFSQuery, useLazyLogoutFromServerQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
-import {settingsList, subRevenue, userSettingList} from '../../DesiginData/Data';
+import { useLazyCreatorProfileQuery, useLazyGetFSDQuery, useLazyGetFSQuery, useLazyLogoutFromServerQuery, useLazyGetFollowingQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { settingsList, subRevenue, userSettingList } from '../../DesiginData/Data';
 import DIcon from '../../DesiginData/DIcons';
-import {autoLogout, logoutExplicit} from '../../AutoLogout';
-import {LoginPageErrors} from '../Components/ErrorSnacks';
-import {nTwins, twins, WIDTH_SIZES} from '../../DesiginData/Utility';
+import { autoLogout, logoutExplicit } from '../../AutoLogout';
+import { LoginPageErrors } from '../Components/ErrorSnacks';
+import { nTwins, twins, WIDTH_SIZES } from '../../DesiginData/Utility';
 import AddSvg from '../../AddSvg';
 import Revenue from '../../Assets/svg/revenue.svg';
 import Drops from '../../Assets/svg/dd.svg';
 import Purchases from 'react-native-purchases';
 import AccMang from '../../Assets/svg/accountManagement.svg';
 const SettingsPage = () => {
-  const [getUserProfileDetailsApi, {error: getUserProfileError}] = useLazyCreatorProfileQuery({refetchOnFocus: true});
+  const [getUserProfileDetailsApi, { error: getUserProfileError }] = useLazyCreatorProfileQuery({ refetchOnFocus: true });
 
   const [userProfileDetails, setUserProfileDetails] = useState({});
 
@@ -26,6 +26,8 @@ const SettingsPage = () => {
   const [subscribers, setSubscribers] = useState(0);
 
   const [subscribed, setSubscribed] = useState(0);
+
+  const [followingCount, setFollowingCount] = useState(0);
 
   const [openRevenue, setOpenRevenue] = useState(false);
 
@@ -44,7 +46,7 @@ const SettingsPage = () => {
   useFocusEffect(
     useCallback(() => {
       async function getUserProfileDetails() {
-        let userDetail = await getUserProfileDetailsApi({token, displayName}, false);
+        let userDetail = await getUserProfileDetailsApi({ token, displayName }, false);
         setUserProfileDetails(userDetail?.data?.data);
       }
       getUserProfileDetails();
@@ -55,27 +57,34 @@ const SettingsPage = () => {
 
   const [getFSD] = useLazyGetFSDQuery();
 
+  const [getFollowing] = useLazyGetFollowingQuery();
+
   useEffect(() => {
     const getFollowers = async () => {
-      const subs = await getFS({token, listType: 'followers', active: true});
+      const subs = await getFS({ token, listType: 'followers', active: true });
 
       setFollowers(subs?.data?.data?.metadata[0]?.total);
     };
 
     const getSubscribers = async () => {
-      const subs = await getFS({token, listType: 'subscribers', active: true});
+      const subs = await getFS({ token, listType: 'subscribers', active: true });
 
       setSubscribers(subs?.data?.data?.metadata[0]?.total);
     };
 
     const getFollowed = async () => {
-      const subs = await getFSD({token, listType: 'followed', active: true});
+      const subs = await getFSD({ token, listType: 'followed', active: true });
 
       setFollowers(subs?.data?.data?.metadata[0]?.total);
     };
 
+    const getFollowingCount = async () => {
+      const subs = await getFollowing({ token });
+      setFollowingCount(subs?.data?.data?.metadata[0]?.total);
+    };
+
     const getSubscribed = async () => {
-      const subs = await getFSD({token, listType: 'subscribed', active: true});
+      const subs = await getFSD({ token, listType: 'subscribed', active: true });
 
       setSubscribed(subs?.data?.data?.metadata[0]?.total);
     };
@@ -83,10 +92,12 @@ const SettingsPage = () => {
     if (role === 'user') {
       getFollowed();
       getSubscribed();
+      getFollowingCount();
     } else {
       getFollowers();
       getSubscribers();
       getSubscribed();
+      getFollowingCount();
     }
   }, [token, role]);
 
@@ -102,29 +113,29 @@ const SettingsPage = () => {
     }
 
     if (id === 3) {
-      navigation.navigate('fsPage', {title: 'Subscribers', token, role, count: subscribers ? subscribers : 0});
+      navigation.navigate('fsPage', { title: 'Subscribers', token, role, count: subscribers ? subscribers : 0 });
     }
 
     if (id === 4) {
-      navigation.navigate('fsPage', {title: 'Followers', token, role, count: followers ? followers : 0});
+      navigation.navigate('fsPage', { title: 'Followers', token, role, count: followers ? followers : 0 });
     }
 
     if (id === 5) {
-      navigation.navigate('changePassword', {title: userInfo?.passwordCreated ? 'Change password' : 'Create password'});
+      navigation.navigate('changePassword', { title: userInfo?.passwordCreated ? 'Change password' : 'Create password' });
     }
 
     if (id === 2) {
-      navigation.navigate('fsPage', {title: 'Subscribed', token, role, count: subscribed ? subscribed : 0});
+      navigation.navigate('fsPage', { title: 'Subscribed', token, role, count: subscribed ? subscribed : 0 });
     }
 
     if (id === 9) {
-      navigation.navigate('blocklist', {title: 'blocklist', token, role, count: subscribed ? subscribed : 0});
+      navigation.navigate('blocklist', { title: 'blocklist', token, role, count: subscribed ? subscribed : 0 });
     }
 
     if (id === 16) {
       try {
         // Step 1: Logout from your server
-        const {data, error} = await logoutFromServer({token});
+        const { data, error } = await logoutFromServer({ token });
 
         // Step 2: Handle error cases
         if (error) {
@@ -132,7 +143,7 @@ const SettingsPage = () => {
             return LoginPageErrors('Please check your network connection.');
           }
 
-          if (error.data?.status_code === 401) {
+          if (error.data?.status_code === 2044) {
             return autoLogout(); // token expired
           }
 
@@ -171,11 +182,11 @@ const SettingsPage = () => {
     }
 
     if (id === 13) {
-      navigation.navigate('webView', {title: 'Terms and Conditions', type: 'tac'});
+      navigation.navigate('webView', { title: 'Terms and Conditions', type: 'tac' });
     }
 
     if (id === 14) {
-      navigation.navigate('webView', {title: 'Privacy and Policy', type: 'pap'});
+      navigation.navigate('webView', { title: 'Privacy and Policy', type: 'pap' });
     }
 
     if (id === 15) {
@@ -183,7 +194,7 @@ const SettingsPage = () => {
     }
 
     if (id === 12) {
-      navigation.navigate('linkAccount', {title: 'Account Linking'});
+      navigation.navigate('linkAccount', { title: 'Account Linking' });
     }
 
     if (id === 30 || id === 17) {
@@ -225,38 +236,40 @@ const SettingsPage = () => {
     }
 
     if (id === 50) {
-      navigation.navigate('webView', {title: 'Refund Policy', type: 'refund'});
+      navigation.navigate('webView', { title: 'Refund Policy', type: 'refund' });
+    }
+
+    if (id === 41) {
+      navigation.navigate('fsPage', { title: 'Following', token, role, count: followingCount ? followingCount : 0 });
     }
   };
 
-  const RenderEachSettings = ({item, index}) => {
-    console.log('nameiui', item.iconName);
-
+  const RenderEachSettings = ({ item, index }) => {
     if (item.id === 7 || item.id === 40) {
       return (
-        <View style={{flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1)}}>
-          <Pressable style={({pressed}) => [styles.item, {backgroundColor: pressed ? '#FFF3EB' : '#fff'}]} onPress={() => handleSelectOption(item?.id)}>
-            <View style={{left: responsiveWidth(5), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(5)}}>
-              <AccMang />
+        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1) }}>
+          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#FFF3EB' : '#fff', justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
+              <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
+                <AccMang />
+              </View>
               <Text style={styles.title}>{item?.title}</Text>
             </View>
 
-            <Text style={{textAlign: 'right', marginLeft: responsiveWidth(6)}}>
-              {/* <DIcon name={"caretdown"} provider={"AntDesign"} size={responsiveWidth(3)} /> */}
-              <View style={{left: responsiveWidth(15)}}>
-                <Drops />
-              </View>
-            </Text>
+            <View>
+              <Drops />
+            </View>
           </Pressable>
 
           {openRevenue && (
             <FlatList
+              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#EAEAEA' }} />}
               data={subRevenue}
-              renderItem={({item, index}) => (
-                <Pressable style={({pressed}) => [styles.item, {paddingLeft: responsiveWidth(11)}, {backgroundColor: pressed ? '#FFF3EB' : 'transparent'}]} onPress={() => handleSelectOption(item?.id)}>
+              renderItem={({ item, index }) => (
+                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#FFF3EB' : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
                   <View
                     style={{
-                      flex: 1, // make it fill the parent
+                      left: responsiveWidth(5),
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: responsiveWidth(6),
@@ -266,7 +279,7 @@ const SettingsPage = () => {
                   </View>
                 </Pressable>
               )}
-              ItemSeparatorComponent={() => <View style={{borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#EAEAEA'}} />}
+              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#EAEAEA' }} />}
             />
           )}
         </View>
@@ -274,8 +287,8 @@ const SettingsPage = () => {
     }
 
     return (
-      <Pressable style={({pressed}) => [styles.item, {backgroundColor: pressed ? '#FFF3EB' : '#fff'}]} onPress={() => handleSelectOption(item?.id)}>
-        <View style={{left: responsiveWidth(5), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6)}}>
+      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#FFF3EB' : '#fff' }]} onPress={() => handleSelectOption(item?.id)}>
+        <View style={{ left: responsiveWidth(5), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
           <AddSvg name={item?.iconName} />
           <Text style={styles.title}>{item?.title}</Text>
         </View>
@@ -289,15 +302,15 @@ const SettingsPage = () => {
         <SectionList
           sections={role === 'creator' ? settingsList : userSettingList}
           keyExtractor={(item, index) => item + index}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <View style={styles.eachSettingsWrapper}>
-              <FlatList data={item.eachSettings} renderItem={({item, index}) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: 'black'}} />} />
+              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: 'black' }} />} />
             </View>
           )}
-          renderSectionHeader={({section: {title}}) => <Text style={styles.header}>{title}</Text>}
+          renderSectionHeader={({ section: { title } }) => <Text style={styles.header}>{title}</Text>}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
-          contentContainerStyle={{paddingTop: WIDTH_SIZES['10']}}
+          contentContainerStyle={{ paddingTop: WIDTH_SIZES['10'] }}
         />
       </View>
     </View>

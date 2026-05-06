@@ -69,56 +69,55 @@ const LabelEditsModal = () => {
     }
   };
 
+  if (!visible) return null;
   return (
-    visible && (
-      <View style={styles.overlay}>
-        <BlurView intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={[styles.dialog]} contentStyle={{padding: 0, paddingTop: 0}} onTouchOutside={() => dispatch(toggleChatRoomLabelEdit({show: false}))}>
-          <View
-            style={styles.content}
-            onLayout={event => {
-              const {height} = event.nativeEvent.layout;
-              setDialogHeight(height);
-            }}>
-            <Text style={styles.title}>Edit Labels Name</Text>
+    <View style={styles.overlay}>
+      <BlurView intensity={15} style={styles.blurBackground} />
+      <Dialog visible={visible} dialogStyle={[styles.dialog]} contentStyle={{padding: 0, paddingTop: 0}} onTouchOutside={() => dispatch(toggleChatRoomLabelEdit({show: false}))}>
+        <View
+          style={styles.content}
+          onLayout={event => {
+            const {height} = event.nativeEvent.layout;
+            setDialogHeight(height);
+          }}>
+          <Text style={styles.title}>Edit Labels Name</Text>
 
-            {/* Label 1 */}
-            <View style={[styles.labelContainer, editingIndex === 1 && {backgroundColor: '#FFF6F0'}]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#BBBBFE'}]} />
-              </View>
-              <TextInput onPress={() => setEditingIndex(1)} style={styles.input} placeholder="Label 1" placeholderTextColor="#999" value={labels.LABEL1} onChangeText={text => handleLabelChange('LABEL1', text)} />
+          {/* Label 1 */}
+          <View style={[styles.labelContainer, editingIndex === 1 && {backgroundColor: '#FFF6F0'}]}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+              <View style={[styles.icon, {backgroundColor: '#BBBBFE'}]} />
             </View>
+            <TextInput onPress={() => setEditingIndex(1)} style={styles.input} placeholder="Label 1" placeholderTextColor="#999" value={labels.LABEL1} onChangeText={text => handleLabelChange('LABEL1', text)} />
+          </View>
 
-            {/* Label 2 */}
-            <View style={[styles.labelContainer, editingIndex === 2 && {backgroundColor: '#FFF6F0'}]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#FBF7A6'}]} />
-              </View>
-              <TextInput onPress={() => setEditingIndex(2)} style={styles.input} placeholder="Label 2" placeholderTextColor="#999" value={labels.LABEL2} onChangeText={text => handleLabelChange('LABEL2', text)} />
+          {/* Label 2 */}
+          <View style={[styles.labelContainer, editingIndex === 2 && {backgroundColor: '#FFF6F0'}]}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+              <View style={[styles.icon, {backgroundColor: '#FBF7A6'}]} />
             </View>
+            <TextInput onPress={() => setEditingIndex(2)} style={styles.input} placeholder="Label 2" placeholderTextColor="#999" value={labels.LABEL2} onChangeText={text => handleLabelChange('LABEL2', text)} />
+          </View>
 
-            {/* Label 3 */}
-            <View style={[styles.labelContainer, editingIndex === 3 && {backgroundColor: '#FFF6F0'}]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#98FF98'}]} />
-              </View>
-              <TextInput onPress={() => setEditingIndex(3)} style={styles.input} placeholder="Label 3" placeholderTextColor="#999" value={labels.LABEL3} onChangeText={text => handleLabelChange('LABEL3', text)} />
+          {/* Label 3 */}
+          <View style={[styles.labelContainer, editingIndex === 3 && {backgroundColor: '#FFF6F0'}]}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+              <View style={[styles.icon, {backgroundColor: '#98FF98'}]} />
             </View>
+            <TextInput onPress={() => setEditingIndex(3)} style={styles.input} placeholder="Label 3" placeholderTextColor="#999" value={labels.LABEL3} onChangeText={text => handleLabelChange('LABEL3', text)} />
+          </View>
 
-            {/* Buttons */}
-            <View style={styles.buttonRow}>
-              <View style={styles.saveButton}>
-                <AnimatedButton title={'Save'} showOverlay={false} loading={loading} onPress={handleSave} highlightOnPress={true} highlightColor={'#FFC399'} />
-              </View>
-              <View style={styles.cancelButton}>
-                <AnimatedButton title={'Cancel'} showOverlay={false} onPress={() => dispatch(toggleChatRoomLabelEdit({show: false}))} style={{backgroundColor: '#fff'}} highlightOnPress={true} highlightColor="#FFF3EB" />
-              </View>
+          {/* Buttons */}
+          <View style={styles.buttonRow}>
+            <View style={styles.saveButton}>
+              <AnimatedButton title={'Save'} showOverlay={false} loading={loading} onPress={handleSave} highlightOnPress={true} highlightColor={'#FFC399'} />
+            </View>
+            <View style={styles.cancelButton}>
+              <AnimatedButton title={'Cancel'} showOverlay={false} onPress={() => dispatch(toggleChatRoomLabelEdit({show: false}))} style={{backgroundColor: '#fff'}} highlightOnPress={true} highlightColor="#FFF3EB" />
             </View>
           </View>
-        </Dialog>
-      </View>
-    )
+        </View>
+      </Dialog>
+    </View>
   );
 };
 

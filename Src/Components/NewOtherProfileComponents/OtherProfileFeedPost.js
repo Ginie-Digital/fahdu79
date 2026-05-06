@@ -1,25 +1,31 @@
 import {StyleSheet, View, Text, FlatList, TouchableOpacity} from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {useSelector} from 'react-redux';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import DIcon from '../../../DesiginData/DIcons';
 import {Image} from 'expo-image';
 import {Tabs} from 'react-native-collapsible-tab-view';
-import {useLazyContactInfoQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useLazyContactInfoQuery, useGetRoomIdMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {token} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {useMessageNavigation} from '../../Hook/useMessageNavigation';
+import {ActivityIndicator} from 'react-native';
+import {LoginPageErrors} from '../ErrorSnacks';
+import {triggerImpactLight} from '../../Utils/Haptics';
 
 const OtherProfileFeedPost = ({contactDescription}) => {
   console.log({contactDescription});
 
-  const {profileDetails} = useSelector(state => state.profileFeedCache.data);
+  const {profileDetails, haveFollowed} = useSelector(state => state.profileFeedCache.data);
   const token = useSelector(state => state.auth.user.token);
 
   const chatRoomObject = useSelector(state => state.roomList.data.none);
 
   const goChat = useMessageNavigation(token, profileDetails, chatRoomObject);
+
+  const [getRoomId] = useGetRoomIdMutation();
+  const [isCallLoading, setIsCallLoading] = useState(null);
 
   const data = [
     {
@@ -54,13 +60,37 @@ const OtherProfileFeedPost = ({contactDescription}) => {
     },
   ];
 
-  const handleButtonPress = index => {
+  const handleButtonPress = async index => {
+    triggerImpactLight();
     if (index === 0) {
       goChat();
+    } else if (index === 2 || index === 3) {
+      if (!haveFollowed) {
+        LoginPageErrors('Please follow the creator to initiate a call.');
+        return;
+      }
+      // Audio Call (2) or Video Call (3)
+      try {
+        setIsCallLoading(index);
+        const data = {user_id: {user1: profileDetails?._id}};
+        const response = await getRoomId({token, data});
+
+        if (response?.data?.statusCode === 200) {
+          const roomId = response?.data?.data?._id;
+          navigate('SelectDuration', {
+            callType: index === 2 ? 'Audio' : 'Video',
+            userId: profileDetails?._id,
+            roomId: roomId,
+          });
+        }
+      } catch (error) {
+        console.error('Error initiating call from profile:', error);
+      } finally {
+        setIsCallLoading(null);
+      }
     } else {
       console.log('index ', index);
     }
-
   };
 
   const card = ({item, index}) => {
@@ -89,25 +119,43 @@ const OtherProfileFeedPost = ({contactDescription}) => {
 
         {/* Pricing */}
         <View style={styles.priceRow}>
+          {/* Followers Pricing */}
           <View style={styles.priceBox}>
-            <Text style={styles.priceValue}>{item?.followerFee || 0}</Text>
-            <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
-            <Text style={styles.priceLabel}>/{`${index === 0 ? 'Msg.' : 'min'}`} Foll</Text>
+            <Text style={[styles.priceTitle, {color: '#314158'}]}>Followers</Text>
+            <View style={styles.priceRightContainer}>
+              <Text style={styles.priceValue}>{item?.followerFee || 0}</Text>
+              <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
+              <Text style={styles.priceLabel}>/{`${index === 0 ? 'msg' : 'min'}`}</Text>
+            </View>
           </View>
 
+          {/* Subscribers Pricing */}
           <View style={styles.priceBox}>
-            <Text style={styles.priceValue}>{item?.subscriptionFee || 0}</Text>
-            <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
-            <Text style={styles.priceLabel}>/{`${index === 0 ? 'Msg.' : 'min'}`} Subs.</Text>
+            <Text style={[styles.priceTitle, {color: '#314158'}]}>Subscribers</Text>
+            <View style={styles.priceRightContainer}>
+              <Text style={styles.priceValue}>{item?.subscriptionFee || 0}</Text>
+              <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
+              <Text style={styles.priceLabel}>/{`${index === 0 ? 'msg' : 'min'}`}</Text>
+            </View>
           </View>
         </View>
 
         {/* CTA Button */}
-        <TouchableOpacity style={styles.callButton} onPress={() => handleButtonPress(index)}>
-          <View style={{height: 22, width: 22}}>
-            <Image source={data[index]?.url} contentFit="contain" style={{flex: 1}} />
-          </View>
-          <Text style={styles.callButtonText}>{data[index]?.buttonText + ' Now'}</Text>
+        <TouchableOpacity 
+          style={[styles.callButton, isCallLoading === index && {opacity: 0.7}]} 
+          onPress={() => handleButtonPress(index)}
+          disabled={isCallLoading !== null}
+        >
+          {isCallLoading === index ? (
+            <ActivityIndicator size="small" color="#1e1e1e" />
+          ) : (
+            <>
+              <View style={{height: 22, width: 22}}>
+                <Image source={data[index]?.url} contentFit="contain" style={{flex: 1}} />
+              </View>
+              <Text style={styles.callButtonText}>{data[index]?.buttonText + ' Now'}</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -219,28 +267,37 @@ const styles = StyleSheet.create({
   },
 
   priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     marginBottom: 16,
-    flexWrap: 'wrap', // ✅ allows wrapping on small screens
-    gap: 8, // ✅ adds consistent spacing between boxes
+    gap: 12, // Increased gap for vertical spacing
   },
 
   priceBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between', // Push content to edges
     backgroundColor: '#FFF3EB',
-    borderRadius: 14,
+    borderRadius: 14, // Back to 14 as per user request
     paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     borderWidth: 1.5,
     borderColor: '#1e1e1e',
-    flexWrap: 'wrap',
-    flex: 1, // ✅ ensures both boxes share space equally
+    width: '100%', // Full width
+  },
+
+  priceTitle: {
+    fontSize: 15,
+    fontFamily: 'Rubik-SemiBold', // Make it bold/semibold
+    color: '#344054', // Dark slate/navy color from image (approx) or #1e1e1e
+  },
+
+  priceRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   priceValue: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Rubik-Medium',
     color: '#1e1e1e',
     marginRight: 4,
@@ -253,7 +310,7 @@ const styles = StyleSheet.create({
   },
 
   priceLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Rubik-Regular',
     color: '#1e1e1e',
   },
@@ -263,15 +320,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFA86B',
-    paddingVertical: 12,
-    borderRadius: 14,
+    paddingVertical: 14, // Slightly taller
+    borderRadius: 14, // Keep consistent or match priceBox
     borderWidth: 1.5,
     borderColor: '#1e1e1e',
   },
 
   callButtonText: {
-    fontSize: 14,
-    fontFamily: 'Rubik-SemiBold',
+    fontSize: 16, // Slightly larger
+    fontFamily: 'Rubik-Bold',
     color: '#1e1e1e',
     marginLeft: 8,
   },

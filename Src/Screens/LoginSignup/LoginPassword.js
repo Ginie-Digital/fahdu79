@@ -1,37 +1,37 @@
-import {Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform} from 'react-native';
-import React, {useCallback, useState, useEffect, useRef} from 'react';
-import {TextInput} from 'react-native-gesture-handler';
-import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
-import {LoginPageErrors, VerifyEmail} from '../../Components/ErrorSnacks';
+import { Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform } from 'react-native';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { TextInput } from 'react-native-gesture-handler';
+import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
+import { LoginPageErrors, VerifyEmail } from '../../Components/ErrorSnacks';
 import axios from 'axios';
-import {useDispatch, useSelector} from 'react-redux';
-import {currentUserInformation} from '../../../Redux/Slices/NormalSlices/AuthSlice';
-import {checkApplicationPermission} from '../../../Permissions';
-import {enableNotificationModal, toggleEmailVerificationModal, toggleForgetPassword, toggleVerficationScreen} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {selectionTwin, validEmail} from '../../../DesiginData/Utility';
+import { useDispatch, useSelector } from 'react-redux';
+import { currentUserInformation } from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { checkApplicationPermission } from '../../../Permissions';
+import { enableNotificationModal, toggleEmailVerificationModal, toggleForgetPassword, toggleVerficationScreen, toggleShowOnboarding } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { selectionTwin, validEmail } from '../../../DesiginData/Utility';
 import DeviceInfo from 'react-native-device-info';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {nTwins} from '../../../DesiginData/Utility';
+import { nTwins } from '../../../DesiginData/Utility';
 import Back from '../../../Assets/svg/back.svg';
 import DIcon from '../../../DesiginData/DIcons';
-import {navigate} from '../../../Navigation/RootNavigation';
-import {setKeyboardHeight} from '../../../Redux/Slices/NormalSlices/AppData/KeyboardPropertiesSlice';
+import { navigate } from '../../../Navigation/RootNavigation';
+import { setKeyboardHeight } from '../../../Redux/Slices/NormalSlices/AppData/KeyboardPropertiesSlice';
 import ForgetPassword from '../../Components/LoginComponent/ForgetPassword';
 import Eye from '../../../Assets/svg/eye.svg';
 import CutEye from '../../../Assets/svg/cutEye.svg';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
 import InputOverlay from '../../Components/InputOverlay';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AnimatedButton from '../../Components/AnimatedButton';
-import {Image} from 'expo-image';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import EmailVerificationModal from './EmailVerificationModal';
-import {setCredentials} from '../../../Redux/Slices/NormalSlices/TempCredentials';
+import { setCredentials } from '../../../Redux/Slices/NormalSlices/TempCredentials';
 import Authenticator from '../../Components/LoginComponent/Authenticator';
 import ChevronLoader from '../../ChevronLoader';
 
-const LoginPassword = ({route}) => {
+const LoginPassword = ({ route }) => {
   const [password, setPassword] = useState('');
   const passwordRef = useRef(null);
   const [authToken, setAuthToken] = useState('');
@@ -39,10 +39,52 @@ const LoginPassword = ({route}) => {
   const [type, setType] = useState('');
   const dispatcher = useDispatch();
   const [isPasswordVisible, setPasswordVisible] = useState(false);
+  const [isLoginDisabled, setIsLoginDisabled] = useState(false);
+  const [loginCheckMessage, setLoginCheckMessage] = useState('');
 
   const showEmailVerificationModal = useSelector(state => state.hideShow.visibility.emailVerification);
 
-  const {isKeyboardVisible} = useKeyboardHook();
+  const getApnToken = useSelector(state => state.auth.user);
+
+  console.log({ getApnToken });
+
+  const { isKeyboardVisible } = useKeyboardHook();
+
+  // Check login availability on page open
+  useEffect(() => {
+    const checkLoginAvailability = async () => {
+      try {
+        const response = await axios.post('https://api.fahdu.com/api/user/login/check', {
+          email: route?.params?.email?.trim(),
+        });
+
+        // If data is false, disable login
+        if (response.data?.data === false) {
+          setIsLoginDisabled(true);
+          setLoginCheckMessage(response.data?.message || '');
+          if (response.data?.message) {
+            LoginPageErrors(response.data.message);
+          }
+        }
+      } catch (error) {
+        // Handle error responses
+        if (error.response?.data?.message) {
+          setIsLoginDisabled(true);
+          setLoginCheckMessage(error.response.data.message);
+          LoginPageErrors(error.response.data.message);
+        }
+        // Log other errors but don't disable login
+        else {
+          console.log('Login check error:', error);
+        }
+      }
+    };
+
+    // Only check if email is available
+    if (route?.params?.email) {
+      checkLoginAvailability();
+    }
+  }, [route?.params?.email]);
 
   const afterLoginProcess = useCallback(async data => {
     await AsyncStorage.setItem('data', data?.data?.token);
@@ -87,6 +129,12 @@ const LoginPassword = ({route}) => {
   }, []);
 
   async function logInHandler() {
+    // Check if login is disabled
+    if (isLoginDisabled) {
+      LoginPageErrors('Login is currently unavailable. Please try again later.');
+      return;
+    }
+
     Keyboard.dismiss();
 
     if (route?.params?.email?.trim()?.length === 0) {
@@ -104,17 +152,17 @@ const LoginPassword = ({route}) => {
         setLoading(true);
 
         try {
-          const {data, status, request} = await axios.post(
-            'https://api.fahdu.in/api/user/signin',
-
-            {email: route?.params?.email?.trim(), password: password.trim()},
+          const { data, status, request } = await axios.post(
+            'https://api.fahdu.com/api/user/signin',
+            { 
+              email: route?.params?.email?.trim(), 
+              password: password.trim(), 
+              apnToken: getApnToken?.apnToken 
+            },
             {
               headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'System-Agent': `${DeviceInfo.getBrand()} ${DeviceInfo.getModel()}`,
-                'App-Platform': `${Platform.OS}`,
+                'Content-Type': 'application/json',
               },
-              timeout: 5000,
             },
           );
 
@@ -124,44 +172,58 @@ const LoginPassword = ({route}) => {
             setLoading(false);
             afterLoginProcess(data);
             setAuthToken(data?.data?.authToken);
+            dispatcher(toggleShowOnboarding({ show: data?.data?.user?.showOnboardingCard ?? false }));
           } else if (data?.statusCode === 202) {
             setLoading(false);
             setType(data?.data?.email);
             setAuthToken(data?.data?.authToken);
-            dispatcher(toggleVerficationScreen({show: 1}));
+            dispatcher(toggleVerficationScreen({ show: 1 }));
           } else {
             setLoading(false);
             LoginPageErrors('Something Went Wrong');
           }
         } catch (e) {
-          console.log(e);
+          setLoading(false);
+          
+          // Detailed error logging
+          console.log('=== LOGIN ERROR DEBUG ===');
+          console.log('Error name:', e?.name);
+          console.log('Error message:', e?.message);
+          console.log('Error code:', e?.code);
+          console.log('Error response status:', e?.response?.status);
+          console.log('Error response data:', JSON.stringify(e?.response?.data));
+          console.log('Error request:', e?.request ? 'Request was made' : 'No request');
+          console.log('Error config:', JSON.stringify(e?.config));
+          console.log('=========================');
 
+          // Handle specific error cases
+          if (e?.response?.data?.message) {
+            const errorMessage = e.response.data.message;
+            
+            if (errorMessage.search('Invalid') >= 0) {
+              LoginPageErrors(errorMessage);
+              return;
+            }
+
+            if (errorMessage.search('verify') >= 0) {
+              VerifyEmail('Email not verified, link sent to your mail please verify', route?.params?.email?.trim(), e?.response?.data?.data?.token);
+              dispatcher(toggleEmailVerificationModal({ show: true }));
+              dispatcher(setCredentials({ data: { email: route?.params?.email?.trim(), password: password.trim() } }));
+              return;
+            }
+            
+            // Show server error message
+            LoginPageErrors(errorMessage);
+            return;
+          }
+
+          // Network error or timeout
           if (e.message === 'Network Error') {
             LoginPageErrors('Please check your network');
-            setLoading(false);
+          } else if (e.code === 'ECONNABORTED') {
+            LoginPageErrors('Request timed out. Please try again.');
           } else {
-            LoginPageErrors('Something went wrong, please try again later');
-            console.log('Error at 160');
-            setLoading(false);
-          }
-
-          if (e?.response?.data?.message.search('Invalid') >= 0) {
-            console.log('luada');
-
-            console.log(e?.response?.data?.message);
-            LoginPageErrors(e?.response?.data?.message);
-            setLoading(false);
-            return;
-          }
-
-          if (e?.response?.data?.message.search('verify') >= 0) {
-            VerifyEmail('Email not verified, link sent to your mail please verify', route?.params?.email?.trim(), e?.response?.data?.data?.token);
-            setLoading(false);
-
-            dispatcher(toggleEmailVerificationModal({show: true}));
-            dispatcher(setCredentials({data: {email: route?.params?.email?.trim(), password: password.trim()}}));
-
-            return;
+            LoginPageErrors(e?.message || 'Something went wrong, please try again later');
           }
         }
       } else {
@@ -171,11 +233,11 @@ const LoginPassword = ({route}) => {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView testID="login-password-screen" style={{ flex: 1, backgroundColor: '#fff' }}>
       {loading && <ChevronLoader />}
 
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigate('LoginEmail')}>
+        <TouchableOpacity testID="login-password-back-button" accessibilityLabel="login-password-back-button" style={styles.backButton} onPress={() => navigate('LoginEmail')}>
           <Back />
         </TouchableOpacity>
         <Text style={styles.heading}>Login</Text>
@@ -185,6 +247,8 @@ const LoginPassword = ({route}) => {
         <View>
           <View style={styles.textInputContainer}>
             <TextInput
+              testID="login-password-input"
+              accessibilityLabel="login-password-input"
               selectionColor={selectionTwin()}
               selectionHandleColor={'#ffa86b'}
               cursorColor={'#1e1e1e'}
@@ -196,14 +260,22 @@ const LoginPassword = ({route}) => {
               style={styles.textInputs}
               secureTextEntry={!isPasswordVisible}
               onChangeText={setPassword}
+              editable={!isLoginDisabled}
             />
-            <Pressable style={styles.iconContainer} onPress={() => setPasswordVisible(!isPasswordVisible)}>
+            <Pressable testID="login-password-toggle-visibility" accessibilityLabel="login-password-toggle-visibility" style={styles.iconContainer} onPress={() => setPasswordVisible(!isPasswordVisible)}>
               {isPasswordVisible ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
 
-          <Pressable style={{alignSelf: 'flex-end', marginTop: responsiveWidth(2.93)}} onPress={() => navigate('forgetPassword', {email: route?.params?.email})}>
-            <Text style={{fontFamily: 'Rubik-Medium', fontSize: responsiveFontSize(1.48), color: '#1e1e1e'}}>Forgot Password?</Text>
+          <Pressable testID="login-forgot-password-link" accessibilityLabel="login-forgot-password-link" style={{ alignSelf: 'flex-end', marginTop: responsiveWidth(2.93) }} onPress={() => !isLoginDisabled && navigate('forgetPassword', { email: route?.params?.email })} disabled={isLoginDisabled}>
+            <Text
+              style={{
+                fontFamily: 'Rubik-Medium',
+                fontSize: responsiveFontSize(1.48),
+                color: isLoginDisabled ? '#B2B2B2' : '#1e1e1e',
+              }}>
+              Forgot Password?
+            </Text>
           </Pressable>
 
           <InputOverlay
@@ -215,20 +287,18 @@ const LoginPassword = ({route}) => {
           />
         </View>
 
-        <AnimatedButton title={'Login'} onPress={logInHandler} loading={loading} />
+        <AnimatedButton testID="login-password-submit-button" title={'Login'} onPress={logInHandler} loading={loading} disabled={isLoginDisabled} />
 
-        {/* <View style={styles.forgotPasswordContainer}>
-          <Pressable onPress={() => navigate('forgetPassword', {email: route?.params?.email})}>
-            <Text style={styles.signupText}>
-              Forgotten password? <Text style={styles.signupLink}>Recover</Text>
-            </Text>
-          </Pressable>
-        </View> */}
+        {isLoginDisabled && loginCheckMessage && (
+          <View style={styles.warningContainer}>
+            <Text style={styles.warningText}>{loginCheckMessage}</Text>
+          </View>
+        )}
 
-        <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => navigate('SignupEmail')}>
+        <TouchableOpacity testID="login-password-signup-link" accessibilityLabel="login-password-signup-link" style={styles.alreadyAccountContainer} onPress={() => !isLoginDisabled && navigate('SignupEmail')} disabled={isLoginDisabled}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={styles.alreadyAccountText}>Don't you have an account? </Text>
-            <Text style={styles.forgotTextTitle}>SignUp</Text>
+            <Text style={[styles.alreadyAccountText, isLoginDisabled && styles.disabledText]}>Don't you have an account?</Text>
+            <Text style={[styles.forgotTextTitle, isLoginDisabled && styles.disabledText]}>SignUp</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -251,7 +321,6 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
   },
   heading: {
-    // marginTop: responsiveWidth(5),
     fontFamily: 'Rubik-Bold',
     color: '#1e1e1e',
     fontSize: 24,
@@ -262,11 +331,6 @@ const styles = StyleSheet.create({
     color: '#1e1e1e',
     fontSize: 14,
     marginTop: Platform.OS === 'android' ? 0 : 10,
-  },
-  subHeadHighlight: {
-    fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
-    fontSize: 14,
   },
   subHeadHighlight: {
     fontFamily: 'Rubik-Medium',
@@ -297,7 +361,6 @@ const styles = StyleSheet.create({
     height: responsiveHeight(6.65),
     borderRadius: responsiveWidth(3.73),
   },
-
   loginButtonContainer: {
     marginTop: responsiveWidth(5),
     alignSelf: 'center',
@@ -332,6 +395,8 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginRight: responsiveWidth(4),
+    height: 19,
+    width: 19,
   },
   signupText: {
     textAlign: 'center',
@@ -340,11 +405,6 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     color: '#FF7F50',
-  },
-  iconContainer: {
-    marginRight: responsiveWidth(4),
-    height: 19,
-    width: 19,
   },
   eyeStyle: {
     flex: 1,
@@ -369,5 +429,23 @@ const styles = StyleSheet.create({
     color: '#FF7F50',
     fontSize: 14,
     fontFamily: 'Rubik-Medium',
+  },
+  disabledText: {
+    color: '#B2B2B2',
+    opacity: 0.5,
+  },
+  warningContainer: {
+    marginTop: responsiveWidth(3),
+    padding: responsiveWidth(3),
+    backgroundColor: '#FFF3CD',
+    borderRadius: responsiveWidth(2),
+    borderWidth: 1,
+    borderColor: '#FFE69C',
+  },
+  warningText: {
+    fontFamily: 'Rubik-Regular',
+    fontSize: responsiveFontSize(1.6),
+    color: '#856404',
+    textAlign: 'center',
   },
 });

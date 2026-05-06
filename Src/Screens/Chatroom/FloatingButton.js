@@ -1,15 +1,24 @@
 import React from 'react';
-import {Pressable, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Image} from 'expo-image'; // or use react-native's Image if needed
+import {Pressable, StyleSheet} from 'react-native';
+import {Image} from 'expo-image';
 import {useDispatch} from 'react-redux';
 import {toggleCombineSelectorModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+
+const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const FloatingButton = () => {
   const dispatch = useDispatch();
 
   return (
     <Pressable
-      onPress={() => dispatch(toggleCombineSelectorModal({show: true}))}
+      onPress={() => {
+        ReactNativeHapticFeedback.trigger("impactLight", hapticOptions);
+        dispatch(toggleCombineSelectorModal({show: true}));
+      }}
       style={({pressed}) => [
         styles.fab,
         {backgroundColor: pressed ? '#FFEDE0' : 'white'}, // change bg when pressed

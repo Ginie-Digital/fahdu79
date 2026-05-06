@@ -1,5 +1,5 @@
-import {createSlice} from '@reduxjs/toolkit';
-import {resetAll} from '../../../Actions';
+import { createSlice } from '@reduxjs/toolkit';
+import { resetAll } from '../../../Actions';
 
 const initialState = {
   data: {
@@ -24,6 +24,13 @@ const myProfileFeedCacheSlice = createSlice({
       state.data.content = [];
     },
 
+    appendFeedCacheMyPosts: (state, action) => {
+      const newPosts = action.payload.data.filter(
+        (newPost) => !state.data.content.some((existingPost) => existingPost._id === newPost._id)
+      );
+      state.data.content = [...state.data.content, ...newPosts];
+    },
+
     likeDislikeMyPost: (state, action) => {
       if (action.payload.type === 'INC') {
         state.data.content[action.payload.index].count.likes++;
@@ -37,7 +44,7 @@ const myProfileFeedCacheSlice = createSlice({
     myProfileIncrementCommentCount: (state, action) => {
       console.log('Incrementingt count of comment', action.payload.postId);
 
-      const {postId} = action.payload;
+      const { postId } = action.payload;
 
       console.log('PostId', postId);
 
@@ -116,7 +123,7 @@ const myProfileFeedCacheSlice = createSlice({
   },
 });
 
-export const {setFeedCacheMyPost, resetFeedMyPost, likeDislikeMyPost, manipulateTotalPagesMyPost, manipulateCurrentPageMyPost, mainpulateFirstPageCreatedAtMyPost, setMyProfileDetails, deleteMyProfilePost, pinMyProfilePost, editMyPostCaption, addNewPostToMyProfileCache, myProfileIncrementCommentCount} =
+export const { setFeedCacheMyPost, resetFeedMyPost, appendFeedCacheMyPosts, likeDislikeMyPost, manipulateTotalPagesMyPost, manipulateCurrentPageMyPost, mainpulateFirstPageCreatedAtMyPost, setMyProfileDetails, deleteMyProfilePost, pinMyProfilePost, editMyPostCaption, addNewPostToMyProfileCache, myProfileIncrementCommentCount } =
   myProfileFeedCacheSlice.actions;
 
 export default myProfileFeedCacheSlice.reducer;

@@ -1,112 +1,59 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Dimensions,
-  ImageBackground,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import {StyleSheet, Text, View, Dimensions, ImageBackground, Pressable, ActivityIndicator, Platform} from 'react-native';
 import Animated, {runOnUI} from 'react-native-reanimated';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {VideoView, useVideoPlayer} from 'expo-video';
-import {
-  responsiveFontSize,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import DIcon from '../../../DesiginData/DIcons';
-import ReadMore from '@fawazahmed/react-native-read-more';
 import {LoginPageErrors} from '../ErrorSnacks';
-import {
-  useLazyGetAllCommentsQuery,
-  useLazyIsValidFollowQuery,
-  useLikeApiMutation,
-} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {
-  GestureHandlerRootView,
-  TapGestureHandler,
-  State,
-  Gesture,
-} from 'react-native-gesture-handler';
+import {useLazyGetAllCommentsQuery, useLazyIsValidFollowQuery, useLikeApiMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {GestureHandlerRootView, TapGestureHandler, State, Gesture} from 'react-native-gesture-handler';
 import CreateCommentBottomSheet from './CreateCommentBottomSheet';
-import {
-  toggleCommentBottomSheet,
-  toggleLoadingComments,
-  toggleSendPostTipModal,
-} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {
-  savePostComments,
-  setCurrentCommentDetails,
-  setTotalPages,
-} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
+import {toggleCommentBottomSheet, toggleLoadingComments, toggleSendPostTipModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
-import PostTipModal from './PostTipModal';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
-import {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import {useAnimatedStyle, useSharedValue, withSpring} from 'react-native-reanimated';
 import {TouchableOpacity} from '@gorhom/bottom-sheet';
 import {Image} from 'expo-image';
+import MentionText from '../MentionText';
+
+const CustomReadMore = ({ text, textStyle, seeMoreStyle, numberOfLines = 2 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const showButton = text?.length > 70; // Threshold for showing See More based on ~2 lines
+
+  return (
+    <View style={{ width: '100%', alignItems: 'flex-start' }}>
+      <MentionText
+        content={text}
+        style={textStyle}
+        numberOfLines={isExpanded ? undefined : (showButton ? numberOfLines : undefined)}
+        ellipsizeMode="tail"
+      />
+      {showButton && (
+        <Text
+          style={[seeMoreStyle, { marginTop: 4, backgroundColor: 'transparent', paddingLeft: 0, paddingRight: 0 }]}
+          onPress={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? 'See less' : 'See more'}
+        </Text>
+      )}
+    </View>
+  );
+};
 
 const HomeVideoPlayer = ({route}) => {
-  const {
-    videoUrl,
-    coverUrl,
-    userImage,
-    displayName,
-    description,
-    count,
-    postId,
-    liked,
-    role,
-    id,
-  } = route?.params;
+  const {videoUrl, coverUrl, userImage, displayName, description, count, postId, liked, role, id} = route?.params;
 
-  console.log('desc', description);
-
-  const currentUserId = useSelector(state => state.auth.user.currentUserId);
-
-  const [likeApi] = useLikeApiMutation();
-
-  const [toPlay, setToPlay] = useState(true);
-
-  const [mute, setMute] = useState(false);
-
-  const [like, setLike] = useState(count?.likes);
-
-  const [buffering, setBuffering] = useState(false);
-
-  const [showSub, setShowSub] = useState(false);
-
-  const [hasLiked, setHasLiked] = useState(liked);
-
-  const dispatch = useDispatch();
-
-  const navigation = useNavigation();
-
-  const token = useSelector(state => state.auth.user.token);
-
-  const [childPressed, setChildPressed] = React.useState(false);
-
-  const currentUserInfo = useSelector(state => state.auth.user);
-
-  const [getAllComments] = useLazyGetAllCommentsQuery();
-
-  const doubleTapRef = useRef(null);
-
-  // Initialize Expo Video Player
   const player = useVideoPlayer(videoUrl, player => {
-    player.loop = false;
-    player.muted = mute;
+    player.loop = true;
     player.play();
   });
 
-  // Handle play/pause state changes
+  const [toPlay, setToPlay] = useState(true);
+  const [mute, setMute] = useState(false);
+
   useEffect(() => {
     if (toPlay) {
       player.play();
@@ -115,36 +62,34 @@ const HomeVideoPlayer = ({route}) => {
     }
   }, [toPlay]);
 
-  // Handle mute state changes
   useEffect(() => {
     player.muted = mute;
   }, [mute]);
 
-  // Listen to player status for buffering state
+  const currentUserId = useSelector(state => state.auth.user.currentUserId);
+  const [likeApi] = useLikeApiMutation();
+  const [like, setLike] = useState(count?.likes);
+  const [buffering, setBuffering] = useState(false);
+  const [showSub, setShowSub] = useState(false);
+  const [hasLiked, setHasLiked] = useState(liked);
+
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+  const token = useSelector(state => state.auth.user.token);
+  const [childPressed, setChildPressed] = React.useState(false);
+  const currentUserInfo = useSelector(state => state.auth.user);
+  const [getAllComments] = useLazyGetAllCommentsQuery();
+  const doubleTapRef = useRef(null);
+
   useEffect(() => {
-    const subscription = player.addListener('statusChange', status => {
-      console.log('Player status:', status);
-
-      // Handle buffering
-      if (status === 'loading' || status === 'readyToPlay') {
-        setBuffering(status === 'loading');
-      }
-
-      // Handle errors
-      if (status === 'error') {
-        console.log('Video error occurred');
-        LoginPageErrors('Error loading video');
-      }
+    const subscription = player.addListener('statusChange', (status) => {
+      setBuffering(status === 'loading' || status === 'buffering');
     });
-
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [player]);
 
   const onSingleTap = event => {
     if (event.nativeEvent.state === State.ACTIVE) {
-      console.log('Screen tapped!');
       setToPlay(!toPlay);
     }
   };
@@ -166,67 +111,27 @@ const HomeVideoPlayer = ({route}) => {
         setHasLiked(!hasLiked);
         return;
       }
-
       LoginPageErrors(error?.data?.message);
-
       return;
-    } else {
-      console.log(data);
     }
   }, [postId, hasLiked]);
 
   const Mute = useCallback(() => {
     return (
-      <View
-        style={{
-          height: responsiveWidth(7),
-          width: responsiveWidth(7),
-          borderRadius: responsiveWidth(20),
-          backgroundColor: '#00000060',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-        <Image
-          source={
-            mute
-              ? require('../../../Assets/Images/mute.png')
-              : require('../../../Assets/Images/unmute.png')
-          }
-          style={{
-            height: responsiveWidth(4),
-            width: responsiveWidth(4),
-            resizeMode: 'contain',
-            alignSelf: 'center',
-          }}
-        />
+      <View style={{height: responsiveWidth(7), width: responsiveWidth(7), borderRadius: responsiveWidth(20), backgroundColor: '#00000060', justifyContent: 'center', alignItems: 'center'}}>
+        <Image source={mute ? require('../../../Assets/Images/mute.png') : require('../../../Assets/Images/unmute.png')} style={{height: responsiveWidth(4), width: responsiveWidth(4), resizeMode: 'contain', alignSelf: 'center'}} />
       </View>
     );
   }, [mute]);
 
   const handleOpenCommentSheet = async (id, focus) => {
     dispatch(toggleLoadingComments({show: true}));
-
     dispatch(toggleCommentBottomSheet({info: {show: 1, focus}}));
-
-    console.log(id, 'POSTID');
-
     const {data, error} = await getAllComments({token, _id: id});
-
-    const metadata = data?.data?.metadata[0]; // { total, page, limit }
-    const totalPages = Math.ceil(metadata?.total / metadata?.limit);
-
-    console.log(totalPages, '✅✅✅✅✅');
-
-    dispatch(setTotalPages({totalPages}));
-
-    console.log('Comments errors', error);
-
-    if (error) {
-      console.log(error);
-      LoginPageErrors(error.message);
-    }
-
     if (data) {
+      const metadata = data?.data?.metadata[0];
+      const totalPages = Math.ceil(metadata?.total / metadata?.limit);
+      dispatch(setTotalPages({totalPages}));
       dispatch(savePostComments({comments: data?.data?.comments}));
       dispatch(toggleLoadingComments({show: false}));
       dispatch(setCurrentCommentDetails({data: {id}}));
@@ -237,27 +142,19 @@ const HomeVideoPlayer = ({route}) => {
 
   useEffect(() => {
     const getValidFollow = async () => {
-      const {data, error} = await isValidFollow({token, userName: displayName});
-
-      if (data) {
-        setShowSub(!data?.data?.subscribe);
-      }
-
-      if (error) {
-        console.log(error?.data);
-      }
+      const {data} = await isValidFollow({token, userName: displayName});
+      if (data) setShowSub(!data?.data?.subscribe);
     };
-
     getValidFollow();
   }, []);
 
   const handleGoToOthersProfile = useCallback(() => {
-    if (currentUserInfo?.currentUserId !== id) {
+    if (currentUserId !== id) {
       navigation.navigate('othersProfile', {userName: displayName, userId: id});
     } else {
-      console.log('Get fuck out of here...');
+      navigation.navigate('profile');
     }
-  }, [currentUserInfo, id, displayName]);
+  }, [currentUserId, id, displayName]);
 
   return (
     <TapGestureHandler
@@ -267,20 +164,7 @@ const HomeVideoPlayer = ({route}) => {
       enabled={!childPressed}>
       <View style={styles.container} pointerEvents="box-none">
         <View source={{uri: coverUrl}} style={styles.videoContainer}>
-          <Image
-            blurRadius={50}
-            source={{uri: coverUrl}}
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: '100%',
-              height: '100%',
-              opacity: 0.5,
-            }}
-          />
+          <Image blurRadius={50} source={{uri: coverUrl}} style={{position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, width: '100%', height: '100%', opacity: 0.5}} />
 
           <VideoView
             player={player}
@@ -289,38 +173,17 @@ const HomeVideoPlayer = ({route}) => {
             nativeControls={false}
           />
 
-          <View
-            style={[styles.overLayContainer]}
-            onPress={() => setToPlay(!toPlay)}>
+          <View style={[styles.overLayContainer]} onPress={() => setToPlay(!toPlay)}>
             <View style={styles.bottomIntractionContainer}>
-              <View style={{height: responsiveWidth(30)}} />
               <View style={styles.postDescriptionContainer}>
                 <View style={styles.headerLeftWrapper}>
                   <View style={styles.headerLeftContentContainer}>
-                    <Pressable
-                      style={[
-                        styles.profileImageContainer,
-                        {borderColor: 'white', borderWidth: 1},
-                      ]}
-                      onPress={() => handleGoToOthersProfile()}>
-                      <Image
-                        placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
-                        source={userImage}
-                        resizeMethod="resize"
-                        style={styles.profileImage}
-                      />
+                    <Pressable style={[styles.profileImageContainer, {borderColor: 'white', borderWidth: 1}]} onPress={() => handleGoToOthersProfile()}>
+                      <Image placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={userImage} resizeMethod="resize" style={styles.profileImage} />
                     </Pressable>
 
-                    <Pressable
-                      style={styles.headerInformation}
-                      onPress={() => handleGoToOthersProfile()}>
-                      <Text
-                        style={[
-                          styles.userName,
-                          {color: '#fff', maxWidth: responsiveWidth(40)},
-                        ]}
-                        numberOfLines={1}
-                        ellipsizeMode="tail">
+                    <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile()}>
+                      <Text style={[styles.userName, {color: '#fff', maxWidth: responsiveWidth(40)}]} numberOfLines={1} ellipsizeMode="tail">
                         {displayName}
                       </Text>
 
@@ -329,7 +192,6 @@ const HomeVideoPlayer = ({route}) => {
                           style={styles.subscribeContainer}
                           onPress={() => {
                             setToPlay(false);
-
                             navigation.navigate('subscribeCreator', {
                               name: displayName,
                               profileImageUrl: userImage,
@@ -337,136 +199,56 @@ const HomeVideoPlayer = ({route}) => {
                               id,
                             });
                           }}>
-                          <Text
-                            style={[
-                              styles.userName,
-                              {color: 'white', fontFamily: 'Rubik-Medium'},
-                            ]}>
-                            Subscribe
-                          </Text>
+                          <Text style={[styles.userName, {color: 'white', fontFamily: 'Rubik-Medium'}]}>Subscribe</Text>
                         </Pressable>
                       )}
                     </Pressable>
                   </View>
                 </View>
 
-                <ReadMore
-                  animate
-                  numberOfLines={2}
-                  style={styles.bioText}
-                  seeMoreStyle={styles.seeMoreLess}
-                  seeLessStyle={styles.seeMoreLess}>
-                  {description}
-                </ReadMore>
+                <View style={{marginTop: responsiveWidth(2)}}>
+                  <CustomReadMore 
+                    text={description} 
+                    textStyle={styles.bioText} 
+                    seeMoreStyle={styles.seeMoreLess} 
+                  />
+                </View>
               </View>
 
               <View style={styles.postInteraction}>
-                <Pressable
-                  style={styles.interactorContainer}
-                  onPressIn={() => setChildPressed(true)}
-                  onPressOut={() => setChildPressed(false)}
-                  onPress={sendLike}>
-                  <DIcon
-                    color={hasLiked ? '#ff6961' : '#fff'}
-                    provider={'AntDesign'}
-                    name={'heart'}
-                    size={responsiveWidth(7)}
-                  />
+                <Pressable style={styles.interactorContainer} onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} onPress={sendLike}>
+                  <DIcon color={hasLiked ? '#ff6961' : '#fff'} provider={'AntDesign'} name={'heart'} size={responsiveWidth(7)} />
                   <Text style={styles.interactorText}>{like}</Text>
                 </Pressable>
 
-                <Pressable
-                  onPress={() => handleOpenCommentSheet(postId, false)}
-                  onPressIn={() => setChildPressed(true)}
-                  onPressOut={() => setChildPressed(false)}
-                  style={styles.interactorContainer}>
-                  <DIcon
-                    color={'#fff'}
-                    provider={'Ionicons'}
-                    name={'chatbubble-sharp'}
-                    size={responsiveWidth(7.5)}
-                  />
+                <Pressable onPress={() => handleOpenCommentSheet(postId, false)} onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} style={styles.interactorContainer}>
+                  <DIcon color={'#fff'} provider={'Ionicons'} name={'chatbubble-sharp'} size={responsiveWidth(7.5)} />
                   <Text style={styles.interactorText}>{count?.comments}</Text>
                 </Pressable>
 
                 {id !== currentUserId && (
-                  <Pressable
-                    style={styles.interactorContainer}
-                    onPressIn={() => setChildPressed(true)}
-                    onPressOut={() => setChildPressed(false)}
-                    onPress={() =>
-                      dispatch(
-                        toggleSendPostTipModal({info: {show: true, postId}}),
-                      )
-                    }>
-                    <Image
-                      source={require('../../../Assets/Images/Coin.png')}
-                      style={{
-                        height: responsiveWidth(7),
-                        width: responsiveWidth(7),
-                        resizeMode: 'contain',
-                        alignSelf: 'center',
-                      }}
-                    />
-                    <Text
-                      style={[
-                        styles.interactorText,
-                        {fontFamily: 'Rubik-Bold'},
-                      ]}>
-                      Tip
-                    </Text>
+                  <Pressable style={styles.interactorContainer} onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} onPress={() => dispatch(toggleSendPostTipModal({info: {show: true, postId}}))}>
+                    <Image source={require('../../../Assets/Images/Coin.png')} style={{height: responsiveWidth(7), width: responsiveWidth(7), resizeMode: 'contain', alignSelf: 'center'}} />
+                    <Text style={[styles.interactorText, {fontFamily: 'Rubik-Bold'}]}>Tip</Text>
                   </Pressable>
                 )}
 
-                <Pressable
-                  onPressIn={() => setChildPressed(true)}
-                  onPressOut={() => setChildPressed(false)}
-                  onPress={() => setMute(mute => !mute)}
-                  style={[
-                    styles.interactorContainer,
-                    {marginTop: responsiveWidth(2)},
-                  ]}>
+                <Pressable onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} onPress={() => setMute(mute => !mute)} style={[styles.interactorContainer, {marginTop: responsiveWidth(2)}]}>
                   <Mute />
                 </Pressable>
               </View>
             </View>
           </View>
         </View>
-        <PostTipModal />
         <CreateCommentBottomSheet />
         {!toPlay && (
-          <TouchableOpacity
-            onPressIn={() => setChildPressed(true)}
-            onPressOut={() => setChildPressed(false)}
-            onPress={() => setToPlay(!toPlay)}
-            style={
-              Platform.OS === 'android'
-                ? styles.playPauseStyle
-                : styles.playPauseStyleIos
-            }>
-            {buffering ? (
-              <ActivityIndicator size={'large'} color={'white'} />
-            ) : (
-              <DIcon
-                provider={'Ionicons'}
-                name={'play'}
-                size={responsiveWidth(10)}
-                color="#fff"
-              />
-            )}
+          <TouchableOpacity onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} onPress={() => setToPlay(!toPlay)} style={Platform.OS === 'android' ? styles.playPauseStyle : styles.playPauseStyleIos}>
+            {buffering ? <ActivityIndicator size={'large'} color={'white'} /> : <DIcon provider={'Ionicons'} name={'play'} size={responsiveWidth(10)} color="#fff" />}
           </TouchableOpacity>
         )}
 
         {buffering && toPlay && (
-          <TouchableOpacity
-            onPressIn={() => setChildPressed(true)}
-            onPressOut={() => setChildPressed(false)}
-            onPress={() => setToPlay(!toPlay)}
-            style={
-              Platform.OS === 'android'
-                ? styles.playPauseStyle
-                : styles.playPauseStyleIos
-            }>
+          <TouchableOpacity onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} onPress={() => setToPlay(!toPlay)} style={Platform.OS === 'android' ? styles.playPauseStyle : styles.playPauseStyleIos}>
             <ActivityIndicator size={'large'} color={'white'} />
           </TouchableOpacity>
         )}
@@ -530,7 +312,8 @@ const styles = StyleSheet.create({
     width: responsiveWidth(75),
     paddingLeft: responsiveWidth(4),
     paddingRight: responsiveWidth(2),
-    marginTop: responsiveWidth(30),
+    marginTop: 'auto',
+    marginBottom: responsiveWidth(4),
   },
   headerLeftWrapper: {
     height: responsiveWidth(12),
@@ -549,7 +332,6 @@ const styles = StyleSheet.create({
     width: responsiveWidth(7),
     borderRadius: responsiveWidth(10),
     overflow: 'hidden',
-    borderRadius: responsiveWidth(10),
     position: 'relative',
   },
   profileImage: {
@@ -569,6 +351,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.8),
     fontFamily: 'Rubik-Regular',
     color: '#fff',
+    lineHeight: 22,
+  },
+  seeMoreStyle: {
+    fontSize: responsiveFontSize(1.8),
+    fontFamily: 'Rubik-Medium',
+    color: '#ff6961',
   },
   seeMoreLess: {
     fontSize: responsiveFontSize(1.8),

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Pressable, Platform } from "react-native";
+import { StyleSheet, Text, View, Image, Pressable, Platform, BackHandler } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { responsiveFontSize, responsiveWidth } from "react-native-responsive-dimensions";
@@ -23,6 +23,8 @@ const AfterLiveStreamEnd = ({ route }) => {
 
   const [sendLiveStreamDetails] = useSendLiveStreamDetailsMutation();
 
+  const navigation = useNavigation();
+
   useEffect(() => {
     let difference = new Date(route?.params?.data?.endTime) - new Date(route?.params?.data?.startTime);
 
@@ -37,6 +39,16 @@ const AfterLiveStreamEnd = ({ route }) => {
     console.log(date);
   }, [route?.params?.data]);
 
+  // Handle hardware back press to navigate to home
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigate("home")
+      return true; // Prevent default back behavior
+    });
+
+    return () => backHandler.remove();
+  }, []);
+
   const { currentUserId } = useSelector((state) => state.auth.user);
 
   const updateStreamDetails = async () => {
@@ -44,7 +56,7 @@ const AfterLiveStreamEnd = ({ route }) => {
       token,
       data: {
         _id: currentUserId,
-        id: "66751de6a9b9ab0a10b882f1", 
+        id: "66751de6a9b9ab0a10b882f1",
         details: {
           earning: route?.params?.data?.total,
           duration: duration,
@@ -73,24 +85,24 @@ const AfterLiveStreamEnd = ({ route }) => {
       <SafeAreaView style={styles.flexOne}>
         <View style={[styles.flexOne, styles.container]}>
 
-        <Pressable
-  style={{
-    alignSelf: "flex-end",
-    marginVertical: responsiveWidth(4),
-    top: responsiveWidth(5.5),
-    right: responsiveWidth(2),
-  }}
-  onPress={() => navigate("home")}
->
-  {({ pressed }) => (
-    <DIcon
-      provider={"AntDesign"}
-      name={"close"}
-      size={responsiveWidth(5)}
-      style={{ color: pressed ? "#999" : "#1e1e1e" }} 
-    />
-  )}
-</Pressable>
+          <Pressable
+            style={{
+              alignSelf: "flex-end",
+              marginVertical: responsiveWidth(4),
+              top: responsiveWidth(5.5),
+              right: responsiveWidth(2),
+            }}
+            onPress={() => navigate("home")}
+          >
+            {({ pressed }) => (
+              <DIcon
+                provider={"AntDesign"}
+                name={"close"}
+                size={responsiveWidth(5)}
+                style={{ color: pressed ? "#999" : "#1e1e1e" }}
+              />
+            )}
+          </Pressable>
 
           <Text style={styles.titleText}>Livestream Report</Text>
 
@@ -106,7 +118,7 @@ const AfterLiveStreamEnd = ({ route }) => {
                     <Text style={styles.description}>Duration</Text>
 
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                      <Text style={[styles.description,{fontFamily:'Rubik-Medium'}]}>{duration}</Text>
+                      <Text style={[styles.description, { fontFamily: 'Rubik-Medium' }]}>{duration}</Text>
                     </View>
                   </View>
 
@@ -114,7 +126,7 @@ const AfterLiveStreamEnd = ({ route }) => {
                     <Text style={styles.description}>Viewers</Text>
 
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                    <Text style={[styles.description,{fontFamily:'Rubik-Medium'}]}>{route?.params?.data?.audience}</Text>
+                      <Text style={[styles.description, { fontFamily: 'Rubik-Medium' }]}>{route?.params?.data?.audience}</Text>
                     </View>
                   </View>
 
@@ -122,17 +134,17 @@ const AfterLiveStreamEnd = ({ route }) => {
                     <Text style={styles.description}>Earnings</Text>
 
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: responsiveWidth(2) }}>
-                    <Text style={[styles.description,{fontFamily:'Rubik-Medium'}]}>{route?.params?.data?.earnings}</Text>
+                      <Text style={[styles.description, { fontFamily: 'Rubik-Medium' }]}>{route?.params?.data?.earnings}</Text>
 
                       <Paisa />
                     </View>
                   </View>
 
-                  <View style={[styles.eachDetailWrapper, {backgroundColor : "#FFA86B", marginBottom : 0}]}>
+                  <View style={[styles.eachDetailWrapper, { backgroundColor: "#FFA86B", marginBottom: 0 }]}>
                     <Text style={styles.description}>Tips</Text>
 
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: responsiveWidth(2) }}>
-                    <Text style={[styles.description,{fontFamily:'Rubik-Medium'}]}>{route?.params?.data?.tip}</Text>
+                      <Text style={[styles.description, { fontFamily: 'Rubik-Medium' }]}>{route?.params?.data?.tip}</Text>
 
                       {/* <Image source={require("../../../Assets/Images/Coin.png")} style={{ height: responsiveWidth(3.5), width: responsiveWidth(3.5), resizeMode: "contain", alignSelf: "center", marginLeft: responsiveWidth(1) }} /> */}
                       <Paisa />
@@ -149,11 +161,11 @@ const AfterLiveStreamEnd = ({ route }) => {
                 <View style={styles.cardLeftView}>
                   <Text style={styles.heading}>Total earnings</Text>
 
-                  <View style={[styles.eachDetailWrapper, {marginBottom : 0}]}>
+                  <View style={[styles.eachDetailWrapper, { marginBottom: 0 }]}>
                     <Text style={styles.description}>Coins</Text>
 
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: responsiveWidth(2) }}>
-                    <Text style={[styles.description,{fontFamily:'Rubik-Medium'}]}>{route?.params?.data?.total}</Text>
+                      <Text style={[styles.description, { fontFamily: 'Rubik-Medium' }]}>{route?.params?.data?.total}</Text>
                       <Paisa />
                       {/* <Image source={require("../../../Assets/Images/Coin.png")} style={{ height: responsiveWidth(3.5), width: responsiveWidth(3.5), resizeMode: "contain", alignSelf: "center", marginLeft: responsiveWidth(1) }} /> */}
                     </View>
@@ -163,7 +175,7 @@ const AfterLiveStreamEnd = ({ route }) => {
             </View>
           </View>
 
-       
+
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -210,14 +222,14 @@ const styles = StyleSheet.create({
     fontFamily: "Rubik-SemiBold",
     color: "#1e1e1e",
     fontSize: responsiveFontSize(2.2),
-    marginBottom : WIDTH_SIZES[14]
+    marginBottom: WIDTH_SIZES[14]
   },
 
   description: {
     fontFamily: "Rubik-Medium",
     color: "#1e1e1e",
     fontSize: responsiveFontSize(1.8),
-    padding:Platform.OS=='ios'?responsiveWidth(1):null
+    padding: Platform.OS == 'ios' ? responsiveWidth(1) : null
   },
 
   cardLeftView: {
@@ -242,8 +254,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: responsiveWidth(3),
     paddingHorizontal: responsiveWidth(4),
-    borderStyle : "dashed",
-    borderColor : "#FF7819",
-    marginBottom : WIDTH_SIZES[16]
+    borderStyle: "dashed",
+    borderColor: "#FF7819",
+    marginBottom: WIDTH_SIZES[16]
   },
 });

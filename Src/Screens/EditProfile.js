@@ -6,7 +6,6 @@ import {useDispatch, useSelector} from 'react-redux';
 import MyProfilePicture from '../Components/MyProfile/MyProfilePicture';
 import {useLazyUserProfileQuery, useUpdateProfileMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import Loader from '../Components/Loader';
 import AnimatedButton from '../Components/AnimatedButton';
@@ -15,7 +14,7 @@ import {nTwins} from '../../DesiginData/Utility';
 
 const regex = /^[\w](?!.*?\.{2})[\w.]{1,28}[\w]$/;
 
-const PersonalDetailsCard = ({fullName, username, emailAddress}) => {
+const PersonalDetailsCard = ({fullName, username, emailAddress, errors = {}}) => {
   return (
     <View style={styles.cardContainer}>
       <View style={styles.cardHeader}>
@@ -36,15 +35,24 @@ const PersonalDetailsCard = ({fullName, username, emailAddress}) => {
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.label}>Full Name</Text>
-          <Text style={styles.value}>{fullName}</Text>
+          <View style={{flex: 1, alignItems: 'flex-end', marginLeft: 10}}>
+            <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{fullName}</Text>
+            {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
+          </View>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Username</Text>
-          <Text style={styles.value}>{username}</Text>
+          <View style={{flex: 1, alignItems: 'flex-end', marginLeft: 10}}>
+            <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{username}</Text>
+            {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
+          </View>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{emailAddress}</Text>
+          <View style={{flex: 1, alignItems: 'flex-end', marginLeft: 10}}>
+            <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{emailAddress}</Text>
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          </View>
         </View>
       </View>
     </View>
@@ -53,58 +61,120 @@ const PersonalDetailsCard = ({fullName, username, emailAddress}) => {
 
 const EditProfile = ({route}) => {
   const [updateProfile] = useUpdateProfileMutation({});
-
   const [userProfile] = useLazyUserProfileQuery({refetchOnFocus: true});
-
   const token = useSelector(state => state.auth.user.token);
-
   const navigation = useNavigation();
-
   const creatorOrUser = useSelector(state => state.auth.user.role);
 
   const [bio, setBio] = useState('');
-
   const [fullName, setFullName] = useState('');
-
   const [userName, setUserName] = useState('');
-
   const [emailAddress, setEmailAddress] = useState('');
-
   const [mounted, setMounted] = useState(false);
-
   const [refresh, setRefresh] = useState(false);
-
   const [dob, setDob] = useState('');
-
   const [loading, setLoading] = useState(false);
-
   const [screenLoading, setScreenLoading] = useState(true);
-
   const [categoryHeader, setCategoryHeader] = useState('Heading (e.g., Dance Creator)');
-
   const [categoryDescription, setCategoryDescription] = useState('Add a detailed description to showcase your skills and interests!');
+
+  // ✅ NEW: Validation state
+  const [errors, setErrors] = useState({
+    fullName: '',
+    userName: '',
+    email: '',
+    bio: '',
+    categoryHeader: '',
+    categoryDescription: '',
+  });
+
+  // ✅ NEW: Validation functions
+  const validateEmail = email => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      return 'Email is required';
+    }
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  };
+
+  const validateUsername = username => {
+    if (!username || username.trim().length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (username.length > 30) {
+      return 'Username must be less than 30 characters';
+    }
+    if (!regex.test(username)) {
+      return 'Username can only contain letters, numbers, dots and underscores';
+    }
+    return '';
+  };
+
+  const validateFullName = name => {
+    if (!name || name.trim().length < 2) {
+      return 'Full name must be at least 2 characters';
+    }
+    if (name.length > 50) {
+      return 'Full name must be less than 50 characters';
+    }
+    return '';
+  };
+
+  const validateBio = bioText => {
+    if (bioText && bioText.length > 150) {
+      return 'Bio must be less than 150 characters';
+    }
+    return '';
+  };
+
+  const validateCategoryHeader = header => {
+    if (header && header.length > 50) {
+      return 'Header must be less than 50 characters';
+    }
+    return '';
+  };
+
+  const validateCategoryDescription = description => {
+    if (description && description.length > 500) {
+      return 'Description must be less than 500 characters';
+    }
+    return '';
+  };
+
+  // ✅ NEW: Validate all fields
+  const validateAllFields = () => {
+    const newErrors = {
+      fullName: validateFullName(fullName),
+      userName: validateUsername(userName),
+      email: validateEmail(emailAddress),
+      bio: validateBio(bio),
+      categoryHeader: validateCategoryHeader(categoryHeader),
+      categoryDescription: validateCategoryDescription(categoryDescription),
+    };
+
+    setErrors(newErrors);
+
+    // Return true if no errors
+    return !Object.values(newErrors).some(error => error !== '');
+  };
 
   useFocusEffect(
     useCallback(() => {
       async function getSettingProfile() {
         let userDetail = await userProfile({token}, false);
-
         const data = userDetail?.data?.data;
 
         console.log(data, 'User Edit profile Data');
 
-        setBio(data?.aboutUser); //Editable
-
-        setFullName(data?.fullName); //Editable
-
-        setUserName(data?.displayName); //Editable
-
+        setBio(data?.aboutUser);
+        setFullName(data?.fullName);
+        setUserName(data?.displayName);
         setEmailAddress(data?.email);
-
         setCategoryDescription(data?.categoryDescription);
-
         setCategoryHeader(data?.categoryHeader);
-
         setScreenLoading(false);
       }
 
@@ -116,8 +186,24 @@ const EditProfile = ({route}) => {
     return <Loader />;
   }
 
+  // ✅ UPDATED: onEdit with validation
   const onEdit = componentName => {
+    // Clear previous errors for this component
+    const newErrors = {...errors};
+
     if (componentName === 'description') {
+      // Validate category fields
+      const headerError = validateCategoryHeader(categoryHeader);
+      const descError = validateCategoryDescription(categoryDescription);
+
+      newErrors.categoryHeader = headerError;
+      newErrors.categoryDescription = descError;
+      setErrors(newErrors);
+
+      if (headerError || descError) {
+        return; // Don't navigate if validation fails
+      }
+
       navigation.navigate('editprofiler', {
         type: 'desc',
         categoryHeader,
@@ -127,10 +213,43 @@ const EditProfile = ({route}) => {
     }
 
     if (componentName === 'bio') {
+      // Validate bio
+      const bioError = validateBio(bio);
+      newErrors.bio = bioError;
+      setErrors(newErrors);
+
+      if (bioError) {
+        return; // Don't navigate if validation fails
+      }
+
       navigation.navigate('editprofiler', {
         type: 'bio',
         bio,
         title: 'Bio',
+      });
+    }
+
+    if (componentName === 'personal') {
+      // Validate personal info
+      const fullNameError = validateFullName(fullName);
+      const userNameError = validateUsername(userName);
+      const emailError = validateEmail(emailAddress);
+
+      newErrors.fullName = fullNameError;
+      newErrors.userName = userNameError;
+      newErrors.email = emailError;
+      setErrors(newErrors);
+
+      if (fullNameError || userNameError || emailError) {
+        return; // Don't navigate if validation fails
+      }
+
+      navigation.navigate('editprofiler', {
+        title: 'Personal Info',
+        type: 'personal',
+        fullName,
+        userName,
+        emailAddress,
       });
     }
   };
@@ -140,11 +259,10 @@ const EditProfile = ({route}) => {
       <KeyboardAwareScrollView style={styles.container} keyboardDismissMode="interactive">
         <MyProfilePicture setRefresh={setRefresh} isEditable={true} />
 
-        <PersonalDetailsCard fullName={fullName} username={userName} emailAddress={emailAddress} />
+        <PersonalDetailsCard fullName={fullName} username={userName} emailAddress={emailAddress} errors={errors} />
 
         <View style={styles.detailContainer}>
           {/* Bio Section */}
-
           <View style={styles.section}>
             <View style={styles.headerRow}>
               <Text style={styles.heading}>Bio</Text>
@@ -153,6 +271,7 @@ const EditProfile = ({route}) => {
               </Pressable>
             </View>
             <Text style={styles.textContent}>{bio || 'Add a short bio to introduce yourself!'}</Text>
+            {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
           </View>
 
           {/* Description Section */}
@@ -165,7 +284,9 @@ const EditProfile = ({route}) => {
                 </Pressable>
               </View>
               <Text style={styles.subheading}>{categoryHeader || 'Heading (e.g., Dance Creator)'}</Text>
+              {errors.categoryHeader && <Text style={styles.errorText}>{errors.categoryHeader}</Text>}
               <Text style={styles.textContent}>{categoryDescription || 'Add a detailed description to showcase your skills and interests!'}</Text>
+              {errors.categoryDescription && <Text style={styles.errorText}>{errors.categoryDescription}</Text>}
             </View>
           )}
 
@@ -173,8 +294,6 @@ const EditProfile = ({route}) => {
             <AnimatedButton title={'View Profile'} buttonMargin={0} onPress={() => navigate('profile')} />
           </View>
         </View>
-
-        {/* <DateTimePickerSheet onScreen={"profileEdit"} date={date} setDate={setDate} type={"dob"} /> */}
       </KeyboardAwareScrollView>
     </GestureHandlerRootView>
   );
@@ -184,25 +303,18 @@ export default EditProfile;
 
 const styles = StyleSheet.create({
   detailContainer: {
-    // marginTop: 32,
     backgroundColor: '#fff',
-    // padding: 24,
   },
   section: {
-    // marginBottom: responsiveWidth(1),
     padding: 24,
     borderTopWidth: 6,
     borderColor: '#EDEDED',
-    // borderRadius: responsiveWidth(2),
-    // backgroundColor: 'red',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // marginBottom: responsiveWidth(2),
   },
-
   heading: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 18,
@@ -243,11 +355,6 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: responsiveFontSize(1.4),
   },
-
-  cardContainer: {
-    borderWidth: 1,
-  },
-
   cardContainer: {
     padding: 24,
     marginTop: 32,
@@ -256,7 +363,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // borderWidth: 1,
     width: '100%',
   },
   title: {
@@ -277,7 +383,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#1e1e1e',
     width: nTwins(89, 98.5),
-    height: 137,
     alignSelf: 'center',
     flexDirection: 'column',
     gap: Platform.OS === 'ios' ? 23 : 14,
@@ -286,6 +391,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   label: {
     fontSize: 14,
@@ -296,5 +402,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Rubik-Medium',
     color: '#1e1e1e',
+  },
+  // ✅ NEW: Error text style
+  errorText: {
+    fontFamily: 'Rubik-Regular',
+    fontSize: 11,
+    color: '#E74C3C',
+    marginTop: 4,
   },
 });

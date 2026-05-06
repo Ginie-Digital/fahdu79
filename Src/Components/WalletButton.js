@@ -43,7 +43,7 @@ const WalletButton = ({title, packId, onPress}) => {
     // </Pressable>
 
     <View style={styles.buttonContainer}>
-      <AnimatedButton overlayStyle={{height: responsiveWidth(9), borderRadius: 12}} title={title} loading={packId === currentButton} style={{height: responsiveWidth(9), borderRadius: 12}} buttonMargin={0} onPress={() => onPress(packId)} />
+      <AnimatedButton overlayStyle={{height: responsiveWidth(9), borderRadius: 12}} title={title} loading={packId != null && packId === currentButton} style={{height: responsiveWidth(9), borderRadius: 12}} buttonMargin={0} onPress={() => onPress(packId)} />
     </View>
   );
 };

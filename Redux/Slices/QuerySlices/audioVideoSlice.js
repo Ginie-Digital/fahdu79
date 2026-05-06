@@ -1,15 +1,15 @@
-import {fetchBaseQuery, createApi} from '@reduxjs/toolkit/query/react';
+import { fetchBaseQuery, createApi } from '@reduxjs/toolkit/query/react';
 
 export const audioVideoApi = createApi({
   reducerPath: 'audioVideoApi',
 
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.fahdu.in/api/',
+    baseUrl: 'https://api.fahdu.com/api/',
   }),
 
   endpoints: builder => ({
     callRequest: builder.mutation({
-      query: ({token, body}) => ({
+      query: ({ token, body }) => ({
         url: 'stream/request-call',
         method: 'POST',
         headers: {
@@ -22,4 +22,4 @@ export const audioVideoApi = createApi({
   }),
 });
 
-export const {useCallRequestMutation} = audioVideoApi;
+export const { useCallRequestMutation } = audioVideoApi;

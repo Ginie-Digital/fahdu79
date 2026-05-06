@@ -5,7 +5,7 @@ import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-nativ
 import {showMessage} from 'react-native-flash-message';
 import {useLazyGetInstagramProfileInfoQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
-import {toggleBrandBottomSheet, toggleInstagrmLinkSubmitModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {toggleInstagrmLinkSubmitModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {convertAbbreviationToNumber, extractInstaInfo, isBetween} from '../../../DesiginData/Utility';
 import OTPTextView from 'react-native-otp-textinput';
 import { ChatWindowError } from '../ErrorSnacks';
@@ -56,7 +56,6 @@ const BrandSubmitLinkModal = () => {
 
     if (is_phone_verified) {
       if (isBetween(Number(campaignDetails?.influencerRange?.min), Number(campaignDetails?.influencerRange?.max), convertAbbreviationToNumber(profileInfo?.followers))) {
-        dispatch(toggleBrandBottomSheet({show: 1}));
         dispatch(toggleInstagrmLinkSubmitModal({show: false}));
       } else {
         setShowEligibilityMessage(true);

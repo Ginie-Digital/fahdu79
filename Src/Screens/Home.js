@@ -1,106 +1,58 @@
-import {
-  StyleSheet,
-  View,
-  Image,
-  Text,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  Button,
-  TouchableOpacity,
-} from 'react-native';
+
+import { StyleSheet, View, Image, Text, ActivityIndicator, Alert, Platform, Button, TouchableOpacity, Modal } from 'react-native';
 
 import PostCards from '../Components/HomeComponents/PostCards';
-import {
-  responsiveFontSize,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
-import messaging from '@react-native-firebase/messaging';
-import {
-  FlatList,
-  GestureHandlerRootView,
-  Pressable,
-  RefreshControl,
-  TextInput,
-} from 'react-native-gesture-handler';
-import {token as memoizedToken} from '../../Redux/Slices/NormalSlices/AuthSlice';
-import HomeBottomSheet from '../Components/HomeComponents/HomeBottomSheet';
-import {
-  useCanClearCacheMutation,
-  useLazyGetInstagramProfileInfoQuery,
-  useLazyGetStoriesQuery,
-  useLazyGetUserFeedQuery,
-} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {useDispatch, useSelector} from 'react-redux';
-import {FlashList} from '@shopify/flash-list';
-import React, {memo, useCallback, useEffect, useRef, useState} from 'react';
-import BrandCards from '../Components/HomeComponents/BrandCards';
-import BrandBottomSheet from '../Components/HomeComponents/BrandBottomSheet';
-import {
-  resetAllModal,
-  setCurrentVideoPlayId,
-  setPostsCardType,
-} from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
-import CreatePostBottomSheet from '../Components/HomeComponents/CreatePostBottomSheet';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
+import { FlatList, GestureHandlerRootView, Pressable, RefreshControl, TextInput } from 'react-native-gesture-handler';
+import { token as memoizedToken } from '../../Redux/Slices/NormalSlices/AuthSlice';
+
+import { useCanClearCacheMutation, useLazyGetInstagramProfileInfoQuery, useLazyGetStoriesQuery, useLazyGetUserFeedQuery, useLazyGetUnreadChatCountQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useDispatch, useSelector } from 'react-redux';
+import { FlashList } from '@shopify/flash-list';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+
+import { resetAllModal, setCurrentVideoPlayId, setPostsCardType, setUnReadChatIcon, toggleCallAccepted } from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useFocusEffect, useScrollToTop } from '@react-navigation/native';
 
 import SwitcherSheet from '../Components/HomeComponents/SwitcherSheet';
-import {navigate} from '../../Navigation/RootNavigation';
-import PostTipModal from '../Components/HomeComponents/PostTipModal';
+import { navigate } from '../../Navigation/RootNavigation';
 import CreateCommentBottomSheet from '../Components/HomeComponents/CreateCommentBottomSheet';
 import PostActionBottomSheet from '../Components/HomeComponents/PostActionBottomSheet';
 import Loader from '../Components/Loader';
-import {autoLogout} from '../../AutoLogout';
-import {Dialog} from 'react-native-simple-dialogs';
-import {
-  mainpulateFirstPageCreatedAt,
-  manipulateCurrentPage,
-  manipulateTotalPages,
-  resetFeed,
-  setFeedCache,
-} from '../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
+import { autoLogout } from '../../AutoLogout';
+import { Dialog } from 'react-native-simple-dialogs';
+import { mainpulateFirstPageCreatedAt, manipulateCurrentPage, manipulateTotalPages, resetFeed, setFeedCache } from '../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import DeviceInfo from 'react-native-device-info';
-import {
-  onDisplayNotification,
-  showPostInteractionNotification,
-} from '../../Notificaton';
-import Purchases, {LOG_LEVEL} from 'react-native-purchases';
 
-import {_filterPostList} from '../../DesiginData/Utility';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+
+import { _filterPostList } from '../../DesiginData/Utility';
 import TermsOfLive from './Stream/TermsOfLive';
-import {
-  pushChats,
-  pushGoals,
-} from '../../Redux/Slices/NormalSlices/LiveStream/LiveChats';
+import { pushChats, pushGoals } from '../../Redux/Slices/NormalSlices/LiveStream/LiveChats';
 // import Stories from '../Components/HomeComponents/Stories';
 // import {pushLiveStories} from '../../Redux/Slices/NormalSlices/Home/StoriesSlice';
-import {confirmPasswordReset, firebase} from '@react-native-firebase/auth';
 import UpdateAppComponent from '../Components/HomeComponents/UpdateAppComponent';
-import {
-  setSharedCampaignId,
-  setUserFromCampaignLink,
-} from '../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
+import { setSharedCampaignId, setUserFromCampaignLink } from '../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
 
-import {showMessage, hideMessage} from 'react-native-flash-message';
+import { showMessage, hideMessage } from 'react-native-flash-message';
 import BrandSubmitLinkModal from '../Components/Modal/BrandSubmitLinkModal';
 import PostShimmer from '../Components/Shimmers/PostShimmer';
 import AreYou from './LoginSignup/AreYou';
 
-import RNFS from 'react-native-fs';
-import {getVersion} from 'react-native-device-info';
-import {resetAll} from '../../Redux/Actions';
-import {
-  resetCallData,
-  setCallData,
-} from '../../Redux/Slices/NormalSlices/Call/CallSlice';
-import PostProgress from '../PostProgress';
-import {resetUploadProgress} from '../../Redux/Slices/NormalSlices/UploadSlice';
-import ReLoginModal from './LoginSignup/ReLoginModal';
-import CallKeepService from '../../service/CallKeepService';
+import { resetAll } from '../../Redux/Actions';
 
-const PlaceHolder = ({text}) => {
+import PostProgress from '../PostProgress';
+import { resetUploadProgress } from '../../Redux/Slices/NormalSlices/UploadSlice';
+import ReLoginModal from './LoginSignup/ReLoginModal';
+import LowBalanceModal from '../Components/LowBalanceModal';
+import socketServices from '../../SocketServices';
+import LiveBanner from '../LiveStream/LiveBanner';
+import LiveUsersScroll from '../LiveStream/LiveUsersScroll';
+import useJoinLiveStream from '../Hook/useJoinLiveStream';
+
+const PlaceHolder = ({ text }) => {
   return (
-    <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+    <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
       <Text
         style={{
           fontFamily: 'MabryPro-Regular',
@@ -113,7 +65,7 @@ const PlaceHolder = ({text}) => {
   );
 };
 
-let tempRemoteNotificationData;
+
 
 const Home = () => {
   const token = useSelector(state => state.auth.user.token);
@@ -132,24 +84,26 @@ const Home = () => {
 
   const currentUserDetails = useSelector(state => state?.auth?.user);
 
-  const [
-    fetchFeedData,
-    {isLoading: isUserFeedFetching, isSuccess: isUserFeedSuccess},
-  ] = useLazyGetUserFeedQuery();
+  const [fetchFeedData, { isLoading: isUserFeedFetching, isSuccess: isUserFeedSuccess }] = useLazyGetUserFeedQuery();
 
   // const [getStories] = useLazyGetStoriesQuery();
 
   const [getInstagramProfileInfo] = useLazyGetInstagramProfileInfoQuery();
 
-  const postCardType = useSelector(
-    state => state.hideShow.visibility.postCardType,
-  );
+  const postCardType = useSelector(state => state.hideShow.visibility.postCardType);
 
   const [campaignArray, setCampaignArray] = useState([]);
 
   const [removePostId, setRemovePostId] = useState(undefined);
 
   const [refreshing, setRefreshing] = useState(false);
+  
+
+
+  const { show: commentBottomSheetVisibility } = useSelector(state => state.hideShow.visibility.commentBottomSheet);
+  const { show: postActionSheetBottomSheetVisibility } = useSelector(state => state.hideShow.visibility.postActionBottomSheet);
+  const switcherSheetVisibility = useSelector(state => state.hideShow.visibility.switcherSheet);
+  const liveTermsHideShow = useSelector(state => state.hideShow.visibility.hideShowLiveTerms);
 
   const [refreshFeed, setRefreshFeed] = useState(false);
 
@@ -165,28 +119,49 @@ const Home = () => {
 
   const [mainLoading, setMainLoading] = useState(true);
 
-  const {
-    content: cachedFeed,
-    blockedPost: blockedPostArr,
-    totalPages,
-    currentPage,
-    firstPostCreatedAt,
-  } = useSelector(state => state.feedCache.data);
+  const { content: cachedFeed, blockedPost: blockedPostArr, totalPages, currentPage, firstPostCreatedAt } = useSelector(state => state.feedCache.data);
 
   const [canClearCache] = useCanClearCacheMutation();
+
+  const [getUnreadChatCount] = useLazyGetUnreadChatCountQuery();
 
   const callData = useSelector(state => state.call.data);
 
   const suspension = useSelector(state => state.auth.user.suspended);
 
-  console.log('Calldata', callData);
+
+  // Get live users from Redux
+  const reduxLiveUsers = useSelector(state => state.liveUsers.liveUsers);
+
+  // Map Redux data to component format
+  const liveUsers = reduxLiveUsers.map(user => ({
+
+    id: user.id,
+    username: user.displayName,
+    avatarUrl: user.profileImage || 'https://via.placeholder.com/64',
+    roomId: user.roomId,
+    userId: user.userId,
+  }));
+
+  // Hook for joining live streams
+  const { joinLiveStream, isLoading: isJoiningLiveStream } = useJoinLiveStream();
+
+  // Handler to join a live stream
+  const handleJoinLiveStream = async (user) => {
+    console.log('Joining stream:', user);
+    if (user?.roomId) {
+      await joinLiveStream(user.roomId, {
+        displayName: user.username,
+        profileImage: user.avatarUrl,
+        userId: user.userId,
+      });
+    }
+  };
 
   async function shouldClearCache() {
-    const androidVersion =
-      Platform.OS === 'android' ? DeviceInfo.getSystemVersion() : null;
-    const iosVersion =
-      Platform.OS === 'ios' ? DeviceInfo.getSystemVersion() : null;
-    const {data, error} = await canClearCache({
+    const androidVersion = Platform.OS === 'android' ? DeviceInfo.getSystemVersion() : null;
+    const iosVersion = Platform.OS === 'ios' ? DeviceInfo.getSystemVersion() : null;
+    const { data, error } = await canClearCache({
       token,
       data: {
         user_id: currentUserDetails?.currentUserId,
@@ -201,73 +176,72 @@ const Home = () => {
     }
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      setTimeout(() => {
-        console.log(
-          callData?.showCallScreen,
-          callData?.fromNotification,
-          ':::::yellowhouse',
-        );
-
-        if (
-          callData?.showCallScreen === true &&
-          callData?.fromNotification === true
-        ) {
-          Alert.alert('yaha se');
-          navigate('incomingCall');
-        }
-      }, 500);
-    }, [callData]),
-  );
+  function handleCall() {
+    console.log('hello', currentUserDetails?.currentUserId);
+    socketServices.emitTyping('6915b4967398b818d22d5e52', currentUserDetails?.currentUserId);
+  }
 
   useEffect(() => {
-    shouldClearCache();
+    // shouldClearCache();
+
+    dispatch(toggleCallAccepted({ status: false }));
+
+    // Fetch unread chat count and show icon if count > 0
+    const fetchUnreadCount = async () => {
+      try {
+        const { data } = await getUnreadChatCount({ token });
+        if (data?.data > 0) {
+          dispatch(setUnReadChatIcon({ show: true }));
+        } else {
+          dispatch(setUnReadChatIcon({ show: false }));
+        }
+      } catch (error) {
+        console.log('Error fetching unread chat count:', error);
+      }
+    };
+
+    if (token) {
+      fetchUnreadCount();
+    }
   }, []);
 
   useEffect(() => {
     if (currentUserDetails?.onlyBrandsAccess) {
-      dispatch(setPostsCardType({postCardType: 'brand'}));
+      dispatch(setPostsCardType({ postCardType: 'brand' }));
     }
   }, [currentUserDetails.onlyBrandsAccess]);
 
-  //Notification opens app in background, once index.js mounts, it won't work later but inside background hanlder will work
-
-  messaging().setBackgroundMessageHandler(async remoteMessage => {
-    console.log('iOS working find...');
-
-    let remoteNotificationData = JSON.parse(remoteMessage.data.payload);
-
-    if (remoteNotificationData?.type === 'message') {
-      tempRemoteNotificationData = remoteNotificationData;
-      await onDisplayNotification(remoteNotificationData?.content);
-    } else {
-      await showPostInteractionNotification(remoteNotificationData);
-    }
-  });
+  // Background message handler is registered in index.js — do NOT register here
+  // (previously had a duplicate handler that overwrote the comprehensive index.js handler on every render)
 
   //Update states
 
-  const SocialPostRender = memo(({item, index}) => (
-    <PostCards item={item} index={index} token={token} />
-  ));
+  const SocialPostRender = memo(({ item, index }) => <PostCards item={item} index={index} token={token} />);
 
-  const brandPostRender = ({item, index}) => <BrandCards item={item} />;
 
-  // useEffect(() => {
-  //   const fethBrandPostList = async () => {
-  //     const {data: responseBrandList} = await trigger({token, page: 1}, false);
+  const ListHeader = () => (
+    <>
+      <PostProgress />
 
-  //     console.log(responseBrandList, '{}+}{{}{}{}{}{}{}{}{}{}{}');
+      {/* Show LiveBanner if only 1 user is live, otherwise show LiveUsersScroll */}
+      {liveUsers.length === 1 && (
+        <LiveBanner
+          username={liveUsers[0].username}
+          avatarUrl={liveUsers[0].avatarUrl}
+          onJoin={() => handleJoinLiveStream(liveUsers[0])}
+          userDetails={liveUsers[0]}
+        />
+      )}
 
-  //     if (responseBrandList?.data?.length > 0) {
-  //       setCampaignArray(responseBrandList?.data);
-  //       setRefreshing(false);
-  //     }
-  //   };
+      {liveUsers.length > 1 && (
+        <LiveUsersScroll
+          liveUsers={liveUsers}
+          onUserPress={handleJoinLiveStream}
+        />
+      )}
+    </>
+  );
 
-  //   fethBrandPostList();
-  // }, [refreshing]);
 
   const userRole = useSelector(state => state.auth.user.role);
 
@@ -279,7 +253,7 @@ const Home = () => {
       const fetchFeeds = async () => {
         setIsLoading(true);
 
-        const {data: responseFeed, error} = await fetchFeedData({
+        const { data: responseFeed, error } = await fetchFeedData({
           token,
           page: currentPage,
           timestamp: currentPage === 1 ? '' : firstPostCreatedAt,
@@ -305,21 +279,12 @@ const Home = () => {
 
           dispatch(
             manipulateTotalPages({
-              currentTotalPage: Number(
-                Math.ceil(
-                  Number(responseFeed?.data?.metadata[0]?.total) /
-                    Number(responseFeed?.data?.metadata[0]?.limit),
-                ),
-              ),
+              currentTotalPage: Number(Math.ceil(Number(responseFeed?.data?.metadata[0]?.total) / Number(responseFeed?.data?.metadata[0]?.limit))),
             }),
           );
 
           if (responseFeed?.data?.posts?.length > 0) {
-            if (
-              cachedFeed.findIndex(
-                x => x._id === responseFeed?.data?.posts[0]?._id,
-              ) === -1
-            ) {
+            if (cachedFeed.findIndex(x => x._id === responseFeed?.data?.posts[0]?._id) === -1) {
               dispatch(
                 setFeedCache({
                   data: [...cachedFeed, ...responseFeed?.data?.posts],
@@ -340,6 +305,7 @@ const Home = () => {
 
   //Just to remove homeBottomSheet
   useEffect(() => {
+    console.log('[BS_DEBUG][Home Screen] useEffect mount: dispatching resetAllModal');
     dispatch(resetAllModal());
     dispatch(resetUploadProgress());
   }, []);
@@ -358,7 +324,8 @@ const Home = () => {
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(resetAllModal());
+      console.log('[BS_DEBUG][Home Screen] useFocusEffect: NOT dispatching resetAllModal anymore');
+      // dispatch(resetAllModal());
     }, []),
   );
 
@@ -369,23 +336,17 @@ const Home = () => {
 
   const onRefreshFeed = () => {
     dispatch(resetFeed());
-    dispatch(manipulateCurrentPage({currentPage: 1}));
-    dispatch(manipulateTotalPages({currentTotalPage: 0}));
+    dispatch(manipulateCurrentPage({ currentPage: 1 }));
+    dispatch(manipulateTotalPages({ currentTotalPage: 0 }));
     setRefreshFeed(true);
   };
+  ``;
 
-  const handleCall = () => {
-    console.log('xxx');
-    CallKeepService.showIncomingCall('user_12345', 'Rishabh');
-  };
   useEffect(() => {
     console.log('USEREMEMMEMEMEM CALLELD DFIFDFJP{{}{}{}');
 
     async function configureRevenueCat() {
-      console.log(
-        '🛠️ Setting up RevenueCat',
-        currentUserDetails?.currentUserId,
-      );
+      console.log('🛠️ Setting up RevenueCat', currentUserDetails?.currentUserId);
 
       Purchases.setLogLevel(LOG_LEVEL.ERROR);
 
@@ -404,9 +365,7 @@ const Home = () => {
           console.log('✅ User Logged In:', customerInfo.originalAppUserId);
           console.log('📜 Full Customer Info:', customerInfo);
 
-          const result = await Purchases.logIn(
-            String(currentUserDetails?.currentUserId),
-          );
+          const result = await Purchases.logIn(String(currentUserDetails?.currentUserId));
           console.log('✅ Logged In:', result.customerInfo.originalAppUserId);
         } catch (error) {
           console.error('❌ RevenueCat configuration failed:', error);
@@ -421,7 +380,7 @@ const Home = () => {
 
   const currentShownPost = useCallback(post => {
     if (post[0]?.isViewable) {
-      dispatch(setCurrentVideoPlayId({currentVideoId: post[0]?.item?._id}));
+      dispatch(setCurrentVideoPlayId({ currentVideoId: post[0]?.item?._id }));
     }
   }, []);
 
@@ -452,7 +411,7 @@ const Home = () => {
 
     if (currentPage >= totalPages) return;
 
-    dispatch(manipulateCurrentPage({currentPage: currentPage + 1}));
+    dispatch(manipulateCurrentPage({ currentPage: currentPage + 1 }));
   };
 
   if (mainLoading || refreshFeed) {
@@ -461,73 +420,37 @@ const Home = () => {
 
   // console.log(cachedFeed[0])
 
-  if (postCardType === 'normal') {
-    return (
-      <GestureHandlerRootView style={styles.homeContainer}>
-        <FlashList
-          ref={homeFlashRef}
-          data={_filterPostList([...cachedFeed], [...blockedPostArr])} //Because
-          renderItem={({item, index}) => (
-            <SocialPostRender item={item} index={index} />
-          )}
-          keyExtractor={item => item._id}
-          onViewableItemsChanged={({changed, viewableItems}) =>
-            currentShownPost(viewableItems)
-          }
-          estimatedItemSize={434}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshFeed}
-              onRefresh={onRefreshFeed}
-            />
-          }
-          onEndReachedThreshold={0.1}
-          onEndReached={fetchNextPage}
-          ListFooterComponent={ListEndLoader}
-          renderToHardwareTextureAndroid
-          decelerationRate={Platform.OS === 'ios' ? 'normal' : 'fast'}
-          ItemSeparatorComponent={() => (
-            <View style={{backgroundColor: '#E9E9E9', height: 4}} />
-          )}
-          // ListHeaderComponent={() => <PostProgress />}
-          ListHeaderComponent={() => (
-            <Button title="Dummy Cal" onPress={() => handleCall()} />
-          )}
-        />
+  return (
+    <GestureHandlerRootView style={styles.homeContainer}>
+      <FlashList
+        ref={homeFlashRef}
+        data={_filterPostList([...cachedFeed], [...blockedPostArr])} //Because
+        renderItem={({ item, index }) => <SocialPostRender item={item} index={index} />}
+        keyExtractor={item => item._id}
+        onViewableItemsChanged={({ changed, viewableItems }) => currentShownPost(viewableItems)}
+        estimatedItemSize={434}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshFeed} onRefresh={onRefreshFeed} />}
+        onEndReachedThreshold={0.1}
+        onEndReached={fetchNextPage}
+        ListFooterComponent={ListEndLoader}
+        renderToHardwareTextureAndroid
+        decelerationRate={Platform.OS === 'ios' ? 'normal' : 'fast'}
+        ItemSeparatorComponent={() => <View style={{ backgroundColor: '#E9E9E9', height: 4 }} />}
+        ListHeaderComponent={ListHeader}
+      // ListHeaderComponent={() => <Button title="Dummy Cal" onPress={() => handleCall()} />}
+      />
 
-        <CreatePostBottomSheet />
-        <SwitcherSheet />
-        <PostTipModal />
-        <HomeBottomSheet currentUserDetails={currentUserDetails} />
-        <CreateCommentBottomSheet />
-        <PostActionBottomSheet />
-        <TermsOfLive />
-        {currentUserDetails?.role !== 'creator' && <AreYou />}
-      </GestureHandlerRootView>
-    );
-  } else {
-    return (
-      <GestureHandlerRootView style={styles.homeContainer}>
-        {campaignArray?.length > 0 && userRole === 'creator' ? (
-          <FlatList
-            data={campaignArray}
-            renderItem={brandPostRender}
-            keyExtractor={item => item._id}
-            estimatedItemSize={600}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          />
-        ) : (
-          <PlaceHolder text={'No brand collaborations yet.'} />
-        )}
-        <BrandBottomSheet setRemovePostId={setRemovePostId} />
-        <SwitcherSheet />
-        <BrandSubmitLinkModal />
-      </GestureHandlerRootView>
-    );
-  }
+
+
+      {commentBottomSheetVisibility === 1 && <CreateCommentBottomSheet />}
+      {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
+      {switcherSheetVisibility === 1 && <SwitcherSheet />}
+      {liveTermsHideShow === 1 && <TermsOfLive />}
+      <LowBalanceModal />
+      {currentUserDetails?.role !== 'creator' && <AreYou />}
+    </GestureHandlerRootView>
+  );
 };
 
 export default Home;

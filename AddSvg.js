@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View} from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import React from 'react';
 import Something from './Assets/svg/Add.svg';
 import Cam from './Assets/svg/chatCam.svg';
@@ -41,10 +41,11 @@ import Refund from './Assets/svg/Refund.svg';
 import TAC from './Assets/svg/tac.svg';
 
 import OtherProfileShareLink from './Assets/svg/OtherProfileShareLink.svg';
+import FeedbackIcon from './Assets/svg/Feedback.svg';
 
-import {responsiveWidth} from 'react-native-responsive-dimensions';
+import { responsiveWidth } from 'react-native-responsive-dimensions';
 
-const AddSvg = ({name, ...props}) => {
+const AddSvg = ({ name, ...props }) => {
   let Provider;
 
   switch (name) {
@@ -87,10 +88,20 @@ const AddSvg = ({name, ...props}) => {
     case 'Subscribers':
       Provider = Subscribers;
       break;
+    case 'PositiveReview':
+      Provider = FeedbackIcon;
+      break;
 
     case 'Followers':
       Provider = Followers;
       break;
+
+    case 'Following':
+      return (
+        <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
+          <Image source={require('./Assets/Images/Following.png')} style={{ width: responsiveWidth(5.5), height: responsiveWidth(5.5) }} resizeMode="contain" />
+        </View>
+      );
 
     case 'Password':
       Provider = Password;
@@ -168,6 +179,13 @@ const AddSvg = ({name, ...props}) => {
       Provider = OtherProfileShareLink;
       break;
 
+    case 'PositiveReview':
+      return (
+        <View style={[{height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center'}]}>
+          <Image source={require('./Assets/Images/review.png')} style={{width: responsiveWidth(5.5), height: responsiveWidth(5.5)}} resizeMode="contain" />
+        </View>
+      );
+
     case 'refund':
       Provider = Refund;
       break;
@@ -177,7 +195,7 @@ const AddSvg = ({name, ...props}) => {
   }
 
   return (
-    <View style={[{height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center'}]}>
+    <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
       <Provider {...props} />
     </View>
   );

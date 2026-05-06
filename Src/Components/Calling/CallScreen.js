@@ -1,14 +1,704 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from 'react';
+import { Audio } from 'expo-av';
+import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, BackHandler, Alert, ActivityIndicator } from 'react-native';
+import { responsiveHeight, responsiveWidth, responsiveFontSize } from 'react-native-responsive-dimensions';
+import Back from '../../../Assets/svg/back.svg';
+import { Image } from 'expo-image';
+import { FONT_SIZES, WIDTH_SIZES } from '../../../DesiginData/Utility';
+import { useNavigation } from '@react-navigation/native';
+import ZegoExpressEngine, { ZegoRoomConfig, ZegoScenario, ZegoAudioRoute } from 'zego-express-engine-reactnative';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { useCallAcceptManualMutation, useLazyGetCallTokenQuery, useLazyRenewTokenCallQuery, useLeaveCallMutation, useRejectCallMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useDispatch, useSelector } from 'react-redux';
+import DeviceInfo from 'react-native-device-info';
+import TimerText from './TimerText';
+import axios from 'axios';
+import { navigate } from '../../../Navigation/RootNavigation';
+import { setCallRejected, clearAcceptedRoomId } from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
+import StreamEndedUserModal from '../../Screens/Stream/StreamEndedUserModal';
+import { toggleCallAccepted } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { LoginPageErrors } from '../ErrorSnacks';
+import NetworkQualityBadge from './NetworkQualityBadge';
+import { useKeepAwake } from '@sayem314/react-native-keep-awake';
+import { ZEGO_APP_ID, ZEGO_APP_SIGN } from '../../Configs/ZegoConfig';
+import CallingStatusText from './CallingStatusText';
+import { AppLog } from '../../Utils/Logger';
 
-const CallScreen = () => {
+const requestMicrophonePermission = async () => {
+  if (Platform.OS === 'ios') {
+    const result = await request(PERMISSIONS.IOS.MICROPHONE);
+    return result === RESULTS.GRANTED;
+  } else if (Platform.OS === 'android') {
+    const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  }
+  return false;
+};
+
+const handleIcon = {
+  micMute: require('../../../Assets/Images/callMute.png'),
+  micUnMute: require('../../../Assets/Images/unnamed.png'),
+  speakerMute: require('../../../Assets/Images/callSpeaker.png'),
+  speakerUnMute: require('../../../Assets/Images/speakerMuted.png'),
+};
+
+const CallScreen = ({ route }) => {
+  console.log(route?.params, '`params`');
+  useKeepAwake();
+
+  const navigation = useNavigation();
+  const ringtoneRef = useRef(null);
+  const callAcceptedRef = useRef(route?.params?.callAccepted || false);
+
+  useEffect(() => {
+    if (callAccepted) {
+      callAcceptedRef.current = true;
+    }
+  }, [callAccepted]);
+  const isEngineActive = useRef(false);
+  const isMounted = useRef(true);
+
+  const [callDetails, setCallDetails] = useState({});
+  const [callStreamEndModal, setCallStreamEndModal] = useState(false);
+  const [isInMute, setIsInMute] = useState(false);
+  const [isSpeakerInMute, setIsSpeakerInMute] = useState(false);
+  const [isOtherUserInRoom, setIsOtherUserInRoom] = useState(false);
+  const [networkQuality, setNetworkQuality] = useState(0);
+  const [isEndingCall, setIsEndingCall] = useState(false);
+
+  const { token, currentUserId, currentUserDisplayName } = useSelector(state => state.auth.user);
+  const callAccepted = useSelector(state => state.hideShow.visibility.callAccepted);
+
+  const dispatch = useDispatch();
+
+  const [getCallToken] = useLazyGetCallTokenQuery();
+  const [renewTokenCall] = useLazyRenewTokenCallQuery();
+  const [leaveCall] = useLeaveCallMutation();
+  const [rejectCall] = useRejectCallMutation();
+  const [callAcceptManual] = useCallAcceptManualMutation();
+
+  const IS_STARTING = currentUserId === route?.params?.callerId;
+
+  // 🔧 One-shot trigger: when callAccepted becomes true, set this to true to trigger engine init.
+  // Unlike putting callAccepted in the dep array, this only goes false→true (never back), so
+  // it won't cause the engine to be destroyed/re-created when callAccepted flickers.
+  // ⚠️ IS_STARTING must be defined BEFORE this line.
+  const [shouldInitEngine, setShouldInitEngine] = useState(!IS_STARTING);
+
+  // 🔥 Configure Navigation Header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: route?.params?.name || 'Call',
+      headerTitleStyle: {
+        fontFamily: 'Rubik-Bold',
+        fontSize: responsiveFontSize(2),
+        color: '#1e1e1e',
+      },
+      headerTitleAlign: 'left',
+      headerShadowVisible: false,
+      headerStyle: {
+        backgroundColor: '#fff',
+      },
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => handleLogout(false)}
+          style={{ marginLeft: 0, paddingRight: 10 }}>
+          <Back />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <View style={{ marginRight: 10 }}>
+          <NetworkQualityBadge quality={networkQuality} />
+        </View>
+      ),
+    });
+  }, [navigation, route?.params?.name, networkQuality, isOtherUserInRoom]); // Added dependencies
+
+  // 🔥 Receiver already accepted the call before landing here, so set callAccepted immediately
+  useEffect(() => {
+    if (!IS_STARTING) {
+      dispatch(toggleCallAccepted({ status: true }));
+    }
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  console.log('CALL_JO', Platform.OS, callAccepted);
+
+  useEffect(() => {
+    if (!IS_STARTING) return; // Only the caller (creator) plays ringtone
+    
+    let isCancelled = false;
+    
+    // 🍎 iOS: Audio.setAudioModeAsync doesn't destructively hijack the route 
+    // the same way react-native-sound does, so it's safer alongside ZEGO.
+    const playRingtone = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+        });
+
+        const { sound } = await Audio.Sound.createAsync(
+          require('../../Assets/Audio/ringfahdu.wav'),
+          { isLooping: true }
+        );
+
+        if (isCancelled || callAcceptedRef.current) {
+          console.log('🔕 Ringtone loaded but call already accepted, skipping play');
+          await sound.unloadAsync();
+          return;
+        }
+
+        ringtoneRef.current = sound;
+        await sound.playAsync();
+      } catch (error) {
+        console.log('❌ Failed to load outgoing call ringtone:', error);
+        AppLog('AUDIO_RINGTONE_ERROR', 'Failed to load outgoing call ringtone in CallScreen', { error: error?.message || error, os: Platform.OS });
+      }
+    };
+
+    playRingtone();
+
+    // Cleanup on unmount
+    return () => {
+      isCancelled = true;
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stopAsync().then(() => {
+          ringtoneRef.current?.unloadAsync();
+          ringtoneRef.current = null;
+        });
+      }
+    };
+  }, []);
+
+  // Stop ringtone when call is accepted
+  useEffect(() => {
+    if (!callAccepted) return;
+    // With expo-av, ringtoneRef is only set AFTER createAsync resolves,
+    // and the playRingtone() function already checks callAcceptedRef before playing.
+    // So there is no race condition — either the ref exists and we stop it,
+    // or playRingtone() will see callAcceptedRef=true and skip playing entirely.
+    if (ringtoneRef.current) {
+      console.log('🔇 Stopping ringtone — call accepted');
+      ringtoneRef.current.stopAsync().then(() => ringtoneRef.current?.unloadAsync());
+      ringtoneRef.current = null;
+    }
+    // Reset audio session for ZEGO capture/playback (both platforms)
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+    }).catch(err => console.log('expo-av audio mode reset error:', err));
+  }, [callAccepted]);
+
+  async function streamHasEndedModalOkay() {
+    try {
+      if (isEngineActive.current) {
+        await ZegoExpressEngine.instance().stopPlayingStream();
+        await ZegoExpressEngine.instance().logoutRoom(callDetails.callRoomId || `call_${route?.params?.roomId}`);
+      }
+    } catch (error) {
+      console.log('⚠️ Error during stream end cleanup:', error);
+    } finally {
+      setCallStreamEndModal(false);
+      navigate('home');
+    }
+  }
+
+  async function leaveCallHandler() {
+    try {
+      const { data, error } = await leaveCall({ token, data: { roomId: route?.params?.roomId } });
+      if (data) console.log(data, 'Leave call success');
+      if (error) console.log(error, 'Leave call error');
+    } catch (error) {
+      console.log('⚠️ Exception in leaveCallHandler:', error);
+    }
+  }
+
+  async function rejectCallHandler() {
+    try {
+      const { data, error } = await rejectCall({
+        token,
+        data: {
+          roomId: route?.params?.roomId,
+          callType: route?.params?.callType || 'audio',
+          userId: currentUserId,
+        },
+      });
+      if (data) console.log(data, 'Reject call success');
+      if (error) console.log(error, 'Reject call error');
+    } catch (error) {
+      console.log('⚠️ Exception in rejectCallHandler:', error);
+    }
+  }
+
+  const handleMic = async () => {
+    try {
+      if (isEngineActive.current) {
+        let x = await ZegoExpressEngine.instance().isMicrophoneMuted();
+        if (!x) {
+          await ZegoExpressEngine.instance().muteMicrophone(true);
+          setIsInMute(true);
+        } else {
+          await ZegoExpressEngine.instance().muteMicrophone(false);
+          setIsInMute(false);
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Error toggling microphone:', error);
+    }
+  };
+
+  const handleSpeaker = async () => {
+    try {
+      if (isEngineActive.current) {
+        const newMuteState = !isSpeakerInMute;
+        // Mute/unmute speaker audio (always stays on speaker, no earpiece)
+        await ZegoExpressEngine.instance().muteSpeaker(newMuteState);
+        setIsSpeakerInMute(newMuteState);
+      }
+    } catch (error) {
+      console.log('⚠️ Error toggling speaker:', error);
+    }
+  };
+
+  const handleLogout = async fromSocket => {
+    if (isEndingCall) return;
+    setIsEndingCall(true);
+    console.log(`Logging out from call_${route?.params?.roomId}`);
+
+    try {
+      if (isEngineActive.current) {
+        const engine = ZegoExpressEngine.instance();
+        if (engine) {
+          await engine.stopPlayingStream();
+          await engine.logoutRoom(callDetails.callRoomId || `call_${route?.params?.roomId}`);
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ ZEGO already destroyed or instance failed:', error.message);
+    }
+
+    // Reset callAccepted to false BEFORE navigation
+    dispatch(toggleCallAccepted({ status: false }));
+
+    if (!fromSocket) {
+      if (callAcceptedRef.current) {
+        // Call was accepted/active → Always use LEAVE
+        await leaveCallHandler();
+        console.log('Leaving call (call was accepted)...');
+      } else {
+        // Call was never accepted → REJECT
+        await rejectCallHandler();
+        console.log('Rejecting call (not accepted yet)...');
+      }
+    }
+
+    if (isMounted.current) {
+      navigate('home');
+    }
+  };
+
+  // 🔥 Keep callAcceptedRef in sync with Redux state
+  useEffect(() => {
+    callAcceptedRef.current = callAccepted;
+    // 🔧 When callAccepted becomes true for the first time, trigger engine init (one-shot)
+    if (callAccepted && !shouldInitEngine) {
+      setShouldInitEngine(true);
+    }
+  }, [callAccepted]);
+
+  // 🔥 Bulletproof 60-second timeout — set ONCE, never resets
+  useEffect(() => {
+    if (!IS_STARTING) return; // Only for caller
+
+    console.log('⏰ Starting 60-second timeout for call acceptance (bulletproof)');
+
+    const timeoutId = setTimeout(async () => {
+      if (!callAcceptedRef.current && isMounted.current) {
+        console.log('⏰ 60 seconds passed, call not accepted - sending UNAVAILABLE');
+        try {
+          await callAcceptManual({
+            token,
+            data: {
+              roomId: route?.params?.roomId,
+              callType: route?.params?.callType || 'audio',
+              status: 'UNAVAILABLE',
+            },
+          });
+        } catch (error) {
+          console.log('❌ Error sending UNAVAILABLE:', error);
+        } finally {
+          if (isMounted.current) {
+            LoginPageErrors('User not receiving the call');
+            navigate('home');
+          }
+        }
+      }
+    }, 60000);
+
+    return () => clearTimeout(timeoutId);
+  }, []); // ← Empty deps = runs once, never resets
+
+  // Disable back button
+  useEffect(() => {
+    let x = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleLogout(false);
+      return true;
+    });
+    return () => x.remove();
+  }, [isOtherUserInRoom]); // Dependency on isOtherUserInRoom for handleLogout
+
+  // Fetch call token
+  useEffect(() => {
+    async function getTokenFromServer() {
+      const { data, error } = await getCallToken({ token, roomId: route?.params?.roomId });
+      if (data) {
+        console.log('Success API', data);
+        setCallDetails({ token: data?.data?.TOKEN, roomId: route?.params?.roomId, callRoomId: data?.data?.callRoomId });
+      }
+      if (error) {
+        console.log('Error api', error, DeviceInfo.isEmulatorSync());
+      }
+
+      console.log("EMOJI", data)
+    }
+
+    getTokenFromServer();
+  }, [token, route?.params?.roomId]);
+
+  // 🔥 Initialize ZEGO - Fixed: listeners before permissions, no callAccepted in deps
+  useEffect(() => {
+  // Wait for call acceptance if starting (use ref to avoid dep array issues)
+    if (IS_STARTING && !shouldInitEngine) {
+      console.log('⏳ Waiting for call to be accepted...');
+      AppLog('CALL', 'Waiting for call acceptance (Caller side)', { roomId: route?.params?.roomId });
+      return;
+    }
+
+    // Wait for token
+    if (!callDetails.token) {
+      console.log('⏳ Waiting for call token...');
+      return;
+    }
+
+    console.log('🚀 Initializing ZEGO engine...');
+    AppLog('CALL', 'Initializing ZEGO engine', { roomId: callDetails.roomId, isStarting: IS_STARTING });
+
+    const initEngine = async () => {
+      const profile = {
+        appID: ZEGO_APP_ID,
+        appSign: ZEGO_APP_SIGN,
+        scenario: ZegoScenario.StandardVoiceCall,
+      };
+
+      try {
+        console.log('🔄 [CallScreen:ZEGO] Setting Expo AV audio mode...');
+        // 🍎 Explicitly set audio mode BEFORE ZEGO engine creation
+        // Must be awaited to guarantee the session is ready
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+        });
+        console.log('✅ [CallScreen:ZEGO] Expo AV audio mode set successfully.');
+
+        console.log('🔄 [CallScreen:ZEGO] Creating Engine with Profile...');
+        const engine = await ZegoExpressEngine.createEngineWithProfile(profile);
+        console.log('✅ [CallScreen:ZEGO] ZEGO engine created successfully.');
+        if (!isMounted.current) {
+          ZegoExpressEngine.destroyEngine();
+          return;
+        }
+        isEngineActive.current = true;
+
+        // 🔧 FIX: Attach event listeners IMMEDIATELY after engine creation,
+        // BEFORE the permission request, so we never miss a stream event.
+        engine.on('roomStateUpdate', (roomID, state, errorCode, extendedData) => {
+          console.log(`📡 [CallScreen:ZEGO] roomStateUpdate: roomID=${roomID}, state=${state}, errorCode=${errorCode}`);
+          AppLog('ZEGO_STATE', 'ZEGO Room State Update', { roomID, state, errorCode, extendedData });
+        });
+
+        engine.on('roomUserUpdate', (roomID, updateType, userList) => {
+          console.log(`📡 [CallScreen:ZEGO] roomUserUpdate: roomID=${roomID}, updateType=${updateType}, usersCount=${userList?.length}`);
+          if (!isMounted.current) return;
+          if (updateType === 0) {
+            const otherUser = userList.find(user => user.userID !== currentUserId);
+            if (otherUser) setIsOtherUserInRoom(true);
+          } else if (updateType === 1) {
+            setIsOtherUserInRoom(false);
+          }
+        });
+
+        engine.on('roomStreamUpdate', async (roomID, updateType, streamList) => {
+          if (!isMounted.current) return;
+          if (updateType === 1) { // Stream removed
+            console.log('❌ Stream removed');
+            AppLog('CALL', 'Remote stream removed', { roomID });
+            dispatch(toggleCallAccepted({ status: false }));
+            setCallStreamEndModal(true);
+            return;
+          }
+          if (streamList?.length > 0 && isEngineActive.current) {
+            engine.startPlayingStream(streamList[0]?.streamID);
+            // Keep earpiece for audio calls — user can toggle to speaker manually
+            AppLog('CALL', 'Started playing remote stream', { streamID: streamList[0]?.streamID });
+          }
+        });
+
+        engine.on('playerStateUpdate', (streamID, state, errorCode, extendedData) => {
+          AppLog('ZEGO_RECEIVING_STATE', `Player state update`, { streamID, state, errorCode, os: Platform.OS });
+        });
+        
+        engine.on('publisherStateUpdate', (streamID, state, errorCode, extendedData) => {
+          AppLog('ZEGO_SENDING_STATE', `Publisher state update`, { streamID, state, errorCode, os: Platform.OS });
+        });
+
+        engine.on('remoteMicStateUpdate', (streamID, state) => {
+          AppLog('REMOTE_MIC_STATE', `Remote microphone state updated`, { streamID, state, os: Platform.OS });
+        });
+
+        engine.on('publisherQualityUpdate', (streamID, quality) => {
+          if (!isMounted.current) return;
+          const mapping = { 0: 1, 1: 2, 2: 3, 3: 5 };
+          setNetworkQuality(mapping[quality.level] ?? 0);
+        });
+
+        console.log('🔄 [CallScreen:ZEGO] Requesting Microphone Permission...');
+        // 🔧 Now request permission (listeners already attached, so no race condition)
+        const hasPermission = await requestMicrophonePermission();
+        if (!hasPermission || !isMounted.current) {
+          console.log('❌ [CallScreen:ZEGO] Microphone permission denied or unmounted');
+          AppLog('CALL', 'Microphone permission denied', { roomId: callDetails.roomId });
+          return;
+        }
+        console.log('✅ [CallScreen:ZEGO] Microphone Permission GRANTED.');
+
+        // Login & Publish
+        const roomConfig = new ZegoRoomConfig();
+        roomConfig.isUserStatusNotify = true;
+        roomConfig.token = callDetails.token;
+
+        console.log('🔄 [CallScreen:ZEGO] Enabling capture devices and setting audio route to speaker...');
+        await engine.enableCamera(false);
+        await engine.enableAudioCaptureDevice(true);
+        // 🔧 Force speaker for audio calls (user can mute/unmute speaker)
+        await engine.setAudioRouteToSpeaker(true);
+        console.log('✅ [CallScreen:ZEGO] Audio devices configured.');
+
+        const myStreamID = 'stream_' + currentUserId;
+        
+        console.log(`🔄 [CallScreen:ZEGO] Logging into Room: ${callDetails.callRoomId} as userID: ${currentUserId}`);
+        // Login room first, sequentially, to prevent race conditions
+        await engine.loginRoom(
+          callDetails.callRoomId,
+          { userID: currentUserId, userName: currentUserDisplayName },
+          roomConfig
+        );
+        console.log('✅ [CallScreen:ZEGO] engine.loginRoom() completed successfully.');
+
+        console.log(`🔄 [CallScreen:ZEGO] Starting to publish stream: ${myStreamID}`);
+        await engine.startPublishingStream(myStreamID);
+        console.log('✅ [CallScreen:ZEGO] engine.startPublishingStream() completed successfully.');
+        
+        AppLog('CALL', 'Logged into room and started publishing (Sequential)', { roomId: callDetails.roomId, streamID: myStreamID });
+
+      } catch (error) {
+        console.error('❌ [CallScreen:ZEGO] Failed during engine initialization/login:', error);
+        AppLog('ZEGO_ERROR', 'Failed to initialize ZEGO engine', { error: error?.message || error, stack: error?.stack, roomId: callDetails.roomId });
+      }
+    };
+
+    initEngine();
+
+    return () => {
+      console.log('componentWillUnmount');
+      try {
+        if (isEngineActive.current) {
+          console.log('[LZP] destroyEngine');
+          ZegoExpressEngine.destroyEngine();
+          isEngineActive.current = false;
+        }
+      } catch (e) {
+        console.log('ZEGO engine already destroyed or instance check failed');
+      }
+    };
+    // 🔧 FIX: Removed callAccepted from deps to prevent mid-call engine destruction.
+    // shouldInitEngine is a one-shot trigger that only ever goes false→true.
+  }, [callDetails, shouldInitEngine, currentUserId, currentUserDisplayName]);
+
+  // 🔥 Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('CallScreen unmounting, resetting callAccepted');
+      dispatch(toggleCallAccepted({ status: false }));
+      // Clear this roomId from accepted list so the same room can be re-accepted
+      if (route?.params?.roomId) {
+        dispatch(clearAcceptedRoomId(route.params.roomId));
+      }
+      isMounted.current = false;
+
+      // Stop ringtone if still playing
+      if (ringtoneRef.current) {
+        ringtoneRef.current.stopAsync().then(() => {
+          ringtoneRef.current?.unloadAsync();
+          ringtoneRef.current = null;
+        });
+      }
+    };
+  }, []);
+
   return (
-    <View>
-      <Text>CallScreen</Text>
+    <View style={styles.container}>
+      {/* Profile Section */}
+      <View style={styles.profileSection}>
+        <View style={styles.outerCircle}>
+          <View style={styles.innerCircle}>
+            <Image source={{ uri: route?.params?.profileImageUrl }} style={styles.profileImage} />
+          </View>
+        </View>
+        {!callAccepted ? (
+          <CallingStatusText username={route?.params?.name} />
+        ) : (
+          <TimerText
+            accepted={callAccepted}
+            totalDuration={route?.params?.totalDuration}
+            onTimerExpire={() => {
+              if (IS_STARTING) {
+                handleLogout(false);
+              }
+            }}
+          />
+        )}
+      </View>
+
+      {/* Controls */}
+      <View style={styles.controls}>
+        {/* <TouchableOpacity style={styles.controlBtn} onPress={() => handleMic()}>
+          <Image source={isInMute ? handleIcon.micMute : handleIcon.micUnMute} style={styles.iconStyle} />
+        </TouchableOpacity> */}
+        <TouchableOpacity style={styles.controlBtn} onPress={() => handleSpeaker()}>
+          <Image source={isSpeakerInMute ? handleIcon.speakerUnMute : handleIcon.speakerMute} style={styles.iconStyle} />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.controlBtn, styles.endCallBtn]} 
+          onPress={() => handleLogout(false)}
+          disabled={isEndingCall}
+        >
+          {isEndingCall ? (
+            <ActivityIndicator color="#1e1e1e" size="small" />
+          ) : (
+            <Image source={require('../../../Assets/Images/callTelephone.png')} style={styles.iconStyle} />
+          )}
+        </TouchableOpacity>
+
+        <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title="Call terminated..." />
+      </View>
     </View>
-  )
-}
+  );
+};
 
-export default CallScreen
+export default CallScreen;
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  timerBelowProfile: {
+    marginTop: 16,
+  },
+  rightInfo: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  timerCoinBox: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderWidth: WIDTH_SIZES['1.5'],
+  },
+  coinTimerText: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: FONT_SIZES['10'],
+    color: '#1e1e1e',
+  },
+  profileSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  outerCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  ringingText: {
+    marginTop: 12,
+    fontSize: responsiveFontSize(2),
+    color: '#888',
+    fontFamily: 'Rubik-Regular',
+  },
+  controls: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFF9F5',
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  controlBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: WIDTH_SIZES['14'],
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: WIDTH_SIZES['1.5'],
+    borderColor: '#1e1e1e',
+  },
+  endCallBtn: {
+    backgroundColor: '#FF8580',
+  },
+  iconStyle: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+  verifyContainer: {
+    width: 15,
+    height: 14.32,
+  },
+  hiddenView: {
+    width: 1,
+    height: 1,
+    opacity: 0,
+  },
+});

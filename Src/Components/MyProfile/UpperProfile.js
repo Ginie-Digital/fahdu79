@@ -12,6 +12,7 @@ import share from 'react-native-share';
 
 import {Image} from 'expo-image';
 import {navigate} from '../../../Navigation/RootNavigation';
+import {formatNiche} from '../../../DesiginData/Utility';
 
 const UpperProfile = ({isFocused}) => {
   const ref = React.useRef();
@@ -32,8 +33,7 @@ const UpperProfile = ({isFocused}) => {
 
   const handlePostActionHandler = async userId => {
     try {
-
-      console.log("xxxx")
+      console.log('xxxx');
 
       let x = await share.open({
         url: userId,
@@ -63,7 +63,7 @@ const UpperProfile = ({isFocused}) => {
 
         console.log(userDetail?.data?.data, '::::userDetail');
 
-        if (userDetail?.error?.data?.status_code === 401) {
+        if (userDetail?.error?.data?.status_code === 2044) {
           autoLogout();
         }
 
@@ -77,26 +77,21 @@ const UpperProfile = ({isFocused}) => {
       }
 
       getUserProfileDetails();
-    }, []),
+    }, [token, loggedUserDetail?.currentUserDisplayName]),
   );
 
-  console.log(loggedUserDetail, ")_)_)_")
-
-
+  console.log(loggedUserDetail, ')_)_)_');
 
   const UserDetailMyProfile = useCallback(() => {
-
-    
-
     return (
-      <View style={[styles.userDetailContainer, userProfileDetails?.role === 'creator' ? {marginTop: responsiveWidth(10)} : {marginTop: responsiveWidth(8)}]}>
+      <View style={[styles.userDetailContainer, (userProfileDetails?.role === 'creator' || userProfileDetails?.role === 'admin') ? {marginTop: responsiveWidth(10)} : {marginTop: responsiveWidth(8)}]}>
         <Text style={styles.name}>{loggedUserDetail?.currentUserFullName}</Text>
 
         {/* User Name */}
         <View style={styles.userName}>
           <View style={styles.userNameRow}>
             <Text style={styles.userNameTitle}>{loggedUserDetail?.currentUserDisplayName}</Text>
-            {userProfileDetails?.role === 'creator' && (
+            {(userProfileDetails?.role === 'creator' || userProfileDetails?.role === 'admin') && (
               <View style={{height: 19, width: 19}}>
                 <Image source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{flex: 1}} />
               </View>
@@ -105,16 +100,12 @@ const UpperProfile = ({isFocused}) => {
         </View>
 
         {/* Creator Info */}
-        {userProfileDetails?.role === 'creator' && (
-          <ScrollView
-            horizontal 
-            showsHorizontalScrollIndicator = {false}
-            contentContainerStyle={styles.creatorScrollContainer} 
-          >
+        {(userProfileDetails?.role === 'creator' || userProfileDetails?.role === 'admin') && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.creatorScrollContainer}>
             <View style={styles.creatorRow}>
               {/* Category Tag */}
               <View style={styles.categoryTag}>
-                <Text style={styles.categoryText}>{userProfileDetails?.niche[0] || 'My Niche'}</Text>
+                <Text style={styles.categoryText}>{formatNiche(userProfileDetails?.niche?.[0]) || 'My Niche'}</Text>
               </View>
 
               {/* Followers */}
@@ -148,8 +139,6 @@ const UpperProfile = ({isFocused}) => {
                   <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{flex: 1}} />
                 </View>
               </Pressable>
-
-
             </View>
           </ScrollView>
         )}
@@ -158,14 +147,14 @@ const UpperProfile = ({isFocused}) => {
   }, [userProfileDetails, loggedUserDetail]);
 
   const BioMyProfile = useCallback(
-    ({userProfileDetails}) => {
+    ({ userProfileDetails }) => {
       // Default bio text if none is provided
       const defaultBio = 'Sharing unique content and engaging with my community. Join me on this journey! 🌟🎨';
 
       return (
         <View style={styles.bioContainer}>
           <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
-            {userProfileDetails?.aboutUser || defaultBio}
+            {loggedUserDetail?.aboutUser || userProfileDetails?.aboutUser || defaultBio}
           </ReadMore>
           {userProfileDetails?.username && <Text style={styles.usernameLink}>@{userProfileDetails.username}</Text>}
         </View>
@@ -176,7 +165,6 @@ const UpperProfile = ({isFocused}) => {
 
   return (
     <View ref={ref} style={{maxHeight: responsiveHeight(60), backgroundColor: '#fff'}}>
-      
       <MyProfilePicture userProfileDetails={userProfileDetails} />
 
       <UserDetailMyProfile userProfileDetails={userProfileDetails} currentUserRole={userProfileDetails?.role} />
@@ -184,7 +172,6 @@ const UpperProfile = ({isFocused}) => {
       <View style={{flexDirection: 'column'}}>
         <BioMyProfile userProfileDetails={userProfileDetails} />
       </View>
-
     </View>
   );
 };
@@ -351,12 +338,12 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     textAlign: 'left',
   },
-  creatorScrollContainer : {
+  creatorScrollContainer: {
     marginTop: responsiveWidth(1.8),
     // backgroundColor : 'red',
-    
-    flexDirection : 'row',
-    alignItems : 'center',
-    height : 40
-  }
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+  },
 });

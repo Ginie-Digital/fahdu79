@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, ToastAndroid } from "react-native";
+import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, ToastAndroid, ActivityIndicator } from "react-native";
 import React, { useCallback } from "react";
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from "react-native-responsive-dimensions";
 import { useSelector, useDispatch } from "react-redux";
@@ -15,11 +15,54 @@ import { chatRoomSuccess, LoginPageErrors } from "../ErrorSnacks";
  * todo : One dispatch to hide show modal, another one to set seelcted sort
  */
 
-const ProfileActionModal = ({ setIsFollowing, isFollowing, token, userName, setSubscribed }) => {
-
+const ProfileActionModal = ({ setIsFollowing, isFollowing, token, userName, setSubscribed, onUnsubscribePress, subscribed, isFetchingSubscription }) => {
+  const dispatch = useDispatch();
   const modalVisibility = useSelector((state) => state.hideShow.visibility.profileActionModal);
 
-  console.log(modalVisibility);
+  const [unFollowUser] = useUnFollowUserMutation();
+
+  const handleProfileActions = async (id) => {
+    if (id === 1) { // Unfollow
+      dispatch(toggleProfileAction());
+      const { data, error } = await unFollowUser({ token, displayName: userName });
+      if (data) {
+        setIsFollowing(false);
+        chatRoomSuccess(`You have unfollowed ${userName}`);
+      }
+      if (error) LoginPageErrors(error?.data?.message);
+    } else if (id === 4) { // Unsubscribe
+      if (onUnsubscribePress) {
+        onUnsubscribePress();
+      }
+    } else if (id === 3) { // Block
+      dispatch(toggleProfileAction());
+      ToastAndroid.show("Block feature coming soon", ToastAndroid.SHORT);
+    }
+  };
+
+  const currentActions = [];
+  if (isFollowing) {
+    currentActions.push({
+      id: 1,
+      title: "Unfollow",
+      iconName: "eye-off",
+      provider: "Feather",
+    });
+  }
+  if (subscribed) {
+    currentActions.push({
+      id: 4,
+      title: "Unsubscribe",
+      iconName: "tag-remove-outline",
+      provider: "MaterialCommunityIcons",
+    });
+  }
+  currentActions.push({
+    id: 3,
+    title: "Block User",
+    iconName: "shield-alert-outline",
+    provider: "MaterialCommunityIcons",
+  });
 
   return (
     <Modal
@@ -27,13 +70,12 @@ const ProfileActionModal = ({ setIsFollowing, isFollowing, token, userName, setS
       animationOut={"fadeOutUp"}
       animationInTiming={150}
       animationOutTiming={150}
-      onRequestClose={() => dispatcher(toggleProfileAction())}
+      onRequestClose={() => dispatch(toggleProfileAction())}
       transparent={true}
       isVisible={modalVisibility}
-      // coverScreen={true}
       backdropColor="transparent"
-      onBackButtonPress={() => dispatcher(toggleProfileAction())}
-      onBackdropPress={() => dispatcher(toggleProfileAction())}
+      onBackButtonPress={() => dispatch(toggleProfileAction())}
+      onBackdropPress={() => dispatch(toggleProfileAction())}
       useNativeDriver
       style={{
         width: "100%",
@@ -45,11 +87,18 @@ const ProfileActionModal = ({ setIsFollowing, isFollowing, token, userName, setS
       <View style={[{ position: "relative" }]}>
         <View style={styles.modalInnerWrapper}>
           <FlatList
-            data={profileActionList}
+            data={currentActions}
             renderItem={({ item, index }) => (
-              <TouchableOpacity onPress={() => handleProfileActions(item.id)}>
-                <View style={styles.eachSortModalList}>
-                  <DIcon name={item.iconName} provider={item.provider} size={responsiveWidth(5)} color={"#FFA07A"} />
+              <TouchableOpacity 
+                onPress={() => !isFetchingSubscription && handleProfileActions(item.id)}
+                disabled={isFetchingSubscription && item.id === 4}
+              >
+                <View style={[styles.eachSortModalList, item.id === 4 && isFetchingSubscription && { opacity: 0.6 }]}>
+                  {item.id === 4 && isFetchingSubscription ? (
+                    <ActivityIndicator size="small" color="#FFA07A" style={{ width: responsiveWidth(5) }} />
+                  ) : (
+                    <DIcon name={item.iconName} provider={item.provider} size={responsiveWidth(5)} color={"#FFA07A"} />
+                  )}
                   <Text style={styles.eachSortByModalListText}>{item.title}</Text>
                 </View>
               </TouchableOpacity>

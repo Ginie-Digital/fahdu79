@@ -1,147 +1,159 @@
-import {
-  StyleSheet,
-  AppState,
-  StatusBar,
-  Platform,
-  View,
-  Linking,
-  Alert,
-} from 'react-native';
-import React, {useCallback, useRef, useState} from 'react';
+import { StyleSheet, AppState, StatusBar, Platform, View, Linking, Alert } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
 import StackNavigation from './Navigation/StackNavigation';
-import {useEffect} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import socketServcies from './SocketServices';
-import messaging, {firebase} from '@react-native-firebase/messaging';
-import {
-  onDisplayNotification,
-  displayChatNotification,
-  showPostInteractionNotification,
-  liveStreamNotification,
-  showOthersCategoryNotification,
-  showSubscriptionNotification,
-} from './Notificaton';
-import {
-  enableNotificationModal,
-  resetAllModal,
-  toggleEmailVerificationModal,
-  toggleNewMessageRecieved,
-} from './Redux/Slices/NormalSlices/HideShowSlice';
-import {
-  authLogout,
-  currentUserInformation,
-  token as memoizedToken,
-} from './Redux/Slices/NormalSlices/AuthSlice';
-import {useSendFcmTokenMutation} from './Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { getMessaging, onMessage, getToken } from '@react-native-firebase/messaging';
+import {dismissProgressNotification, displayNotificationProgressIndicator, showMentionNotification, showOthersCategoryNotification, showSubscriptionNotification, showCallRelatedNotification, showCallReminderNotification, liveStreamNotification, onDisplayNotification, showPostInteractionNotification} from './Notificaton';
+import { enableNotificationModal, resetAllModal, setLatestTip, setUnReadChatIcon, toggleCallAccepted, toggleEmailVerificationModal, toggleNewMessageRecieved } from './Redux/Slices/NormalSlices/HideShowSlice';
+import { authLogout, currentUserInformation, token as memoizedToken } from './Redux/Slices/NormalSlices/AuthSlice';
+import { markRoomAsProcessed, markRoomAsAccepted, clearProcessedRoomId } from './Redux/Slices/NormalSlices/Call/CallSlice';
+import { useSendFcmTokenMutation } from './Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 
-import notifee from '@notifee/react-native';
+import notifee, { EventType } from '@notifee/react-native';
 
 // import notifee, {EventType} from '@notifee/react-native';
 
 import axios from 'axios';
-import {navigate} from './Navigation/RootNavigation';
-import {screens} from './DesiginData/Data';
-import {
-  removeRoomList,
-  updateCacheRoomList,
-} from './Redux/Slices/NormalSlices/RoomListSlice';
-import {
-  emptyUnreadRoomList,
-  pushUnReadRoomIds,
-} from './Redux/Slices/NormalSlices/UnReadThreadSlice';
-import {useFocusEffect} from '@react-navigation/native';
-import {LoginPageErrors, OnlineSnack} from './Src/Components/ErrorSnacks';
-import {deleteCachedMessages} from './Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
+import { navigate } from './Navigation/RootNavigation';
+import { screens } from './DesiginData/Data';
+import { removeRoomList, updateCacheRoomList } from './Redux/Slices/NormalSlices/RoomListSlice';
+import { emptyUnreadRoomList, pushUnReadRoomIds } from './Redux/Slices/NormalSlices/UnReadThreadSlice';
+import { useFocusEffect } from '@react-navigation/native';
+import { chatRoomSuccess, LoginPageErrors, OnlineSnack } from './Src/Components/ErrorSnacks';
+import { deleteCachedMessages } from './Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
 
-import DeviceInfo, {getVersion} from 'react-native-device-info';
-import {setUpdateStatus} from './Redux/Slices/NormalSlices/HasAppUpdatedSlice';
-import {resetAll} from './Redux/Actions';
+import { AppLog } from './Src/Utils/Logger';
+import { BASE_URL } from './Src/Configs/ApiConfig';
+import DeviceInfo, { getVersion } from 'react-native-device-info';
+import { setUpdateStatus } from './Redux/Slices/NormalSlices/HasAppUpdatedSlice';
+import { resetAll } from './Redux/Actions';
 
 // import SplashScreen from "react-native-splash-screen";
-import {
-  pushChats,
-  pushGoals,
-  removeGoals,
-  setMuteState,
-  setToAnimate,
-  setViewers,
-  updateGoals,
-} from './Redux/Slices/NormalSlices/LiveStream/LiveChats';
+import { pushChats, pushGoals, removeGoals, setMuteState, setToAnimate, setViewers, updateGoals } from './Redux/Slices/NormalSlices/LiveStream/LiveChats';
 import FlashMessage from 'react-native-flash-message';
-import {checkApplicationPermission} from './Permissions';
-import {deleteCredentials} from './Redux/Slices/NormalSlices/TempCredentials';
-import {
-  extractUserIdFromUrl,
-  extractUserNameAndroid,
-  extractUsernameFromDeepLink,
-  isVersionGreaterOrEqual,
-  joinLivestream,
-} from './DesiginData/Utility';
-import {setRefferalLink} from './Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
-import {
-  setCallbackId,
-  setCallCallback,
-  setCallData,
-} from './Redux/Slices/NormalSlices/Call/CallSlice';
-import {addCallback} from './Redux/socketCallbacks';
+import { checkApplicationPermission } from './Permissions';
+import { deleteCredentials } from './Redux/Slices/NormalSlices/TempCredentials';
+import { extractUserIdFromUrl, extractUserNameAndroid, extractUsernameFromDeepLink, isVersionGreaterOrEqual, joinLivestream } from './DesiginData/Utility';
+import { setRefferalLink } from './Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
+
 import AlertBox from './Src/AlertBox';
 import ReLoginModal from './Src/Screens/LoginSignup/ReLoginModal';
-// import CallKeepService from '../../service/CallKeepService';
-
-import CallKeepService from './service/CallKeepService';
-
-// import StarterLottie from "./Src/Screens/StarterLottie";
+import { setCallRejected } from './Redux/Slices/NormalSlices/Call/CallSlice';
+import { updateWallet } from './Redux/Slices/NormalSlices/Wallet/WalletSlice';
+import ServerMaintenance from './Src/Screens/ServerMaintenance';
+import PostTipModal from './Src/Components/HomeComponents/PostTipModal';
+import CombineSelectorModal from './Src/Screens/Chatroom/CombineSelectorModal';
+import LabelModal from './Src/Components/LabelModal';
+import ChatWindowTipModal from './Src/Components/ChatWindowComponents/ChatWindowTipModal';
+import ScreenshotPrevention from './Src/Components/ScreenshotPrevention';
+import DateTimePickerSheet from './Src/Components/CreatePostComponents/DateTimePickerSheet';
+import NicheSelectorModal from './Src/Components/Verification/NicheSelectorModal';
+import CallDisconnectedModal from './Src/Components/Calling/CallDisconnectedModal';
+import HomeBottomSheet from './Src/Components/HomeComponents/HomeBottomSheet';
+import CreatePostBottomSheet from './Src/Components/HomeComponents/CreatePostBottomSheet';
 
 const Main = () => {
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
-
   const token = useSelector(state => state.auth.user.token);
+  const currentChatRoomId = useSelector(state => state.chatWindowCurrentChattingRoom.data.roomId);
+  const doUpdate = useSelector(state => state.hasAppUpdated.app.updated);
+  const doUserClickedOnForeGroundNotification = useSelector(state => state.hideShow.visibility.notificationClick);
+  const doUserLoggedIn = useSelector(state => state.auth.user.token);
+  const isNotificationFromQuitState = useSelector(state => state.call.data.fromNotification);
+  const processedRoomIds = useSelector(state => state.call.processedRoomIds);
+  const acceptedRoomIds = useSelector(state => state.call.acceptedRoomIds);
+  const data = useSelector(state => state.credentials.user);
+
   const [sendFcmToken] = useSendFcmTokenMutation();
   const dispatch = useDispatch();
   const [showLottie, setShowLottie] = useState(false);
-  const currentChatRoomId = useSelector(
-    state => state.chatWindowCurrentChattingRoom.data.roomId,
-  );
-  const doUpdate = useSelector(state => state.hasAppUpdated.app.updated);
-  const doUserClickedOnForeGroundNotification = useSelector(
-    state => state.hideShow.visibility.notificationClick,
-  );
+  const [disconnectModalVisible, setDisconnectModalVisible] = useState(false);
   const hasHandledInitialLink = useRef(false);
 
-  const doUserLoggedIn = useSelector(state => state.auth.user.token);
+  // Stable refs to prevent onMessage re-subscription gaps
+  const currentChatRoomIdRef = useRef(currentChatRoomId);
+  const processedRoomIdsRef = useRef(processedRoomIds);
+  const acceptedRoomIdsRef = useRef(acceptedRoomIds);
 
-  const isNotificationFromQuitState = useSelector(
-    state => state.call.data.fromNotification,
-  );
+  useEffect(() => { currentChatRoomIdRef.current = currentChatRoomId; }, [currentChatRoomId]);
+  useEffect(() => { processedRoomIdsRef.current = processedRoomIds; }, [processedRoomIds]);
+  useEffect(() => { acceptedRoomIdsRef.current = acceptedRoomIds; }, [acceptedRoomIds]);
 
+  // Reset persisted call state on fresh app launch
   useEffect(() => {
-    // Listen for app state changes to handle navigation from a killed state
-    const appStateSubscription = AppState.addEventListener(
-      'change',
-      CallKeepService.handleAppStateChange,
-    );
-
-    // Alert.alert('fuk');
-    return () => {
-      // Clean up listeners
-      appStateSubscription.remove();
-      // callManager.removeAllListeners();
-    };
+    dispatch(toggleCallAccepted({ status: false }));
   }, []);
 
-  // useEffect(() => {
-  //   console.log('666666666666666666::::::::::::::::::6666666666::::::(((((99999');
+  // Unified incoming call handler to prevent duplicates (Socket vs FCM)
+  // Uses callId from backend (same across Socket & FCM) for reliable deduplication
+  const handleIncomingCall = useCallback((callData, source) => {
+    const roomId = callData?.roomId;
+    if (!roomId) return;
 
-  //   const subscription = AppState.addEventListener('change', nextState => {
-  //     if (nextState === 'active') {
-  //       console.log('666666666666666666::::::::::::::::::6666666666');
-  //       Alert.alert('fuklc');
-  //       CallKeepService.setupCallKeep(); // Only initialize in foreground
-  //     }
-  //   });
-  //   return () => subscription.remove();
-  // }, []);
+    const callId = callData?.callId;
 
+    console.log(`\n==========================================`);
+    console.log(`📞 [Main:IncomingCall] Incoming from ${source}`);
+    console.log(`📞 [Main:IncomingCall] RoomID: ${roomId}, CallID: ${callId}`);
+    console.log(`📞 [Main:IncomingCall] Current Processed IDs: ${JSON.stringify(processedRoomIdsRef.current)}`);
+
+    // Dedup using backend callId — identical across Socket & FCM for same call session
+    if (callId) {
+      if (processedRoomIdsRef.current.includes(callId)) {
+        console.log(`🚨 [Main:IncomingCall] BLOCKED: Duplicate call event from ${source} for callId ${callId}`);
+        console.log(`==========================================\n`);
+        return;
+      }
+      dispatch(markRoomAsProcessed(callId));
+    } else {
+      console.log(`⚠️ [Main:IncomingCall] No callId from backend — skipping dedup`);
+    }
+
+    console.log(`✅ [Main:IncomingCall] ALLOWED: Processing incoming call from ${source}`);
+
+    try {
+      navigate('incomingCall', {
+        name: callData?.name || callData?.displayName,
+        profileImageUrl: callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
+        roomId: roomId,
+        callType: callData?.callType,
+        callerId: callData?.callerId || callData?.senderId,
+        callId: callId,
+      });
+      console.log(`🚀 [Main:IncomingCall] Navigation to 'incomingCall' triggered successfully from ${source}`);
+      console.log(`==========================================\n`);
+    } catch (e) {
+      console.error(`❌ [Main:IncomingCall] Navigation error from ${source}:`, e);
+      console.log(`==========================================\n`);
+    }
+  }, [dispatch]);
+
+  const handleCallAccepted = useCallback((callData, source) => {
+    const roomId = callData?.roomId || callData?.content?.roomId;
+    
+    AppLog('SOCKET_CALL', `Call accepted signal received via ${source}`, { roomId, callData });
+    
+    if (!roomId) {
+      console.log(`[Main] No roomId in call accepted event from ${source}`);
+      return;
+    }
+
+    if (acceptedRoomIdsRef.current.includes(roomId)) {
+      console.log(`[Main] Ignoring duplicate call accepted event from ${source} for room ${roomId}`);
+      return;
+    }
+
+    console.log(`[Main] Processing call accepted from ${source} for room ${roomId}`);
+    dispatch(markRoomAsAccepted(roomId));
+
+    // Common logic for call acceptance
+    chatRoomSuccess('Call accepted...');
+    dispatch(toggleCallAccepted({ status: true }));
+  }, [dispatch]);
+
+  // Socket initialization and listeners
   useEffect(() => {
     console.log('Rendered Socket');
     if (currentUserId !== undefined) {
@@ -155,113 +167,127 @@ const Main = () => {
 
       socketServcies.on('livestream_chat', data => {
         console.log('::::::::::::::LIVESTREAM CHAT:::::::::::::', data);
-
-        dispatch(pushChats({chat: data}));
+        dispatch(pushChats({ chat: data }));
       });
 
       socketServcies.on('livestream_tip', data => {
         console.log('::::::::::::::::::LIVE_STREAM_TIP::::::::::::::', data);
-
-        dispatch(pushChats({chat: data}));
+        dispatch(pushChats({ chat: data }));
       });
 
       socketServcies.on('new_goal', data => {
         console.log('::::::::::::NEW_GOAL_UPDATE::::::::::::', data);
-
-        dispatch(pushGoals({goals: data}));
+        dispatch(pushGoals({ goals: data }));
       });
 
       socketServcies.on('tipped_goal', data => {
         console.log('::::::::::::::::::::TIPPED_GOAL:::::::::', data);
-
-        dispatch(updateGoals({data}));
+        dispatch(updateGoals({ data }));
       });
 
       socketServcies.on('viewers', data => {
         console.log(':::::::::::::::::::viewers:::::::::', data);
-        dispatch(setViewers({viewers: data}));
+        dispatch(setViewers({ viewers: data }));
       });
 
       socketServcies.on('completed_goal', data => {
-        console.log(
-          '::::::::::::::::::::::::::COMPLETED_GOAL::::::::::::',
-          data,
-        );
-        dispatch(removeGoals({data}));
-        dispatch(pushChats({chat: {...data, type: 'completed'}}));
-        dispatch(setToAnimate({toAnimate: true}));
+        console.log('::::::::::::::::::::::::::COMPLETED_GOAL::::::::::::', data);
+        dispatch(removeGoals({ data }));
+        dispatch(pushChats({ chat: { ...data, type: 'completed' } }));
+        dispatch(setToAnimate({ toAnimate: true }));
       });
 
       socketServcies.on('livestream_join', data => {
-        console.log(
-          '::::::::::::::::::::::::::NEW_USER_JOIN::::::::::::',
-          data,
-        );
-        dispatch(pushChats({chat: {...data, type: 'new_user'}}));
+        console.log('::::::::::::::::::::::::::NEW_USER_JOIN::::::::::::', data);
+        dispatch(pushChats({ chat: { ...data, type: 'new_user' } }));
       });
 
       socketServcies.on('livestream_mute', data => {
         console.log(':::::::::::::::::::livestream_mute:::::::::', data);
-        dispatch(setMuteState({data}));
+        dispatch(setMuteState({ data }));
       });
 
-      socketServcies.on('call', (data, callback) => {
-        console.log(':::::::::::::::::::calling:::::::::', data);
-        // LOG  :::::::::::::::::::calling::::::::: {"callType": "audio", "engagement": {"createdBy": {"_id": "67ac4216ce51846c5df2d155", "displayName": "kanchu_0210", "profile_image": [Object], "role": "creator"}}, "roomId": "67fdffb402f40aeb676108ad"}
+      // Creator (sender) receives this via socket when the other party accepts
+      socketServcies.on('call_accepted', data => {
+        AppLog('SOCKET_CALL', 'Received call_accepted event (Detailed)', data);
+        handleCallAccepted(data, 'SOCKET_CALL_ACCEPTED');
+      });
 
-        const transformCallData = data => {
-          const createdBy = data.engagement.createdBy;
+      // initiator_accepted is now handled via Notification (FCM) instead of socket
 
-          return {
-            callType: data.callType,
-            channel: 'call',
-            createdAt: new Date().toISOString(), // Current timestamp
-            hasAttachment: false,
-            profile_image:
-              createdBy?.profile_image?.url ??
-              'https://fahdu-bucket.s3.us-east-1.amazonaws.com/assets/default-avatar-profile-icon-1.jpg',
-            roomId: data.roomId,
-            sender_id: createdBy._id,
-            sender_role: createdBy.role,
-            subtitle:
-              data.callType === 'audio' ? '📞 Audio Call' : '📹 Video Call',
-            title: `${createdBy.displayName} is calling you`,
-            username: createdBy.displayName,
-          };
-        };
 
-        dispatch(
-          setCallData({
-            data: transformCallData(data),
-            receivedAt: Date.now().toString(),
-            fromNotification: false,
-          }),
-        );
+      socketServcies.on('call_unavailable', data => {
+        AppLog('SOCKET_CALL', 'Received call_unavailable event (Detailed)', data);
+        dispatch(toggleCallAccepted({ status: false }));
+        // Cleanup: allow this room to receive new calls
+        if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
+        navigate('home');
+        LoginPageErrors('User not receiving the call');
+      });
 
-        // dispatch(setCallCallback(() => callback));
 
-        if (!isNotificationFromQuitState) {
-          const callbackId = `cb_${Date.now()}`;
-          addCallback(callbackId, callback);
-          dispatch(setCallbackId(callbackId));
-          navigate('incomingCall', {data, callbackId});
+      socketServcies.on('CREATOR_LIVE_STARTED', data => {
+        AppLog('STREAM', 'Follower seen Creator started live signal', data);
+      });
+
+      socketServcies.on('call_rejected', data => {
+        console.log(':::::::::::::::::::call_rejected:::::::::', data?.by, currentUserId, Platform.OS);
+        AppLog('SOCKET_CALL', 'Received call_rejected event (Detailed)', data);
+        if (currentUserId !== data?.by) {
+          dispatch(toggleCallAccepted({ status: false }));
+          // Cleanup: allow this room to receive new calls
+          if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
+          LoginPageErrors('Call Rejected...');
+          navigate('home');
+        } else {
+          // Own rejection echo — still clear dedup guard so next call isn't blocked
+          if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
+          console.log('Ignoring own rejection event (dedup guard cleared)');
         }
       });
 
-      socketServcies.on('call_join', data => {
-        console.log(':::::::::::::::::::call_join:::::::::', data);
-        Alert.alert('join');
+      socketServcies.on('call_disconnected', data => {
+        console.log(':::::::::::::::::::call_disconnected:::::::::', data);
+        AppLog('SOCKET_CALL', 'Received call_disconnected event (Detailed)', data);
+        dispatch(toggleCallAccepted({ status: false }));
+        // Cleanup: allow this room to receive new calls
+        if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
+        navigate('home');
       });
 
-      socketServcies.on('call_ended', data => {
-        console.log(':::::::::::::::::::call_left:::::::::', data);
-        Alert.alert('leave');
+      // Special handler for App Termination/Swipe-close on the other side (Socket)
+      socketServcies.on('socket_disconnect_close_app', data => {
+        console.log(':::::::::::socket_disconnect_close_app:::::::::', data);
+        AppLog('SOCKET_CALL', 'Other side swiped-closed app (socket signal)', data);
+        dispatch(toggleCallAccepted({ status: false }));
+        // Cleanup: allow this room to receive new calls
+        if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
+        setDisconnectModalVisible(true);
+      });
+
+      socketServcies.on('incoming_caller', data => {
+        // Alert.alert("bpm,")
+        AppLog('INCOMING_SOCKET_CALL', 'Received incoming_caller via socket (Detailed)', data);
+        handleIncomingCall(data, 'SOCKET');
+      });
+
+      socketServcies.on('connect', data => {
+        console.log('Socket Connected Main.js');
+        AppLog('SOCKET', 'Socket connected to server');
+      });
+      socketServcies.on('disconnect', data => {
+        console.log('Socket Disconnected Main.js');
+        AppLog('SOCKET', 'Socket disconnected from server');
+      });
+      socketServcies.on('call_tip', data => {
+        console.log('💰 [Main] Received call tip socket:', data);
+        AppLog('CALL', 'Received call tip over socket', data);
+        dispatch(setLatestTip(data));
       });
     }
   }, [currentUserId, token]);
 
-  const data = useSelector(state => state.credentials.user);
-
+  // After login process
   const afterLoginProcess = useCallback(async data => {
     dispatch(
       currentUserInformation({
@@ -299,17 +325,14 @@ const Main = () => {
     });
   }, []);
 
-  const handleCall = () => {
-    console.log('xxx');
-    CallKeepService.showIncomingCall('user_12345', 'Rishabh');
-  };
 
+
+  // Login user
   const loginUser = async (email, password) => {
     try {
-      const {data} = await axios.post(
-        'https://api.fahdu.com/api/user/signin',
-
-        {email, password},
+      const { data } = await axios.post(
+        `${BASE_URL}/api/user/signin`,
+        { email, password },
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -322,10 +345,8 @@ const Main = () => {
       console.log(data?.statusCode, '::::::EMAIL LOGIN');
 
       if (data?.statusCode === 200) {
-        dispatch(toggleEmailVerificationModal({show: false}));
-
+        dispatch(toggleEmailVerificationModal({ show: false }));
         dispatch(deleteCredentials());
-
         afterLoginProcess(data);
       } else {
         LoginPageErrors('Something Went Wrong');
@@ -342,153 +363,242 @@ const Main = () => {
     }
   };
 
-  useEffect(() => {
-    const handleDeepLink = async url => {
-      console.log('GETTING LINK:', url);
+  // Helper function to get query params
+  const getQueryParams = (url) => {
+    const qIndex = url.indexOf('?');
+    if (qIndex === -1) return {};
+    const qs = url.substring(qIndex + 1).split('#')[0];
+    return qs
+      .split('&')
+      .filter(Boolean)
+      .reduce((acc, pair) => {
+        const [k, v = ''] = pair.split('=');
+        acc[decodeURIComponent(k)] = decodeURIComponent(v);
+        return acc;
+      }, {});
+  };
 
-      try {
-        if (!url) {
-          console.log('No URL found');
+  // Unified deep link handler
+  const handleDeepLink = useCallback(async (url) => {
+    console.log('HANDLING DEEP LINK:', url);
+
+    if (!url) {
+      console.log('No URL provided');
+      return;
+    }
+
+    try {
+      let route = url;
+
+      // Normalize URL - handle both web and app scheme
+      if (route.startsWith('https://link.fahdu.com/go/')) {
+        route = route.replace('https://link.fahdu.com/go/', '');
+      } else if (route.startsWith('exp+fahdu://')) {
+        route = route.replace('exp+fahdu://', '');
+      } else if (route.startsWith('fahdu://')) {
+        route = route.replace('fahdu://', '');
+      }
+
+      console.log('Processed route:', route);
+
+      // Strip optional 'home/' prefix that some schemes might include
+      if (route.startsWith('home/')) {
+        route = route.replace('home/', '');
+      }
+
+      console.log('Final normalized route:', route);
+
+      // Handle email verification deep link (for auto-login)
+      const parts = url.split('/');
+      const lastSegment = parts[parts.length - 1];
+
+      if (data.email && data.password && data.email === lastSegment) {
+        console.log('Auto-login triggered');
+        await loginUser(data.email, data.password);
+        return;
+      }
+
+      // Handle profile deep link
+      if (route.startsWith('profile')) {
+        const params = getQueryParams(url);
+        const id = params.id;
+        const username = route.split('/')[1]?.split('?')[0];
+
+        if (!doUserLoggedIn) {
+          console.log('User not logged in, storing referral link');
+          dispatch(setRefferalLink({ link: username }));
           return;
         }
 
-        // Directly use the URL without resolving it
-        const parts = url.split('/');
-        const lastEmail = parts.pop();
-
-        // Compare the email and log in if it matches
-        if (data.email === lastEmail) {
-          await loginUser(data.email, data.password);
+        if (currentUserId === id) {
+          navigate('profile');
         } else {
-          console.log('Not a new user to auto-login');
+          dispatch(setRefferalLink({ link: username }));
+          navigate('othersProfile', {
+            userName: username,
+            userId: id,
+            role: 'creator',
+          });
+        }
+        return;
+      }
 
-          const match = url.match(/\/post\/([^/]+)/);
+      // Handle post deep link
+      if (route.startsWith('post')) {
+        const postId = route.split('/')[1]?.split('?')[0];
 
-          console.log({match});
+        if (!doUserLoggedIn) {
+          console.log('User not logged in, cannot view post');
+          return;
+        }
 
-          if (doUserLoggedIn) {
-            if (match) {
-              const postId = match[1]; // '12345'
-              console.log('Post ID:', postId);
+        if (postId) {
+          navigate('sharedPost', { postId });
+        }
+        return;
+      }
 
-              navigate('sharedPost', {postId});
-            } else {
-              //android and ios both get different links
+      console.log('Unrecognized deep link route:', route);
+    } catch (error) {
+      console.error('Error handling deep link:', error);
+    }
+  }, [data.email, data.password, doUserLoggedIn, currentUserId]);
 
-              let userName =
-                Platform.OS === 'android'
-                  ? extractUserNameAndroid(url)
-                  : extractUserNameAndroid(url);
+  // Consolidated deep link handling
+  useEffect(() => {
+    // Handle cold start (app was closed)
+    const handleInitialUrl = async () => {
+      if (hasHandledInitialLink.current) {
+        return;
+      }
 
-              let userId = extractUserIdFromUrl(url);
-
-              console.log('USERNAME', userId);
-
-              dispatch(setRefferalLink({link: userName}));
-
-              // navigate('othersProfile', {
-              //   userName: userName,
-              //   userId: userId,
-              //   role: 'creator',
-              // });
-            }
+      try {
+        if (Platform.OS === 'ios') {
+          const url = await Linking.getInitialURL();
+          if (url) {
+            console.log('iOS initial URL:', url);
+            await handleDeepLink(url);
+            hasHandledInitialLink.current = true;
+          }
+        } else {
+          // Deep link handling (Standard URLs only)
+          const url = await Linking.getInitialURL();
+          if (url) {
+            console.log('Android Linking initial URL:', url);
+            await handleDeepLink(url);
+            hasHandledInitialLink.current = true;
           }
         }
       } catch (error) {
-        console.error('Error handling deep link:', error);
+        console.error('Error handling initial URL:', error);
       }
     };
 
-    try {
-      if (Platform.OS === 'ios') {
-        // 🔹 Handle cold start for iOS
-        Linking.getInitialURL()
-          .then(url => {
-            console.log(url, '}}}}');
-            if (url) {
-              if (String(url).split('/').length === 4) {
-                Linking.openURL(url);
-              } else {
-                handleDeepLink(url);
-              }
-            } else {
-              console.log('No initial URL found');
-            }
-          })
-          .catch(error => {
-            console.error('Error getting initial URL:', error);
-          });
-      } else {
-        // 🔹 Handle cold start for Android using Firebase Dynamic Links
-        // dynamicLinks()
-        //   .getInitialLink()
-        //   .then(link => {
-        //     if (link?.url) {
-        //       console.log('Deep link on cold start:', link.url);
-        //       handleDeepLink(link.url);
-        //     } else {
-        //       console.log('No initial URL found');
-        //     }
-        //   })
-        //   .catch(error => {
-        //     console.error('Error getting initial link:', error);
-        //   });
-      }
-    } catch (e) {
-      console.log('DDEEEEP', e);
-    }
+    // Call initial handler
+    handleInitialUrl();
 
-    // 🔹 Handle deep links while the app is running (Android & iOS)
-    const linkingSubscription = Linking.addEventListener('url', ({url}) => {
+    // Listen for deep links while app is running
+    const linkingSubscription = Linking.addEventListener('url', ({ url }) => {
+      console.log('Linking event received:', url);
       handleDeepLink(url);
     });
 
-    // Cleanup event listeners
+
+    // Cleanup
     return () => {
       linkingSubscription.remove();
-      // firebaseSubscription();
     };
-  }, [data.email, data.password, doUserLoggedIn, currentUserId]);
+  }, [handleDeepLink]);
 
+  // FCM Token registration with retry logic
   useEffect(() => {
-    if (currentUserId !== undefined) {
-      const notificationToken = async () => {
-        if (Platform.OS === 'android') {
-          await messaging().registerDeviceForRemoteMessages();
+    let timeoutId;
+    let isMounted = true;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
+    const registerFCM = async () => {
+      if (!isMounted || currentUserId === undefined || token === undefined) return;
+
+      try {
+        // 1. Request OS-level notification permissions (iOS & Android 13+)
+        const authStatus = await getMessaging().requestPermission();
+        const enabled =
+          authStatus === 1 || // messaging.AuthorizationStatus.AUTHORIZED
+          authStatus === 2;   // messaging.AuthorizationStatus.PROVISIONAL
+
+        if (!enabled) {
+          console.log('❌ User denied notification permissions');
+          AppLog('FCM_INIT', 'User denied push notification permissions', { authStatus, currentUserId });
+          return;
         }
 
-        const fcmToken = await messaging().getToken();
-        return fcmToken;
-      };
-      notificationToken().then(async e => {
-        console.log('user notificatoin id', e);
-        sendFcmToken({token, fcmToken: e}).then(e => {
-          if (e?.error?.status === 401) {
-            dispatch(authLogout());
-            dispatch(deleteCachedMessages());
-            dispatch(removeRoomList());
-            dispatch(emptyUnreadRoomList());
-          }
-        });
-      });
-    }
-  }, [currentUserId]);
+        // Small delay to ensure Firebase is fully initialized
+        await new Promise(resolve => setTimeout(resolve, 500));
 
+        // 2. Fetch Token
+        const fcmToken = await getToken(getMessaging());
+        console.log('✅ FCM token obtained:', fcmToken?.substring(0, 20) + '...');
+        AppLog('FCM_INIT', 'FCM token generated successfully', { partialToken: fcmToken?.substring(0, 10), currentUserId });
+
+        const response = await sendFcmToken({ token, fcmToken });
+        
+        if (response?.error) {
+          console.log('⚠️ FCM token API registration failed:', response?.error);
+          AppLog('FCM_API', 'Failed to register token with backend', { error: response?.error });
+          if (retryCount < MAX_RETRIES && isMounted) {
+            retryCount++;
+            timeoutId = setTimeout(registerFCM, 5000);
+          }
+        } else {
+          console.log('✅ FCM token registered successfully with backend');
+          AppLog('FCM_API', 'Token successfully registered with backend', { currentUserId });
+        }
+      } catch (error) {
+        console.log('❌ FCM registration exception:', error?.code, error?.message);
+        AppLog('FCM_ERROR', 'Exception during FCM registration', { error: error?.message, code: error?.code });
+        if (retryCount < MAX_RETRIES && isMounted) {
+          retryCount++;
+          console.log(`🔄 Retrying FCM registration (${retryCount}/${MAX_RETRIES}) in 5s...`);
+          timeoutId = setTimeout(registerFCM, 5000);
+        }
+      }
+    };
+
+    registerFCM();
+
+    // Listen for FCM token refreshes
+    const unsubscribeTokenRefresh = getMessaging().onTokenRefresh(async (newFcmToken) => {
+      console.log('🔄 FCM token natively refreshed by Firebase:', newFcmToken?.substring(0, 20) + '...');
+      if (currentUserId && token) {
+        try {
+          await sendFcmToken({ token, fcmToken: newFcmToken });
+          console.log('✅ Refreshed FCM token updated in backend!');
+          AppLog('FCM_REFRESH', 'Token successfully refreshed with backend', { currentUserId });
+        } catch (err) {
+          console.error('❌ Failed to update refreshed token in backend', err);
+          AppLog('FCM_ERROR', 'Failed to update refreshed token', { error: err?.message });
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      unsubscribeTokenRefresh();
+    };
+  }, [currentUserId, token]);
+
+  // Join livestream with notification handler
   const joinLiveStreamWithNotificationHandler = async (detail, token) => {
-    const joinStreamApi = await joinLivestream(
-      token,
-      detail?.notification?.data?.roomId,
-    );
+    const joinStreamApi = await joinLivestream(token, detail?.notification?.data?.roomId);
 
     console.log(joinStreamApi, 'joinStreamAPi');
 
     if (joinStreamApi?.statusCode === 200) {
-      console.log('liveJOINDATA', data?.data?.data);
+      console.log('liveJOINDATA', joinStreamApi?.data);
 
-      navigate('confirmlivestreamjoin', {
-        data: joinStreamApi?.data,
-        roomId: detail?.notification?.data?.roomId,
-      });
+      navigate('confirmlivestreamjoin', { data: joinStreamApi?.data, roomId: detail?.notification?.data?.roomId });
     } else {
       if (joinStreamApi?.statusCode === 400) {
         LoginPageErrors('Hey!, Livestream has ended 🥺');
@@ -503,8 +613,6 @@ const Main = () => {
   async function bootstrap() {
     const initialNotification = await notifee.getInitialNotification();
 
-    // Alert.alert('hdleoo');
-
     console.log(initialNotification, 'XOOOO');
 
     if (initialNotification) {
@@ -515,294 +623,243 @@ const Main = () => {
           navigate('Chats', {
             chatRoomId: initialNotification?.notification?.data?.roomId,
             name: initialNotification?.notification?.data?.userName,
-            profileImageUrl:
-              initialNotification?.notification?.android?.largeIcon,
+            profileImageUrl: initialNotification?.notification?.android?.largeIcon,
           });
         } catch (e) {
           console.log('Error on MainJS', e?.message);
         }
-      } else if (
-        initialNotification?.notification?.data?.type === 'livestream'
-      ) {
+      } else if (initialNotification?.notification?.data?.type === 'livestream') {
         await joinLiveStreamWithNotificationHandler(initialNotification, token);
-      } else {
+      } else if (initialNotification?.notification?.data?.type === 'call_reminder') {
+        try {
+          navigate('Chats', {
+            chatRoomId: initialNotification?.notification?.data?.roomId,
+            name: initialNotification?.notification?.data?.userName,
+            profileImageUrl: initialNotification?.notification?.data?.profile_image,
+          });
+        } catch (e) {
+          console.log('Error on MainJS', e?.message);
+        }
+      } else if (initialNotification?.notification?.data?.type === 'call_accepted') {
+        try {
+          navigate('CallRequests', {activeTab: 'scheduled'});
+        } catch (e) {
+          console.log('Error navigation to CallRequests on bootstrap', e?.message);
+        }
+      } else if (initialNotification?.notification?.data?.type === 'subscription') {
         console.log('NOTHING_MATCHED');
-      }
-
-      if (initialNotification?.notification?.data?.type === 'subscription') {
-        console.log('LUCK');
-
-        Linking.openURL(initialNotification?.notification?.data?.link);
+      } else if (initialNotification?.notification?.data?.type === 'mention') {
+        const link = initialNotification?.notification?.data?.link;
+        const postId = link?.split('post/')?.[1]?.split('?')?.[0];
+        if (postId) {
+          navigate('sharedPost', {postId});
+        }
       }
     }
   }
 
+  // Bootstrap on notification click
   useEffect(() => {
     bootstrap();
   }, [doUserClickedOnForeGroundNotification]);
 
+  // Foreground notification handler
   useEffect(() => {
-    const unsubscribe = notifee.onForegroundEvent(async ({type, detail}) => {
-      if (type === EventType.PRESS) {
-        console.log('Got token from notification:', detail);
+    const unsubscribe = notifee.onForegroundEvent(async ({ type, detail }) => {
+      console.log('EVENb', type, detail);
 
-        if (detail?.notification?.data?.type === 'livestream') {
+      // Handle notification press
+      if (type === EventType.PRESS) {
+        console.log('Notification pressed:', detail);
+
+        const notificationType = detail?.notification?.data?.type;
+        const notificationData = detail?.notification?.data;
+
+        // Handle livestream notification
+        if (notificationType === 'livestream') {
           await joinLiveStreamWithNotificationHandler(detail, token);
         }
 
-        if (detail?.notification?.data?.type === 'subscription') {
-          console.log('LUCK');
+        // Handle subscription notification
+        else if (notificationType === 'subscription') {
+          console.log('Subscription notification pressed');
 
-          if (type === EventType.PRESS && detail?.notification?.data?.link) {
-            Linking.openURL(detail.notification.data.link);
+          if (notificationData?.link) {
+            Linking.openURL(notificationData.link);
           }
         }
+
+        // Handle call request notification
+        else if (notificationType === 'call_request') {
+          console.log('Call request notification pressed');
+
+          const { roomId, sender_id, sender_role, callType } = notificationData;
+        }
+
+        // Handle call accepted notification
+        else if (notificationType === 'call_request_accepted') {
+          console.log('Call accepted notification pressed');
+          navigate('CallRequests', {activeTab: 'scheduled'});
+        }
+
+        else if (notificationType === 'call_reminder') {
+          try {
+            navigate('Chats', {
+              chatRoomId: notificationData?.roomId,
+              name: notificationData?.userName,
+              profileImageUrl: notificationData?.profile_image
+            });
+          } catch (e) {
+            console.log('Error on MainJS', e?.message);
+          }
+        } 
+        
+        else if (notificationType === 'mention') {
+          const link = notificationData?.link;
+          const postId = link?.split('post/')?.[1]?.split('?')?.[0];
+          if (postId) {
+            navigate('sharedPost', {postId});
+          }
+        }
+
+      }
+
+      // Handle notification action press
+
+      // Handle notification dismissal
+      else if (type === EventType.DISMISSED) {
+        console.log('Notification dismissed');
       }
     });
 
     return () => {
-      // ✅ Important cleanup
       unsubscribe();
     };
   }, [token]);
 
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const onMessageReceived = async msg => {
-  //       console.log(msg);
-
-  //       if (msg?.data?.type === 'incoming_call') {
-  //         Alert.alert('Incoming cal');
-  //       }
-
-  //       let remoteNotificationData = JSON.parse(msg?.data?.payload);
-
-  //       if (remoteNotificationData?.type === 'message') {
-  //         dispatch(
-  //           updateCacheRoomList({
-  //             chatRoomId: remoteNotificationData?.content?.roomId,
-  //             createdAt: remoteNotificationData?.content?.createdAt,
-  //             message: remoteNotificationData?.content?.hasAttachment ? '' : remoteNotificationData?.content?.message,
-  //             hasAttachment: remoteNotificationData?.content?.hasAttachment,
-  //             senderId: remoteNotificationData?.content?.sender_id,
-  //             profileImage: remoteNotificationData?.content?.profile_image,
-  //             userName: remoteNotificationData?.content?.username,
-  //             role: remoteNotificationData?.content?.sender_role,
-  //           }),
-  //         );
-
-  //         console.log('808080', remoteNotificationData, '::');
-
-  //         dispatch(pushUnReadRoomIds({chatRoomId: remoteNotificationData?.content?.roomId}));
-
-  //         if (currentChatRoomId !== remoteNotificationData?.content?.roomId) {
-  //           onDisplayNotification(remoteNotificationData?.content);
-  //         }
-  //       } else if (remoteNotificationData?.type === 'livestream') {
-  //         // Alert.alert("fuck")
-
-  //         await liveStreamNotification(remoteNotificationData?.content);
-  //       } else if (remoteNotificationData?.type === 'others') {
-  //         await showOthersCategoryNotification(remoteNotificationData);
-  //       } else if (remoteNotificationData?.type === 'subscription') {
-  //         await showSubscriptionNotification(remoteNotificationData);
-  //       } else {
-  //         showPostInteractionNotification(remoteNotificationData);
-  //       }
-  //     };
-
-  //     let unsubscribe = firebase.messaging().onMessage(onMessageReceived);
-
-  //     return () => {
-  //       unsubscribe();
-  //     };
-  //   }, [currentChatRoomId]),
-  // );
-
-  useFocusEffect(
-    useCallback(() => {
-      const onMessageReceived = async msg => {
-        console.log(msg);
-
-        // Handle incoming call type directly
-        if (msg?.data?.type === 'incoming_call') {
-          // Alert.alert('Incoming call');
-          handleCall();
-          return; // stop further processing
-        }
-
-        // ✅ Proceed only if payload exists
-        if (!msg?.data?.payload) {
-          console.log('No payload found, skipping message');
-          return;
-        }
-
-        let remoteNotificationData;
-        try {
-          remoteNotificationData = JSON.parse(msg.data.payload);
-        } catch (error) {
-          console.error('Invalid payload JSON:', error);
-          return;
-        }
-
-        if (remoteNotificationData?.type === 'message') {
-          dispatch(
-            updateCacheRoomList({
-              chatRoomId: remoteNotificationData?.content?.roomId,
-              createdAt: remoteNotificationData?.content?.createdAt,
-              message: remoteNotificationData?.content?.hasAttachment
-                ? ''
-                : remoteNotificationData?.content?.message,
-              hasAttachment: remoteNotificationData?.content?.hasAttachment,
-              senderId: remoteNotificationData?.content?.sender_id,
-              profileImage: remoteNotificationData?.content?.profile_image,
-              userName: remoteNotificationData?.content?.username,
-              role: remoteNotificationData?.content?.sender_role,
-            }),
-          );
-
-          console.log('808080', remoteNotificationData, '::');
-
-          dispatch(
-            pushUnReadRoomIds({
-              chatRoomId: remoteNotificationData?.content?.roomId,
-            }),
-          );
-
-          if (currentChatRoomId !== remoteNotificationData?.content?.roomId) {
-            onDisplayNotification(remoteNotificationData?.content);
-          }
-        } else if (remoteNotificationData?.type === 'livestream') {
-          await liveStreamNotification(remoteNotificationData?.content);
-        } else if (remoteNotificationData?.type === 'others') {
-          await showOthersCategoryNotification(remoteNotificationData);
-        } else if (remoteNotificationData?.type === 'subscription') {
-          await showSubscriptionNotification(remoteNotificationData);
-        } else {
-          showPostInteractionNotification(remoteNotificationData);
-        }
-      };
-
-      const unsubscribe = firebase.messaging().onMessage(onMessageReceived);
-
-      return () => {
-        unsubscribe();
-      };
-    }, [currentChatRoomId]),
-  );
-
+  // Firebase messaging handler
   useEffect(() => {
-    // Handle cold-start link only once
-    if (!hasHandledInitialLink.current) {
-      Linking.getInitialURL().then(url => {
-        if (url) {
-          handleDeepLink(url);
-          hasHandledInitialLink.current = true; // mark as handled
+    const onMessageReceived = async msg => {
+      console.log('FCM Message Received:', msg);
+
+      // Proceed only if payload exists
+      if (!msg?.data?.payload) {
+        console.log('No payload found, skipping message');
+        return;
+      }
+
+      let remoteNotificationData;
+      try {
+        remoteNotificationData = JSON.parse(msg.data.payload);
+      } catch (error) {
+        console.error('Invalid payload JSON:', error);
+        return;
+      }
+
+      if (remoteNotificationData?.type === 'message') {
+        console.log(remoteNotificationData?.content?.unreadCount, 'POPOP');
+
+        dispatch(
+          updateCacheRoomList({
+            chatRoomId: remoteNotificationData?.content?.roomId,
+            createdAt: remoteNotificationData?.content?.createdAt,
+            message: remoteNotificationData?.content?.hasAttachment ? '' : remoteNotificationData?.content?.message,
+            hasAttachment: remoteNotificationData?.content?.hasAttachment,
+            senderId: remoteNotificationData?.content?.sender_id,
+            profileImage: remoteNotificationData?.content?.profile_image,
+            userName: remoteNotificationData?.content?.username,
+            role: remoteNotificationData?.content?.sender_role,
+            unreadCount: remoteNotificationData?.content?.unreadCount,
+            updatedAt: remoteNotificationData?.content?.createdAt,
+            user_type: remoteNotificationData?.content?.user_type,
+          }),
+        );
+
+        dispatch(setUnReadChatIcon({ show: true }));
+
+        dispatch(pushUnReadRoomIds({ chatRoomId: remoteNotificationData?.content?.roomId }));
+
+        if (currentChatRoomIdRef.current !== remoteNotificationData?.content?.roomId) {
+          onDisplayNotification(remoteNotificationData?.content);
         }
-      });
-    }
+      } else if (remoteNotificationData?.type === 'livestream') {
+        await liveStreamNotification(remoteNotificationData?.content);
+      } else if (remoteNotificationData?.type === 'others') {
+        await showOthersCategoryNotification(remoteNotificationData);
+      } else if (remoteNotificationData?.type === 'mention') {
+        await showMentionNotification(remoteNotificationData);
+      } else if (remoteNotificationData?.type === 'subscription') {
+        await showSubscriptionNotification(remoteNotificationData);
+      } else if (remoteNotificationData?.type === 'call_rejected') {
+        if (Platform.OS === 'android') {
+          // CallKeep stuff removed
+        }
+      } else if (remoteNotificationData?.type === 'call') {
+        console.log('📱 [Main:FCM] --- INCOMING CALL SIGNAL RECEIVED ---');
+        console.log('📱 [Main:FCM] Full Payload:', JSON.stringify(remoteNotificationData, null, 2));
+        
+        const callContent = remoteNotificationData?.content;
+        console.log(`📱 [Main:FCM] Extracted callId: ${callContent?.callId}`);
+        console.log(`📱 [Main:FCM] Extracted roomId: ${callContent?.roomId}`);
+        console.log(`📱 [Main:FCM] Extracted timestamp: ${callContent?.createdAt || callContent?.timestamp}`);
+        
+        AppLog('INCOMING_CALL_FCM', 'Received call via FCM (Detailed)', { 
+          fullPayload: remoteNotificationData,
+          extractedCallId: callContent?.callId,
+          extractedRoomId: callContent?.roomId
+        });
+        
+        handleIncomingCall(callContent, 'FCM');
+      } else if (remoteNotificationData?.type === 'call_request') {
+        await showCallRelatedNotification(remoteNotificationData);
+        console.log(remoteNotificationData, ':::::');
+      } else if (remoteNotificationData?.type === 'call_request_accepted') {
+        // Informational only via FCM; logic handled via Socket as requested
+        await showCallRelatedNotification(remoteNotificationData);
+      } else if (remoteNotificationData?.type === 'initiator_accepted') {
+        // Handled via Notification (FCM) as requested; triggers call start (Silent)
+        AppLog('FCM_CALL', 'Received initiator_accepted notification (silent trigger)');
+        handleCallAccepted(remoteNotificationData, 'FCM_INITIATOR_ACCEPTED');
+      } else if (remoteNotificationData?.type === 'call_completed') {
+        console.log(remoteNotificationData, ':::::');
+        await showCallRelatedNotification(remoteNotificationData);
+      } else if (remoteNotificationData?.type === 'fcm_disconnect_close_app') {
+        // Handle swipe-close/disconnect from other side via FCM
+        AppLog('FCM_CALL', 'Other side swiped-closed app (FCM signal)', remoteNotificationData);
+        dispatch(toggleCallAccepted({ status: false }));
+        const callContent = remoteNotificationData?.content;
+        if (callContent?.callId) dispatch(clearProcessedRoomId(callContent.callId));
+        navigate('home');
+      } else if (remoteNotificationData?.type === 'call_disconnected') {
+        // General disconnect via FCM
+        AppLog('FCM_CALL', 'Received call_disconnected via FCM', remoteNotificationData);
+        dispatch(toggleCallAccepted({ status: false }));
+        const callContent = remoteNotificationData?.content;
+        if (callContent?.callId) dispatch(clearProcessedRoomId(callContent.callId));
+        navigate('home');
+      } else if (remoteNotificationData?.type === 'missed_call') {
+        console.log(remoteNotificationData, ':::::');
+        await showCallRelatedNotification(remoteNotificationData);
+      } else if (remoteNotificationData?.type === 'call_unavailable') {
+        // CallKeep stuff removed
+      } else if (remoteNotificationData?.type === '10_reminder' || remoteNotificationData?.type === '5_reminder' || remoteNotificationData?.type === '1_reminder') {
+        await showCallReminderNotification(remoteNotificationData);
+      } else {
+        showPostInteractionNotification(remoteNotificationData);
+      }
+    };
 
-    // Listen for links when app is open
-    const subscription = Linking.addEventListener('url', ({url}) => {
-      handleDeepLink(url);
-    });
+    const unsubscribe = onMessage(getMessaging(), onMessageReceived);
 
-    return () => subscription.remove();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  function getQueryParams(url) {
-    const qIndex = url.indexOf('?');
-    if (qIndex === -1) return {};
-    const qs = url.substring(qIndex + 1).split('#')[0];
-    return qs
-      .split('&')
-      .filter(Boolean)
-      .reduce((acc, pair) => {
-        const [k, v = ''] = pair.split('=');
-        acc[decodeURIComponent(k)] = decodeURIComponent(v);
-        return acc;
-      }, {});
-  }
+  const isServerMaintenance = useSelector(state => state.hideShow.visibility.serverMaintenance);
 
-  // function handleDeepLink(url) {
-  //   if (!url) return;
-
-  //   const route = url.replace('https://link.fahdu.com/go/', '');
-
-  //   // PROFILE handler
-  //   if (route.startsWith('profile')) {
-  //     const params = getQueryParams(url);
-  //     const id = params.id;
-  //     const username = route.split('/')[1]?.split('?')[0];
-
-  //     if (currentUserId === id) {
-  //       navigate('profile');
-  //     } else {
-  //       navigate('othersProfile', {
-  //         userName: username,
-  //         userId: id,
-  //         role: 'creator',
-  //       });
-  //     }
-  //     return; // stop here
-  //   }
-
-  //   // POST handler
-  //   if (route.startsWith('post')) {
-  //     const postId = route.split('/')[1]?.split('?')[0];
-  //     if (postId) {
-  //       navigate('sharedPost', {postId});
-  //     }
-  //     return; // stop here
-  //   }
-
-  //   console.log('Unrecognized deep link:', route);
-  // }
-
-  function handleDeepLink(url) {
-    if (!url) return;
-
-    let route = url;
-
-    // Handle both prefixes
-    if (route.startsWith('https://link.fahdu.com/go/')) {
-      route = route.replace('https://link.fahdu.com/go/', '');
-    } else if (route.startsWith('exp+fahdu://')) {
-      route = route.replace('exp+fahdu://', '');
-    }
-
-    // PROFILE handler
-    if (route.startsWith('profile')) {
-      const params = getQueryParams(url);
-      const id = params.id;
-      const username = route.split('/')[1]?.split('?')[0];
-
-      if (currentUserId === id) {
-        navigate('profile');
-      } else {
-        dispatch(setRefferalLink({link: username}));
-
-        if (doUserLoggedIn) {
-          navigate('othersProfile', {
-            userName: username,
-            userId: id,
-            role: 'creator',
-          });
-        }
-      }
-      return;
-    }
-
-    // POST handler
-    if (route.startsWith('post')) {
-      const postId = route.split('/')[1]?.split('?')[0];
-      if (postId) {
-        navigate('sharedPost', {postId});
-      }
-      return; // stop here
-    }
-
-    console.log('Unrecognized deep link:', route);
+  if (isServerMaintenance) {
+    return <ServerMaintenance />;
   }
 
   return (
@@ -812,11 +869,29 @@ const Main = () => {
       <StackNavigation />
       <FlashMessage position="top" />
       <ReLoginModal />
+      <PostTipModal />
+      <CombineSelectorModal />
+      <LabelModal />
+      <ChatWindowTipModal />
+      <ScreenshotPrevention />
+      <DateTimePickerSheet />
+      <NicheSelectorModal />
+      <CallDisconnectedModal 
+        visible={disconnectModalVisible} 
+        onPress={() => {
+          setDisconnectModalVisible(false);
+          navigate('home');
+        }} 
+      />
+      <HomeBottomSheet />
+      <CreatePostBottomSheet />
     </View>
   );
 };
 
 export default Main;
+
+
 
 const styles = StyleSheet.create({
   SafeAreaViewStyle: {

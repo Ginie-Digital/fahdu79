@@ -1,6 +1,7 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {View, Text, StyleSheet, Pressable, Platform, Image, Dimensions} from 'react-native';
-import {Dialog} from 'react-native-simple-dialogs';
+import {View, Text, StyleSheet, Pressable, Platform, Image, Dimensions, ScrollView, Animated} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+// Dialog replaced with custom overlay to avoid SafeAreaView push issue
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
 import {useDispatch, useSelector} from 'react-redux';
@@ -10,59 +11,52 @@ import {sortByLabel} from '../../../Redux/Slices/NormalSlices/RoomListSlice';
 import {setLabel, setSelectedSort} from '../../../Redux/Slices/NormalSlices/SortSelectedSlice';
 import CustomCheckbox from '../../Components/CustomCheckbox';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import AnimatedButton from '../../Components/AnimatedButton';
 import {useLazyGetAllLabelNameQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {setMassMessageLabel, setMassMessageTargetOnlinleOffline} from '../../../Redux/Slices/NormalSlices/MessageSlices/MassMessage';
+import {resetMassMessage, setAudienceType, setMassMessageLabel, setMassMessageTargetOnlinleOffline} from '../../../Redux/Slices/NormalSlices/MessageSlices/MassMessage';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {useLabelList} from '../../Hook/useLabelList';
+import {setSelectedAudience} from '../../../Redux/Slices/NormalSlices/AudienceSelectedSlice';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import {triggerImpactLight} from '../../Utils/Haptics';
 
-const CombineSelectorModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, setIsOnline, isOnline}) => {
+const CombineSelectorModal = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const token = useSelector(state => state.auth.user.token);
-  const [contentHeight, setContentHeight] = useState(0);
 
   const visible = useSelector(state => state.hideShow.visibility.combineSelectorModal);
-
   const lable = useSelector(state => state.massMessage.data.target.label);
-
   const status = useSelector(state => state.massMessage.data.status);
+  const audienceType = useSelector(state => state.massMessage.data.audienceType);
+
+  const [contentHeight, setContentHeight] = useState(0);
+
+  const slideAnim = useRef(new Animated.Value(600)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      slideAnim.setValue(600);
+    }
+  }, [visible]);
+
+  console.log('audiencetype', audienceType);
 
   const {labelList, getAllLabelNamesHandler} = useLabelList(token);
 
-  console.log(status, 'P');
-
   const [getAllLabelNames] = useLazyGetAllLabelNameQuery();
 
-  // const [labelList, setLabelList] = useState([
-  //   {
-  //     id: 1,
-  //     name: 'Purple',
-  //     color: '#BBBBFE',
-  //     iconName: 'back-in-time',
-  //     labelName: 'LABEL1',
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Yellow',
-  //     color: '#FBF7A6',
-  //     iconName: 'arrow-down',
-  //     labelName: 'LABEL2',
-  //   },
-  //   {
-  //     id: 3,
-  //     name: 'Green',
-  //     iconName: 'mail-unread-outline',
-  //     color: '#98FF98',
-  //     labelName: 'LABEL3',
-  //   },
-  // ]);
-
   // Height calculations
-  const buttonHeight = 50;
-  const padding = 32;
-  const minModalHeight = 400;
-  const maxModalHeight = Dimensions.get('window').height * 0.8;
+  const buttonHeight = 64; // Footer height matching styles.cancelDoneRow
+  const padding = 0;
+  const minModalHeight = 0;
+  const maxModalHeight = Dimensions.get('window').height * 0.85;
 
   const handleContentLayout = event => {
     const {height} = event.nativeEvent.layout;
@@ -70,8 +64,8 @@ const CombineSelectorModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, 
   };
 
   const calculateModalHeight = () => {
-    const totalHeight = contentHeight + buttonHeight + padding * 2;
-    return Math.min(Math.max(totalHeight, minModalHeight), maxModalHeight);
+    const totalHeight = contentHeight + buttonHeight;
+    return Math.min(totalHeight > 0 ? totalHeight : minModalHeight, maxModalHeight);
   };
 
   const handlePress = () => {
@@ -85,20 +79,27 @@ const CombineSelectorModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, 
   };
 
   const handleRandomSelection = () => {
+    triggerImpactLight();
     dispatch(toggleShowChatRoomSelector({show: true}));
 
     // setTimeout(() => {
-    dispatch(toggleCombineSelectorModal({show: false}));
+    handleCloseModal(false);
 
     setTimeout(() => {
       dispatch(toggleFloatingViews({show: 'showSelected'}));
+
+      // if (audienceType.subscribers) {
+      //   dispatch(setSelectedAudience({audienceNumber: 2}));
+      // }
     }, 500);
   };
 
   const handleSelection = () => {
+    triggerImpactLight();
     // dispatch(toggleShowChatRoomSelector({show : true}))
 
-    dispatch(toggleCombineSelectorModal({show: false}));
+    // dispatch(toggleCombineSelectorModal({show: false}));
+    handleCloseModal(false);
 
     setTimeout(() => {
       // dispatch(toggleFloatingViews({show : "showSelected"}))
@@ -114,82 +115,135 @@ const CombineSelectorModal = ({setIsOnlineFilterEnabled, isOnlineFilterEnabled, 
     }
   }, [visible]);
 
+  function handleCloseModal(shouldResetMassmessage) {
+    if (shouldResetMassmessage === true) {
+      dispatch(resetMassMessage());
+    }
+    dispatch(toggleCombineSelectorModal({show: false}));
+  }
+
   return (
     visible && (
       <View style={styles.overlay}>
         <BlurView intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={[styles.dialog, {height: calculateModalHeight() + 300}]} contentStyle={{padding: 0, backgroundColor: '#fff'}} onTouchOutside={() => dispatch(toggleCombineSelectorModal({show: false}))}>
-          <View style={[styles.section, {paddingVertical: 0, paddingBottom: WIDTH_SIZES[16], paddingTop: 0}]}>
-            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: WIDTH_SIZES[16]}}>
-              <Text style={[styles.heading, {marginBottom: 0}]}>LABELS</Text>
-            </View>
+        <Pressable style={styles.touchOutside} onPress={() => handleCloseModal(true)} />
+        <Animated.View style={[styles.dialog, {transform: [{translateY: slideAnim}]}]}>
+          <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+            <View onLayout={handleContentLayout}>
+              {/* Audience Type Section */}
+              <View style={[styles.section, {paddingVertical: WIDTH_SIZES[16], borderBottomWidth: WIDTH_SIZES[1.5], borderBottomColor: '#E9E9E9'}]}>
+                <Text style={styles.heading}>AUDIENCE</Text>
 
-            <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#BBBBFE'}]} />
-                <Text style={styles.label}>{labelList[0]?.name}</Text>
+                <View style={styles.row}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <Text style={styles.label}>All</Text>
+                  </View>
+                  <CustomCheckbox checked={audienceType.all} onToggle={() => dispatch(setAudienceType({audienceType: 'all'}))} />
+                </View>
+
+                <View style={styles.row}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <Text style={styles.label}>Followers</Text>
+                  </View>
+                  <CustomCheckbox checked={audienceType.followers} onToggle={() => dispatch(setAudienceType({audienceType: 'followers'}))} />
+                </View>
+
+                <View style={styles.rowLast}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <Text style={styles.label}>Subscribers</Text>
+                  </View>
+                  <CustomCheckbox checked={audienceType.subscribers} onToggle={() => dispatch(setAudienceType({audienceType: 'subscribers'}))} />
+                </View>
               </View>
 
-              <CustomCheckbox checked={lable.includes(labelList[0]?.labelName)} onToggle={() => dispatch(setMassMessageLabel({label: labelList[0]?.labelName}))} />
-            </View>
-            <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#FBF7A6'}]} />
-                <Text style={styles.label}>{labelList[1]?.name}</Text>
+              {/* Labels Section */}
+              <View style={[styles.section, {paddingVertical: WIDTH_SIZES[16], borderBottomWidth: WIDTH_SIZES[1.5], borderBottomColor: '#E9E9E9'}]}>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: WIDTH_SIZES[16]}}>
+                  <Text style={[styles.heading, {marginBottom: 0}]}>LABELS</Text>
+                </View>
+
+                <View style={styles.row}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#BBBBFE'}]} />
+                    <Text style={styles.label}>{labelList[0]?.name}</Text>
+                  </View>
+                  <CustomCheckbox checked={lable.includes(labelList[0]?.labelName)} onToggle={() => dispatch(setMassMessageLabel({label: labelList[0]?.labelName}))} />
+                </View>
+                <View style={styles.row}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#FBF7A6'}]} />
+                    <Text style={styles.label}>{labelList[1]?.name}</Text>
+                  </View>
+                  <CustomCheckbox checked={lable.includes(labelList[1]?.labelName)} onToggle={() => dispatch(setMassMessageLabel({label: labelList[1]?.labelName}))} />
+                </View>
+                <View style={styles.rowLast}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#98FF98'}]} />
+                    <Text style={styles.label}>{labelList[2]?.name}</Text>
+                  </View>
+                  <CustomCheckbox checked={lable.includes(labelList[2]?.labelName)} onToggle={() => dispatch(setMassMessageLabel({label: labelList[2]?.labelName}))} />
+                </View>
               </View>
 
-              <CustomCheckbox checked={lable.includes(labelList[1]?.labelName)} onToggle={() => dispatch(setMassMessageLabel({label: labelList[1]?.labelName}))} />
-            </View>
-            <View style={styles.rowLast}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#98FF98'}]} />
-                <Text style={styles.label}>{labelList[2]?.name}</Text>
+              {/* Status Section */}
+              <View style={[styles.section, {borderBottomWidth: 0}]}>
+                <Text style={styles.heading}>STATUS</Text>
+
+                <View style={styles.row}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#2FD159'}]} />
+                    <Text style={styles.label}>Online</Text>
+                  </View>
+                  <CustomCheckbox
+                    checked={status.online}
+                    onToggle={() =>
+                      dispatch(
+                        setMassMessageTargetOnlinleOffline({
+                          status: {
+                            online: !status.online,
+                            offline: status.offline,
+                          },
+                        }),
+                      )
+                    }
+                  />
+                </View>
+
+                <View style={styles.rowLast}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
+                    <View style={[styles.icon, {backgroundColor: '#FF4539'}]} />
+                    <Text style={styles.label}>Offline</Text>
+                  </View>
+                  <CustomCheckbox
+                    checked={status.offline}
+                    onToggle={() =>
+                      dispatch(
+                        setMassMessageTargetOnlinleOffline({
+                          status: {
+                            online: status.online,
+                            offline: !status.offline,
+                          },
+                        }),
+                      )
+                    }
+                  />
+                </View>
               </View>
-
-              <CustomCheckbox checked={lable.includes(labelList[2]?.labelName)} onToggle={() => dispatch(setMassMessageLabel({label: labelList[2]?.labelName}))} />
             </View>
-          </View>
+          </ScrollView>
 
-          {/* Status */}
-          <View style={[styles.section, {borderBottomWidth: 0}]}>
-            <Text style={styles.heading}>STATUS</Text>
-
-            <View style={styles.row}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#2FD159'}]} />
-                <Text style={styles.label}>Online</Text>
-              </View>
-
-              <CustomCheckbox checked={status.online} onToggle={() => dispatch(setMassMessageTargetOnlinleOffline({status: {online: true, offline: false}}))} />
+          <SafeAreaView edges={['bottom']} style={{backgroundColor: '#fff'}}>
+            <View style={styles.cancelDoneRow}>
+              <Pressable onPress={handleRandomSelection} style={[styles.cancelDoneButton, {flexDirection: 'row', alignItems: 'center', gap: 8}]}>
+                <Icon name="random" size={16} color="#1e1e1e" />
+                <Text style={styles.cancelText}>Random Audience</Text>
+              </Pressable>
+              <Pressable onPress={handleSelection} style={styles.doneButton}>
+                <Text style={styles.doneText}>Apply</Text>
+              </Pressable>
             </View>
-
-            <View style={styles.rowLast}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 9}}>
-                <View style={[styles.icon, {backgroundColor: '#FF4539'}]} />
-                <Text style={styles.label}>Offline</Text>
-              </View>
-
-              <CustomCheckbox checked={status.offline} onToggle={() => dispatch(setMassMessageTargetOnlinleOffline({status: {online: false, offline: true}}))} />
-            </View>
-          </View>
-
-          {/* <View style={{width: '100%', alignSelf: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: WIDTH_SIZES[32]}}>
-            <View style={{flexBasis: '44%'}}>
-              <AnimatedButton title={'Reset'} onPress={() => handleReset()} buttonMargin={Platform.OS === 'android' ? 0 : 0} style={{backgroundColor: '#fff'}} showOverlay={false} />
-            </View>
-            <View style={{flexBasis: '44%'}}>
-              <AnimatedButton title={'Done'} onPress={() => handleDone()} buttonMargin={Platform.OS === 'android' ? 0 : 0} loading={loading} showOverlay={false} />
-            </View>
-          </View> */}
-
-          <View style={{paddingHorizontal: WIDTH_SIZES[32]}}>
-            <AnimatedButton title={'Select Random Audience'} showOverlay={false} style={{backgroundColor: '#fff', alignSelf: 'center'}} onPress={handleRandomSelection} highlightOnPress={true} highlightColor="#FFF3EB" />
-          </View>
-
-          <View style={{paddingHorizontal: WIDTH_SIZES[32]}}>
-            <AnimatedButton title={'Done'} style={{alignSelf: 'center'}} showOverlay={false} onPress={handleSelection} highlightOnPress={true} highlightColor="#FFC399" />
-          </View>
-        </Dialog>
+          </SafeAreaView>
+        </Animated.View>
       </View>
     )
   );
@@ -199,19 +253,22 @@ const styles = StyleSheet.create({
   dialog: {
     borderTopLeftRadius: responsiveWidth(5.33),
     borderTopRightRadius: responsiveWidth(5.33),
-    alignSelf: 'center',
-    paddingTop: 32,
     backgroundColor: '#fff',
     width: WINDOW_WIDTH,
     position: 'absolute',
-    bottom: -30,
-    zIndex: 1,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 16,
+    maxHeight: Dimensions.get('window').height * 0.8,
+  },
+  touchOutside: {
+    flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 999,
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -219,7 +276,7 @@ const styles = StyleSheet.create({
 
   //new
   section: {
-    borderBottomWidth: WIDTH_SIZES[1.5],
+    // borderBottomWidth: WIDTH_SIZES[1.5],
     paddingHorizontal: WIDTH_SIZES[32],
     borderBottomColor: '#E9E9E9',
     paddingVertical: WIDTH_SIZES[16],
@@ -258,6 +315,36 @@ const styles = StyleSheet.create({
     borderWidth: WIDTH_SIZES[1.5],
     borderColor: '#1e1e1e',
     borderRadius: responsiveWidth(30),
+  },
+  cancelDoneRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: WIDTH_SIZES[16],
+    height: 64,
+    backgroundColor: '#fff',
+  },
+  doneButton: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    borderRadius: 66,
+    paddingHorizontal: 16,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 52,
+  },
+  cancelText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#1e1e1e',
+    fontSize: FONT_SIZES[16],
+  },
+  doneText: {
+    fontFamily: 'Rubik-SemiBold',
+    color: '#FFFFFF',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
 

@@ -1,4 +1,4 @@
-import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable, ActivityIndicator, FlatList, Vibration, Platform} from 'react-native';
+import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable, ActivityIndicator, FlatList, Vibration, Platform, Alert} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {CropView} from 'react-native-image-crop-tools';
 import {useNavigation} from '@react-navigation/native';
@@ -11,32 +11,9 @@ import {LoginPageErrors, chatRoomSuccess} from '../Components/ErrorSnacks';
 import {padios} from '../../DesiginData/Utility';
 import AnimatedButton from '../Components/AnimatedButton';
 import RNFS from 'react-native-fs';
-
 import {Image} from 'expo-image';
-import {convertPngToJpeg, resizeImage} from '../../FFMPeg/FFMPegModule';
+import {resizeImage, resizeCoverImage, convertPngToJpeg} from '../../FFMPeg/FFMPegModule';
 import {ScrollView} from 'react-native-gesture-handler';
-
-// const aspectRatiosObject = [
-//   {
-//     id : 1,
-//     title : "4:5",
-//     h : 4,
-//     w : 5
-//   },
-//   {
-//     id : 2,
-//     title : "1:1",
-//     h : 1,
-//     w : 1
-//   },
-//   {
-//     id : 3,
-//     title : "16:9",
-//     h : ,
-//     w : 16
-//   },
-
-// ]
 
 const aspectImages = [
   {
@@ -50,12 +27,6 @@ const aspectImages = [
     uri: require('../../Assets/Images/CreatePost/2.png'),
     height: 32,
     width: 32,
-  },
-  {
-    id: 3,
-    uri: require('../../Assets/Images/CreatePost/3.png'),
-    height: 32,
-    width: 57,
   },
 ];
 
@@ -78,13 +49,15 @@ const CropViewScreen = ({route}) => {
 
   const [width, setWidth] = useState(4);
   const [height, setHeight] = useState(5);
+  const [cropAreaWidth, setCropAreaWidth] = useState(null);
+  const [cropAreaHeight, setCropAreaHeight] = useState(null);
 
   const {uri} = route.params;
 
   const token = useSelector(state => state.auth.user.token);
 
   const handleSaveImage = () => {
-    let x = cropViewRef.current.saveImage(true, 90);
+    let x = cropViewRef.current.saveImage(true, 100);
     console.log(x);
   };
 
@@ -94,114 +67,142 @@ const CropViewScreen = ({route}) => {
   const userInfo = useSelector(state => state.auth.user);
 
   const [uploading, setUploading] = useState(false);
+  const [statusText, setStatusText] = useState('');
 
   const [selected, setSelected] = useState(0);
 
   const dispatch = useDispatch();
 
   const handleSelectImage = async x => {
+    console.log('📸 handleSelectImage called with:', {
+      uri: x?.uri,
+      width: x?.width,
+      height: x?.height,
+      correctedWidth: x?.correctedWidth,
+      correctedHeight: x?.correctedHeight,
+      type: route?.params?.type,
+      cropAreaWidth,
+      cropAreaHeight,
+    });
+
     if (route?.params?.type === undefined) {
-      // navigation.navigate('createpostpage', x);
-
-      setUploading(true);
-
-      let convertedImage = await convertPngToJpeg(x?.uri, `${RNFS.TemporaryDirectoryPath}${Date.now()}.jpg`);
-
-      setUploading(false);
-
-      navigation.navigate('createpostpage', {
+      // Create post flow - Only dimension cut, no further optimization
+      // Create post flow - Navigate to Filter Screen
+      navigation.navigate('filterScreen', {
         height: x?.height,
         width: x?.width,
-        uri: convertedImage,
+        uri: x?.uri,
       });
     } else if (route?.params?.type === 'massMessage') {
       setUploading(true);
-
+      setStatusText('Processing...');
       let convertedImage = await convertPngToJpeg(x?.uri, `${RNFS.TemporaryDirectoryPath}${Date.now()}.jpg`);
-
       setUploading(false);
-
+      setStatusText('');
       navigation.navigate('massMessageMedia', {
         height: x?.height,
         width: x?.width,
         uri: convertedImage,
       });
     } else {
-      let formData = new FormData();
-
-      const inputPath = Platform.select({
-        ios: x?.uri,
-        android: x?.uri,
-      });
-
+      // Profile or Cover photo update
+      const timestamp = Date.now();
       const outputPath = Platform.select({
-        ios: `${RNFS.TemporaryDirectoryPath}output_resized.jpg`,
-        android: `${RNFS.CachesDirectoryPath}/output_resized.jpg`,
+        ios: `${RNFS.TemporaryDirectoryPath}output_resized_${timestamp}.jpg`,
+        android: `${RNFS.CachesDirectoryPath}/output_resized_${timestamp}.jpg`,
       });
 
-      resizeImage(inputPath, outputPath)
-        .then(resizedPath => {
-          console.log('Image resized successfully at:', resizedPath);
-          formData.append('keyName', 'profile');
+      try {
+        setUploading(true);
+        setStatusText('Optimizing image...');
 
+        const inputPath = Platform.select({
+          ios: x?.uri,
+          android: x?.uri,
+        });
+
+        console.log('🔧 Starting resize with:', {inputPath, outputPath, type: route?.params?.type});
+
+        try {
+          // 1. Resize Image
+          const resizedPath = await (route?.params?.type === 'Cover'
+            ? resizeCoverImage(inputPath, outputPath)
+            : resizeImage(inputPath, outputPath));
+
+          console.log('✅ Image resized successfully at:', resizedPath);
+          setStatusText('Uploading to server...');
+
+          // 2. Upload Attachment
+          let formData = new FormData();
+          formData.append('keyName', 'profile');
           formData.append('file', {
             name: 'editProfile',
             type: 'image/jpeg',
             uri: `file://${resizedPath}`,
           });
 
-          setUploading(true);
+          const uploadRes = await uploadAttachment({token, formData});
+          
+          if (uploadRes?.data?.statusCode === 200) {
+            const uploadedUrl = uploadRes?.data?.data?.url;
+            console.log('✅ Upload successful:', uploadedUrl);
+            setStatusText('Updating profile...');
 
-          uploadAttachment({token, formData}).then(e => {
-            // if (e?.error?.data?.status_code === 401) {
-            //   autoLogout();
-            // }
+            // 3. Update Picture Metadata
+            const updateData = {
+              profile_image: {
+                url: route?.params?.type === 'Profile' ? uploadedUrl : userInfo?.currentUserProfilePicture,
+                type: 'profile',
+              },
+              cover_photo: {
+                url: route?.params?.type === 'Cover' ? uploadedUrl : userInfo?.currentUserCoverPicture,
+                type: 'coverImage',
+              },
+            };
 
-            console.log(e?.error, 'LLLLLL');
+            const updateRes = await updatePicture({token, data: updateData});
 
-            if (e?.data?.statusCode === 200) {
-              let x = {
-                profile_image: {
-                  url: route?.params?.type === 'Profile' ? e?.data?.data?.url : userInfo?.currentUserProfilePicture,
-                  type: 'profile',
-                },
-                cover_photo: {
-                  url: route?.params?.type === 'Cover' ? e?.data?.data?.url : userInfo?.currentUserCoverPicture,
-                  type: 'coverImage',
-                },
-              };
-
-              updatePicture({token, data: x}).then(e => {
-                if (e?.data?.statusCode === 200) {
-                  setUploading(false);
-
-                  dispatch(updateCoverProfilePicture({coverUrl: e?.data?.data?.cover_photo?.url, profileUrl: e?.data?.data?.profile_image?.url}));
-
-                  chatRoomSuccess(`Successfully updated your ${route?.params?.type} picture`);
-
-                  navigation.goBack();
-                } else {
-                  console.log('After Upload Change Picture', e);
-
-                  setUploading(false);
-                }
-              });
+            if (updateRes?.data?.statusCode === 200) {
+              console.log('✅ Profile updated successfully');
+              dispatch(
+                updateCoverProfilePicture({
+                  coverUrl: updateRes?.data?.data?.cover_photo?.url,
+                  profileUrl: updateRes?.data?.data?.profile_image?.url,
+                }),
+              );
+              chatRoomSuccess(`Successfully updated your ${route?.params?.type} picture`);
+              navigation.goBack();
             } else {
-              console.log(e, 'OOOOOO');
-              if (e?.error?.status === 'FETCH_ERROR') {
-                LoginPageErrors('Please check your network');
-                setUploading(false);
-              }
+              console.log('❌ Update Picture failed:', updateRes);
+              LoginPageErrors(updateRes?.data?.message || 'Failed to update profile');
             }
+          } else {
+            console.log('❌ Upload Attachment failed:', uploadRes);
+            if (uploadRes?.error?.status === 'FETCH_ERROR') {
+              LoginPageErrors('Please check your network');
+            } else {
+              LoginPageErrors(uploadRes?.data?.message || 'Upload failed');
+            }
+          }
+        } finally {
+          // Cleanup resized file
+          RNFS.exists(outputPath).then(exists => {
+            if (exists) RNFS.unlink(outputPath).catch(() => {});
           });
-        })
-        .catch(error => {
-          console.error('Resize failed:', error);
-        });
+        }
+      } catch (error) {
+        console.error('❌ Selective image update failed:', error);
+        LoginPageErrors('An error occurred during update. Please try again.');
+      } finally {
+        setUploading(false);
+        setStatusText('');
+      }
     }
   };
 
   const handleSetAspectRatio = (h, w, index) => {
+    console.log('🔵 handleSetAspectRatio called:', {h, w, index});
+
     if (Platform.OS === 'android') {
       Vibration.vibrate(10);
     }
@@ -209,49 +210,183 @@ const CropViewScreen = ({route}) => {
     setSelected(index);
     setWidth(w);
     setHeight(h);
+
+    // Calculate fixed crop dimensions based on aspect ratio
+    const screenWidth = responsiveWidth(90);
+    let newCropWidth, newCropHeight;
+
+    if (w / h > 1) {
+      // Wider than tall
+      newCropWidth = screenWidth;
+      newCropHeight = (screenWidth * h) / w;
+    } else {
+      // Taller than wide or square
+      newCropHeight = screenWidth;
+      newCropWidth = (screenWidth * w) / h;
+    }
+
+    console.log('🟢 Calculated crop dimensions:', {
+      screenWidth,
+      newCropWidth,
+      newCropHeight,
+      aspectRatio: `${w}:${h}`,
+      calculatedRatio: (newCropWidth / newCropHeight).toFixed(2),
+    });
+
+    setCropAreaWidth(newCropWidth);
+    setCropAreaHeight(newCropHeight);
   };
 
+  // Create a unique key based on aspect ratio to force re-render
+  const cropViewKey = `${width}-${height}`;
+
+  console.log('🎯 Current state:', {
+    width,
+    height,
+    cropAreaWidth,
+    cropAreaHeight,
+    cropViewKey,
+    routeType: route?.params?.type,
+    shouldLockAspectRatio: route?.params?.type === 'Profile' || route?.params?.type === 'Cover',
+  });
+
   useEffect(() => {
+    console.log('🟡 useEffect triggered with route.params.type:', route?.params?.type);
+
     if (route?.params?.type) {
       if (route?.params?.type === 'Profile') {
+        // Lock to 1:1 for Profile
+        console.log('🔴 Setting Profile mode - 1:1 aspect ratio');
         setWidth(1);
         setHeight(1);
-      } else {
+        const size = responsiveWidth(90);
+        console.log('🔴 Profile crop size:', size);
+        setCropAreaWidth(size);
+        setCropAreaHeight(size);
+      } else if (route?.params?.type === 'Cover') {
+        // Lock to 16:9 for Cover
+        console.log('🟠 Setting Cover mode - 16:9 aspect ratio');
         setWidth(16);
         setHeight(9);
+        const screenWidth = responsiveWidth(90);
+        const calculatedHeight = (screenWidth * 9) / 16;
+        console.log('🟠 Cover crop dimensions:', {
+          width: screenWidth,
+          height: calculatedHeight,
+          ratio: (screenWidth / calculatedHeight).toFixed(2),
+        });
+        setCropAreaWidth(screenWidth);
+        setCropAreaHeight(calculatedHeight);
       }
+    } else {
+      // For create post, default to 4:5
+      console.log('🟣 Setting CreatePost mode - 4:5 aspect ratio');
+      const screenWidth = responsiveWidth(90);
+      const calculatedWidth = (screenWidth * 4) / 5;
+      console.log('🟣 CreatePost crop dimensions:', {
+        width: calculatedWidth,
+        height: screenWidth,
+        ratio: (calculatedWidth / screenWidth).toFixed(2),
+      });
+      setCropAreaHeight(screenWidth);
+      setCropAreaWidth(calculatedWidth);
     }
   }, [route?.params?.type]);
 
-  /*
-  
+  // Define aspect ratios based on type
+  const allRatios =
+    route?.params?.type === 'Profile'
+      ? [{h: 1, w: 1}] // Only 1:1 for Profile
+      : route?.params?.type === 'Cover'
+      ? [{h: 16, w: 9}] // Only 16:9 for Cover
+      : [
+          {h: 4, w: 5},
+          {h: 1, w: 1},
+        ];
 
-  
-  */
+  // Show aspect ratio selector only for create post and mass message
+  const shouldShowAspectSelector = route?.params?.type === undefined || route?.params?.type === 'massMessage';
+
+  // Determine if aspect ratio should be locked
+  const shouldLockAspectRatio = route?.params?.type === 'Profile' || route?.params?.type === 'Cover';
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {uri ? (
         <>
+          {console.log('🖼️ Rendering CropView with props:', {
+            key: cropViewKey,
+            aspectRatio: {width, height},
+            cropAreaWidth,
+            cropAreaHeight,
+            keepAspectRatio: true,
+            lockAspectRatio: true,
+          })}
+
           <CropView
-            iosDimensionSwapEnabled
+            key={cropViewKey}
             sourceUrl={uri}
             style={[styles.cropView, route?.params?.type === undefined ? {height: 425} : {height: responsiveWidth(130)}]}
             ref={cropViewRef}
-            onImageCrop={res => handleSelectImage({...res, height, width})}
+            onImageCrop={res => {
+              console.log('✂️ onImageCrop callback (BEFORE correction):', {
+                width: res?.width,
+                height: res?.height,
+                uri: res?.uri,
+                expectedAspectRatio: `${width}:${height}`,
+                actualRatio: res?.width && res?.height ? (res.width / res.height).toFixed(2) : 'N/A',
+              });
+
+              // Force correct aspect ratio by recalculating dimensions
+              let correctedWidth = res?.width;
+              let correctedHeight = res?.height;
+
+              if (res?.width && res?.height) {
+                const expectedRatio = width / height;
+                const actualRatio = res.width / res.height;
+
+                // If ratio doesn't match (with 0.5% tolerance), fix it
+                if (Math.abs(actualRatio - expectedRatio) > expectedRatio * 0.005) {
+                  console.log('⚠️ Aspect ratio mismatch detected! Correcting...');
+
+                  // Keep width, adjust height to match aspect ratio
+                  correctedHeight = Math.round(res.width / expectedRatio);
+
+                  console.log('✅ Corrected dimensions:', {
+                    originalWidth: res.width,
+                    originalHeight: res.height,
+                    correctedWidth,
+                    correctedHeight,
+                    correctedRatio: (correctedWidth / correctedHeight).toFixed(2),
+                    expectedRatio: expectedRatio.toFixed(2),
+                  });
+                }
+              }
+
+              handleSelectImage({
+                ...res,
+                height,
+                width,
+                correctedWidth,
+                correctedHeight,
+              });
+            }}
             aspectRatio={{width, height}}
+            keepAspectRatio={true}
+            lockAspectRatio={true}
+            {...(cropAreaWidth && cropAreaHeight
+              ? {
+                  cropAreaWidth,
+                  cropAreaHeight,
+                }
+              : {})}
           />
-          {/* <Button title='Save' onPress={() => handleSaveImage()} /> */}
 
           {route?.params?.type === undefined && <Text style={{textAlign: 'left', fontFamily: 'Rubik-Medium', color: '#282828', marginTop: 24, fontSize: responsiveFontSize(2.3), marginLeft: 26}}>Choose Aspect Ratio</Text>}
 
-          {route?.params?.type === undefined || route?.params?.type === 'massMessage' ? (
+          {shouldShowAspectSelector && (
             <FlatList
-              data={[
-                {h: 4, w: 5},
-                {h: 1, w: 1},
-                {h: 16, w: 9},
-              ]}
+              data={allRatios}
               showsHorizontalScrollIndicator={false}
               horizontal
               renderItem={({item, index}) => (
@@ -264,10 +399,17 @@ const CropViewScreen = ({route}) => {
               )}
               style={{alignSelf: 'center', marginHorizontal: 18, marginTop: 12, maxHeight: 119}}
               keyExtractor={(item, index) => index.toString()}
-              // contentContainerStyle={{alignItems: 'center', alignSelf: 'center', justifyContent: 'center', }}
               ItemSeparatorComponent={() => <View style={{marginHorizontal: 9}} />}
             />
-          ) : null}
+          )}
+
+          {statusText !== '' && (
+            <View style={{ marginTop: 20, alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'Rubik-Medium', color: '#FF7043', fontSize: responsiveFontSize(1.8) }}>
+                {statusText}
+              </Text>
+            </View>
+          )}
 
           <View style={{position: 'relative', alignSelf: 'center', width: responsiveWidth(90), marginBottom: responsiveWidth(8)}}>
             <AnimatedButton title={route?.params?.type === undefined ? 'Next' : 'Update'} loading={uploading} onPress={() => cropViewRef.current.saveImage()} buttonMargin={route?.params?.type === undefined || route?.params?.type === 'massMessage' ? 6 : 30} />
@@ -292,18 +434,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f3f3',
   },
   aspectRatioContainer: {
-    // padding: responsiveWidth(1),
     flexDirection: 'row',
     justifyContent: 'center',
-
-    // backgroundColor : 'green',
-    // gap: responsiveWidth(12),
-    // marginTop: responsiveWidth(10),
   },
 
   eachRatioBox: {
     padding: responsiveWidth(2),
-    // borderWidth: 2,
     width: responsiveWidth(14),
     height: responsiveWidth(14),
     justifyContent: 'center',
@@ -347,7 +483,6 @@ const styles = StyleSheet.create({
   selectedBox: {
     borderColor: '#FF7043',
     backgroundColor: '#fff3eb',
-    // backgroundColor: 'red',
     borderWidth: 1.5,
   },
   innerBox: {
@@ -367,6 +502,5 @@ const styles = StyleSheet.create({
   iconContainer: {
     height: 40,
     width: 32,
-    // backgroundColor : 'green'
   },
 });

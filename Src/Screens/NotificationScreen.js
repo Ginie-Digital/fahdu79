@@ -1,17 +1,17 @@
-import {FlatList, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Pressable, RefreshControl} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import { FlatList, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
+import React, { useCallback, useState } from 'react';
 import axios from 'axios';
-import {useFocusEffect} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
-import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
+import { useFocusEffect } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
 import Moment from 'react-moment';
-import {navigate} from '../../Navigation/RootNavigation';
-import {ChatWindowError, LoginPageErrors} from '../Components/ErrorSnacks';
-import {Image} from 'expo-image';
-import {useLazyJoinLiveStreamQuery, useLazyMyPostListQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {WIDTH_SIZES} from '../../DesiginData/Utility';
+import { navigate } from '../../Navigation/RootNavigation';
+import { ChatWindowError, LoginPageErrors } from '../Components/ErrorSnacks';
+import { Image } from 'expo-image';
+import { useLazyJoinLiveStreamQuery, useLazyMyPostListQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { WIDTH_SIZES } from '../../DesiginData/Utility';
 import NotificationScreenShimmer from '../Components/Shimmers/NotificationScreenShimmer';
-import {setFeedCacheMyPost} from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
+import { setFeedCacheMyPost } from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 
 const NotificationScreen = () => {
   const [joinLiveStream] = useLazyJoinLiveStreamQuery();
@@ -42,11 +42,11 @@ const NotificationScreen = () => {
       data={filters}
       keyExtractor={(item, index) => `${item}-${index}`}
       horizontal
-      style={{maxHeight: responsiveWidth(14)}}
+      style={{ maxHeight: responsiveWidth(14) }}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{paddingVertical: 10, alignItems: 'center'}}
-      ItemSeparatorComponent={() => <View style={{width: responsiveWidth(3)}} />}
-      renderItem={({item}) => {
+      contentContainerStyle={{ paddingVertical: 10, alignItems: 'center' }}
+      ItemSeparatorComponent={() => <View style={{ width: responsiveWidth(3) }} />}
+      renderItem={({ item }) => {
         const isActive = selectedFilter === item;
         return (
           <TouchableOpacity
@@ -70,7 +70,7 @@ const NotificationScreen = () => {
     else setLoading(true);
 
     try {
-      const {data} = await axios.get(`https://api.fahdu.in/api/notification/get-notification?filter=${myFilter}&page=${pageNum}`, {
+      const { data } = await axios.get(`https://api.fahdu.com/api/notification/get-notification?filter=${myFilter}&page=${pageNum}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ const NotificationScreen = () => {
       setIsNotification(true);
       setHasMore(newMetadata.page * newMetadata.limit < newMetadata.total);
     } catch (e) {
-      console.log('Error ', e);
+      // Error handling
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -133,7 +133,7 @@ const NotificationScreen = () => {
       case 'liveStream':
         return `is going live!`;
       case 'calls':
-        return `called you.`;
+        return item?.title;
       case 'follow':
         return `started following you.`;
       case 'wishlist':
@@ -143,7 +143,11 @@ const NotificationScreen = () => {
       case 'subs':
         return item?.title;
       case 'chats':
-        return `sent you a message.`;
+        return item?.title?.replace(item?.createdBy?.displayName, '').trim() || `sent you a message.`;
+      case 'reminders':
+        return item?.title;
+      case 'mention':
+        return `mentioned you in a post.`;
       default:
         return item?.title || 'You have a new notification.';
     }
@@ -159,17 +163,15 @@ const NotificationScreen = () => {
 
     if (type === 'liveStream') {
       let roomId = urlOrId.split('/').at(-1);
-      const {error, data} = await joinLiveStream({token, roomId});
+      const { error, data } = await joinLiveStream({ token, roomId });
 
       if (error?.data?.statusCode === 400) {
         ChatWindowError('Hey!, Livestream has ended');
         return;
       }
-
-      console.log(data?.data);
-      navigate('confirmlivestreamjoin', {data: data?.data, roomId});
+      navigate('confirmlivestreamjoin', { data: data?.data, roomId });
     } else if (['like', 'comments', 'coins'].includes(type)) {
-      const {data: postData} = await postList({token}, false);
+      const { data: postData } = await postList({ token }, false);
 
       if (postData) {
         let pinnedPost = postData?.data?.pinnedPosts.map(x => ({
@@ -178,80 +180,92 @@ const NotificationScreen = () => {
         }));
         let combined = [...pinnedPost, ...postData?.data?.posts];
         const index = combined.findIndex(item => item._id === urlOrId);
-        dispatch(setFeedCacheMyPost({data: combined}));
-        navigate('allmyposts', {scrollIndex: index, type, postId: urlOrId});
+        dispatch(setFeedCacheMyPost({ data: combined }));
+        navigate('allmyposts', { scrollIndex: index, type, postId: urlOrId });
       }
+    } else if (type === 'mention') {
+      navigate('sharedPost', { postId: urlOrId });
     } else if (type === 'subscription') {
-      navigate('fsPage', {title: 'Subscribed', token, role: 'creator'});
+      navigate('fsPage', { title: 'Subscribed', token, role: 'creator' });
     } else if (type === 'follow') {
-      navigate('fsPage', {title: 'Followers', token, role: 'creator'});
+      navigate('fsPage', { title: 'Followers', token, role: 'creator' });
     } else if (type === 'wishlist') {
       if (!wishlistTitle?.toLowerCase()?.includes('thank')) {
-        navigate('profile', {from: 'notification', wishlistScrollId: urlOrId});
+        navigate('profile', { from: 'notification', wishlistScrollId: urlOrId });
       }
     } else if (type === 'payments') {
       navigate('mrDashboard');
-    } else if (type === 'chats') {
+    } else if (type === 'chats' || type === "calls") {
       navigate('Chats', {
-        chatRoomId: urlOrId?.data?.room_id,
+        chatRoomId: urlOrId?.data?.roomId || urlOrId?.data?.room_id,
         name: urlOrId?.createdBy?.displayName,
         profileImageUrl: urlOrId?.createdBy?.profile_image?.url,
-        role: urlOrId?.data?.role,
+        role: urlOrId?.data?.sender_role,
         id: urlOrId?.createdBy?._id,
         label: urlOrId?.data?.label,
       });
+    } else if (type === 'reminders') {
+      navigate('CallRequests', { activeTab: 'scheduled' });
     } else if (type === 'subs') {
-      navigate('fsPage', {title: 'Subscribers', token, role: 'creator'});
+      navigate('fsPage', { title: 'Subscribers', token, role: 'creator' });
     }
   };
 
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     const username = item?.createdBy?.displayName || 'Someone';
+    
+    // New logic: Blur only if it's a subscriber-only post AND the user is not a subscriber
+    const isSubOnly = item?.data?.for_subscribers === true || item?.data?.for_subscribers === 'true' || item?.data?.forSubscriber === true || item?.data?.forSubscriber === 'true';
+    const isSubbed = item?.data?.isSubscriber === true || item?.data?.isSubscriber === 'true';
+    
+    const shouldBlur = isSubOnly && !isSubbed;
+
+    if (item?.data?.postContent?.file) {
+      console.log(`Notification ${item._id}: isSubOnly=${isSubOnly}, isSubbed=${isSubbed}, shouldBlur=${shouldBlur}`);
+    }
 
     return (
       <Pressable
-        style={({pressed}) => [styles.notificationCard, {backgroundColor: pressed ? '#FFA86B1C' : '#fff'}]}
-        onPress={() => handleLinks(item?.type, item?.type === 'liveStream' ? item?.data : item?.type === 'wishlist' ? item?.data?.wishlistItem : item?.type === 'chats' ? item : item?.data?.postId, item?.title)}>
-        {item.type === 'liveStream' ? (
-          <View style={[styles.profileImageWrapper, {marginRight: 10}]}>
-            <Image
-              source={{uri: item?.createdBy?.profile_image?.url}}
-              placeholder={{
-                uri: 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png',
-              }}
-              style={styles.profileImage}
-              contentFit="cover"
-            />
-          </View>
-        ) : (
+        onPress={() => {
+          handleLinks(item?.type, item?.type === 'liveStream' ? item?.data : item?.type === 'wishlist' ? item?.data?.wishlistItem : (item?.type === 'chats' || item?.type === 'calls' || item?.type === 'reminders') ? item : item?.data?.postId, item?.title);
+        }}
+        style={({ pressed }) => [styles.notificationCard, { backgroundColor: pressed ? '#FFA86B1C' : '#fff' }]}>
+        <View style={styles.profileImageContainer}>
           <Image
-            source={{uri: item?.createdBy?.profile_image?.url}}
+            source={{ uri: item?.createdBy?.profile_image?.url }}
             placeholder={{
               uri: 'https://www.redditstatic.com/avatars/defaults/v2/avatar_default_1.png',
             }}
-            style={styles.profileImageSmall}
+            style={styles.profileImage}
             contentFit="cover"
           />
-        )}
+        </View>
 
         <View style={styles.textContainer}>
           <Text style={styles.notificationText}>
-            <Text style={styles.usernameText}>{username}</Text>
-            <Text style={styles.messageText}>{' ' + renderNotificationMessage(item)}</Text>
+            {(item.type !== 'calls' && item.type !== 'reminders') && <Text style={styles.usernameText}>{username}</Text>}
+            <Text style={styles.messageText}>{(item.type !== 'calls' && item.type !== 'reminders' ? ' ' : '') + renderNotificationMessage(item)}</Text>
           </Text>
           <Moment element={Text} style={styles.timeText} fromNow>
             {item.createdAt}
           </Moment>
         </View>
 
-        {item?.data?.postContent?.file && <Image source={{uri: item?.data?.postContent?.file}} style={styles.thumbnail} contentFit="cover" />}
+        {item?.data?.postContent?.file && (
+          <Image 
+            source={{ uri: item?.data?.postContent?.file }} 
+            style={styles.thumbnail} 
+            contentFit="cover" 
+            blurRadius={shouldBlur ? 150 : 0} 
+          />
+        )}
       </Pressable>
     );
   };
 
   return (
     <View style={styles.container}>
-      <View style={{paddingLeft: 24, justifyContent: 'center', paddingRight: WIDTH_SIZES['10']}}>
+      <View style={{ paddingLeft: 24, justifyContent: 'center', paddingRight: WIDTH_SIZES['10'] }}>
         <FilterNotifications />
       </View>
 
@@ -260,7 +274,7 @@ const NotificationScreen = () => {
       ) : (
         <FlatList
           data={notification}
-          style={{marginTop: 20}}
+          style={{ marginTop: 20 }}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
@@ -274,7 +288,7 @@ const NotificationScreen = () => {
               }}
             />
           )}
-          ListFooterComponent={loadingMore ? <ActivityIndicator size="small" style={{marginVertical: 20}} /> : null}
+          ListFooterComponent={loadingMore ? <ActivityIndicator size="small" style={{ marginVertical: 20 }} /> : null}
           refreshControl={
             // 👈 add this
             <RefreshControl
@@ -358,59 +372,36 @@ const styles = StyleSheet.create({
     backgroundColor: '#eee',
   },
 
-  profileImageWrapper: {
-    borderWidth: 1.8,
-    borderColor: '#1e1e1e', // or any color you prefer
-    borderStyle: 'dashed',
-    borderRadius: 100, // match with image's radius for a circular look
-    padding: 5, // optional, to add some spacing between border and image
-    alignItems: 'center',
+  profileImageContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#1e1e1e',
     justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
 
   profileImage: {
-    height: 49,
-    width: 49,
-    borderRadius: responsiveWidth(100),
-    borderRadius: responsiveWidth(6),
-    borderWidth: 1.8,
-    borderColor: '#1e1e1e',
-    // marginRight : 80
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
 
   notificationText: {
     fontSize: 14,
-    color: '#1e1e1e', // or any text color
+    color: '#1e1e1e',
+    fontFamily: 'Rubik-Regular',
   },
 
   usernameText: {
-    fontFamily: 'Rubik-SemiBold', // or 'Rubik-Medium' if preferred
+    fontFamily: 'Rubik-SemiBold',
     color: '#1e1e1e',
   },
 
   messageText: {
     fontFamily: 'Rubik-Regular',
     color: '#1e1e1e',
-  },
-
-  profileImageWrapper: {
-    width: 40,
-    height: 40,
-    overflow: 'hidden',
-    borderRadius: 20, // make it circular if needed
-  },
-
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 20,
-  },
-
-  profileImageSmall: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 8,
   },
 });

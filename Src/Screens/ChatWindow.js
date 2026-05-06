@@ -1,60 +1,60 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {ActivityIndicator, Alert, Button, FlatList, Keyboard, Platform, StyleSheet, ToastAndroid, View} from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, ToastAndroid, View } from 'react-native';
 
-import {useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation} from '../../Redux/Slices/QuerySlices/roomListSliceApi';
+import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
-import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {LeftChatBubble, RightChatBubble} from '../Components/ChatWindowComponents/ChatWindowElements';
+import { responsiveWidth } from 'react-native-responsive-dimensions';
+import { LeftChatBubble, RightChatBubble } from '../Components/ChatWindowComponents/ChatWindowElements';
 
-import {useSendMessageMutation} from '../../Redux/Slices/QuerySlices/roomListSliceApi';
+import { useSendMessageMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
-import {useSelector, useDispatch} from 'react-redux';
-import {userIdCreateSelector} from '../../Redux/Slices/NormalSlices/AuthSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { userIdCreateSelector } from '../../Redux/Slices/NormalSlices/AuthSlice';
 
-import {deleteCachedMessages, pushSentMessageResponse, saveThread, updateThread} from '../../Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
+import { deleteCachedMessages, pushSentMessageResponse, saveThread, updateThread } from '../../Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
 
 import ChatWindowInput from '../Components/ChatWindowComponents/ChatWindowInput';
 import ChatWindowClipModal from '../Components/ChatWindowComponents/ChatWindowClipModal';
 import ChatWindowPreviewModal from '../Components/ChatWindowComponents/ChatWindowPreviewModal';
 import ChatWindowVideoModal from '../Components/ChatWindowComponents/ChatWindowVideoModal';
-import {setChatWindowSenderUserDetails} from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowSenderDetailSlice';
+import { setChatWindowSenderUserDetails } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowSenderDetailSlice';
 import ChatWindowPaymentModal from '../Components/ChatWindowComponents/ChatWindowPaymentModal';
 import ChatWindowFullSizedImageModal from '../Components/ChatWindowComponents/ChatWindowFullSizedImageModal';
-import {setClickedNotification, toggleCallRequestModal, toggleNewMessageRecieved} from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useFocusEffect, useIsFocused, useRoute} from '@react-navigation/native';
+import { setClickedNotification, setUnReadChatIcon, toggleCallRequestModal, toggleNewMessageRecieved, toggleShowBankDetailsModal, toggleShowRechargeModal, updateOnlineStatus } from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useFocusEffect, useIsFocused, useRoute } from '@react-navigation/native';
 import ChatWindowInformationModal from '../Components/ChatWindowComponents/ChatWindowInformationModal';
-import ChatWindowTipModal from '../Components/ChatWindowComponents/ChatWindowTipModal';
 
-import {setCurrentScreen, setsecondUser} from '../../Redux/Slices/NormalSlices/SecondUserSlice';
-import {screens} from '../../DesiginData/Data';
-import {removeRoomList, updateCacheRoomList} from '../../Redux/Slices/NormalSlices/RoomListSlice';
-import {firebase} from '@react-native-firebase/messaging';
+import { setCurrentScreen, setsecondUser } from '../../Redux/Slices/NormalSlices/SecondUserSlice';
+import { screens } from '../../DesiginData/Data';
+import { removeRoomList, resetUnreadCount, updateCacheRoomList } from '../../Redux/Slices/NormalSlices/RoomListSlice';
 
 //For Logging out user when not authorized via server;
-import {authLogout} from '../../Redux/Slices/NormalSlices/AuthSlice';
-import {emptyUnreadRoomList, removeRoomIds} from '../../Redux/Slices/NormalSlices/UnReadThreadSlice';
-import {saveFeeDetails} from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowFeeDetailsSlice';
-import {setCurrentChattingRoom} from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
-import {Text} from 'react-native-svg';
-import {ChatWindowError, ChatWindowFollowError} from '../Components/ErrorSnacks';
-import {signOutGoogle} from '../../OAuth';
-import {useFollowUserMutation, useLazyCallTriesStatusQuery, useUnFollowUserMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {soundObj} from '../../Sound';
-import {autoLogout} from '../../AutoLogout';
+import { authLogout } from '../../Redux/Slices/NormalSlices/AuthSlice';
+import { emptyUnreadRoomList, removeRoomIds } from '../../Redux/Slices/NormalSlices/UnReadThreadSlice';
+import { saveFeeDetails } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowFeeDetailsSlice';
+import { setCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
+import { Text } from 'react-native-svg';
+import { ChatWindowError, ChatWindowFollowError, LoginPageErrors } from '../Components/ErrorSnacks';
+import { signOutGoogle } from '../../OAuth';
+import { useFollowUserMutation, useLazyCallTriesStatusQuery, useLazyOnlineStatusQuery, useUnFollowUserMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { soundObj } from '../../Sound';
+import { autoLogout } from '../../AutoLogout';
 import MediaLoadingModal from '../Components/ChatWindowComponents/MediaLoadingModal';
-import ChatWindowPreviewSheet from '../Components/ChatWindowComponents/ChatWindowPreviewSheet';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {WIDTH_SIZES} from '../../DesiginData/Utility';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { WIDTH_SIZES } from '../../DesiginData/Utility';
 import ChatWindowFeeSetup from '../Components/ChatWindowComponents/ChatWindowFeeSetup';
 import ChatWindowLabelModal from '../Components/ChatWindowLabelModal';
-import CallMethodSelector from '../Components/ChatWindowComponents/CallMethodSelector';
 import CallRequestModal from '../Components/ChatWindowComponents/CallRequestModal';
 import CallPricesModal from '../Components/ChatWindowComponents/CallPricesModal';
 import TimeRequestModal from '../Components/Calling/TimeRequestModal';
+import LowBalanceModal from '../Components/LowBalanceModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import socketServices from '../../SocketServices';
+import TypingIndicator from '../Components/ChatWindowComponents/TypingIndicator';
 
 const Loader = () => {
   return (
-    <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+    <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
       <ActivityIndicator color={'#282828'} size={'large'} />
     </View>
   );
@@ -62,7 +62,7 @@ const Loader = () => {
 
 let timer;
 
-const ChatWindow = ({route, navigation}) => {
+const ChatWindow = ({ route, navigation }) => {
   const messageInputRef = useRef(null);
 
   const flatlistThreadListRef = useRef();
@@ -77,13 +77,15 @@ const ChatWindow = ({route, navigation}) => {
 
   //!<!-------------States Finish>
 
-  const {chatRoomId, name, profileImageUrl, role, id, label} = route.params.params || route.params;
+  const { chatRoomId, name, profileImageUrl, role, id, label } = route.params.params || route.params;
 
   const chatThreadFromCache = useSelector(state => state.thread.threadStore[chatRoomId]);
 
   const token = useSelector(state => state.auth.user.token);
 
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
+
+  console.log('CurrentUserId', currentUserId, 'OtherUserId', id, Platform.OS, role);
 
   const [setSeenToServer] = useSetSeenToServerMutation();
 
@@ -94,6 +96,8 @@ const ChatWindow = ({route, navigation}) => {
   const [disableSendButton, setDisableSendButton] = useState(false);
 
   const [loadingMessage, setLoadingMessage] = useState(false);
+
+  const [updatedOnlineStatus, setUpdatedOnlineStatus] = useState(false);
 
   //pagination
 
@@ -109,13 +113,42 @@ const ChatWindow = ({route, navigation}) => {
 
   const [getInitialChats] = useLazyGetInitialChatsQuery();
 
+
   const [viewMargin, setViewMargin] = useState(0);
 
   const [isOldChatsFinished, setIsOldChatsFinished] = useState(false);
 
+
   const [callTriesData, setCallTriesData] = useState({});
 
   const [callTriesStatus] = useLazyCallTriesStatusQuery();
+
+  const [doRaisedRequest, setDoRaisedRequest] = useState({});
+
+  const [onlineStatus] = useLazyOnlineStatusQuery();
+
+  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
+
+  async function userStatusHandler() {
+    try {
+      const response = await onlineStatus({ token, displayName: name });
+
+      if (response.data?.statusCode === 200) {
+        if (response?.data?.data?.status === 'online') {
+          setUpdatedOnlineStatus(true);
+          dispatch(updateOnlineStatus({ onlineStatus: true }));
+        } else {
+          setUpdatedOnlineStatus(false);
+          dispatch(updateOnlineStatus({ onlineStatus: false }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user status:', error);
+    }
+  }
+  useEffect(() => {
+    userStatusHandler();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -125,32 +158,44 @@ const ChatWindow = ({route, navigation}) => {
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(setsecondUser({role}));
+      dispatch(setsecondUser({ role }));
     }, [role]),
   );
+
+
 
   console.log('RoooooomId', chatRoomId);
 
   useEffect(() => {
     async function fetchCallStatus() {
-      const {data, error} = await callTriesStatus({token, roomId: chatRoomId});
+      const { data, error } = await callTriesStatus({ token, roomId: chatRoomId });
 
-      console.log(data, error, 'opopop');
+      console.log(data, '::OPPO');
 
-      if (data) {
-        console.log('Data', data?.data?.initiator, currentUserId);
+      if (data?.success) {
+        const { hasCallRequest, callTries, availability, type, initiator } = data?.data;
 
-        // LOG  Data {"data": {"callTries": 1, "initiatedAt": "2025-06-02T10:31:49.607Z", "initiator": "67fde0e702f40aeb67610439", "type": "VIDEO"}, "message": "Call request found", "statusCode": 200}
-        setCallTriesData(data?.data);
+        setDoRaisedRequest({ hasCallRequest, callTries, availability, type, initiator });
 
-        if (data?.data?.callTries > -1 && data?.data?.callTries < 3 && data?.data?.initiator !== currentUserId) {
-          dispatch(toggleCallRequestModal({show: true}));
-        }
+        dispatch(toggleCallRequestModal({ show: true }));
       }
 
-      if (error) {
-        console.log('Error', error);
-      }
+      // console.log(data, error, 'opopop');
+
+      // if (data) {
+      //   console.log('Data', data?.data?.initiator, currentUserId);
+
+      //   // LOG  Data {"data": {"callTries": 1, "initiatedAt": "2025-06-02T10:31:49.607Z", "initiator": "67fde0e702f40aeb67610439", "type": "VIDEO"}, "message": "Call request found", "statusCode": 200}
+      //   setCallTriesData(data?.data);
+
+      //   if (data?.data?.callTries > -1 && data?.data?.callTries < 3 && data?.data?.initiator !== currentUserId) {
+      //     dispatch(toggleCallRequestModal({show: true}));
+      //   }
+      // }
+
+      // if (error) {
+      //   console.log('Error', error);
+      // }
     }
 
     fetchCallStatus();
@@ -172,12 +217,36 @@ const ChatWindow = ({route, navigation}) => {
     ``;
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      // Screen focused
+      socketServices.emit('join_room', {
+        roomId: chatRoomId,
+        userId: currentUserId,
+      });
+
+      socketServices.on('user_typing', () => {
+        setIsOtherUserTyping(true);
+      });
+
+      socketServices.on('user_stop_typing', () => {
+        setIsOtherUserTyping(false);
+      });
+
+      return () => {
+        socketServices.emitStopTyping(chatRoomId, currentUserId);
+        socketServices.off('user_typing');
+        socketServices.off('user_stop_typing');
+      };
+    }, [chatRoomId, currentUserId]),
+  );
+
   // !<!---------Use Queries------------>
 
-  const {data: responseDataServerThreads, isSuccess: isSuccessServerThreads, isFetching: isFetchingServerThreads, error: errorServerThreads} = useGetInitialChatsQuery({token, chatRoomId, page: currentPage}, {skip: shouldSkip});
+  const { data: responseDataServerThreads, isSuccess: isSuccessServerThreads, isFetching: isFetchingServerThreads, error: errorServerThreads } = useGetInitialChatsQuery({ token, chatRoomId, page: currentPage }, { skip: shouldSkip });
 
   //todo:-> aut key values jo abhi use nai hue hai wo iss liye rakha hai taaki baad mein use karr saku
-  const [trigger, {error: errorLatestMessage}] = useLazyGetLatestChatQuery();
+  const [trigger, { error: errorLatestMessage }] = useLazyGetLatestChatQuery();
 
   const [sendMessage] = useSendMessageMutation();
 
@@ -185,10 +254,15 @@ const ChatWindow = ({route, navigation}) => {
   let arr2 = Object.assign([]);
 
   const onChangeText = useCallback(value => (messageInputRef.current = value), []);
+
   const onButtonSendButtonClick = useCallback(
     dispatch => {
-      console.log(messageInputRef.current);
-      ``;
+      const messageContent = messageInputRef.current?.trim();
+
+      if (!messageContent) {
+        console.log('🟡 [ChatWindow] Blocked empty message send attempt');
+        return;
+      }
 
       setDisableSendButton(true);
 
@@ -202,52 +276,104 @@ const ChatWindow = ({route, navigation}) => {
         preview: '',
       };
 
-      sendMessage({token, message: messageInputRef?.current, roomId: chatRoomId, attachment})
+      sendMessage({ token, message: messageContent, roomId: chatRoomId, attachment })
         .then(async e => {
           if (e?.data?.statusCode === 200) {
             setDisableSendButton(false);
             messageInputRef.current = '';
             arr.push(e.data.data);
-            dispatch(pushSentMessageResponse({chatRoomId, sentMessageResponse: arr?.shift()}));
-            dispatch(updateCacheRoomList({chatRoomId, createdAt: e?.data?.data?.createdAt, message: e?.data?.data?.message, hasAttachment: false, senderId: e?.data?.data?.sender?._id})); //To Sort & Update Chat RoomList
+            dispatch(pushSentMessageResponse({ chatRoomId, sentMessageResponse: arr?.shift() }));
+
+            // ✅ Update cache with current online status from state
+            dispatch(
+              updateCacheRoomList({
+                chatRoomId,
+                createdAt: e?.data?.data?.createdAt,
+                message: e?.data?.data?.message,
+                hasAttachment: false,
+                senderId: e?.data?.data?.sender?._id,
+                recipientId: route.params?.id,
+                userName: route.params?.name,
+                profileImage: route.params?.profileImageUrl,
+                role: route.params?.role,
+                onlineStatus: updatedOnlineStatus,
+                unreadCount: 0,
+              }),
+            );
+
             soundObj.play();
-          } else if (e?.error?.data?.status_code === 401) {
+          } else if (e?.error?.data?.status_code === 2044) {
             console.log('Status Code not 200');
             autoLogout();
             ChatWindowError('Please Login Again');
             await signOutGoogle();
           } else {
-            console.log('Sending message error', e?.error?.data);
+            console.log('🔴 [ChatWindow:SendMessage] Error Response:', JSON.stringify(e, null, 2));
+            console.log('🔴 [ChatWindow:SendMessage] RoomID:', chatRoomId);
+            console.log('🔴 [ChatWindow:SendMessage] Token Exists:', !!token);
 
-            if (e?.error?.data?.message?.search('Follow') >= 0) {
-              ChatWindowFollowError(e?.error?.data?.message, followUser, token, name);
-            } else if (e?.error?.data?.message?.search('insufficient') >= 0) {
-              ChatWindowError('Insufficient Balance');
+            const errorData = e?.error?.data;
+            const errorStatus = e?.error?.status;
+            const errorMessage = errorData?.message || errorData?.errorMessage;
+
+            if (errorStatus === 403 || errorData?.status_code === 403 || errorMessage?.toLowerCase()?.includes('blocked')) {
+              ChatWindowError(errorMessage || 'Unable to send message');
+            } else if (errorMessage?.search('Follow') >= 0) {
+              LoginPageErrors(errorMessage);
+            } else if (errorMessage?.search('insufficient') >= 0) {
+              dispatch(toggleShowRechargeModal({ show: true }));
             } else {
-              ChatWindowError("Can't reach server");
+              // Detailed logging and informative feedback for "Can't reach server" cases
+              if (errorStatus === 'FETCH_ERROR') {
+                 console.log('🌐 [ChatWindow:SendMessage] FETCH_ERROR detected - checking network...');
+                 ChatWindowError("Can't reach server. Please check your internet.");
+              } else if (errorStatus === 'TIMEOUT_ERROR') {
+                 console.log('⏱️ [ChatWindow:SendMessage] TIMEOUT_ERROR detected');
+                 ChatWindowError("Request timed out. Please try again.");
+              } else if (errorMessage) {
+                 console.log('📝 [ChatWindow:SendMessage] Validation or Server Error:', errorMessage);
+                 ChatWindowError(errorMessage);
+              } else {
+                 console.log('❓ [ChatWindow:SendMessage] Generic Error:', errorStatus, errorMessage);
+                 ChatWindowError("Can't reach server");
+              }
             }
             setDisableSendButton(false);
           }
         })
-        .catch(e => console.log('There was error while sending message', e));
+        .catch(error => {
+          console.log('❌ [ChatWindow:SendMessage] Promise Catch:', error);
+          ChatWindowError("Something went wrong");
+          setDisableSendButton(false);
+        });
     },
-    [navigation, route],
+    [navigation, route, updatedOnlineStatus],
   );
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(setCurrentChattingRoom({chatRoomId}));
+    dispatch(setCurrentChattingRoom({ chatRoomId }));
 
-    dispatch(setChatWindowSenderUserDetails({name: name, profileImageUrl: profileImageUrl, role, id}));
+    dispatch(setChatWindowSenderUserDetails({ name: name, profileImageUrl: profileImageUrl, role, id }));
   }, [route, navigation]);
 
-  let __id = chatThreadFromCache?.messages[chatThreadFromCache?.messages?.length - 1]?._id;
+  const __id = useMemo(() => {
+    console.log(chatThreadFromCache?.messages[chatThreadFromCache?.messages?.length - 1]?._id, 'memoized__id');
+
+    return chatThreadFromCache?.messages[chatThreadFromCache?.messages?.length - 1]?._id;
+  }, [chatThreadFromCache?.messages]);
+
+  // Keep a ref in sync so fetches always use the latest __id without being a dependency
+  const __idRef = useRef(__id);
+  useEffect(() => {
+    __idRef.current = __id;
+  }, [__id]);
 
   useFocusEffect(
     useCallback(() => {
       //remove unRead From RoomList
-      dispatch(removeRoomIds({chatRoomId}));
+      dispatch(removeRoomIds({ chatRoomId }));
 
       if (!chatThreadFromCache) {
         setShouldSkip(false);
@@ -255,16 +381,16 @@ const ChatWindow = ({route, navigation}) => {
         setLoading(true);
 
         if (isSuccessServerThreads) {
-          dispatch(saveThread({chatRoomId, threadDetails: responseDataServerThreads}));
-          dispatch(saveFeeDetails({chatRoomId, feeDetails: responseDataServerThreads?.feeDetails}));
+          dispatch(saveThread({ chatRoomId, threadDetails: responseDataServerThreads }));
+          dispatch(saveFeeDetails({ chatRoomId, feeDetails: responseDataServerThreads?.feeDetails }));
           setLoading(false);
         }
 
         if (errorServerThreads) {
           // console.log(red(`Fetching Error @ChatWindow : LN 91, `), );
 
-          if (errorServerThreads?.data?.status_code === 401) {
-            console.log('Fetch chat 401');
+          if (errorServerThreads?.data?.status_code === 2044) {
+            console.log('Fetch chat 2044');
             dispatch(authLogout());
             dispatch(deleteCachedMessages());
             dispatch(removeRoomList());
@@ -274,8 +400,9 @@ const ChatWindow = ({route, navigation}) => {
       } else {
         console.log('elese block');
 
+        console.log(__id, 'CHATID');
         async function fetchFreshLatestChats(token, chatRoomId) {
-          const {data: responseLatestMessage} = await trigger({token, chatRoomId, _id: __id}, false);
+          const { data: responseLatestMessage } = await trigger({ token, chatRoomId, _id: __id }, false);
 
           if (responseLatestMessage?.messages?.length > 0) {
             console.log('There are some message');
@@ -284,25 +411,29 @@ const ChatWindow = ({route, navigation}) => {
 
             arr2.push(responseLatestMessage?.messages);
 
-            dispatch(updateThread({chatRoomId, newMessage: arr2.shift()}));
+            dispatch(updateThread({ chatRoomId, newMessage: arr2.shift() }));
 
             let latestMessage = responseLatestMessage?.messages?.at(-1);
 
-            dispatch(updateCacheRoomList({chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: latestMessage?.sender_id})); //To Sort Chat RoomList
-
-            setSeenToServer({token, roomId: chatRoomId})
-              .then(s => console.log('Sent seen to server', s))
-              .catch(e => console.log('There was error in setting seen to server', e));
+            dispatch(updateCacheRoomList({ chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: latestMessage?.sender_id })); //To Sort Chat RoomList
           } else {
             console.log('No new message found !');
             setLoadingMessage(false);
           }
+
+          setSeenToServer({ token, roomId: chatRoomId })
+            .then(s => {
+              dispatch(resetUnreadCount({ chatRoomId }));
+              // Check if there are still unread messages in other rooms
+              // The icon will be updated in the ChatRoom screen when user navigates there
+            })
+            .catch(e => console.log('There was error in setting seen to server', e));
         }
 
         fetchFreshLatestChats(token, chatRoomId).then(() => setLoading(false));
 
         if (errorLatestMessage) {
-          if (errorLatestMessage?.data?.status_code === 401) {
+          if (errorLatestMessage?.data?.status_code === 2044) {
             dispatch(authLogout());
             dispatch(deleteCachedMessages());
             dispatch(removeRoomList());
@@ -313,24 +444,21 @@ const ChatWindow = ({route, navigation}) => {
           }
         }
       }
-    }, [chatThreadFromCache, isFetchingServerThreads, isSuccessServerThreads, errorServerThreads, route, navigation]),
+    }, [chatThreadFromCache, isFetchingServerThreads, isSuccessServerThreads, errorServerThreads, route, navigation, __id]),
   );
 
   function fetchFreshLatestChats(token, chatRoomId) {
-    trigger({token, chatRoomId, _id: __id}, false)
+    const currentId = __idRef.current;
+    trigger({ token, chatRoomId, _id: currentId }, false)
       .then(responseLatestMessage => {
-        console.log(JSON.stringify(responseLatestMessage));
-
-        dispatch(toggleNewMessageRecieved());
         if (responseLatestMessage?.data?.messages?.length > 0) {
-          if (responseLatestMessage?.data?.messages[0]._id !== __id) {
-            dispatch(updateThread({chatRoomId, newMessage: responseLatestMessage?.data?.messages}));
+          if (responseLatestMessage?.data?.messages[0]._id !== currentId) {
+            dispatch(updateThread({ chatRoomId, newMessage: responseLatestMessage?.data?.messages }));
             let latestMessage = responseLatestMessage?.data?.messages?.at(-1);
-            dispatch(updateCacheRoomList({chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: responseLatestMessage?.data?.messages[0]?.sender_id})); //To Sort Chat RoomList
+            dispatch(updateCacheRoomList({ chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: responseLatestMessage?.data?.messages[0]?.sender_id }));
           } else console.log('Encountered same.');
-        } else {
         }
-        setSeenToServer({token, roomId: chatRoomId});
+        setSeenToServer({ token, roomId: chatRoomId });
       })
       .catch(e => {
         console.log('Error While fetching latest message', e);
@@ -339,49 +467,58 @@ const ChatWindow = ({route, navigation}) => {
   }
 
   useEffect(() => {
-    if (newMessageStatus === true) {
+    // Skip the initial mount (counter is 0)
+    if (newMessageStatus > 0) {
       fetchFreshLatestChats(token, chatRoomId);
-    } else {
-      console.log('');
     }
-  }, [newMessageStatus, __id, route, navigation]);
+  }, [newMessageStatus]);
 
   useEffect(() => {
-    dispatch(setClickedNotification({click: false}));
+    dispatch(setClickedNotification({ click: false }));
   }, [route, navigation]);
 
   const endReached = useCallback(() => {
-    if (chatThreadFromCache?.messages?.length > 2) {
-      clearTimeout(timer);
-
-      timer = setTimeout(async () => {
-        if (currentPage > totalPages) {
-          console.log('Finish');
-          setIsOldChatsFinished(true);
-          return;
-        }
-
-        if (totalPages > currentPage) {
-          setCurrentPage(currentPage + 1);
-        }
-
-        if (totalPages === 1 && currentPage === 1) {
-          setCurrentPage(currentPage + 1);
-        }
-      }, 1000);
-    } else {
+    // ✅ Add more strict conditions
+    if (!chatThreadFromCache?.messages || chatThreadFromCache.messages.length < 10) {
+      console.log('Not enough messages to paginate yet');
       setIsOldChatsFinished(true);
+      return;
     }
-  }, [totalPages, currentPage]);
+
+    // ✅ Prevent multiple rapid calls
+    if (loading || isFetchingServerThreads) {
+      console.log('Already loading, skipping pagination');
+      return;
+    }
+
+    // ✅ Check if already at the end
+    if (currentPage >= totalPages && totalPages !== 1) {
+      console.log('Already fetched all pages');
+      setIsOldChatsFinished(true);
+      return;
+    }
+
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      console.log(`Fetching page ${currentPage + 1} of ${totalPages}`);
+      setCurrentPage(prev => prev + 1);
+    }, 500); // Reduced timeout
+  }, [chatThreadFromCache?.messages, currentPage, totalPages, loading, isFetchingServerThreads]);
 
   useEffect(() => {
     const getMeOldChats = async () => {
-      const {data, error} = await getInitialChats({token, chatRoomId, page: currentPage});
-
-      dispatch(saveThread({chatRoomId, threadDetails: data}));
-      dispatch(saveFeeDetails({chatRoomId, feeDetails: data?.feeDetails}));
+      const { data, error } = await getInitialChats({ token, chatRoomId, page: currentPage });
 
       if (data) {
+        dispatch(
+          saveThread({
+            chatRoomId,
+            threadDetails: data,
+            append: currentPage > 1, // ✅ Append if it's not the first page
+          }),
+        );
+        dispatch(saveFeeDetails({ chatRoomId, feeDetails: data?.feeDetails }));
         setTotalPages(Number(Math.ceil(Number(data?.metadata[0]?.total) / Number(data?.metadata[0]?.limit))));
       }
     };
@@ -389,60 +526,76 @@ const ChatWindow = ({route, navigation}) => {
     if (!isMounted) {
       setIsMounted(true);
     } else {
-      console.log('Calling...');
+      console.log('Fetching old chats for page:', currentPage);
       getMeOldChats();
     }
   }, [currentPage, chatRoomId, token]);
 
   return (
-    <GestureHandlerRootView style={[styles.wrapper, Platform.OS === 'ios' ? {paddingBottom: viewMargin} : {}]}>
-      {/* <ChatWindowPreviewModal chatRoomId={chatRoomId} name = {name}/> */}
-      <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />
-      <ChatWindowInformationModal chatRoomId={chatRoomId} followUser={followUser} unFollowUser={unFollowUser} role={role} />
+    <GestureHandlerRootView style={styles.wrapper}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
 
-      {loading ? (
-        <Loader />
-      ) : (
-        <FlatList
-          removeClippedSubviews={false}
-          ref={flatlistThreadListRef}
-          data={chatThreadFromCache ? [...chatThreadFromCache?.messages]?.reverse() : []}
-          renderItem={({item}) => (
-            <>
-              {currentUserId === item?.sender_id ? (
-                <RightChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} />
-              ) : (
-                <LeftChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} chatRoomId={chatRoomId} token={token} />
-              )}
-            </>
-          )}
-          keyboardShouldPersistTaps="always"
-          showsVerticalScrollIndicator={false}
-          keyExtractor={item => {
-            return item._id;
-          }}
-          inverted
-          ListHeaderComponent={() => (loadingMessage ? <ActivityIndicator color={'red'} size={'small'} /> : null)}
-          ListFooterComponent={() => !isOldChatsFinished && <ActivityIndicator size={'large'} color={'#e7e8ea'} />}
-          onEndReached={endReached}
-          onEndReachedThreshold={0.3}
-          keyboardDismissMode="on-drag"
+
+        {/* All your modals */}
+        <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />
+        <ChatWindowInformationModal chatRoomId={chatRoomId} followUser={followUser} unFollowUser={unFollowUser} role={role} />
+        {loading ? (
+          <Loader />
+        ) : (
+          <FlatList
+
+
+            removeClippedSubviews={false}
+            ref={flatlistThreadListRef}
+            data={chatThreadFromCache ? [...chatThreadFromCache?.messages]?.reverse() : []}
+            renderItem={({ item }) => (
+              <>
+                {currentUserId === item?.sender_id ? (
+                  <RightChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} otherUserId={id} chatRoomId={chatRoomId} />
+                ) : (
+                  <LeftChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} chatRoomId={chatRoomId} token={token} otherUserId={id} />
+                )}
+              </>
+            )}
+            keyboardShouldPersistTaps="always"
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item, index) => item._id ? `${item._id}` : `fallback-${index}`}
+            inverted
+            ListHeaderComponent={() => (loadingMessage ? <ActivityIndicator color={'red'} size={'small'} /> : null)}
+            ListFooterComponent={() => !isOldChatsFinished && <ActivityIndicator size={'large'} color={'#e7e8ea'} />}
+            onEndReached={endReached}
+            onEndReachedThreshold={0.1}
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={{ flexGrow: 1 }}
+          />
+        )}
+        {/* All your remaining modals and components */}
+        <ChatWindowFullSizedImageModal uri={fullSizeImageUrl} />
+        <ChatWindowClipModal />
+        <TypingIndicator visible={isOtherUserTyping} />
+        <ChatWindowInput
+          doRaisedRequest={doRaisedRequest}
+          show={doRaisedRequest?.initiator !== currentUserId}
+          onChangeText={onChangeText}
+          onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)}
+          disableSendButton={disableSendButton}
+          roomId={chatRoomId}
+          userId={currentUserId}
+          otherUserId={id}
+          name={name}
+          profileImageUrl={profileImageUrl}
+          role={role}
+          onlineStatus={updatedOnlineStatus}
         />
-      )}
-
-      <ChatWindowFullSizedImageModal uri={fullSizeImageUrl} />
-      <ChatWindowClipModal />
-      <ChatWindowTipModal chatRoomId={chatRoomId} />
-      <ChatWindowInput onChangeText={onChangeText} onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)} disableSendButton={disableSendButton} />
-      <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
+        <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
       <MediaLoadingModal />
-      <ChatWindowPreviewSheet chatRoomId={chatRoomId} name={name} />
-      <ChatWindowFeeSetup />
-      <ChatWindowLabelModal roomId={chatRoomId} label={label} />
-      <CallMethodSelector />
-      {/* <CallRequestModal roomId={chatRoomId} callTriesData={callTriesData} name={name} profileImageUrl={profileImageUrl} /> */}
-      {/* <CallPricesModal userId={id} roomId={chatRoomId} /> */}
-      {/* <TimeRequestModal /> */}
+        <ChatWindowFeeSetup />
+        <ChatWindowLabelModal roomId={chatRoomId} label={label} />
+        <LowBalanceModal />
+        {/* {doRaisedRequest?.hasCallRequest && chatThreadFromCache && doRaisedRequest?.initiator !== currentUserId && <CallRequestModal doRaisedRequest={doRaisedRequest} roomId={chatRoomId} name={name} profileImageUrl={profileImageUrl} targetUserId={id} />} */}
+        <CallPricesModal userId={id} roomId={chatRoomId} />
+        <TimeRequestModal visible={true} roomId={chatRoomId} />
+      </KeyboardAvoidingView>
     </GestureHandlerRootView>
   );
 };

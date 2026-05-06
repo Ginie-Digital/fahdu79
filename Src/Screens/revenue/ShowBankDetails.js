@@ -1,6 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {View, Text, StyleSheet, Pressable, Platform, Image, Dimensions} from 'react-native';
-import {Dialog} from 'react-native-simple-dialogs';
+import {View, Text, StyleSheet, Pressable, Platform, Image, Dimensions, Animated} from 'react-native';
 import AnimatedButton from '../../Components/AnimatedButton';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
@@ -8,7 +7,9 @@ import {useDispatch, useSelector} from 'react-redux';
 import {toggleBankDetailsModal, toggleConfirmBankDetails, toggleShowBankDetailsModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {WINDOW_WIDTH} from '@gorhom/bottom-sheet';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {useLazyGetShowBankDetailsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useDeleteBankDetailsMutation, useLazyGetShowBankDetailsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {CommonSuccess, LoginPageErrors, successSnack} from '../../Components/ErrorSnacks';
+import {navigate} from '../../../Navigation/RootNavigation';
 
 const ShowBankDetails = ({visible}) => {
   const dispatch = useDispatch();
@@ -16,13 +17,29 @@ const ShowBankDetails = ({visible}) => {
   const [getShowBankDetails] = useLazyGetShowBankDetailsQuery();
   const [bankDetails, setBankDetails] = useState({});
   const [contentHeight, setContentHeight] = useState(0);
-  
-  const token = useSelector(state => state.auth.user.token);
-  
+
+  const slideAnim = useRef(new Animated.Value(600)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      slideAnim.setValue(600);
+    }
+  }, [visible]);
+
+  const {token, currentUserId} = useSelector(state => state.auth.user);
+
+  const [deleteBankDetails, {isLoading: isDeleteLoading, isSuccess: isDeleteSuccess, isError: isDeleteError, error: deleteError}] = useDeleteBankDetailsMutation();
+
   // Height calculations
-  const buttonHeight = 50; // Approximate height of the button
   const padding = 32; // Dialog padding
-  const minModalHeight = 400; // Minimum height you want for the modal
+  const minModalHeight = 250; // Reduced since buttons are removed
   const maxModalHeight = Dimensions.get('window').height * 0.8; // Maximum height (80% of screen)
 
   const getBankDetails = async () => {
@@ -33,8 +50,10 @@ const ShowBankDetails = ({visible}) => {
   };
 
   useEffect(() => {
-    getBankDetails();
-  }, []);
+    if (visible) {
+      getBankDetails();
+    }
+  }, [visible]);
 
   const handleEditDetails = () => {
     dispatch(toggleShowBankDetailsModal({show: false}));
@@ -43,29 +62,57 @@ const ShowBankDetails = ({visible}) => {
     }, 500);
   };
 
-  const handleContentLayout = (event) => {
-    const { height } = event.nativeEvent.layout;
+  const handleContentLayout = event => {
+    const {height} = event.nativeEvent.layout;
     setContentHeight(height);
   };
 
   const calculateModalHeight = () => {
-    const totalHeight = contentHeight + buttonHeight + padding * 2;
-    return Math.min(Math.max(totalHeight, minModalHeight), maxModalHeight);
+    const totalHeight = contentHeight + padding * 2;
+    return Math.min(totalHeight, maxModalHeight);
+  };
+
+
+  const handleDeleteBankDetails = async () => {
+    try {
+      const res = await deleteBankDetails({
+        token,
+        data: {userId: currentUserId},
+      }).unwrap();
+
+      // ---------------------------
+      // ✅ SUCCESS CASE (statusCode === 200)
+      // ---------------------------
+      if (res?.statusCode === 200) {
+        console.log('Delete Success:', res?.message);
+        dispatch(toggleShowBankDetailsModal({show: false}));
+
+        CommonSuccess(String(res?.message)); // your success popup/toast
+
+        // navigate to home
+        navigate('home');
+        return;
+      }
+
+      // In case API returns success but not 200
+      LoginPageErrors('Unexpected response');
+    } catch (err) {
+      // ---------------------------
+      // ❌ ERROR CASE (statusCode === 400)
+      // ---------------------------
+      console.log('Delete Failed:', err);
+      dispatch(toggleShowBankDetailsModal({show: false}));
+
+      LoginPageErrors(err?.data?.message || 'Something went wrong, try again!');
+    }
   };
 
   return (
     visible && (
       <View style={styles.overlay}>
         <BlurView intensity={15} style={styles.blurBackground} />
-        <Dialog 
-          visible={visible} 
-          dialogStyle={[
-            styles.dialog,
-            {height: calculateModalHeight() + 50}
-          ]} 
-          contentStyle={{padding: 0, backgroundColor: '#fff'}} 
-          onTouchOutside={() => dispatch(toggleShowBankDetailsModal({show: false}))}
-        >
+        <Pressable style={styles.touchOutside} onPress={() => dispatch(toggleShowBankDetailsModal({show: false}))} />
+        <Animated.View style={[styles.dialog, {transform: [{translateY: slideAnim}]}]}>
           <View style={styles.dialogContainer} onLayout={handleContentLayout}>
             {/* Header with Title & Edit Icon */}
             <View style={styles.header}>
@@ -80,21 +127,12 @@ const ShowBankDetails = ({visible}) => {
               {label: 'Beneficiary Name', value: bankDetails?.beneficiaryName},
               {label: 'Account Number', value: bankDetails?.accountNo},
               {label: 'IFSC Code', value: bankDetails?.IFSC},
-              {label: 'PAN', value: bankDetails?.PAN},
             ].map((item, index) => (
               <View style={styles.detailItem} key={index}>
                 <Text style={styles.label}>{item.label}</Text>
                 <Text style={styles.valueBold}>{item.value || 'Not provided'}</Text>
               </View>
             ))}
-
-            <View style={styles.buttonWrapper}>
-              <AnimatedButton 
-                title={'Confirm'} 
-                buttonMargin={0} 
-                onPress={() => dispatch(toggleShowBankDetailsModal({show: false}))} 
-              />
-            </View>
 
             {/* Note */}
             <Text style={styles.note}>
@@ -106,7 +144,7 @@ const ShowBankDetails = ({visible}) => {
               For further enquiry email at <Text style={styles.email}>contact@fahdu.com</Text>
             </Text>
           </View>
-        </Dialog>
+        </Animated.View>
       </View>
     )
   );
@@ -116,19 +154,24 @@ const styles = StyleSheet.create({
   dialog: {
     borderTopLeftRadius: responsiveWidth(5.33),
     borderTopRightRadius: responsiveWidth(5.33),
-    alignSelf: 'center',
-    padding: 32,
     backgroundColor: '#fff',
     width: WINDOW_WIDTH,
     position: 'absolute',
     bottom: 0,
+    left: 0, 
+    right: 0,
+    padding: 32,
     zIndex: 1,
+    minHeight: responsiveHeight(40),
+  },
+  touchOutside: {
+    flex: 1,
+    width: '100%',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 999,
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject,

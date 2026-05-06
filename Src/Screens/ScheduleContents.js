@@ -1,6 +1,5 @@
 import React, {useCallback, useState} from 'react';
-import {View, Text, FlatList, TouchableOpacity, StyleSheet} from 'react-native';
-import IonIcon from 'react-native-vector-icons/Ionicons';
+import {View, Text, FlatList, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import {FONT_SIZES} from '../../DesiginData/Utility';
 import {Image} from 'expo-image';
 import DIcon from '../../DesiginData/DIcons';
@@ -10,44 +9,24 @@ import {chatRoomSuccess, LoginPageErrors} from '../Components/ErrorSnacks';
 import {autoLogout} from '../../AutoLogout';
 import Moment from 'react-moment';
 import {useFocusEffect} from '@react-navigation/native';
-
-const initialScheduleContents = [
-  {
-    id: '1',
-    user: {
-      name: 'Hiiiiiiii Guyzzzzzzzzzzzzzz',
-      avatar: 'https://via.placeholder.com/50', // Replace with actual image URL
-    },
-    date: '10 April 2025 At 6:40 PM',
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Holi hai',
-      avatar: '',
-    },
-    date: '01 April 2025 At 11:40 PM',
-  },
-];
+import MentionText from '../Components/MentionText';
 
 const ScheduleContents = () => {
   const [data, setData] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
+  const [expandedIds, setExpandedIds] = useState(new Set());
 
   const token = useSelector(state => state.auth.user.token);
 
   const [getScheduledPosts] = useLazyGetScheduledPostsQuery();
-
   const [deleteScheduledPost] = useDeleteScheduledPostMutation();
 
   useFocusEffect(
     useCallback(() => {
       const getAllScheduledContent = async () => {
         const {data, error} = await getScheduledPosts({token});
-        console.log(data?.data, '::::');
 
         if (error) {
-          if (error?.data?.status_code === 401) {
+          if (error?.data?.status_code === 2044) {
             autoLogout();
             return;
           } else {
@@ -64,80 +43,130 @@ const ScheduleContents = () => {
     }, []),
   );
 
-  const handleLongPress = id => {
-    setSelectedId(id === selectedId ? null : id);
+  const handleDelete = async id => {
+    Alert.alert(
+      'Delete Scheduled Post',
+      'Are you sure you want to delete this scheduled post?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await deleteScheduledPost({token, data: {postId: id}});
+
+              if (response?.error) {
+                return LoginPageErrors(response.error?.data?.message);
+              }
+
+              setData(prevData => prevData.filter(item => item._id !== id));
+              chatRoomSuccess('Successfully deleted scheduled post!');
+            } catch (err) {
+              console.error('Delete Error:', err);
+              LoginPageErrors('Failed to delete scheduled post.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
-
-  const handleDelete = async (id) => {
-    try {
-      // API Call First
-      const response = await deleteScheduledPost({ token, data: { postId: id } });
-  
-      // Check for Errors
-      if (response?.error) {
-        return LoginPageErrors(response.error?.data?.message);
+  const toggleExpanded = id => {
+    setExpandedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
       }
-  
-      // Update UI Only if API Call is Successful
-      setData((prevData) => prevData.filter((item) => item._id !== id));
-      setSelectedId(null);
-  
-      chatRoomSuccess("Successfully deleted scheduled post!");
-    } catch (err) {
-      console.error("Delete Error:", err);
-      LoginPageErrors("Failed to delete scheduled post.");
-    }
+      return newSet;
+    });
   };
-  
 
-  const handlePress = id => {
-    if (selectedId === id) {
-      setSelectedId(null); // Unselect if already selected
-    }
+  const truncateText = (text, maxLength = 120) => {
+    if (!text || text.trim() === '') return null;
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   const renderItem = ({item}) => {
-    const isSelected = item._id === selectedId;
+    const isExpanded = expandedIds.has(item._id);
+    const hasLongText = item.postContent && item.postContent.length > 120;
+    const displayText = truncateText(item.postContent, 120);
+    const hasCaption = item.postContent && item.postContent.trim() !== '';
 
     return (
-      <TouchableOpacity style={[styles.eachCardContainer, isSelected && styles.selectedItem]} onPress={() => handlePress(item._id)} onLongPress={() => handleLongPress(item._id)}>
-        <View style={[styles.itemContainer]}>
-          <View style={styles.leftContainer}>
-            {isSelected ? (
-              // <IonIcon name="checkmark-circle" size={24} color="#FF5733" style={styles.checkIcon} />
-              <View style={styles.checkIcon}>
-                <DIcon provider={'FontAwesome6'} name={'check'} size={18} color="#1e1e1e" />
-              </View>
+      <View style={styles.cardContainer}>
+        <View style={styles.itemContainer}>
+          {/* Thumbnail */}
+          <View style={styles.thumbnailContainer}>
+            {item?.post_content_files?.[0]?.url ? (
+              <Image source={{uri: item.post_content_files[0].url}} style={styles.thumbnail} contentFit="cover" />
             ) : (
-              <View style={styles.avatar}>
-                <Image source={{uri: item?.post_content_files[0]?.url}} style={{flex: 1}} />
+              <View style={[styles.thumbnail, styles.placeholderThumbnail]}>
+                <DIcon provider={'Ionicons'} name={'image-outline'} size={24} color="#999" />
               </View>
             )}
-            <View>
-              <Text style={styles.username}>{item.postContent ? item.postContent : 'No post description added'}</Text>
-              <Text style={styles.dateText}>
-                {`Post scheduled `}
-                <Moment style={styles.timiming} element={Text} fromNow>
+          </View>
+
+          {/* Content */}
+          <View style={styles.contentContainer}>
+            {hasCaption ? (
+              <TouchableOpacity onPress={() => hasLongText && toggleExpanded(item._id)} activeOpacity={hasLongText ? 0.7 : 1}>
+                <MentionText 
+                  content={isExpanded ? item.postContent : displayText} 
+                  style={styles.postText} 
+                  numberOfLines={isExpanded ? undefined : 3} 
+                />
+                {hasLongText && <Text style={styles.readMoreText}>{isExpanded ? 'Show less' : 'Read more'}</Text>}
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.noCaptionText}>No caption</Text>
+            )}
+
+            {/* Schedule Info */}
+            <View style={styles.scheduleInfoContainer}>
+              <DIcon provider={'Ionicons'} name={'calendar-outline'} size={14} color="#FFA86B" />
+              <Text style={styles.scheduleText}>
+                Scheduled{' '}
+                <Moment style={styles.momentText} element={Text} fromNow>
                   {item?.activate_on}
                 </Moment>
               </Text>
             </View>
+
+            {/* Status Badge */}
+            <View style={styles.statusBadge}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>Pending</Text>
+            </View>
           </View>
-          {isSelected && (
-            <TouchableOpacity onPress={() => handleDelete(item?._id)}>
-              <DIcon style={{marginLeft: 20}} provider={'AntDesign'} name="delete" size={20} color="#1e1e1e" />
-            </TouchableOpacity>
-          )}
+
+          {/* Delete Button */}
+          <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item._id)} activeOpacity={0.7}>
+            <DIcon provider={'Ionicons'} name="trash-outline" size={20} color="#FF6B6B" />
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      <FlatList data={data} keyExtractor={item => item.id} renderItem={renderItem} ItemSeparatorComponent={() => <View style={{height: 1.5, backgroundColor: '#E9E9E9'}} />} />
-      <Text style={styles.footerText}>Long Press to Delete</Text>
+      {data.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <DIcon provider={'Ionicons'} name={'calendar-outline'} size={64} color="#ccc" />
+          <Text style={styles.emptyText}>No scheduled posts</Text>
+          <Text style={styles.emptySubText}>Your scheduled content will appear here</Text>
+        </View>
+      ) : (
+        <FlatList data={data} keyExtractor={item => item._id} renderItem={renderItem} contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false} />
+      )}
     </View>
   );
 };
@@ -145,75 +174,129 @@ const ScheduleContents = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F7FA',
   },
-  header: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
+  listContainer: {
+    padding: 12,
+  },
+  cardContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
   },
   itemContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
+    padding: 12,
+    alignItems: 'flex-start',
+  },
+  thumbnailContainer: {
+    marginRight: 12,
+  },
+  thumbnail: {
+    width: 70,
+    height: 70,
     borderRadius: 10,
-    marginVertical: 5,
+    backgroundColor: '#F0F0F0',
   },
-  selectedItem: {
-    backgroundColor: '#FFA86B33',
-
-    borderTopColor: '#FFA86B',
-    borderBottomColor: '#FFA86B',
-    borderTopWidth: 2,
-    borderBottomWidth: 2,
-  },
-  leftContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 50, // Ensure it’s a square
-    height: 50,
-    borderRadius: 12, // Prevent circular cropping
-    resizeMode: 'cover', // Remove any border space
-    marginRight: 15,
-    borderWidth: 1.5,
-    borderColor: '#1e1e1e',
-    overflow: 'hidden',
-  },
-
-  checkIcon: {
-    marginRight: 15,
-    backgroundColor: '#FFA86B',
-    borderRadius: 12,
-    height: 50,
-    width: 50,
+  placeholderThumbnail: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FF8733',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
   },
-  username: {
-    fontSize: FONT_SIZES[16],
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  postText: {
+    fontSize: FONT_SIZES[14],
+    fontFamily: 'Rubik-Regular',
+    color: '#1e1e1e',
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  noCaptionText: {
+    fontSize: FONT_SIZES[14],
+    fontFamily: 'Rubik-Regular',
+    color: '#999',
+    fontStyle: 'italic',
+    marginBottom: 6,
+  },
+  readMoreText: {
+    fontSize: FONT_SIZES[12],
+    fontFamily: 'Rubik-Medium',
+    color: '#FFA86B',
+    marginTop: 4,
+  },
+  scheduleInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  scheduleText: {
+    fontSize: FONT_SIZES[12],
+    fontFamily: 'Rubik-Regular',
+    color: '#666',
+    marginLeft: 4,
+  },
+  momentText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#1e1e1e',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#999',
+    marginRight: 4,
+  },
+  statusText: {
+    fontSize: FONT_SIZES[11],
+    fontFamily: 'Rubik-Medium',
+    color: '#666',
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 4,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 36,
+    height: 36,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyText: {
+    fontSize: FONT_SIZES[18],
     fontFamily: 'Rubik-SemiBold',
     color: '#1e1e1e',
+    marginTop: 16,
   },
-  dateText: {
-    fontSize: FONT_SIZES[12],
-    color: '#1e1e1e',
+  emptySubText: {
+    fontSize: FONT_SIZES[14],
     fontFamily: 'Rubik-Regular',
-  },
-  footerText: {
+    color: '#999',
+    marginTop: 8,
     textAlign: 'center',
-    fontSize: 12,
-    color: '#777',
-    marginTop: 20,
-  },
-  eachCardContainer: {
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
   },
 });
 

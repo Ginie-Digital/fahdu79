@@ -28,7 +28,7 @@ const LinkAccount = () => {
 
   const [loadingInfo, setLoadingInfo] = useState(false);
 
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const accountLinkStatusHandler = async () => {
@@ -51,16 +51,16 @@ const LinkAccount = () => {
 
       if (unlink?.data) {
         LoginPageErrors(unlink?.data?.message);
-        
+
         setGoogleAccount(false);
       }
-      
+
       if (unlink?.error) {
         dispatch(toggleLinkingModal({show: true}));
         // CreatePasswordError(unlink?.error?.data?.message);
       }
 
-      if (unlink?.error?.data?.status_code === 401) {
+      if (unlink?.error?.data?.status_code === 2044) {
         autoLogout();
       }
     } else {
@@ -78,7 +78,7 @@ const LinkAccount = () => {
         setGoogleAccount(true);
       }
 
-      if (link?.error?.data?.status_code === 401) {
+      if (link?.error?.data?.status_code === 2044) {
         autoLogout();
       }
 
@@ -96,45 +96,40 @@ const LinkAccount = () => {
 
   return (
     <View style={styles.container}>
-
-<Pressable
-  style={({ pressed }) => [
-    styles.loginWithGoogle,
-    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    pressed && { backgroundColor: '#1e1e1e' } // only background changes
-  ]}
-  
-  onPress={connectDisconnectHandler}
->
-  {({ pressed }) =>
-    loadingInfo ? (
-      <ActivityIndicator size={'small'} color={pressed ? 'white' : '#1e1e1e'} />
-    ) : (
-      <>
-        <Image
-          source={require('../../Assets/Images/googleIcon.png')}
-          style={{
-            height: responsiveWidth(5.5),
-            width: responsiveWidth(5.5)
-            // no tintColor here — keeps original logo colors
-          }}
-          resizeMethod="resize"
-          resizeMode="contain"
-        />
-        <Text
-          style={{
-            fontFamily: 'Rubik-Medium',
-            color: pressed ? 'white' : '#1e1e1e',
-            fontSize: FONT_SIZES['16']
-          }}
-        >
-          {googleAccount ? 'Disconnect' : 'Connect'}
-        </Text>
-      </>
-    )
-  }
-</Pressable>
-
+      <Pressable
+        style={({pressed}) => [
+          styles.loginWithGoogle,
+          {flexDirection: 'row', alignItems: 'center', gap: 8},
+          pressed && {backgroundColor: '#1e1e1e'}, // only background changes
+        ]}
+        onPress={connectDisconnectHandler}>
+        {({pressed}) =>
+          loadingInfo ? (
+            <ActivityIndicator size={'small'} color={pressed ? 'white' : '#1e1e1e'} />
+          ) : (
+            <>
+              <Image
+                source={require('../../Assets/Images/googleIcon.png')}
+                style={{
+                  height: responsiveWidth(5.5),
+                  width: responsiveWidth(5.5),
+                  // no tintColor here — keeps original logo colors
+                }}
+                resizeMethod="resize"
+                resizeMode="contain"
+              />
+              <Text
+                style={{
+                  fontFamily: 'Rubik-Medium',
+                  color: pressed ? 'white' : '#1e1e1e',
+                  fontSize: FONT_SIZES['16'],
+                }}>
+                {googleAccount ? 'Disconnect' : 'Connect'}
+              </Text>
+            </>
+          )
+        }
+      </Pressable>
 
       <Text style={styles.textHighlight}>*Your account is linked with Google. Disconnect here to secure it with a password.</Text>
       <LinkingModal />

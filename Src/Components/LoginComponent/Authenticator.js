@@ -1,49 +1,24 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Animated,
-  TouchableOpacity,
-  FlatList,
-  Image,
-  TextInput,
-  Switch,
-  ToastAndroid,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-  BackHandler,
-  Linking,
-} from 'react-native';
-import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
-import {
-  responsiveFontSize,
-  responsiveHeight,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
+import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, TextInput, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking } from 'react-native';
+import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
+import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
 import DIcon from '../../../DesiginData/DIcons';
-import {useSelector, useDispatch} from 'react-redux';
-import {toggleVerficationScreen} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleVerficationScreen } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
-import {useKeyboard} from '@react-native-community/hooks';
+import { useKeyboard } from '@react-native-community/hooks';
 import axios from 'axios';
 
-import {emptyUnreadRoomList} from '../../../Redux/Slices/NormalSlices/UnReadThreadSlice';
-import {LoginPageErrors, successSnack} from '../ErrorSnacks';
-import {
-  FONT_SIZES,
-  padios,
-  selectionTwin,
-  WIDTH_SIZES,
-} from '../../../DesiginData/Utility';
+import { emptyUnreadRoomList } from '../../../Redux/Slices/NormalSlices/UnReadThreadSlice';
+import { LoginPageErrors, successSnack } from '../ErrorSnacks';
+import { FONT_SIZES, padios, selectionTwin, WIDTH_SIZES } from '../../../DesiginData/Utility';
 
-import {BottomSheetBackdrop, BottomSheetModal} from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet';
 import AnimatedButton from '../AnimatedButton';
-import {useGetTFAEmailCodeMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {openInbox} from 'react-native-email-link';
+import { useGetTFAEmailCodeMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { openInbox } from 'react-native-email-link';
 
-const Authenticator = ({authToken, type, afterLoginProcess}) => {
+const Authenticator = ({ authToken, type, afterLoginProcess }) => {
   console.log(authToken, 'AUTHTOKEN');
 
   const inputRefs = React.useRef([]);
@@ -82,16 +57,14 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
 
   const bottomSheetRef = useRef(null);
 
-  const homeBottomSheetVisibility = useSelector(
-    state => state.hideShow.visibility.verficationScreen,
-  );
+  const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.verficationScreen);
   // const homeBottomSheetVisibility = 1
 
   const snapPoints = useMemo(() => ['40%', '50%', '60%'], []);
 
   const handleSheetChanges = useCallback(index => {
     if (index === -1) {
-      dispatch(toggleVerficationScreen({show: -1}));
+      dispatch(toggleVerficationScreen({ show: -1 }));
     }
   }, []);
 
@@ -115,14 +88,11 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
         bottomSheetRef.current.close();
         console.log('Closing');
       } else {
-        // BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-        const backHandler = BackHandler.addEventListener(
-          'hardwareBackPress',
-          onBackPress,
-        );
-
-        return () => backHandler.remove();
+        return () => {
+          subscription.remove();
+        };
       }
     }
   }, [homeBottomSheetVisibility]);
@@ -133,16 +103,7 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
     }
   }, [homeBottomSheetVisibility]);
 
-  const renderBackdrop = useCallback(
-    props => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={1}
-      />
-    ),
-    [],
-  );
+  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
 
   //Main finish
 
@@ -161,8 +122,8 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
 
     if (type && authToken) {
       try {
-        let {data: serverResponse} = await axios.post(
-          `https://api.fahdu.in/api/TFA/login`,
+        let { data: serverResponse } = await axios.post(
+          `https://api.fahdu.com/api/TFA/login`,
           {
             authToken,
             code: verificationCode,
@@ -177,7 +138,7 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
 
         console.log(serverResponse, '::::::');
 
-        dispatch(toggleVerficationScreen({show: -1}));
+        dispatch(toggleVerficationScreen({ show: -1 }));
 
         await afterLoginProcess(serverResponse);
       } catch (e) {
@@ -191,8 +152,8 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
       try {
         console.log('Verification via Authenticator');
 
-        let {data: serverResponse, status} = await axios.post(
-          `https://api.fahdu.in/api/TFA/login`,
+        let { data: serverResponse, status } = await axios.post(
+          `https://api.fahdu.com/api/TFA/login`,
           {
             authToken,
             code: verificationCode,
@@ -208,7 +169,7 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
         console.log(status);
 
         if (serverResponse?.statusCode === 200) {
-          dispatch(toggleVerficationScreen({show: -1}));
+          dispatch(toggleVerficationScreen({ show: -1 }));
 
           await afterLoginProcess(serverResponse);
         }
@@ -227,19 +188,18 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
       name="HOmeBottom"
       backdropComponent={renderBackdrop}
       ref={bottomSheetRef}
-      index={homeBottomSheetVisibility}
+      index={homeBottomSheetVisibility === 1 ? 0 : -1}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       enablePanDownToClose={true}
-      backgroundStyle={{backgroundColor: '#fffef9'}}>
-      <View style={{width: '100%', height: '100%'}}>
+      enableDynamicSizing={false}
+      backgroundStyle={{ backgroundColor: '#fffef9' }}>
+      <View style={{ width: '100%', height: '100%' }}>
         <View style={[styles.modalInnerWrapper]}>
           <View style={styles.headerContainer}>
             <Text style={styles.heading}>Security Check</Text>
           </View>
-          <Text style={styles.subtext}>
-            Enter the security code we just sent on your email address.
-          </Text>
+          <Text style={styles.subtext}>Enter the security code we just sent on your email address.</Text>
 
           <View style={styles.tipContainer}>
             <View style={styles.tipCounterContainer}>
@@ -253,21 +213,15 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
                       ref={ref => (inputRefs.current[index] = ref)}
                       value={verificationCode[index] || ''}
                       onChangeText={text => handleCodeChange(text, index)}
-                      onKeyPress={({nativeEvent}) => {
-                        if (
-                          nativeEvent.key === 'Backspace' &&
-                          verificationCode[index] === ''
-                        ) {
+                      onKeyPress={({ nativeEvent }) => {
+                        if (nativeEvent.key === 'Backspace' && verificationCode[index] === '') {
                           handleBackspace(index);
                         }
                       }}
                       maxLength={1}
                       autoCapitalize="characters"
                       keyboardType="default"
-                      style={[
-                        styles.codeBox,
-                        verificationCode[index] ? styles.codeBoxFilled : null,
-                      ]}
+                      style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null]}
                       selectionColor={selectionTwin()}
                       selectionHandleColor={'#ffa86b'}
                       cursorColor={'#1e1e1e'}
@@ -291,17 +245,9 @@ const Authenticator = ({authToken, type, afterLoginProcess}) => {
               <Pressable onPress={() => handleVerification()}>{!loading ? <Text style={[styles.loginButton]}>VERIFY</Text> : <ActivityIndicator size={"small"} color={"#282828"} style={styles.loginButton} />}</Pressable>
             </View> */}
 
-            <AnimatedButton
-              title={'Verify'}
-              buttonMargin={0}
-              onPress={handleVerification}
-              loading={loading}
-              disabled={loading}
-            />
+            <AnimatedButton title={'Verify'} buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} />
 
-            <TouchableOpacity
-              style={styles.alreadyAccountContainer}
-              onPress={() => openInbox()}>
+            <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => openInbox()}>
               <View style={styles.alreadyAccountRow}>
                 <Text style={styles.forgotTextTitle}>Open Mail App</Text>
               </View>

@@ -1,42 +1,112 @@
-import {fetchBaseQuery, createApi} from '@reduxjs/toolkit/query/react';
-import {Platform} from 'react-native';
-import {useSendMessageMutation} from './roomListSliceApi';
+import { fetchBaseQuery, createApi } from '@reduxjs/toolkit/query/react';
+import { Platform } from 'react-native';
+import { BASE_URL } from '../../../Src/Configs/ApiConfig';
+import { useSendMessageMutation } from './roomListSliceApi';
 import axios from 'axios';
-import {setUploadProgress} from '../NormalSlices/UploadSlice';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import { setUploadProgress } from '../NormalSlices/UploadSlice';
+import { baseQueryWithReauth } from './baseQueryWithReauth';
+import { toggleReLogin } from '../NormalSlices/HideShowSlice';
 
 export const chatWindowAttachmentApi = createApi({
   reducerPath: 'chatWindowAttachmentApi',
 
-  baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.fahdu.in',
-  }),
+  baseQuery: baseQueryWithReauth(fetchBaseQuery({
+    baseUrl: BASE_URL,
+  })),
 
-  tagTypes: ['CampaignList', 'Hello'],
+  tagTypes: ['CampaignList', 'Hello', 'UserProfile'],
 
   endpoints: builder => ({
     uploadAttachment: builder.mutation({
-      query: ({token, formData}) => ({
-        url: '/api/upload',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      }),
+      queryFn: async ({ token, formData }, { dispatch }) => {
+        try {
+          // Extract file info from the FormData parts
+          const parts = formData.getParts ? formData.getParts() : formData._parts;
+          let fileUri = '';
+          let fileName = 'file';
+          let fileType = 'application/octet-stream';
+          let keyName = 'message_attachment';
+
+          if (parts) {
+            for (const part of parts) {
+              // FormData._parts is an array of [key, value] pairs
+              const key = Array.isArray(part) ? part[0] : part.fieldName;
+              const value = Array.isArray(part) ? part[1] : part;
+
+              if (key === 'keyName') {
+                keyName = Array.isArray(part) ? part[1] : part.string;
+              } else if (key === 'file') {
+                const fileObj = Array.isArray(part) ? part[1] : part;
+                fileUri = fileObj.uri || '';
+                fileName = fileObj.name || fileObj.fileName || 'file';
+                fileType = fileObj.type || 'application/octet-stream';
+              }
+            }
+          }
+
+          // Normalize URI — remove file:// prefix for ReactNativeBlobUtil
+          let cleanUri = fileUri;
+          if (cleanUri.startsWith('file://')) {
+            cleanUri = cleanUri.replace('file://', '');
+          }
+
+          console.log('📤 BlobUtil upload:', { cleanUri, fileName, fileType, keyName });
+
+          const response = await ReactNativeBlobUtil.fetch(
+            'POST',
+            `${BASE_URL}/api/upload`,
+            {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
+            },
+            [
+              { name: 'keyName', data: keyName },
+              {
+                name: 'file',
+                filename: fileName,
+                type: fileType,
+                data: ReactNativeBlobUtil.wrap(cleanUri),
+              },
+            ],
+          );
+
+          const status = response.respInfo.status;
+          const data = response.json();
+
+          console.log('📤 BlobUtil response status:', status);
+
+          if (status === 401) {
+            const tokenExists = getState()?.auth?.user?.token;
+            if (tokenExists) {
+              dispatch(toggleReLogin({ show: true }));
+            }
+            return { error: data || 'Unauthorized' };
+          }
+
+          if (status >= 200 && status < 300) {
+            return { data };
+          }
+
+          return { error: data || `Upload failed with status ${status}` };
+        } catch (error) {
+          console.error('❌ uploadAttachment BlobUtil error:', error);
+          return { error: error?.message || 'Network error during upload' };
+        }
+      },
     }),
 
     createPostUploadAttachment: builder.mutation({
-      queryFn: async ({token, formData}, {dispatch}) => {
+      queryFn: async ({ token, formData }, { dispatch }) => {
         try {
-          const response = await axios.post('https://api.fahdu.in/api/upload', formData, {
+          const response = await axios.post(`${BASE_URL}/api/upload`, formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
               Authorization: `Bearer ${token}`,
             },
             // This is the key part for progress tracking
             onUploadProgress: progressEvent => {
-              const {loaded, total} = progressEvent;
+              const { loaded, total } = progressEvent;
 
               console.log(loaded, total, '&&&&&&&&&', progressEvent);
               const percentCompleted = Math.round((loaded * 100) / total);
@@ -44,15 +114,21 @@ export const chatWindowAttachmentApi = createApi({
               dispatch(setUploadProgress(percentCompleted));
             },
           });
-          return {data: response};
+          return { data: response };
         } catch (error) {
-          return {error: error.response?.data || error.message};
+          if (error.response?.status === 401) {
+            const tokenExists = getState()?.auth?.user?.token;
+            if (tokenExists) {
+              dispatch(toggleReLogin({ show: true }));
+            }
+          }
+          return { error: error.response?.data || error.message };
         }
       },
     }),
 
     initiatePayment: builder.mutation({
-      query: ({token, conversationId, roomId}) => ({
+      query: ({ token, conversationId, roomId }) => ({
         url: '/api/wallet/message/initiate-attachment-payment',
         method: 'POST',
         headers: {
@@ -67,7 +143,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     payment: builder.mutation({
-      query: ({token, conversationId, roomId}) => ({
+      query: ({ token, conversationId, roomId }) => ({
         url: '/api/wallet/message/payment',
         method: 'POST',
         headers: {
@@ -82,7 +158,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     sendFcmToken: builder.mutation({
-      query: ({token, fcmToken}) => ({
+      query: ({ token, fcmToken }) => ({
         url: '/api/notification/preserve/token',
         method: 'POST',
         headers: {
@@ -95,8 +171,62 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    calculateCallAmount: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/stream/call/amount',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    requestCall: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/stream/request-call',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    startCall: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/stream/call',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    getPendingCalls: builder.query({
+      query: (token) => ({
+        url: '/api/stream/pending/calls',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
+    }),
+
+    getScheduledCalls: builder.query({
+      query: (token) => ({
+        url: '/api/stream/scheduled/calls',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }),
+    }),
+
     sendTip: builder.mutation({
-      query: ({token, tipAmount, chatRoomId}) => ({
+      query: ({ token, tipAmount, chatRoomId }) => ({
         url: '/api/wallet/chat/send-tip',
         method: 'POST',
         headers: {
@@ -111,8 +241,20 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    sendCallTip: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/wallet/call/send-tip',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
     getAllNotifications: builder.query({
-      query: ({token, chatRoomId, _id}) => {
+      query: ({ token, chatRoomId, _id }) => {
         return {
           url: ``,
           headers: {
@@ -125,7 +267,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     logoutFromServer: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/user/logout`,
           headers: {
@@ -137,7 +279,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getCoins: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/wallet/get-coins`,
           headers: {
@@ -149,7 +291,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     isValidFollow: builder.query({
-      query: ({token, userName}) => {
+      query: ({ token, userName }) => {
         console.log('FOLLO', userName);
 
         return {
@@ -163,7 +305,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     followUser: builder.mutation({
-      query: ({token, displayName}) => ({
+      query: ({ token, displayName }) => ({
         url: '/api/user/follow',
         method: 'POST',
         headers: {
@@ -177,7 +319,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     unFollowUser: builder.mutation({
-      query: ({token, displayName}) => ({
+      query: ({ token, displayName }) => ({
         url: '/api/user/unFollow',
         method: 'POST',
         headers: {
@@ -191,7 +333,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getUserFeed: builder.query({
-      query: ({token, page, timestamp}) => {
+      query: ({ token, page, timestamp }) => {
         return {
           url: `/api/post/user/feeds?page=${page}&timestamp=${timestamp}`,
           headers: {
@@ -203,7 +345,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     requestBrandCollab: builder.mutation({
-      query: ({token, id}) => ({
+      query: ({ token, id }) => ({
         url: '/api/brand/campaign/apply',
         method: 'POST',
         headers: {
@@ -217,7 +359,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getDashBoardData: builder.query({
-      query: ({token, page}) => {
+      query: ({ token, page }) => {
         return {
           url: `/api/brand/creator/campaign/dashboard`,
           headers: {
@@ -229,7 +371,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getCampaignList: builder.query({
-      query: ({token, filter, page}) => {
+      query: ({ token, filter, page }) => {
         return {
           url: `/api/brand/creator/campaign/response?filter=${filter}&&page=${page}`,
           headers: {
@@ -242,7 +384,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     submitMediaForApproval: builder.mutation({
-      query: ({token, id, url}) => ({
+      query: ({ token, id, url }) => ({
         url: '/api/brand/campaign/creator/submit',
         method: 'POST',
         headers: {
@@ -258,7 +400,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     submitMediaForRevision: builder.mutation({
-      query: ({token, id, url}) => ({
+      query: ({ token, id, url }) => ({
         url: '/api/brand/campaign/creator/revision/submit',
         method: 'POST',
         headers: {
@@ -274,7 +416,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     submitLinkToBrand: builder.mutation({
-      query: ({token, id, url}) => ({
+      query: ({ token, id, url }) => ({
         url: '/api/brand/campaign/creator/ready/submit',
         method: 'POST',
         headers: {
@@ -290,7 +432,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     createPost: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/create',
         method: 'POST',
         headers: {
@@ -302,9 +444,9 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     myPostList: builder.query({
-      query: ({token}) => {
+      query: ({ token, page = 1 }) => {
         return {
-          url: `/api/post/user/cpost?page=1&timestamp=`,
+          url: `/api/post/user/cpost?page=${page}&timestamp=`,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -315,9 +457,9 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     otherPostList: builder.query({
-      query: ({token, userName}) => {
+      query: ({ token, userName, page = 1 }) => {
         return {
-          url: `/api/post/user/cr_feeds?id=${userName}&page=1&timestamp=`,
+          url: `/api/post/user/cr_feeds?id=${userName}&page=${page}&timestamp=`,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -328,7 +470,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     creatorProfile: builder.query({
-      query: ({token, displayName}) => {
+      query: ({ token, displayName }) => {
         return {
           url: `/api/user/${displayName}`,
           headers: {
@@ -337,10 +479,11 @@ export const chatWindowAttachmentApi = createApi({
           },
         };
       },
+      providesTags: ['UserProfile'],
     }),
 
     creatorRating: builder.query({
-      query: ({token, displayName}) => {
+      query: ({ token, displayName }) => {
         return {
           url: `/api/user/get-user-rating?displayName=${displayName}`,
           headers: {
@@ -352,7 +495,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getWishList: builder.query({
-      query: ({token, userId}) => {
+      query: ({ token, userId }) => {
         return {
           url: `/api/wishlists?userId=${userId}`,
           headers: {
@@ -364,7 +507,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     rateUser: builder.mutation({
-      query: ({token, displayName, rating}) => ({
+      query: ({ token, displayName, rating }) => ({
         url: '/api/user/user-rating',
         method: 'POST',
         headers: {
@@ -379,7 +522,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     uploadWishList: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/wishlists',
         method: 'POST',
         headers: {
@@ -391,7 +534,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     changePassword: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/password-change',
         method: 'POST',
         headers: {
@@ -403,7 +546,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     userProfile: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/user/profile`,
           headers: {
@@ -412,10 +555,11 @@ export const chatWindowAttachmentApi = createApi({
           },
         };
       },
+      providesTags: ['UserProfile'],
     }),
 
     updateProfile: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/update-profile',
         method: 'POST',
         headers: {
@@ -424,12 +568,13 @@ export const chatWindowAttachmentApi = createApi({
         },
         body: data,
       }),
+      invalidatesTags: ['UserProfile'],
     }),
 
     //DiscoverPageAPI
 
     newCreators: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/creators/new-creators`,
           headers: {
@@ -441,7 +586,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     mostSearch: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/creators/most-search`,
           headers: {
@@ -453,9 +598,21 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     trendingCreators: builder.query({
-      query: ({token}) => {
+      query: ({ token, niche, filter, page = 1 }) => {
         return {
-          url: `/api/creators/trending-creators`,
+          url: `/api/creators/trending-creators?niche=${encodeURIComponent(niche)}&filter=${filter}&page=${page}`,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    newCreators: builder.query({
+      query: ({ token, niche, filter, page = 1 }) => {
+        return {
+          url: `/api/creators/creators-list?niche=${encodeURIComponent(niche)}&filter=${filter}&page=${page}`,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -465,7 +622,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     discoverRecomendCreators: builder.query({
-      query: ({token, type = 'LifeStyle'}) => {
+      query: ({ token, type = 'LifeStyle' }) => {
         return {
           url: `api/creators/niche?niche=${encodeURIComponent(type)}`,
           headers: {
@@ -477,7 +634,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     recommendedCreators: builder.query({
-      query: ({token, page}) => {
+      query: ({ token, page }) => {
         return {
           url: `/api/creators/trending-creators-niche?page=${page}`,
           headers: {
@@ -489,7 +646,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     popularCreators: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/creators/popular-artist`,
           headers: {
@@ -501,12 +658,11 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     searchedCreators: builder.query({
-      query: ({token, name}) => {
+      query: ({ name }) => {
         return {
           url: `/api/user/search/creators?searchBy=${name}`,
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
         };
       },
@@ -515,9 +671,9 @@ export const chatWindowAttachmentApi = createApi({
     //Creatrors perspective
 
     getFS: builder.query({
-      query: ({token, listType, active = true}) => {
+      query: ({ token, listType, active = true, page = 1, t = '' }) => {
         return {
-          url: `/api/subscription/get-${listType}?active=${active}&page=1`,
+          url: `/api/subscription/get-${listType}?active=${active}&page=${page}${t ? `&t=${t}` : ''}`,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -530,9 +686,21 @@ export const chatWindowAttachmentApi = createApi({
 
     //list-type : followed/subscribed
     getFSD: builder.query({
-      query: ({token, listType, active = true}) => {
+      query: ({ token, listType, active = true, page = 1, t = '' }) => {
         return {
-          url: `/api/subscription/get-${listType}?active=${active}&page=1`,
+          url: `/api/subscription/get-${listType}?active=${active}&page=${page}${t ? `&t=${t}` : ''}`,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    getFollowing: builder.query({
+      query: ({ token, page = 1, limit = 10, t = '' }) => {
+        return {
+          url: `/api/subscription/get-followed?page=${page}&limit=${limit}${t ? `&t=${t}` : ''}`,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -544,7 +712,7 @@ export const chatWindowAttachmentApi = createApi({
     //Check account link
 
     accountLinkStatus: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/connect`,
           headers: {
@@ -556,7 +724,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     linkAccount: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: `/api/connect/link`,
         method: 'POST',
         headers: {
@@ -568,7 +736,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     unLinkAccount: builder.mutation({
-      query: ({token, provider}) => ({
+      query: ({ token, provider }) => ({
         url: `/api/connect/unlink`,
         method: 'POST',
         headers: {
@@ -584,7 +752,7 @@ export const chatWindowAttachmentApi = createApi({
     // user/
 
     updatePictures: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/update-profile-image',
         method: 'POST',
         headers: {
@@ -596,7 +764,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     createPassword: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/create-password',
         method: 'POST',
         headers: {
@@ -608,7 +776,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getRoomId: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/messages/room',
         method: 'POST',
         headers: {
@@ -620,7 +788,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     wishListDonation: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/wishlists/donate',
         method: 'POST',
         headers: {
@@ -632,7 +800,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     transactionData: builder.query({
-      query: ({token, page, filter}) => {
+      query: ({ token, page, filter }) => {
         return {
           url: `api/wallet/get-recentTrxn?page=${page}&filter=${filter}`,
           headers: {
@@ -644,7 +812,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     forgetPassword: builder.mutation({
-      query: ({data}) => ({
+      query: ({ data }) => ({
         url: '/api/user/forget-password',
         method: 'POST',
         headers: {
@@ -655,7 +823,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     verifyOtp: builder.mutation({
-      query: ({data}) => ({
+      query: ({ data }) => ({
         url: '/api/user/forgot-password/verify',
         method: 'POST',
         headers: {
@@ -666,7 +834,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     resendOtp: builder.mutation({
-      query: ({data}) => ({
+      query: ({ data }) => ({
         url: '/api/user/resend-otp',
         method: 'POST',
         headers: {
@@ -677,7 +845,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     resetPassword: builder.mutation({
-      query: ({data}) => ({
+      query: ({ data }) => ({
         url: '/api/user/update-password',
         method: 'POST',
         headers: {
@@ -690,7 +858,7 @@ export const chatWindowAttachmentApi = createApi({
     // user/signup
 
     signUp: builder.mutation({
-      query: ({data}) => ({
+      query: ({ data }) => ({
         url: '/api/user/signup',
         method: 'POST',
         headers: {
@@ -701,7 +869,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     referralVerify: builder.query({
-      query: ({query}) => {
+      query: ({ query }) => {
         return {
           url: `/api/user/verify-referral?refId=${query}`,
           headers: {
@@ -714,7 +882,7 @@ export const chatWindowAttachmentApi = createApi({
     //
 
     signUpByRefferal: builder.mutation({
-      query: ({data}) => ({
+      query: ({ data }) => ({
         url: '/api/user/signup-by-referral',
         method: 'POST',
         headers: {
@@ -725,7 +893,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getCreatorsPlan: builder.query({
-      query: ({token, id}) => {
+      query: ({ token, id }) => {
         return {
           url: `/api/subscription/get-package/${id}`,
           headers: {
@@ -737,7 +905,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     subscriptionPayments: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/wallet/subscription/payment',
         method: 'POST',
         headers: {
@@ -748,8 +916,30 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    getCashfreeSubscription: builder.query({
+      query: ({ token, creatorId }) => ({
+        url: `/api/payments/cashfree/subscription?creatorId=${creatorId}`,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }),
+    }),
+
+    manageSubscription: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/payments/cashfree/subscription/manage',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
     unSubscribe: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/unsubscribe',
         method: 'POST',
         headers: {
@@ -763,7 +953,7 @@ export const chatWindowAttachmentApi = createApi({
     //
 
     instaVerify: builder.query({
-      query: ({token, handle}) => {
+      query: ({ token, handle }) => {
         return {
           url: `/api/document-verification/v3/ig/account?handle=${handle}`,
           headers: {
@@ -775,7 +965,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     coverUpdateProfile: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/cove/update-profile',
         method: 'POST',
         headers: {
@@ -784,10 +974,11 @@ export const chatWindowAttachmentApi = createApi({
         },
         body: data,
       }),
+      invalidatesTags: ['UserProfile'],
     }),
 
     getNoOnce: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/document-verification/get-nonce`,
           headers: {
@@ -799,7 +990,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     checkUserNameAvailability: builder.query({
-      query: ({token, displayName}) => {
+      query: ({ token, displayName }) => {
         return {
           url: `/api/document-verification/v2/check-availability?displayName=${displayName}`,
           headers: {
@@ -811,7 +1002,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getUserDoc: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/document-verification/v2/get-user-docs`,
           headers: {
@@ -823,7 +1014,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     finalVerificationSubmission: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/document-verification/v2/create-docs',
         method: 'POST',
         headers: {
@@ -835,7 +1026,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getOwnPackage: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/subscription/get-own-package`,
           headers: {
@@ -845,9 +1036,20 @@ export const chatWindowAttachmentApi = createApi({
         };
       },
     }),
+    createSubscription: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/payments/cashfree/subscription/create',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
 
     addPackageSubscription: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/subscription/add-package',
         method: 'POST',
         headers: {
@@ -859,7 +1061,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getFeeSetupDetails: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/fee-setup/get-feesetup-details`,
           headers: {
@@ -871,7 +1073,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     updateFeeSetup: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/fee-setup/update',
         method: 'POST',
         headers: {
@@ -883,7 +1085,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     updateFeeSetupChatWindow: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/fee-setup/chat/update',
         method: 'POST',
         headers: {
@@ -895,7 +1097,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getWalletPack: builder.query({
-      query: ({token, os}) => {
+      query: ({ token, os }) => {
         return {
           url: `/api/wallet/get-coin-packs?type=${os}`,
           headers: {
@@ -907,7 +1109,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     appleReceiptVerify: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/payments/apple/verify',
         method: 'POST',
         headers: {
@@ -919,7 +1121,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getMRDashboardData: builder.query({
-      query: ({token, type, filter}) => {
+      query: ({ token, type, filter }) => {
         return {
           url: `/api/creators/dashboard?filter=${type}&duration=${filter}`,
           headers: {
@@ -931,7 +1133,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     refferalDetails: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/referral/details`,
           headers: {
@@ -945,7 +1147,7 @@ export const chatWindowAttachmentApi = createApi({
     //
 
     getSelfLike: builder.query({
-      query: ({token, _id}) => {
+      query: ({ token, _id }) => {
         return {
           url: `/api/post/get-like?postId=${_id}`,
           headers: {
@@ -957,7 +1159,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     likeApi: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/likes',
         method: 'POST',
         headers: {
@@ -969,7 +1171,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getAllComments: builder.query({
-      query: ({token, _id, page = 1}) => {
+      query: ({ token, _id, page = 1 }) => {
         console.log('kanchanpage', page);
 
         return {
@@ -983,7 +1185,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     doComment: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/comment',
         method: 'POST',
         headers: {
@@ -995,7 +1197,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     sendPostTip: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/wallet/post/send-tip',
         method: 'POST',
         headers: {
@@ -1007,7 +1209,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     reportPost: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/report',
         method: 'POST',
         headers: {
@@ -1021,7 +1223,7 @@ export const chatWindowAttachmentApi = createApi({
     //
 
     getScheduledPosts: builder.query({
-      query: ({token, _id}) => {
+      query: ({ token, _id }) => {
         return {
           url: `/api/post/get-scheduled-post`,
           headers: {
@@ -1033,7 +1235,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     deleteScheduledPost: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/cancel-schedule-post',
         method: 'POST',
         headers: {
@@ -1045,7 +1247,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     deleteMyPost: builder.mutation({
-      query: ({token, postId}) => ({
+      query: ({ token, postId }) => ({
         url: `/api/post/del-post?postId=${postId}`,
         method: 'DELETE',
         headers: {
@@ -1056,7 +1258,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     pinUnPinPost: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/pin',
         method: 'POST',
         headers: {
@@ -1068,7 +1270,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     postEdit: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/edit-post',
         method: 'POST',
         headers: {
@@ -1080,7 +1282,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     blockUser: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/block',
         method: 'POST',
         headers: {
@@ -1092,7 +1294,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     unblockUser: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/unblock',
         method: 'POST',
         headers: {
@@ -1104,7 +1306,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getBlockList: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/user/blocked-list`,
           headers: {
@@ -1116,7 +1318,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getSupportRoomId: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/static/config/additional`,
           headers: {
@@ -1130,7 +1332,7 @@ export const chatWindowAttachmentApi = createApi({
     //
 
     getTippersList: builder.query({
-      query: ({token, postId, page = 1}) => {
+      query: ({ token, postId, page = 1 }) => {
         return {
           url: `/api/post/details/tip?postId=${postId}&page=${page}`,
           headers: {
@@ -1142,7 +1344,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getTFACode: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/third-party/access-code',
         method: 'POST',
         headers: {
@@ -1154,7 +1356,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getTFAEmailCode: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/mail/access-code',
         method: 'POST',
         headers: {
@@ -1166,7 +1368,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     validateTFA: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/mail/validate',
         method: 'POST',
         headers: {
@@ -1178,7 +1380,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     validateTFAAuth: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/third-party/get-qrcode',
         method: 'POST',
         headers: {
@@ -1190,7 +1392,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getTFAStatus: builder.query({
-      query: ({token, postId, page = 1}) => {
+      query: ({ token, postId, page = 1 }) => {
         return {
           url: '/api/TFA',
           headers: {
@@ -1204,7 +1406,7 @@ export const chatWindowAttachmentApi = createApi({
     // /api/TFA/mail/disable/access-code
 
     enableThirdPartyAuth: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/third-party/validate',
         method: 'POST',
         headers: {
@@ -1216,7 +1418,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     disableThirdPartyAuth: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/third-party/disable',
         method: 'POST',
         headers: {
@@ -1228,7 +1430,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     disableMailTwoFA: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/mail/disable/confirm',
         method: 'POST',
         headers: {
@@ -1240,7 +1442,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     resendCodeTFA: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/mail/resend/access-code',
         method: 'POST',
         headers: {
@@ -1252,7 +1454,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getDisableMailTFACode: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/TFA/mail/disable/access-code',
         method: 'POST',
         headers: {
@@ -1264,7 +1466,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getSinglePostDetails: builder.query({
-      query: ({token, postId}) => {
+      query: ({ token, postId }) => {
         return {
           url: `/api/post/get-post?postId=${postId}`,
           headers: {
@@ -1276,7 +1478,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     deleteUser: builder.mutation({
-      query: ({token}) => ({
+      query: ({ token }) => ({
         url: '/api/user/account/remove',
         method: 'DELETE',
         headers: {
@@ -1287,7 +1489,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     agreeToLicense: builder.mutation({
-      query: ({token}) => ({
+      query: ({ token }) => ({
         url: '/api/user/toc/agree',
         method: 'POST',
         headers: {
@@ -1300,7 +1502,7 @@ export const chatWindowAttachmentApi = createApi({
     //!liveStream
 
     createLiveStream: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/create',
         method: 'POST',
         headers: {
@@ -1312,7 +1514,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     joinLiveStream: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/livestream/join?roomId=${roomId}`,
           headers: {
@@ -1326,7 +1528,7 @@ export const chatWindowAttachmentApi = createApi({
     // /api/stream/live/token?roomId=92846b8c-3313-445e-a0aa-3c62e78d3644
 
     getStreamTokenToJoin: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/live/token?roomId=${roomId}`,
           headers: {
@@ -1340,7 +1542,7 @@ export const chatWindowAttachmentApi = createApi({
     //We have to renew token of user for every 1 min
 
     userRenewToken: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/live/renew-token?roomId=${roomId}`,
           headers: {
@@ -1353,7 +1555,7 @@ export const chatWindowAttachmentApi = createApi({
 
     //roomId in body {terminate livestream from userSide}
     leaveLiveStream: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/leave',
         method: 'POST',
         headers: {
@@ -1366,7 +1568,7 @@ export const chatWindowAttachmentApi = createApi({
 
     //{terminate livestream from streamer side}
     endLiveStream: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/end',
         method: 'POST',
         headers: {
@@ -1379,7 +1581,7 @@ export const chatWindowAttachmentApi = createApi({
 
     // {amount, roomId, type : "LIVESTREAM"}
     liveStreamTip: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/wallet/livestream/send-tip',
         method: 'POST',
         headers: {
@@ -1393,7 +1595,7 @@ export const chatWindowAttachmentApi = createApi({
     //
 
     sendMessageLiveStream: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/sendMessage',
         method: 'POST',
         headers: {
@@ -1407,7 +1609,7 @@ export const chatWindowAttachmentApi = createApi({
     // {amount, title}
 
     addGoalsLiveStream: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/goals',
         method: 'POST',
         headers: {
@@ -1420,7 +1622,7 @@ export const chatWindowAttachmentApi = createApi({
 
     // { amount: 2, title: "Russian", roomId: "83c3a194-ec4a-4842-9049-1490eecd6f26" }
     tipForGoal: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/goals/tip',
         method: 'POST',
         headers: {
@@ -1432,7 +1634,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     reJoin: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/rejoin',
         method: 'POST',
         headers: {
@@ -1446,7 +1648,7 @@ export const chatWindowAttachmentApi = createApi({
     //Mutre
 
     muteLiveStream: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/livestream/toggleMute',
         method: 'POST',
         headers: {
@@ -1460,7 +1662,7 @@ export const chatWindowAttachmentApi = createApi({
     //For leaderboard
 
     sendLiveStreamDetails: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: 'api/leaderboard/submit/task/liveStream',
         method: 'POST',
         headers: {
@@ -1474,7 +1676,7 @@ export const chatWindowAttachmentApi = createApi({
     //Stories
 
     getStories: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/post/get-stories`,
           headers: {
@@ -1486,7 +1688,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getInstagramProfileInfo: builder.query({
-      query: ({username}) => {
+      query: ({ username }) => {
         return {
           url: `/api/brand/creator/insta/information/${username}`,
           headers: {
@@ -1497,7 +1699,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     applyInCampaign: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/brand/creator/apply',
         method: 'POST',
         headers: {
@@ -1509,7 +1711,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     listOfAppliedCampaign: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/brand/creator/campaign/applied/list',
         method: 'POST',
         headers: {
@@ -1521,7 +1723,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     submitMobileNumberForOtp: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/brand/creator/send/otp',
         method: 'POST',
         headers: {
@@ -1533,7 +1735,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     verifyWhatsappOtp: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/brand/creator/verify/mobilenumber',
         method: 'POST',
         headers: {
@@ -1546,10 +1748,8 @@ export const chatWindowAttachmentApi = createApi({
 
     //Payments
 
-    // http://localhost:8000
-
     paymentCheckOut: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/payments/cashfree/wallet/checkout',
         method: 'POST',
         headers: {
@@ -1561,7 +1761,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     paymentCheckOutPhonePe: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/payments/wallet/checkout',
         method: 'POST',
         headers: {
@@ -1573,7 +1773,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     searchProfile: builder.query({
-      query: ({token, name}) => {
+      query: ({ token, name }) => {
         return {
           url: `/api/creators/search-user?prefix=${name}`,
           headers: {
@@ -1585,9 +1785,13 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getWeeklyEarning: builder.query({
-      query: ({token}) => {
+      query: ({ token, startDate, endDate }) => {
+        let url = '/api/wallet/get-weeklyEarnings';
+        if (startDate && endDate) {
+          url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
         return {
-          url: `/api/wallet/get-weeklyEarnings`,
+          url,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -1597,7 +1801,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getTotalEarnings: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/wallet/get-totalEarnings`,
           headers: {
@@ -1609,8 +1813,8 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     saveBankDetails: builder.mutation({
-      query: ({token, data}) => ({
-        url: '/api/wallet/save/bankDetails',
+      query: ({ token, data }) => ({
+        url: '/api/payments/cashfree/create/beneficiary',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1621,7 +1825,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     featureWiseEarningDetail: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/wallet/get-earningDetails`,
           headers: {
@@ -1633,7 +1837,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     withdrawableBalance: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/wallet/withdrawableBalance`,
           headers: {
@@ -1645,7 +1849,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     refferalList: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/referral/get-referral`,
           headers: {
@@ -1659,7 +1863,7 @@ export const chatWindowAttachmentApi = createApi({
     //Check if bank details already submitted
 
     alreadyFilledBankDetails: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/wallet/checkBankDetails`,
           headers: {
@@ -1671,7 +1875,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getShowBankDetails: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/wallet/get-bankDetails`,
           headers: {
@@ -1683,7 +1887,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     helpCenterRequest: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/helpcenter',
         method: 'POST',
         headers: {
@@ -1694,8 +1898,32 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    transferAmount: builder.mutation({
+      query: ({ token, data }) => ({
+        url: 'api/payout/transfer/payout',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    wishlistPayout: builder.mutation({
+      query: ({ token, data }) => ({
+        url: 'api/payout/transfer/payout',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
     assignLabel: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/messages/label/assign',
         method: 'POST',
         headers: {
@@ -1707,7 +1935,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     updateLabelTitle: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/messages/label/update',
         method: 'POST',
         headers: {
@@ -1719,7 +1947,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getAllLabelName: builder.query({
-      query: ({token}) => {
+      query: ({ token }) => {
         return {
           url: `/api/messages/getLabels`,
           headers: {
@@ -1731,7 +1959,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     sendMassMessage: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/messages/bulk',
         method: 'POST',
         headers: {
@@ -1743,7 +1971,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getPostDetails: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/post/share-post',
         method: 'POST',
         headers: {
@@ -1757,7 +1985,7 @@ export const chatWindowAttachmentApi = createApi({
     //notificaiton
 
     areYouACreatorNotification: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/signup/notification',
         method: 'POST',
         headers: {
@@ -1782,7 +2010,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     callRequest: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/request-call',
         method: 'POST',
         headers: {
@@ -1794,7 +2022,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getCallToken: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/call/token?roomId=${roomId}`,
           headers: {
@@ -1806,7 +2034,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     renewTokenCall: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/call/renew-token?roomId=${roomId}`,
           headers: {
@@ -1818,7 +2046,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     othersCallingFeeDetail: builder.query({
-      query: ({token, userId}) => {
+      query: ({ token, userId }) => {
         return {
           url: `/api/fee-setup/get-fees?userId=${userId}`,
           headers: {
@@ -1830,7 +2058,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     acceptCallRequest: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/call',
         method: 'POST',
         headers: {
@@ -1842,7 +2070,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     callTriesStatus: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/call/status/?roomId=${roomId}`,
           headers: {
@@ -1855,7 +2083,7 @@ export const chatWindowAttachmentApi = createApi({
 
     //roomId in body {terminate livestream from userSide}
     leaveCall: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/call/leave',
         method: 'POST',
         headers: {
@@ -1866,8 +2094,20 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    rejectCall: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/stream/reject-call',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
     callTip: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/wallet/call/send-tip',
         method: 'POST',
         headers: {
@@ -1879,7 +2119,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     getPaymentToken: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/payments/cashfree/create/order',
         method: 'POST',
         headers: {
@@ -1891,7 +2131,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     callAcceptManual: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/stream/call/accept/manual',
         method: 'POST',
         headers: {
@@ -1902,10 +2142,27 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
-    //
+    declineCallRequest: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/stream/decline-call-request',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    /**
+     * { "roomId":"6800e1f6a0afe682dc8f4bd5",
+"callType":"audio",
+"status":"ACCEPTED" }
+REJECTED, UNAVAILABLE
+    */
 
     phonePePayLoad: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/payments/generate/payload',
         method: 'POST',
         headers: {
@@ -1929,8 +2186,33 @@ export const chatWindowAttachmentApi = createApi({
     // }),
 
     updateProfileDescription: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/update/contactInfo',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+      invalidatesTags: ['UserProfile'],
+    }),
+
+    verifyPan: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/payments/cashfree/verify/pan',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    deleteBankDetails: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/payments/cashfree/delete/beneficiary',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1941,7 +2223,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     onlineStatus: builder.query({
-      query: ({token, displayName}) => {
+      query: ({ token, displayName }) => {
         return {
           url: `/api/user/status?displayName=${displayName}`,
           headers: {
@@ -1952,10 +2234,10 @@ export const chatWindowAttachmentApi = createApi({
       },
     }),
 
-    // https://api.fahdu.in
+    // https://api.fahdu.com
 
     liveStatus: builder.query({
-      query: ({token, userId}) => {
+      query: ({ token, userId }) => {
         return {
           url: `/api/stream/live/status?userId=${userId}`,
           headers: {
@@ -1967,7 +2249,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     creditDebit: builder.query({
-      query: ({token, roomId}) => {
+      query: ({ token, roomId }) => {
         return {
           url: `/api/stream/live/transferCoins?roomId=${roomId}`,
           headers: {
@@ -1979,7 +2261,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     contactInfo: builder.query({
-      query: ({token, userId}) => {
+      query: ({ token, userId }) => {
         return {
           url: `/api/user/get/contactInfo?userId=${userId}`,
           headers: {
@@ -1990,9 +2272,21 @@ export const chatWindowAttachmentApi = createApi({
       },
     }),
 
+    pingIt: builder.query({
+      query: ({ token, userId }) => {
+        return {
+          url: `/api/messages/emit/socket?roomId=${roomId}`,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
     //clear cache
     canClearCache: builder.mutation({
-      query: ({token, data}) => ({
+      query: ({ token, data }) => ({
         url: '/api/user/set/version',
         method: 'POST',
         headers: {
@@ -2001,6 +2295,66 @@ export const chatWindowAttachmentApi = createApi({
         },
         body: data,
       }),
+    }),
+
+    // Get unread chat count
+    getUnreadChatCount: builder.query({
+      query: ({ token }) => {
+        return {
+          url: `/api/messages/get/unread/count`,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    // Complete onboarding
+    toggleOnboarding: builder.mutation({
+      query: ({ token, userId }) => ({
+        url: 'api/creators/complete/onboarding',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: {
+          userId,
+        },
+      }),
+    }),
+
+    updateAvailability: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/stream/update/availability',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
+    submitFeedback: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/user/feedback',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+      async onQueryStarted(arg, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          console.log('Feedback API Response:', data);
+        } catch (err) {
+          console.error('Feedback API Error:', err);
+        }
+      },
     }),
   }),
 });
@@ -2056,6 +2410,7 @@ export const {
   useUpdateFeeSetupMutation,
   useLazyGetFeeSetupDetailsQuery,
   useAddPackageSubscriptionMutation,
+  useCreateSubscriptionMutation,
   useLazyGetOwnPackageQuery,
   useLazyGetUserDocQuery,
   useFinalVerificationSubmissionMutation,
@@ -2065,6 +2420,7 @@ export const {
   useCoverUpdateProfileMutation,
   useUnSubscribeMutation,
   useSubscriptionPaymentsMutation,
+  useGetCreatorsPlanQuery,
   useLazyGetCreatorsPlanQuery,
   useSignUpByRefferalMutation,
   useLazyReferralVerifyQuery,
@@ -2181,6 +2537,8 @@ export const {
 
   useLeaveCallMutation,
 
+  useRejectCallMutation,
+
   useCallTipMutation,
 
   useLazyLiveStatusQuery,
@@ -2201,7 +2559,35 @@ export const {
 
   useLazyOnlineStatusQuery,
 
+  useDeclineCallRequestMutation,
+
+  useTransferAmountMutation,
+
+  useDeleteBankDetailsMutation,
+
   useLazyWithdrawableBalanceQuery,
 
+  useLazyPingItQuery,
+
+  useWishlistPayoutMutation,
+
+  useVerifyPanMutation,
+
   useAreYouACreatorNotificationMutation,
+
+  useToggleOnboardingMutation,
+  useLazyGetUnreadChatCountQuery,
+  useLazyGetFollowingQuery,
+  useCalculateCallAmountMutation,
+  useRequestCallMutation,
+  useStartCallMutation,
+  useUpdateAvailabilityMutation,
+  useLazyGetPendingCallsQuery,
+  useLazyGetScheduledCallsQuery,
+  useGetPendingCallsQuery,
+  useGetScheduledCallsQuery,
+  useSendCallTipMutation,
+  useLazyGetCashfreeSubscriptionQuery,
+  useManageSubscriptionMutation,
+  useSubmitFeedbackMutation,
 } = chatWindowAttachmentApi;

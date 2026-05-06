@@ -1,52 +1,49 @@
-import {createSelector, createSlice} from '@reduxjs/toolkit';
-import {resetAll} from '../../../Actions';
-import dayjs from 'dayjs';
-
-const initialState = {
-  data: {
-    showCallScreen : false,
-    receivedAt : null,
-    data : {},
-    callback: null,
-    fromNotification : false,
-    callbackId : null
-  },
-};
+// In your Call Redux slice file
+import {createSlice} from '@reduxjs/toolkit';
 
 const callSlice = createSlice({
   name: 'call',
-  initialState,
+  initialState: {
+    data: {
+      // your existing state
+    },
+    isRejected: false,
+    processedRoomIds: [], // Track processed call IDs
+    acceptedRoomIds: [], // Track accepted room IDs for deduplication
+  },
   reducers: {
-    setCallData: (state, action) => {
-
-      console.log(action.payload, "<<<<<<>>>>>>")
-      state.data.showCallScreen = true
-      state.data.receivedAt = action.payload.receivedAt
-      state.data.data ={...action.payload.data}
-      state.data.fromNotification = action.payload.fromNotification
+    setCallRejected: (state, action) => {
+      state.isRejected = action.payload;
     },
-
-    setCallCallback: (state, action) => {
-      state.data.callback = action.payload; 
+    markRoomAsProcessed: (state, action) => {
+      const roomId = action.payload;
+      if (!state.processedRoomIds.includes(roomId)) {
+        state.processedRoomIds.push(roomId);
+        // Optional: Keep only last 10-20 IDs to avoid uncontrolled growth
+        if (state.processedRoomIds.length > 20) {
+          state.processedRoomIds.shift();
+        }
+      }
     },
-
-    setCallbackId : (state, action) => {
-      state.data.callbackId = action.payload.callbackId
+    markRoomAsAccepted: (state, action) => {
+      const roomId = action.payload;
+      if (!state.acceptedRoomIds.includes(roomId)) {
+        state.acceptedRoomIds.push(roomId);
+        if (state.acceptedRoomIds.length > 20) {
+          state.acceptedRoomIds.shift();
+        }
+      }
     },
-
-    setNotificationFrom : (state, action) => {
-      state.data.fromNotification = action.payload.fromNotification
+    clearAcceptedRoomId: (state, action) => {
+      const roomId = action.payload;
+      state.acceptedRoomIds = state.acceptedRoomIds.filter(id => id !== roomId);
     },
-
-
-
-
-    resetCallData: (state, action) => {
-      state.data = {};
+    clearProcessedRoomId: (state, action) => {
+      const callId = action.payload;
+      state.processedRoomIds = state.processedRoomIds.filter(id => id !== callId);
     },
   },
 });
 
-export const {setCallData, resetCallData, setCallCallback, setCallbackId, setNotificationFrom} = callSlice.actions;
-
+export const {setCallRejected, markRoomAsProcessed, markRoomAsAccepted, clearAcceptedRoomId, clearProcessedRoomId} = callSlice.actions;
 export default callSlice.reducer;

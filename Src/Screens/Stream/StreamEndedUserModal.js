@@ -8,7 +8,7 @@ import {toggleEmailVerificationModal} from '../../../Redux/Slices/NormalSlices/H
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import AnimatedButton from '../../Components/AnimatedButton';
 
-const StreamEndedUserModal = ({visible, onPress}) => {
+const StreamEndedUserModal = ({visible, onPress, title = 'Livestream has ended...'}) => {
   const dispatch = useDispatch();
 
   return (
@@ -17,7 +17,7 @@ const StreamEndedUserModal = ({visible, onPress}) => {
         <BlurView intensity={20} style={styles.blurBackground} />
         <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{paddingVertical: 32, paddingHorizontal: 32}} onTouchOutside={() => dispatch(toggleEmailVerificationModal({show: false}))}>
           <View style={styles.content}>
-            <Text style={styles.text}>Livestream has ended...</Text>
+            <Text style={styles.text}>{title}</Text>
 
             <View style={{width: '100%'}}>
               <AnimatedButton title={'Ok'} onPress={onPress} showOverlay={false} />
@@ -91,4 +91,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default StreamEndedUserModal;
+export default React.memo(StreamEndedUserModal);

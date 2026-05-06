@@ -1,15 +1,13 @@
 import {StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator} from 'react-native';
-import React, {useCallback, useState} from 'react';
-import {useFocusEffect} from '@react-navigation/native';
+import React, {useCallback, useRef, useState} from 'react';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useLazyGetWishListQuery, useLazyIsValidFollowQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import ProgressBar from 'react-native-progress/Bar';
-import {useDispatch} from 'react-redux';
 
 import {setWishListDonationInfo} from '../../../Redux/Slices/NormalSlices/OtherProfile/WishListDonateSheetSlice';
-import {toggleWishListSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {Tabs} from 'react-native-collapsible-tab-view';
 
 import {Image} from 'expo-image';
@@ -22,6 +20,7 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
 
   const [wishList, setWishList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const initialLoadDone = useRef(false);
   const userInformation = useSelector(state => state.auth.user);
 
   const refresh = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
@@ -44,27 +43,30 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
+      if (!initialLoadDone.current) {
+        setLoading(true);
+        initialLoadDone.current = true;
+      }
       wishListCall();
     }, [refresh, wishListBottomSheetVisibility]),
   );
 
-  const WishListCard = useCallback(({item}) => {
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
 
-    const handleDonation = () => {
-      console.log('hello');
-      dispatch(setWishListDonationInfo({donationInfo: item}));
-      dispatch(toggleWishListSheet({show: 1}));
-    };
+  const handleDonation = useCallback((item) => {
+    dispatch(setWishListDonationInfo({donationInfo: item}));
+    navigation.navigate('wishListDonateScreen');
+  }, [dispatch, navigation]);
 
+  const renderWishListCard = useCallback(({item}) => {
     return (
       <Pressable
-        onPress={handleDonation}
+        onPress={() => handleDonation(item)}
         android_ripple={{color: '#f3f3f3'}}
         style={({pressed}) => [
           styles.cardWrapper,
-          {backgroundColor: pressed ? '#fff9f5' : '#ffffff'}, // pressed background
+          {backgroundColor: pressed ? '#fff9f5' : '#ffffff'},
         ]}>
         <View style={styles.imageContainer}>
           <Image allowDownscaling placeholder={require('../../../Assets/Images/WishlistDefault.jpg')} source={{uri: item?.images[0]?.url}} contentFit="cover" placeholderContentFit="cover" style={styles.image} />
@@ -78,7 +80,7 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
           <View style={styles.cardBottomViewUpper}>
             <Text style={styles.smallTexts}>Fund Raised</Text>
             <Text style={[styles.smallTexts, {flexDirection: 'row'}]}>
-              {item?.totalCollected}/{item?.listedCoinsRequired}
+              {Number(item?.totalCollected).toLocaleString('en-IN')}/{Number(item?.listedCoinsRequired).toLocaleString('en-IN')}
               <Image
                 source={require('../../../Assets/Images/Coin.png')}
                 style={{
@@ -103,7 +105,7 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
         </View>
       </Pressable>
     );
-  }, []);
+  }, [handleDonation]);
 
   if (loading) {
     return (
@@ -115,7 +117,7 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
 
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
-      <Tabs.FlatList data={wishList} renderItem={({item, index}) => <WishListCard item={item} pressDisabled={true} />} numColumns={1} key={item => item?._id} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: responsiveWidth(6)}} />
+      <Tabs.FlatList data={wishList} renderItem={renderWishListCard} numColumns={1} keyExtractor={item => item?._id} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: responsiveWidth(6), paddingBottom: responsiveWidth(20)}} />
     </View>
   );
 };

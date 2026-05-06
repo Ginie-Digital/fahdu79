@@ -1,23 +1,23 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, FlatList, Pressable} from 'react-native';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Pressable } from 'react-native';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import WalletSVG from '../../../Assets/svg/WalletIcon.svg';
-import {useLazyRecommendedCreatorsQuery, useLazyTrendingCreatorsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {useSelector} from 'react-redux';
-import {Image} from 'expo-image';
+import { useLazyRecommendedCreatorsQuery, useLazyTrendingCreatorsQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useSelector } from 'react-redux';
+import { Image } from 'expo-image';
 import UserProfileTrendingShimmer from '../Shimmers/UserProfileTrendingShimmer';
-import {navigate} from '../../../Navigation/RootNavigation';
+import { navigate } from '../../../Navigation/RootNavigation';
 import axios from 'axios';
 import AnimatedNumber from '../AnimatedNumber';
-import {nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {LoginPageErrors} from '../ErrorSnacks';
-import {useFocusEffect} from '@react-navigation/native';
+import {formatNiche, nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import { LoginPageErrors } from '../ErrorSnacks';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ProfileUser = () => {
   const token = useSelector(state => state.auth.user.token);
   const [creatorsList, setCreatorsList] = useState([]);
-  const [trendingCreators] = useLazyRecommendedCreatorsQuery({refetchOnFocus: true});
+  const [trendingCreators] = useLazyRecommendedCreatorsQuery({ refetchOnFocus: true });
   const [loading, setLoading] = useState(false);
   const [coins, setCoins] = useState(0);
 
@@ -27,19 +27,19 @@ const ProfileUser = () => {
 
   const [buttonClickRecharge, setButtonClickRecharge] = useState(false);
 
-  const [clickRecommendation, setClickRecommendation] = useState({click: false, id: 0});
+  const [clickRecommendation, setClickRecommendation] = useState({ click: false, id: 0 });
 
   const [firstLoading, setFirstLoading] = useState(true);
 
   const handleGoToOthersProfile = useCallback(async (userName, userId) => {
-    navigate('othersProfile', {userName, userId, role: 'creator'});
+    navigate('othersProfile', { userName, userId, role: 'creator' });
   }, []);
 
   const suspended = useSelector(state => state.auth.user.suspended);
 
   async function getUserCoins() {
-    let {data} = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {
-      headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+    let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       timeout: 10000,
     });
 
@@ -54,7 +54,7 @@ const ProfileUser = () => {
       setFirstLoading(false);
     }
 
-    let trendingCreatorsList = await trendingCreators({token, page: currentPage}, false);
+    let trendingCreatorsList = await trendingCreators({ token, page: currentPage }, false);
     if (trendingCreatorsList?.data?.statusCode === 200) {
       const totalPage = Math.ceil(trendingCreatorsList?.data?.data?.metadata?.[0]?.total / trendingCreatorsList?.data?.data?.metadata?.[0]?.limit);
 
@@ -87,25 +87,25 @@ const ProfileUser = () => {
     return;
   };
 
-  const renderItem = ({index, item}) => (
+  const renderItem = ({ index, item }) => (
     <Pressable
-      style={[styles.recommendationCard, clickRecommendation.id === index && clickRecommendation.click && {backgroundColor: '#FFF3EB'}]}
-      onPressIn={() => setClickRecommendation({click: true, id: index})}
-      onPressOut={() => setClickRecommendation({click: false, id: index})}
+      style={[styles.recommendationCard, clickRecommendation.id === index && clickRecommendation.click && { backgroundColor: '#FFF3EB' }]}
+      onPressIn={() => setClickRecommendation({ click: true, id: index })}
+      onPressOut={() => setClickRecommendation({ click: false, id: index })}
       onPress={() => handleGoToOthersProfile(item?.displayName, item?._id)}>
       <View style={styles.profileImage}>
-        <Image style={{flex: 1, width: '100%'}} placeholderContentFit="cover" contentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.profile_image?.url}} />
+        <Image style={{ flex: 1, width: '100%' }} placeholderContentFit="cover" contentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{ uri: item?.profile_image?.url }} />
       </View>
       <View style={styles.profileInfo}>
-        <View style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.profileName}>{item?.displayName}</Text>
 
           <View style={styles.verifyContainer}>
-            <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{flex: 1}} />
+            <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{ flex: 1 }} />
           </View>
         </View>
 
-        <Text style={styles.profileCategory}>{item.niche[0]}</Text>
+        <Text style={styles.profileCategory}>{formatNiche(item?.niche?.[0])}</Text>
       </View>
       <Ionicons name="arrow-forward" size={24} color="black" />
     </Pressable>
@@ -128,7 +128,7 @@ const ProfileUser = () => {
         </View>
 
         <Pressable
-          style={[styles.rechargeButton, buttonClickRecharge && {backgroundColor: '#1e1e1e'}]}
+          style={[styles.rechargeButton, buttonClickRecharge && { backgroundColor: '#1e1e1e' }]}
           onPressIn={() => setButtonClickRecharge(true)}
           onPressOut={() => setButtonClickRecharge(false)}
           onPress={() => {
@@ -139,7 +139,7 @@ const ProfileUser = () => {
 
             navigate('wallet');
           }}>
-          <Text style={[styles.rechargeText, buttonClickRecharge && {color: '#fff'}]}>Recharge Now</Text>
+          <Text style={[styles.rechargeText, buttonClickRecharge && { color: '#fff' }]}>Recharge Now</Text>
         </Pressable>
       </View>
       <Text style={styles.recommendationText}>Recommendations</Text>
@@ -153,7 +153,7 @@ const ProfileUser = () => {
           showsVerticalScrollIndicator={false}
           onEndReached={handleFetchNext}
 
-          // style = {{flex : 1}}
+        // style = {{flex : 1}}
         />
       )}
 

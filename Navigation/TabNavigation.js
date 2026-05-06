@@ -1,8 +1,8 @@
-import {StyleSheet, Text, View, Platform, Pressable} from 'react-native';
-import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { StyleSheet, Text, View, Platform, Pressable } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ChatRoom from '../Src/Screens/ChatRoom';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
+import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import BottomNavigationIcons from '../DesiginData/BottomNavigationIcons';
 import NotificationScreen from '../Src/Screens/NotificationScreen';
 import HeaderCenteredTitle from '../Src/Components/HeaderCenteredTitle';
@@ -11,19 +11,23 @@ import ChatRoomHeaderRight from '../Src/Components/ChatRoomHeaderRight';
 import Home from '../Src/Screens/Home';
 import HomeHeaderRight from '../Src/Components/HomeHeaderRight';
 import DashBoard from '../Src/Screens/DashBoard';
-import {useDispatch, useSelector} from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import HeaderLeftMyProfile from '../Src/Components/MyProfile/HeaderLeftMyProfile';
 import HeaderRightMyProfile from '../Src/Components/MyProfile/HeaderRightMyProfile';
 import DiscoverScreen from '../Src/Screens/DiscoverScreen';
 import ProfileNew from '../Src/Screens/ProfileNew';
 import LottieView from 'lottie-react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import {nTwins, twins} from '../DesiginData/Utility';
-import {toggleCreatePostBottomSheet} from '../Redux/Slices/NormalSlices/HideShowSlice';
+import { nTwins, twins } from '../DesiginData/Utility';
+import { toggleCreatePostBottomSheet } from '../Redux/Slices/NormalSlices/HideShowSlice';
 import ChatRoomHeader from '../Src/Components/ChatWindowComponents/ChatRoomHeader';
-import {navigate} from './RootNavigation';
+import { navigate } from './RootNavigation';
 import DIcon from '../DesiginData/DIcons';
 import FloatingSelectedBar from '../Src/Screens/Chatroom/FloatingSelectedBar';
+import DiscoverHeader from './DiscoverHeader';
+import FilterButton from './FilterButton';
+import RandomAudienceHeader from '../Src/Screens/Chatroom/RandomAudienceHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ✅ Add this import
 
 const Tab = createBottomTabNavigator();
 
@@ -58,27 +62,30 @@ const handleIcons = (route, focused) => {
 
   return <BottomNavigationIcons iconName={iconName} focused={focused} />;
 };
+
 function EmptyComponent() {
   return 'notifications';
 }
 
 const TabNavigation = () => {
   const currentAppMode = useSelector(state => state.hideShow.visibility.postCardType);
-  const {role} = useSelector(state => state.auth.user);
+  const { role } = useSelector(state => state.auth.user);
+  const visibility = useSelector(state => state.hideShow.visibility.floatingViews);
+  const showTabBar = useSelector(state => state.hideShow.visibility.showTabBar);
 
   const dispatch = useDispatch();
-
   const [show, setShow] = useState(false);
 
-  const visibility = useSelector(state => state.hideShow.visibility.floatingViews);
+  // ✅ Get safe area insets
+  const insets = useSafeAreaInsets();
 
   return (
     <>
       <Tab.Navigator
-        screenOptions={({route}) => ({
-          tabBarStyle: [styles.tabBarStyle],
+        screenOptions={({ route }) => ({
+          tabBarStyle: [styles.tabBarStyle, !showTabBar && { display: 'none' }],
           tabBarShowLabel: false,
-          tabBarIcon: ({color, focused}) => handleIcons(route, focused, color),
+          tabBarIcon: ({ color, focused }) => handleIcons(route, focused, color),
         })}
         initialRouteName="home">
         <Tab.Screen
@@ -89,7 +96,7 @@ const TabNavigation = () => {
             gestureEnabled: false,
             headerShadowVisible: false,
             headerBackTitleVisible: false,
-            headerStyle: {backgroundColor: '#fff'}, //#f9e4d1  e0c1de
+            headerStyle: { backgroundColor: '#fff' }, //#f9e4d1  e0c1de
             headerBackVisible: false,
             headerLeft: () => <ChatRoomHeaderLeft />,
             headerRight: () => <HomeHeaderRight />,
@@ -109,7 +116,7 @@ const TabNavigation = () => {
               gestureEnabled: false,
               headerShadowVisible: false,
               headerBackTitleVisible: false,
-              headerStyle: {backgroundColor: '#fff'}, //#f9e4d1  e0c1de
+              headerStyle: { backgroundColor: '#fff' }, //#f9e4d1  e0c1de
               headerTitle: '',
               headerLeft: () => <HeaderCenteredTitle title="Dashboard" />,
               headerBackButtonMenuEnabled: false,
@@ -125,17 +132,24 @@ const TabNavigation = () => {
                 gestureEnabled: false,
                 headerShadowVisible: false,
                 headerBackTitleVisible: false,
-                headerStyle: {backgroundColor: '#fff'}, //#f9e4d1  e0c1de
-                headerTitle: '',
-                // headerLeft: () => <ChatRoomHeaderLeft />,
-                // headerRight: () => <ChatRoomHeaderRight />,
-
                 headerBackButtonMenuEnabled: false,
                 tabBarHideOnKeyboard: true,
-                header: () => <ChatRoomHeader />,
+                animation: 'none',
+                headerShown: true,
+                // ✅ Updated header with safe area insets
+                header: () => (
+                  <View
+                    style={{
+                      paddingTop: insets.top, // ✅ This handles iOS notches and Android status bar
+                      backgroundColor: '#fff',
+                    }}>
+                    {visibility === 'showSelected' ? <RandomAudienceHeader /> : <ChatRoomHeader />}
+                  </View>
+                ),
               }}
             />
-            {role === 'creator' && (
+
+            {(role === 'creator' || role === 'admin') && (
               <Tab.Screen
                 name="createpostbottomtab"
                 component={EmptyComponent}
@@ -145,7 +159,7 @@ const TabNavigation = () => {
                     // Prevent default action
                     e.preventDefault();
 
-                    dispatch(toggleCreatePostBottomSheet({show: 1}));
+                    dispatch(toggleCreatePostBottomSheet({ show: 1 }));
                   },
                 }}
               />
@@ -156,21 +170,13 @@ const TabNavigation = () => {
               component={DiscoverScreen}
               options={{
                 headerTitle: '',
-                headerLeft: () => <Text style={{fontFamily: 'Rubik-Bold', fontSize: responsiveFontSize(3), color: '#1E1E1E', paddingLeft: 24}}>Discover</Text>,
-
-                headerRight: () => (
-                  <Pressable
-                    onPress={() => navigate('creatorSearch')}
-                    style={({pressed}) => ({
-                      paddingRight: 24,
-                      opacity: pressed ? 0.5 : 1,
-                    })}>
-                    <DIcon provider="Feather" name="search" size={20} color="#1E1E1E" />
-                  </Pressable>
-                ),
-
+                headerLeft: () => <DiscoverHeader />,
+                headerRight: () => <FilterButton />,
+                headerStyle: {
+                  backgroundColor: '#fff9f5',
+                },
                 tabBarHideOnKeyboard: true,
-                tabBarStyle: styles.tabBarStyle,
+                tabBarStyle: [styles.tabBarStyle, !showTabBar && { display: 'none' }],
                 headerShadowVisible: false,
               }}
             />
@@ -182,7 +188,7 @@ const TabNavigation = () => {
                 headerTitle: '',
                 headerLeft: () => <HeaderLeftMyProfile />,
                 headerRight: () => <HeaderRightMyProfile />,
-                headerStyle: {backgroundColor: '#fff'},
+                headerStyle: { backgroundColor: '#fff' },
                 headerShadowVisible: false,
                 headerShown: false,
                 headerStatusBarHeight: 0,

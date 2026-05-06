@@ -1,5 +1,5 @@
+const path = require('path');
 const {getDefaultConfig} = require('expo/metro-config');
-const {mergeConfig} = require('@react-native/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
@@ -14,5 +14,10 @@ config.resolver = {
   assetExts: config.resolver.assetExts.filter(ext => ext !== 'svg'),
   sourceExts: [...config.resolver.sourceExts, 'svg'],
 };
+
+// Explicitly watch the FFMPegBuild directory
+config.watchFolders = [
+  path.resolve(__dirname, 'FFMPegBuild/react-native'),
+];
 
 module.exports = config;

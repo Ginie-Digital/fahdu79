@@ -1,33 +1,33 @@
-import {StyleSheet, Text, View, ScrollView, FlatList, Dimensions, Image, Button, Alert} from 'react-native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
+import { StyleSheet, Text, View, ScrollView, FlatList, Dimensions, Image, Button, Alert } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import SettingsPage from '../Src/Screens/SettingsPage';
 import FeedPostComponent from '../Src/Components/PostComponents/FeedPostComponent';
 import GridFeedPostComponent from '../Src/Components/PostComponents/GridFeedPostComponent';
 import WishListPostComponent from '../Src/Components/PostComponents/WishListPostComponent';
-import {responsiveWidth} from 'react-native-responsive-dimensions';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import { responsiveWidth } from 'react-native-responsive-dimensions';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import UpperProfile from '../Src/Components/MyProfile/UpperProfile';
 import CreatePostBottomSheet from '../Src/Components/HomeComponents/CreatePostBottomSheet';
-import {useDispatch, useSelector} from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import WishListPreviewModal from '../Src/Components/MyProfile/WishListPreviewModal';
 import PostTipModal from '../Src/Components/HomeComponents/PostTipModal';
 import CreateCommentBottomSheet from '../Src/Components/HomeComponents/CreateCommentBottomSheet';
 import PostActionBottomSheet from '../Src/Components/HomeComponents/PostActionBottomSheet';
 import TipSheet from '../Src/Components/PostComponents/TipSheet';
-import {useLazyContactInfoQuery, useLazyMyPostListQuery} from '../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {setFeedCacheMyPost} from '../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
+import { useLazyContactInfoQuery, useLazyMyPostListQuery } from '../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { setFeedCacheMyPost, manipulateTotalPagesMyPost, manipulateCurrentPageMyPost } from '../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 
-import {Tabs, MaterialTabBar} from 'react-native-collapsible-tab-view';
+import { Tabs, MaterialTabBar } from 'react-native-collapsible-tab-view';
 import FAbout from '../Assets/Images/ProfileTab/fabout.svg';
 import UFAbout from '../Assets/Images/ProfileTab/ufabout.svg';
 import FPost from '../Assets/Images/ProfileTab/fpost.svg';
 import UFPost from '../Assets/Images/ProfileTab/ufpost.svg';
 import FWishlist from '../Assets/Images/ProfileTab/fwishlist.svg';
 import UFWishlist from '../Assets/Images/ProfileTab/ufwishlist.svg';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import ProfileUser from '../Src/Components/MyProfile/ProfileUser';
-import {useContactInfo} from '../Src/Hook/FeeSetupUpdate';
+import { useContactInfo } from '../Src/Hook/FeeSetupUpdate';
 
 const showContentList = [
   {
@@ -49,7 +49,7 @@ const showContentList = [
   },
 ];
 
-const TopTabNavigation = ({notificationData}) => {
+const TopTabNavigation = ({ notificationData }) => {
   const [isFocused, setIsFocused] = useState(false); // Track focus state
   const userInformation = useSelector(state => state.auth.user);
 
@@ -59,7 +59,7 @@ const TopTabNavigation = ({notificationData}) => {
 
   // const [contactInfo] = useLazyContactInfoQuery();
 
-  const {fetchContactInfo} = useContactInfo(userInformation?.token, userInformation?.currentUserId);
+  const { fetchContactInfo } = useContactInfo(userInformation?.token, userInformation?.currentUserId);
 
   const handleTabChange = tabIndex => {
     tabsRef.current?.setIndex(tabIndex);
@@ -69,7 +69,7 @@ const TopTabNavigation = ({notificationData}) => {
     useCallback(() => {
       if (notificationData?.from === 'notification') {
         handleTabChange(2);
-        navigation.setParams({from: undefined});
+        navigation.setParams({ from: undefined });
 
         return;
       }
@@ -103,7 +103,7 @@ const TopTabNavigation = ({notificationData}) => {
   }, []);
 
   const getPostList = async () => {
-    let {data: postData} = await postList({token}, false);
+    let { data: postData } = await postList({ token }, false);
 
     if (postData) {
       let pinnedPost = postData?.data?.pinnedPosts.map(x => ({
@@ -112,8 +112,14 @@ const TopTabNavigation = ({notificationData}) => {
       }));
 
       let combinedPinnedUnPinnedPosts = [...pinnedPost, ...postData?.data?.posts];
+      dispatch(setFeedCacheMyPost({ data: combinedPinnedUnPinnedPosts }));
 
-      dispatch(setFeedCacheMyPost({data: combinedPinnedUnPinnedPosts}));
+      if (postData?.data?.metadata?.[0]) {
+        const meta = postData.data.metadata[0];
+        const totalPages = Math.ceil(meta.total / meta.limit);
+        dispatch(manipulateTotalPagesMyPost({ currentTotalPage: totalPages }));
+        dispatch(manipulateCurrentPageMyPost({ currentPage: 1 }));
+      }
     }
   };
 
@@ -123,23 +129,23 @@ const TopTabNavigation = ({notificationData}) => {
 
   return (
     <>
-      {userInformation?.role === 'creator' && (
-        <Tabs.Container ref={tabsRef} renderTabBar={props => <MaterialTabBar {...props} indicatorStyle={{backgroundColor: '#1E1E1E', height: responsiveWidth(0.4)}} />} renderHeader={() => <UpperProfile isFocused={isFocused} />} onTabChange={({tabName}) => setCurrentTab(tabName)}>
-          <Tabs.Tab name="profile" label={({name}) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
+      {(userInformation?.role === 'creator' || userInformation?.role === 'admin') && (
+        <Tabs.Container ref={tabsRef} renderTabBar={props => <MaterialTabBar {...props} indicatorStyle={{ backgroundColor: '#1E1E1E', height: responsiveWidth(0.4) }} />} renderHeader={() => <UpperProfile isFocused={isFocused} />} onTabChange={({ tabName }) => setCurrentTab(tabName)}>
+          <Tabs.Tab name="profile" label={({ name }) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
             <FeedPostComponent />
           </Tabs.Tab>
 
-          <Tabs.Tab name="post" label={({name}) => (currentTab === name ? <FPost size={10} /> : <UFPost />)}>
+          <Tabs.Tab name="post" label={({ name }) => (currentTab === name ? <FPost size={10} /> : <UFPost />)}>
             <GridFeedPostComponent />
           </Tabs.Tab>
 
-          <Tabs.Tab name="wishlist" label={({name}) => (currentTab === name ? <FWishlist size={10} /> : <UFWishlist />)}>
+          <Tabs.Tab name="wishlist" label={({ name }) => (currentTab === name ? <FWishlist size={10} /> : <UFWishlist />)}>
             <WishListPostComponent wishlistId={notificationData?.wishlistScrollId} />
           </Tabs.Tab>
         </Tabs.Container>
       )}
 
-      {userInformation?.role !== 'creator' && (
+      {userInformation?.role !== 'creator' && userInformation?.role !== 'admin' && (
         <FlatList
           data={[]} // No actual list data
           renderItem={null} // Nothing to render

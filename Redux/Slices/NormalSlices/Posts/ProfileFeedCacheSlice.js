@@ -1,5 +1,5 @@
-import {createSlice} from '@reduxjs/toolkit';
-import {resetAll} from '../../../Actions';
+import { createSlice } from '@reduxjs/toolkit';
+import { resetAll } from '../../../Actions';
 
 const initialState = {
   data: {
@@ -27,6 +27,13 @@ const profileFeedCacheSlice = createSlice({
       state.data.content = [];
     },
 
+    appendFeedCachePosts: (state, action) => {
+      const newPosts = action.payload.data.filter(
+        (newPost) => !state.data.content.some((existingPost) => existingPost._id === newPost._id)
+      );
+      state.data.content = [...state.data.content, ...newPosts];
+    },
+
     likeDislikePost: (state, action) => {
       if (action.payload.type === 'INC') {
         state.data.content[action.payload.index].count.likes++;
@@ -39,7 +46,7 @@ const profileFeedCacheSlice = createSlice({
 
     otherProfileIncrementCommentCount: (state, action) => {
 
-      const {postId} = action.payload;
+      const { postId } = action.payload;
 
       console.log('PostId', postId);
 
@@ -115,6 +122,7 @@ const profileFeedCacheSlice = createSlice({
 export const {
   setFeedCachePost,
   resetFeedPost,
+  appendFeedCachePosts,
   likeDislikePost,
   manipulateTotalPagesPost,
   manipulateCurrentPagePost,

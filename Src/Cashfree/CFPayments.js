@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Button, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, ActivityIndicator, Platform } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useGetPaymentTokenMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { useSelector } from 'react-redux';
@@ -12,10 +12,7 @@ import {
 } from 'cashfree-pg-api-contract';
 
 
-import {
-  CFErrorResponse,
-  CFPaymentGatewayService,
-} from 'react-native-cashfree-pg-sdk';
+const CFPaymentGatewayService = Platform.OS === 'android' ? require('react-native-cashfree-pg-sdk').CFPaymentGatewayService : null;
 
 
 const CFPayments = () => {
@@ -29,21 +26,25 @@ const CFPayments = () => {
   const [responseText, setResponseText] = useState('');
 
   useEffect(() => {
-    CFPaymentGatewayService.setCallback({
-      onVerify: (orderID) => {
-        setResponseText('orderId is :' + orderID);
-        setLoading(false)
-      },
-      onError: (error, orderID) => {
-        setResponseText(
-          'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
-        );
-        setLoading(false)
-      },
-    });
+    if (CFPaymentGatewayService) {
+      CFPaymentGatewayService.setCallback({
+        onVerify: (orderID) => {
+          setResponseText('orderId is :' + orderID);
+          setLoading(false)
+        },
+        onError: (error, orderID) => {
+          setResponseText(
+            'exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID
+          );
+          setLoading(false)
+        },
+      });
+    }
 
     return () => {
-      CFPaymentGatewayService.removeCallback();
+      if (CFPaymentGatewayService) {
+        CFPaymentGatewayService.removeCallback();
+      }
     };
   }, []);
 
@@ -95,7 +96,11 @@ const CFPayments = () => {
         theme
       );
       
-      CFPaymentGatewayService.doPayment(dropPayment);
+      if (CFPaymentGatewayService) {
+        CFPaymentGatewayService.doPayment(dropPayment);
+      } else {
+        console.warn('Cashfree Payment Gateway Service not available');
+      }
 
     } catch (error) {
       setLoading(false);

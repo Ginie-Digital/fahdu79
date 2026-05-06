@@ -1,35 +1,14 @@
 //todo:This modal will popup when user click on clip in chatWindow Text Input
 
-import {
-  StyleSheet,
-  Text,
-  View,
-  Animated,
-  TouchableOpacity,
-  FlatList,
-  PermissionsAndroid,
-  ToastAndroid,
-  Platform,
-} from 'react-native';
+import {StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, PermissionsAndroid, ToastAndroid, Platform} from 'react-native';
 import React, {useCallback, useState, useEffect} from 'react';
-import {
-  responsiveFontSize,
-  responsiveHeight,
-  responsiveWidth,
-} from 'react-native-responsive-dimensions';
+import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useSelector, useDispatch, shallowEqual} from 'react-redux';
 import Modal from 'react-native-modal';
-import {
-  toggleChatWindowClipModal,
-  toggleChatWindowAttachmentPreviewModal,
-  toggleAttachmentMediaLoading,
-  toggleChatWindowPreviewSheet,
-} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {toggleChatWindowClipModal, toggleChatWindowAttachmentPreviewModal, toggleAttachmentMediaLoading, toggleChatWindowPreviewSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {chatWindowAttachmentList} from '../../../DesiginData/Data';
 import DIcon from '../../../DesiginData/DIcons';
-
-import {pick, types, isCancel} from '@react-native-documents/picker';
-
+import * as DocumentPicker from '@react-native-documents/picker';
 import {setMediaData} from '../../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowPreviewDataSlice';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {generateBase64Image} from '../../../FFMPeg/FFMPegModule';
@@ -38,71 +17,78 @@ import ImageCropPicker from 'react-native-image-crop-picker';
 import {makeid, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import {Image} from 'expo-image';
 
-const selectDocument = async () => {
+export const selectDocument = async () => {
   try {
-    const docInfo = await pick({
-      type: [types.pdf],
-      multiple: false,
+    const [docInfo] = await DocumentPicker.pick({
+      type: [DocumentPicker.types.pdf],
       copyTo: 'cachesDirectory',
+      allowMultiSelection: false,
     });
-
     if (docInfo?.size > 60000000) {
+      //60MB
       ChatWindowError('PDF Size must be lower than 60 MB');
       return 0;
     }
     return docInfo;
   } catch (e) {
-    if (isCancel(e)) {
-      console.log('User cancelled document selection.');
-      return undefined;
-    }
     console.log('CWClip SelectDocument Error', e.message);
     return undefined;
   }
 };
 
-const selectMediaImage = async type => {
+export const selectMediaImage = async type => {
   try {
     if (type === 'photo') {
-      const mediaImageInfo = await launchImageLibrary({mediaType: 'photo'});
-
-      if (mediaImageInfo?.assets[0]?.fileSize > 20000000) {
-        //20 MB
-        ChatWindowError('Image Size must be lower than 20 MB');
-        return {didCancel: true};
-      } else {
-        if (mediaImageInfo?.didCancel !== true) {
-          let dePixeldPreviewBase64MediaInfo = await generateBase64Image(
-            mediaImageInfo?.assets[0]?.uri,
-          );
-
-          return {
-            mediaImageInfo: {
-              uri: mediaImageInfo?.assets[0].uri,
-              name: mediaImageInfo?.assets[0].fileName,
-              type: mediaImageInfo?.assets[0].type,
-            },
-            dePixeldPreviewBase64MediaInfo,
-          };
-        } else {
+      let image;
+      try {
+        image = await ImageCropPicker.openPicker({
+          mediaType: 'photo',
+          multiple: false,
+          forceJpg: true, // Automatically converts HEIC/HEIF to JPEG!
+          compressImageQuality: 0.7, // More aggressive compression to speed up picking large images
+          compressImageMaxWidth: 1920, // Downscale at pick time — no need for full 4K
+          compressImageMaxHeight: 1920,
+        });
+      } catch (err) {
+        if (err.code === 'E_PICKER_CANCELLED') {
           return {didCancel: true};
         }
+        throw err;
       }
+
+      if (image) {
+        // Map the ImageCropPicker payload to the expected structure
+        const asset = {
+          uri: image.path,
+          fileName: image.filename || image.path.split('/').pop(),
+          type: image.mime,
+          fileSize: image.size,
+        };
+
+        if (!asset.type || !asset.type.startsWith('image/')) {
+          ChatWindowError('Please select an image file only');
+          return {didCancel: true};
+        }
+
+        if (asset.fileSize > 20000000) {
+          //20 MB
+          ChatWindowError('Image Size must be lower than 20 MB');
+          return {didCancel: true};
+        }
+
+        let dePixeldPreviewBase64MediaInfo = await generateBase64Image(asset.uri);
+        return {
+          mediaImageInfo: {uri: asset.uri, name: asset.fileName, type: asset.type},
+          dePixeldPreviewBase64MediaInfo,
+        };
+      }
+
+      return {didCancel: true};
     } else {
-      const mediaImageInfo = await ImageCropPicker.openCamera({
-        mediaType: 'photo',
-      });
-
-      let dePixeldPreviewBase64MediaInfo = await generateBase64Image(
-        mediaImageInfo?.path,
-      );
-
+      const mediaImageInfo = await ImageCropPicker.openCamera({mediaType: 'photo'});
+      let dePixeldPreviewBase64MediaInfo = await generateBase64Image(mediaImageInfo?.path);
       return {
-        mediaImageInfo: {
-          uri: mediaImageInfo?.path,
-          name: makeid(6) + 'frommsgcam',
-          type: mediaImageInfo?.mime,
-        },
+        mediaImageInfo: {uri: mediaImageInfo?.path, name: makeid(6) + 'frommsgcam', type: mediaImageInfo?.mime},
         dePixeldPreviewBase64MediaInfo,
       };
     }
@@ -112,31 +98,65 @@ const selectMediaImage = async type => {
   }
 };
 
-const selectMediaVideo = async () => {
+export const selectMediaVideo = async () => {
   try {
     const mediaVideoInfo = await launchImageLibrary({
-      mediaType: Platform.OS === 'ios' ? 'video' : 'mixed',
+      mediaType: 'video',
       selectionLimit: 1,
-      assetRepresentationMode: 'current',
-    }); //!odo : FilesSize lagana hai
+      assetRepresentationMode: Platform.OS === 'android' ? 'auto' : 'current', // Fix for Android
+      includeBase64: false,
+      includeExtra: true, // Important for Android to get proper file info
+      videoQuality: 'high',
+    });
 
-    if (
-      mediaVideoInfo?.assets[0]?.type?.search('mp4') >= 0 ||
-      mediaVideoInfo?.assets[0]?.type?.search('mov') >= 0 ||
-      mediaVideoInfo?.assets[0]?.type?.search('quicktime') >= 0
-    ) {
-      if (mediaVideoInfo.assets[0].fileSize <= 60000000) {
-        return mediaVideoInfo;
-      } else {
+    if (mediaVideoInfo?.didCancel) {
+      return undefined;
+    }
+
+    if (mediaVideoInfo?.assets && mediaVideoInfo.assets.length > 0) {
+      const asset = mediaVideoInfo.assets[0];
+
+      // Strict video type validation
+      if (!asset.type || !asset.type.startsWith('video/')) {
+        ChatWindowError('Please select a video file only');
+        return undefined;
+      }
+
+      // Android specific: Check if fileSize exists, if not try to get from uri
+      let fileSize = asset.fileSize;
+
+      if (!fileSize && Platform.OS === 'android') {
+        console.log('Android: fileSize not available directly, video might be large');
+        // For Android, if fileSize is undefined, it might be a very large file
+        ChatWindowError('Unable to determine video size. Please try a smaller video.');
+        return undefined;
+      }
+
+      const isValidFormat = asset.type.includes('mp4') || asset.type.includes('mov') || asset.type.includes('quicktime') || asset.type.includes('3gpp'); // Add 3gpp for some Android devices
+
+      if (!isValidFormat) {
+        ChatWindowError('Only mp4 or mov video format allowed');
+        return undefined;
+      }
+
+      if (fileSize && fileSize > 60000000) {
+        // 60MB
         ChatWindowError('Video size must be lower than 60 MB');
         return undefined;
       }
-    } else {
-      ChatWindowError('Only mp4 or mov video format allowed');
-      return undefined;
+
+      return mediaVideoInfo;
     }
+
+    return undefined;
   } catch (e) {
     console.log('CWClip SelectMediaVideo Error', e.message);
+    // Check if error is related to file size on Android
+    if (Platform.OS === 'android' && e.message) {
+      if (e.message.includes('size') || e.message.includes('large')) {
+        ChatWindowError('Video file is too large. Please select a smaller video.');
+      }
+    }
     return undefined;
   }
 };
@@ -148,9 +168,7 @@ export const afterImageClipSelected = (dispatcher, type = 'photo') => {
     if (e?.didCancel !== true) {
       console.log('🖼️ File selected');
       dispatcher(setMediaData({type: 1, mediaImageInfoSet: e}));
-      type === 'photo'
-        ? dispatcher(toggleChatWindowClipModal())
-        : console.log('Was Camera 🎃');
+      type === 'photo' ? dispatcher(toggleChatWindowClipModal()) : console.log('Was Camera 🎃');
       dispatcher(toggleChatWindowPreviewSheet({show: 1}));
       dispatcher(toggleAttachmentMediaLoading({show: false}));
     } else {
@@ -161,9 +179,7 @@ export const afterImageClipSelected = (dispatcher, type = 'photo') => {
 };
 
 const ChatWindowClipModal = () => {
-  const modalVisibility = useSelector(
-    state => state.hideShow.visibility.chatWindowClipModal,
-  );
+  const modalVisibility = useSelector(state => state.hideShow.visibility.chatWindowClipModal);
 
   const dispatcher = useDispatch();
 
@@ -227,16 +243,10 @@ const ChatWindowClipModal = () => {
           <FlatList
             data={chatWindowAttachmentList}
             renderItem={({item, index}) => (
-              <TouchableOpacity
-                onPress={handleClipSelectedMedia.bind(null, {id: item.id})}>
+              <TouchableOpacity onPress={handleClipSelectedMedia.bind(null, {id: item.id})}>
                 <View style={styles.eachSortModalList}>
                   <View style={styles.verifyContainer}>
-                    <Image
-                      cachePolicy="memory-disk"
-                      source={item.url}
-                      contentFit="contain"
-                      style={{flex: 1}}
-                    />
+                    <Image cachePolicy="memory-disk" source={item.url} contentFit="contain" style={{flex: 1}} />
                   </View>
                 </View>
               </TouchableOpacity>

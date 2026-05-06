@@ -1,26 +1,26 @@
-import {StyleSheet, Text, View, Share, Pressable, TouchableOpacity, FlatList, Linking, Vibration, Alert, Platform} from 'react-native';
+import { StyleSheet, Text, View, Share, Pressable, TouchableOpacity, FlatList, Linking, Vibration, Alert, Platform } from 'react-native';
 
-import React, {useCallback, useEffect, useState} from 'react';
-import {useFollowUserMutation, useGetRoomIdMutation, useLazyCreatorProfileQuery, useLazyCreatorRatingQuery, useLazyIsValidFollowQuery, useSubmitLinkToBrandMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {useDispatch, useSelector} from 'react-redux';
-import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useFollowUserMutation, useGetRoomIdMutation, useLazyCreatorProfileQuery, useLazyCreatorRatingQuery, useLazyIsValidFollowQuery, useSubmitLinkToBrandMutation, useBlockUserMutation, useUnblockUserMutation, useLazyGetCreatorsPlanQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useDispatch, useSelector } from 'react-redux';
+import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import ReadMore from '@fawazahmed/react-native-read-more';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { LoginPageErrors, chatRoomSuccess } from '../ErrorSnacks';
 import OtherProfilePicture from '../MyProfile/OtherProfilePicture';
-import {toggleOtherProfileActionSheet, toggleOtherProfileRatingSheet, toggleRefreshOtherProfile, toggleOtherProfileLoader, toggleRatingModal, toggleOtherProfileActionModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {setCacheByFilter, updateCacheRoomList} from '../../../Redux/Slices/NormalSlices/RoomListSlice';
-import {navigate} from '../../../Navigation/RootNavigation';
-import {autoLogout} from '../../../AutoLogout';
-import {setOtherProfileUserInfo, setRating} from '../../../Redux/Slices/NormalSlices/OtherProfile/OtherProfileUserInfoSlice';
-import {useLazyGetRoomListQuery} from '../../../Redux/Slices/QuerySlices/roomListSliceApi';
-import {setHaveFollowedOrSubscribedOtherUser, setOtherProfileShareLink, setProfileDetails} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
+import { toggleOtherProfileActionSheet, toggleOtherProfileRatingSheet, toggleRefreshOtherProfile, toggleOtherProfileLoader, toggleRatingModal, toggleOtherProfileActionModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { setCacheByFilter, updateCacheRoomList } from '../../../Redux/Slices/NormalSlices/RoomListSlice';
+import { navigate } from '../../../Navigation/RootNavigation';
+import { autoLogout } from '../../../AutoLogout';
+import { setOtherProfileUserInfo, setRating } from '../../../Redux/Slices/NormalSlices/OtherProfile/OtherProfileUserInfoSlice';
+import { useLazyGetRoomListQuery } from '../../../Redux/Slices/QuerySlices/roomListSliceApi';
+import { setHaveFollowedOrSubscribedOtherUser, setOtherProfileShareLink, setProfileDetails } from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import share from 'react-native-share';
 
-import {Image} from 'expo-image';
+import { Image } from 'expo-image';
 import AnimatedButton from '../AnimatedButton';
-import {WIDTH_SIZES} from '../../../DesiginData/Utility';
-import {ScrollView} from 'react-native-gesture-handler';
+import { formatNiche, WIDTH_SIZES } from '../../../DesiginData/Utility';
+import { ScrollView } from 'react-native-gesture-handler';
 import { useMessageNavigation } from '../../Hook/useMessageNavigation';
 
 //Ye share funciton stack navigation dwara use kiya ja raha hais
@@ -45,21 +45,22 @@ export const shareLink = async link => {
   }
 };
 
-const UpperOtherProfile = ({toCallApiInfo}) => {
+const UpperOtherProfile = ({ toCallApiInfo }) => {
+  const { userName } = toCallApiInfo;
+  console.log('userinfos', userName);
 
-
-  
-  const {userName} = toCallApiInfo
-  console.log("userinfos", userName)
-
-  const [getUserProfileDetailsApi] = useLazyCreatorProfileQuery({refetchOnFocus: true});
+  const [getUserProfileDetailsApi] = useLazyCreatorProfileQuery({ refetchOnFocus: true });
   const [followUser] = useFollowUserMutation();
   const [isValidFollow] = useLazyIsValidFollowQuery();
   const [getRoomId] = useGetRoomIdMutation();
   const [creatorRating] = useLazyCreatorRatingQuery();
   const [getRoomList] = useLazyGetRoomListQuery();
+  const [getCreatorsPlan] = useLazyGetCreatorsPlanQuery();
+  const [blockUser] = useBlockUserMutation();
+  const [unblockUser] = useUnblockUserMutation();
+  const [isFetchingSubscription, setIsFetchingSubscription] = useState(false);
 
-  
+  const loggedInUserRole = useSelector(state => state.auth.user.role);
 
   // const [userProfileDetails, setUserProfileDetails] = useState({});
 
@@ -67,9 +68,9 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
 
   const refresh = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
 
-  const {stateOne, stateTwo} = useSelector(state => state.hideShow.visibility.otherProfileLoader);
+  const { stateOne, stateTwo } = useSelector(state => state.hideShow.visibility.otherProfileLoader);
 
-  const {profileDetails: userProfileDetails, haveSubscribed, haveFollowed} = useSelector(state => state.profileFeedCache.data);
+  const { profileDetails: userProfileDetails, haveSubscribed, haveFollowed } = useSelector(state => state.profileFeedCache.data);
 
   const [tempRating, setTempRating] = useState(0);
 
@@ -77,11 +78,14 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
 
   const chatRoomObject = useSelector(state => state.roomList.data.none);
 
-  const goChat = useMessageNavigation(token, userProfileDetails, chatRoomObject)
+  const goChat = useMessageNavigation(token, userProfileDetails, chatRoomObject);
+
+  const thisUserRating = useSelector(state => state.otherProfileUserInfo.rating);
 
   const getRating = async userData => {
     if (userData?.displayName) {
-      const {data, error} = await creatorRating({token, displayName: userData?.displayName});
+      // Pass false to force fresh fetch (skip RTK Query cache)
+      const { data, error } = await creatorRating({ token, displayName: userData?.displayName }, false);
 
       if (data) {
         setTempRating(data?.data?.rating);
@@ -91,10 +95,11 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
 
   useEffect(() => {
     getRating(userProfileDetails);
-  }, [userProfileDetails]);
+  }, [userProfileDetails, thisUserRating]);
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const navigation = useNavigation();
 
@@ -110,7 +115,7 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
 
   useEffect(() => {
     const listeners = navigation.addListener('blur', () => {
-      dispatch(setRating({rate: 0}));
+      dispatch(setRating({ rate: 0 }));
     });
 
     return () => navigation.removeListener(listeners);
@@ -119,25 +124,25 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
   useEffect(() => {
     setIsFollowing(haveFollowed);
     setSubscribed(haveSubscribed);
-  }, [haveSubscribed, haveFollowed]);
+    setIsBlocked(userProfileDetails?.isBlocked || false);
+  }, [haveSubscribed, haveFollowed, userProfileDetails?.isBlocked]);
 
-
-  const shareCard = useCallback(async name => {}, []);
+  const shareCard = useCallback(async name => { }, []);
 
   const handleFollow = useCallback(() => {
     console.log('xx');
 
-    followUser({token, displayName: toCallApiInfo?.userName})
+    followUser({ token, displayName: toCallApiInfo?.userName })
       .then(e => {
         console.log(e, '::::');
 
         if (e?.data) {
-          dispatch(setHaveFollowedOrSubscribedOtherUser({type: 'follow', setFollow: true}));
+          dispatch(setHaveFollowedOrSubscribedOtherUser({ type: 'follow', setFollow: true }));
         }
 
         if (e?.error?.data?.message?.search('Already') >= 0) {
-          dispatch(setHaveFollowedOrSubscribedOtherUser({type: 'follow', setFollow: true}));
-        } else if (e?.error?.data?.status_code === 401) {
+          dispatch(setHaveFollowedOrSubscribedOtherUser({ type: 'follow', setFollow: true }));
+        } else if (e?.error?.data?.status_code === 2044) {
           console.log('Logout');
         }
       })
@@ -147,107 +152,107 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
       });
   }, [toCallApiInfo]);
 
+  //   const handleMessageNavigation = useCallback(async () => {
+  //   try {
+  //     const data = {
+  //       user_id: { user1: userProfileDetails?._id },
+  //     };
 
-//   const handleMessageNavigation = useCallback(async () => {
-//   try {
-//     const data = {
-//       user_id: { user1: userProfileDetails?._id },
-//     };
+  //     const e = await getRoomId({ token, data });
 
-//     const e = await getRoomId({ token, data });
+  //     if (e?.error?.status === 'FETCH_ERROR') {
+  //       LoginPageErrors('Please check your network or go to chatroom to start conversation');
+  //       return;
+  //     }
 
-//     if (e?.error?.status === 'FETCH_ERROR') {
-//       LoginPageErrors('Please check your network or go to chatroom to start conversation');
-//       return;
-//     }
+  //     if (!e?.data?.statusCode) return;
 
-//     if (!e?.data?.statusCode) return;
+  //     let chatRoomAndWidowDetails = {
+  //       chatRoomId: e?.data?.data?._id,
+  //       name: userProfileDetails?.displayName,
+  //       profileImageUrl: userProfileDetails?.profile_image?.url,
+  //       role: userProfileDetails?.role,
+  //       id: userProfileDetails?._id,
+  //     };
 
-//     let chatRoomAndWidowDetails = {
-//       chatRoomId: e?.data?.data?._id,
-//       name: userProfileDetails?.displayName,
-//       profileImageUrl: userProfileDetails?.profile_image?.url,
-//       role: userProfileDetails?.role,
-//       id: userProfileDetails?._id,
-//     };
+  //     if (Object?.keys(chatRoomObject)?.length === 0) {
+  //       const { data, error } = await getRoomList({
+  //         token,
+  //         page: 1,
+  //         sortBy: 'recent',
+  //         filter: 'none',
+  //       });
 
-//     if (Object?.keys(chatRoomObject)?.length === 0) {
-//       const { data, error } = await getRoomList({
-//         token,
-//         page: 1,
-//         sortBy: 'recent',
-//         filter: 'none',
-//       });
+  //       if (data) {
+  //         dispatch(setCacheByFilter({ type: 'none', data: data?.data?.rooms }));
+  //       }
 
-//       if (data) {
-//         dispatch(setCacheByFilter({ type: 'none', data: data?.data?.rooms }));
-//       }
+  //       if (error?.status === 'FETCH_ERROR') {
+  //         LoginPageErrors('Please check your network');
+  //       }
+  //     } else {
+  //       dispatch(
+  //         updateCacheRoomList({
+  //           chatRoomId: chatRoomAndWidowDetails?.chatRoomId,
+  //           createdAt: e?.data?.data?.createdAt,
+  //           message: e?.data?.data?.lastMessage?.hasAttachment ? '' : e?.data?.data?.lastMessage?.message,
+  //           hasAttachment: e?.data?.data?.lastMessage?.hasAttachment,
+  //           senderId: chatRoomAndWidowDetails?.id,
+  //           profileImage: chatRoomAndWidowDetails?.profileImageUrl,
+  //           userName: chatRoomAndWidowDetails?.name,
+  //           role: chatRoomAndWidowDetails?.role,
+  //         }),
+  //       );
+  //     }
 
-//       if (error?.status === 'FETCH_ERROR') {
-//         LoginPageErrors('Please check your network');
-//       }
-//     } else {
-//       dispatch(
-//         updateCacheRoomList({
-//           chatRoomId: chatRoomAndWidowDetails?.chatRoomId,
-//           createdAt: e?.data?.data?.createdAt,
-//           message: e?.data?.data?.lastMessage?.hasAttachment ? '' : e?.data?.data?.lastMessage?.message,
-//           hasAttachment: e?.data?.data?.lastMessage?.hasAttachment,
-//           senderId: chatRoomAndWidowDetails?.id,
-//           profileImage: chatRoomAndWidowDetails?.profileImageUrl,
-//           userName: chatRoomAndWidowDetails?.name,
-//           role: chatRoomAndWidowDetails?.role,
-//         }),
-//       );
-//     }
-
-//     navigate('Chats', chatRoomAndWidowDetails); // ✅ works after room is ready
-//   } catch (err) {
-//     console.error('Error in handleMessageNavigation:', err);
-//     LoginPageErrors('Something went wrong. Please try again.');
-//   }
-// }, [token, userProfileDetails, chatRoomObject, dispatch, navigate]);
-
+  //     navigate('Chats', chatRoomAndWidowDetails); // ✅ works after room is ready
+  //   } catch (err) {
+  //     console.error('Error in handleMessageNavigation:', err);
+  //     LoginPageErrors('Something went wrong. Please try again.');
+  //   }
+  // }, [token, userProfileDetails, chatRoomObject, dispatch, navigate]);
 
   async function subscribedOrFollowed(userName) {
-
-
-    const {data, error} = await isValidFollow({token, userName}, false);
+    const { data, error } = await isValidFollow({ token, userName }, false);
 
     setSubscribed(data?.data?.subscribe);
 
     setIsFollowing(data?.data?.follow);
 
-    dispatch(setHaveFollowedOrSubscribedOtherUser({data: {haveSubscribed: data?.data?.subscribe, haveFollowed: data?.data?.follow}}));
+    dispatch(setHaveFollowedOrSubscribedOtherUser({ data: { haveSubscribed: data?.data?.subscribe, haveFollowed: data?.data?.follow } }));
   }
 
   async function getUserProfileDetails(toCallApiInfo) {
-    let userDetail = await getUserProfileDetailsApi({token, displayName: toCallApiInfo?.userName}, false);
+    let userDetail = await getUserProfileDetailsApi({ token, displayName: toCallApiInfo?.userName }, false);
 
-    if (userDetail?.error?.data?.status_code === 401) {
+    if (userDetail?.error?.data?.status_code === 2044) {
       autoLogout();
     }
-    dispatch(setProfileDetails({profileDetails: userDetail?.data?.data}));
+    dispatch(setProfileDetails({ profileDetails: userDetail?.data?.data }));
   }
 
   useEffect(() => {
     async function callAll() {
-      await subscribedOrFollowed(userName);
-      await getUserProfileDetails(toCallApiInfo);
+      if (userName && userName !== 'undefined') {
+        await subscribedOrFollowed(userName);
+      }
+      if (toCallApiInfo && toCallApiInfo?.userName && toCallApiInfo?.userName !== 'undefined') {
+        await getUserProfileDetails(toCallApiInfo);
+      }
     }
 
     callAll().then(e => {
-      dispatch(toggleOtherProfileLoader({info: {stateOne: false}}));
+      dispatch(toggleOtherProfileLoader({ info: { stateOne: false } }));
     });
-  }, [toCallApiInfo, userName]);
+  }, [toCallApiInfo, userName, refresh]);
 
   const handleRating = useCallback((userProfileDetails, isFollowing) => {
     console.log(userProfileDetails?.likes, 'hgsgdhsghdgshdg');
 
     if (isFollowing) {
-      dispatch(setOtherProfileUserInfo({userInfo: {displayName: userProfileDetails?.displayName, profilePirUrl: userProfileDetails?.profile_image?.url}}));
-      dispatch(setRating({rate: userProfileDetails?.likes}));
-      dispatch(toggleRatingModal({show: true}));
+      dispatch(setOtherProfileUserInfo({ userInfo: { displayName: userProfileDetails?.displayName, profilePirUrl: userProfileDetails?.profile_image?.url } }));
+      dispatch(setRating({ rate: userProfileDetails?.likes }));
+      dispatch(toggleRatingModal({ show: true }));
     } else {
       LoginPageErrors('Hey! Follow creator to rate');
     }
@@ -257,7 +262,7 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
     console.log(userProfileDetails, '((((((099899999999');
 
     return (
-      <View style={[styles.userDetailContainer, userProfileDetails?.role === 'creator' ? {marginTop: responsiveWidth(10)} : {marginTop: responsiveWidth(8)}]}>
+      <View style={[styles.userDetailContainer, userProfileDetails?.role === 'creator' ? { marginTop: responsiveWidth(10) } : { marginTop: responsiveWidth(8) }]}>
         <Text style={styles.name}>{userProfileDetails?.fullName}</Text>
 
         {/* User Name */}
@@ -266,8 +271,8 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
             <Text style={styles.userNameTitle}>{userProfileDetails?.displayName}</Text>
 
             {userProfileDetails?.role === 'creator' && (
-              <View style={{height: 19, width: 19}}>
-                <Image source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{flex: 1}} />
+              <View style={{ height: 19, width: 19 }}>
+                <Image source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{ flex: 1 }} />
               </View>
             )}
           </View>
@@ -278,29 +283,29 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
             <View style={styles.creatorRow}>
               {/* Category Tag */}
               <View style={styles.categoryTag}>
-                <Text style={styles.categoryText}>{userProfileDetails?.niche[0]}</Text>
+                <Text style={styles.categoryText}>{formatNiche(userProfileDetails?.niche?.[0])}</Text>
               </View>
 
               {/* Followers */}
-              <Pressable style={({pressed}) => [styles.statItem, {backgroundColor: pressed ? '#FFEDE0' : '#fff'}]}>
-                <View style={{height: 16, width: 14}}>
-                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{flex: 1}} />
+              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#FFEDE0' : '#fff' }]}>
+                <View style={{ height: 16, width: 14 }}>
+                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{ flex: 1 }} />
                 </View>
                 <Text style={styles.statText}>{userProfileDetails?.followers?.count?.followers}</Text>
               </Pressable>
 
               {/* Likes */}
-              <Pressable style={({pressed}) => [styles.statItem, {backgroundColor: pressed ? '#FFEDE0' : '#fff'}]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
-                <View style={{height: 16, width: 17}}>
-                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{flex: 1}} />
+              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#FFEDE0' : '#fff' }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
+                <View style={{ height: 16, width: 17 }}>
+                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{ flex: 1 }} />
                 </View>
                 <Text style={styles.statText}>{Math.round(tempRating)}</Text>
               </Pressable>
 
               {/* Share Button */}
-              <Pressable style={({pressed}) => [styles.statItem, {backgroundColor: pressed ? '#FFEDE0' : '#fff'}]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
-                <View style={{height: 17, width: 22}}>
-                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{flex: 1}} />
+              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#FFEDE0' : '#fff' }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
+                <View style={{ height: 17, width: 22 }}>
+                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{ flex: 1 }} />
                 </View>
               </Pressable>
             </View>
@@ -324,6 +329,11 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
   // }, [userProfileDetails, thisUserRating]);
 
   const BioMyProfile = useCallback(() => {
+    // Don't show bio for blocked profiles (when displayName is undefined)
+    if (!userProfileDetails?.displayName) {
+      return null;
+    }
+
     // Default bio text if none is provided
     const defaultBio = 'Sharing unique content and engaging with my community. Join me on this journey! 🌟🎨';
 
@@ -345,10 +355,82 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
     );
   }, [userProfileDetails]);
 
+  const handleBlockUser = useCallback(async () => {
+    try {
+      const data = {
+        id: userProfileDetails?._id,
+      };
+      const response = await blockUser({ token, data });
+
+      if (response?.data) {
+        setIsBlocked(true);
+        chatRoomSuccess('User blocked successfully');
+      } else if (response?.error) {
+        LoginPageErrors(response?.error?.data?.message || 'Failed to block user');
+      }
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      LoginPageErrors('An error occurred while blocking user');
+    }
+  }, [userProfileDetails, token]);
+
+  const handleUnblockUser = useCallback(async () => {
+    try {
+      const data = {
+        id: userProfileDetails?._id,
+      };
+      const response = await unblockUser({ token, data });
+
+      if (response?.data) {
+        setIsBlocked(false);
+        chatRoomSuccess('User unblocked successfully');
+      } else if (response?.error) {
+        LoginPageErrors(response?.error?.data?.message || 'Failed to unblock user');
+      }
+    } catch (error) {
+      console.error('Error unblocking user:', error);
+      LoginPageErrors('An error occurred while unblocking user');
+    }
+  }, [userProfileDetails, token]);
+
+  const BlockButton = useCallback(() => {
+    // Check if profile is already blocked (API returns undefined values)
+    const isProfileBlocked = !userProfileDetails?.displayName || !userProfileDetails?._id;
+
+    if (isProfileBlocked) {
+      return (
+        <View style={[styles.btnContainer, { width: '100%', justifyContent: 'center', paddingHorizontal: responsiveWidth(6.3), marginTop: responsiveWidth(3) }]}>
+          <AnimatedButton
+            title="Go to Blocked List"
+            style={[styles.blockButton]}
+            buttonMargin={4}
+            showOverlay={false}
+            onPress={() => {
+              navigation.replace('settingsPage');
+            }}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={[styles.btnContainer, { width: '100%', justifyContent: 'center', paddingHorizontal: responsiveWidth(6.3), marginTop: responsiveWidth(3) }]}>
+        <AnimatedButton
+          title={isBlocked ? 'Unblock User' : 'Block User'}
+          style={[styles.blockButton]}
+          buttonMargin={4}
+          showOverlay={false}
+          onPress={isBlocked ? handleUnblockUser : handleBlockUser}
+          icon={<Image source={require('../../../Assets/Images/block.png')} style={{ width: 20, height: 20, marginRight: 8 }} />}
+        />
+      </View>
+    );
+  }, [isBlocked, handleBlockUser, handleUnblockUser, userProfileDetails]);
+
   const MessageSubButton = useCallback(() => {
     if (!isFollowing) {
       return (
-        <View style={[styles.btnContainer, {width: '100%', justifyContent: 'center'}]}>
+        <View style={[styles.btnContainer, { width: '100%', justifyContent: 'center' }]}>
           <AnimatedButton title="Follow" style={[styles.subscribeButton]} buttonMargin={4} showOverlay={false} onPress={handleFollow} />
         </View>
       );
@@ -363,50 +445,71 @@ const UpperOtherProfile = ({toCallApiInfo}) => {
             style={[styles.subscribeButton]}
             buttonMargin={4}
             showOverlay={false}
-            onPress={() =>
-              navigate('subscribeCreator', {
-                name: userProfileDetails?.displayName,
-                profileImageUrl: userProfileDetails?.profile_image?.url,
-                role: userProfileDetails?.role,
-                id: userProfileDetails?._id,
-              })
-            }
+            loading={isFetchingSubscription}
+            onPress={async () => {
+              try {
+                setIsFetchingSubscription(true);
+                // Pre-fetch plans before navigating
+                await getCreatorsPlan({ token, id: userProfileDetails?._id });
+                navigate('subscribeCreator', {
+                  name: userProfileDetails?.displayName,
+                  profileImageUrl: userProfileDetails?.profile_image?.url,
+                  role: userProfileDetails?.role,
+                  id: userProfileDetails?._id,
+                });
+              } catch (error) {
+                console.error('Error pre-fetching subscription data:', error);
+                // Navigate anyway even if pre-fetch fails
+                navigate('subscribeCreator', {
+                  name: userProfileDetails?.displayName,
+                  profileImageUrl: userProfileDetails?.profile_image?.url,
+                  role: userProfileDetails?.role,
+                  id: userProfileDetails?._id,
+                });
+              } finally {
+                setIsFetchingSubscription(false);
+              }
+            }}
           />
         )}
 
         {/* Message Button (Centered) */}
-        <View style={{flex: 1, alignItems: 'center'}}>
+        <View style={{ flex: 1, alignItems: 'center' }}>
           <AnimatedButton title="Message" style={[styles.messageButton]} buttonMargin={4} showOverlay={false} onPress={goChat} />
         </View>
 
         {/* Three Dots Button (Right-Aligned) */}
-        <View style={{justifyContent: 'center'}}>
+        <View style={{ justifyContent: 'center' }}>
           <Pressable
             onPress={() => {
-              dispatch(toggleOtherProfileActionSheet({info: {show: 1, subscribed}}));
-              dispatch(toggleOtherProfileActionModal({show: true}));
+              dispatch(toggleOtherProfileActionSheet({ info: { show: 1, subscribed } }));
+              dispatch(toggleOtherProfileActionModal({ show: true }));
             }}
-            style={({pressed}) => ({
+            style={({ pressed }) => ({
               height: 16,
               width: 14,
               opacity: pressed ? 0.5 : 1,
             })}>
-            <Image source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{flex: 1}} />
+            <Image source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{ flex: 1 }} />
           </Pressable>
         </View>
       </View>
     );
-  }, [userProfileDetails, isFollowing, subscribed]);
+  }, [userProfileDetails, isFollowing, subscribed, loggedInUserRole]);
 
   return (
-    <View style={{maxHeight: responsiveHeight(64), backgroundColor: '#fff'}}>
-      {userProfileDetails?.displayName && userProfileDetails?._id && <OtherProfilePicture displayName={userProfileDetails?.displayName} userId={userProfileDetails?._id} />}
+    <View style={{ maxHeight: responsiveHeight(64), backgroundColor: '#fff' }}>
+      <OtherProfilePicture displayName={userProfileDetails?.displayName} userId={userProfileDetails?._id} />
       <UserDetailMyProfile />
-      <View style={{flexDirection: 'column'}}>
+      <View style={{ flexDirection: 'column' }}>
         <BioMyProfile />
       </View>
       {/* {userProfileDetails?.role === 'creator' && <RatingSocialMyProfile />} */}
-      {userProfileDetails?.role === 'creator' && <MessageSubButton />}
+      {userProfileDetails?.role === 'creator' ? <MessageSubButton /> : (
+        <View>
+          <BlockButton />
+        </View>
+      )}
     </View>
   );
 };
@@ -621,6 +724,15 @@ const styles = StyleSheet.create({
     borderColor: '#1e1e1e',
     borderWidth: 2,
     width: responsiveWidth(35),
+    height: responsiveWidth(9.8),
+    borderRadius: responsiveWidth(3.2),
+  },
+
+  blockButton: {
+    backgroundColor: '#FFA86B',
+    borderColor: '#1e1e1e',
+    borderWidth: 2,
+    width: responsiveWidth(87.4),
     height: responsiveWidth(9.8),
     borderRadius: responsiveWidth(3.2),
   },

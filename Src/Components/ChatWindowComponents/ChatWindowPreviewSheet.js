@@ -600,13 +600,13 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
   );
 
   return (
-    homeBottomSheetVisibility === 1 && (
       <BottomSheetModal
         ref={bottomSheetRef}
-        index={homeBottomSheetVisibility}
+        index={homeBottomSheetVisibility === 1 ? 0 : -1}
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
         enablePanDownToClose={true}
+        enableDynamicSizing={false}
         backdropComponent={renderBackdrop}
         keyboardBehavior="interactive"
         backgroundStyle={{backgroundColor: '#fffef9'}}>
@@ -846,7 +846,6 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
           )}
         </View>
       </BottomSheetModal>
-    )
   );
 };
 

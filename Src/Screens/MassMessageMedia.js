@@ -1,14 +1,13 @@
-import {StyleSheet, Text, View, Image, TextInput, TouchableOpacity, Switch, Pressable, ActivityIndicator, ToastAndroid, Platform, InputAccessoryView, Keyboard, ScrollView, Alert} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import {StyleSheet, Text, View, Image, TextInput, TouchableOpacity, Switch, Pressable, ActivityIndicator, ToastAndroid, Platform, InputAccessoryView, Keyboard, ScrollView, Alert, KeyboardAvoidingView} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {launchImageLibrary} from 'react-native-image-picker';
-import {useNavigation} from '@react-navigation/native';
-import DateTimePickerSheet from '../Components/CreatePostComponents/DateTimePickerSheet';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleDateTimePicker, toggleFloatingViews, toggleShowChatRoomSelector} from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useCreatePostMutation, useSendMassMessageMutation, useUploadAttachmentMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import {generateBase64Image, generateVideoThumbnail, getImageSize, videoReducer} from '../../FFMPeg/FFMPegModule';
+import {generateBase64Image, generateVideoThumbnail, getImageSize, resizeImageForPost, videoReducer} from '../../FFMPeg/FFMPegModule';
 import {chatRoomSuccess, ChatWindowError, LoginPageErrors, successSnacks} from '../Components/ErrorSnacks';
 import DIcon from '../../DesiginData/DIcons';
 import {dismissProgressNotification, displayNotificationProgressIndicator} from '../../Notificaton';
@@ -27,10 +26,25 @@ import {resetMassMessage, setMassMessageLabel, setMassMessageTargetOnlinleOfflin
 import {navigate} from '../../Navigation/RootNavigation';
 import {removeRoomList} from '../../Redux/Slices/NormalSlices/RoomListSlice';
 import {deleteCachedMessages} from '../../Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
+import {setSelectedAudience} from '../../Redux/Slices/NormalSlices/AudienceSelectedSlice';
 
 const MassMessageMedia = ({route}) => {
   const height = route?.params?.height ?? 9;
   const width = route?.params?.width ?? 16;
+
+  const scrollViewRef = useRef(null);
+  const textInputRef = useRef(null);
+
+  const handleTextInputFocus = () => {
+    setTimeout(() => {
+      textInputRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        scrollViewRef.current?.scrollTo({
+          y: pageY - 100, // Adjust this offset as needed
+          animated: true,
+        });
+      });
+    }, 100);
+  };
 
   if (route?.params?.uri) {
     RNFS.stat(route?.params?.uri)
@@ -84,6 +98,8 @@ const MassMessageMedia = ({route}) => {
 
   const {target, status} = useSelector(state => state.massMessage.data);
 
+  const chatRoomData = useSelector(state => state.roomList.data);
+
   useEffect(() => {
     const itemsToPush = [...target.label];
 
@@ -98,6 +114,8 @@ const MassMessageMedia = ({route}) => {
     if (target.selectedUsers.length > 0) {
       itemsToPush.push('Random users');
     }
+
+    itemsToPush.push(target.filter);
 
     setSelectedItems(itemsToPush);
   }, [target, status]);
@@ -157,48 +175,67 @@ const MassMessageMedia = ({route}) => {
         });
       }
 
-      // const mediaInfo = await launchImageLibrary({ mediaType: "mixed", selectionLimit : 1, assetRepresentationMode : 'auto' });
+      const mediaInfo = await ImageCropPicker.openPicker({
+        mediaType: 'any',
+        forceJpg: true, // Auto convert HEIC to JPG
+        compressImageQuality: 0.9,
+      });
 
-      const mediaInfo = await ImageCropPicker.openPicker({mediaType: 'any'});
-
-      console.log(mediaInfo?.path, 'PATH');
+      console.log(mediaInfo, 'PATH');
 
       if (mediaInfo?.mime?.search('image') >= 0) {
         console.log('Image size', mediaInfo?.size);
 
-        //Image size max 20
         if (mediaInfo?.size >= 20000000) {
           LoginPageErrors('Image size must be lower than 20 MB');
-
           return 0;
         } else {
-          setMediaSelected(true);
+          // Reset all states before navigating to crop
+          setMediaSelected(false); // Set to false, will be true when coming back from crop
           setIsMediaVideo(false);
           setVideoUrl(undefined);
+          setMediaUri(undefined);
+          setForSubscribers(false);
+          setIsMediaVideo(false);
+          setVideoUrl(undefined);
+
+          // Reset paid status
+
           if (mediaInfo?.didCancel !== true) {
-            navigation.navigate('cropViewScreen', {uri: Platform.OS === 'ios' ? 'file://' + mediaInfo?.path : mediaInfo?.path, type: 'massMessage'});
+            navigation.navigate('cropViewScreen', {
+              uri: Platform.OS === 'ios' ? 'file://' + mediaInfo?.path : mediaInfo?.path,
+              type: 'massMessage',
+            });
           }
         }
       } else {
         console.log(mediaInfo.size, mediaInfo?.size >= 60000000, '{{{}{}{}{}{}{}');
 
         if (mediaInfo?.size >= 60000000) {
-          //Video size max 60
-
           LoginPageErrors('Video size must be lower than 60 MB');
           return 0;
-        } else {
-          setMediaSelected(true);
-          setIsMediaVideo(true);
-          generateVideoThumbnail(mediaInfo?.path).then(e => {
-            console.log(e);
-            setMediaUri(e);
-            setVideoUrl(mediaInfo?.path);
-          });
         }
+
+        // For video, reset image states and set video states
+        setMediaUri(undefined); // Clear any previous image
+        setMediaSelected(true);
+        setForSubscribers(false); // Reset paid status
+
+        generateVideoThumbnail(mediaInfo?.path).then(e => {
+          console.log(e);
+          setMediaUri(e); // Set thumbnail as mediaUri
+          setVideoUrl(mediaInfo?.path); // Store actual video path
+          setIsMediaVideo(true);
+        });
       }
     } catch (e) {
-      console.log('Selecitng media error', e.message);
+      console.log('Selecting media error', e.message);
+      // Reset states when user cancels or there's an error
+      setMediaSelected(false);
+      setForSubscribers(false);
+      setMediaUri(undefined);
+      setVideoUrl(undefined);
+      setIsMediaVideo(false);
     }
   };
 
@@ -213,10 +250,43 @@ const MassMessageMedia = ({route}) => {
   }, [isEnabled]);
 
   useEffect(() => {
-    console.log('Uri Changed');
+    console.log('Uri Changed', route?.params?.uri);
 
-    setMediaUri(route?.params?.uri);
+    if (route?.params?.uri) {
+      setMediaUri(route?.params?.uri);
+      setMediaSelected(true);
+    } else {
+      // When uri is cleared (user went back without selecting)
+      setMediaUri(undefined);
+      setMediaSelected(false);
+      setForSubscribers(false);
+      setIsMediaVideo(false);
+      setVideoUrl(undefined);
+    }
   }, [route?.params?.uri]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Check if we returned without an image
+      if (!route?.params?.uri && mediaSelected) {
+        setMediaUri(undefined);
+        setMediaSelected(false);
+        setForSubscribers(false);
+        setIsMediaVideo(false);
+        setVideoUrl(undefined);
+      }
+    }, [route?.params?.uri, mediaSelected]),
+  );
+
+  useEffect(() => {
+    if (!mediaSelected) {
+      setForSubscribers(false); // Reset to Free when no media
+    } else if (mediaSelected && isMediaVideo) {
+      // For videos, enable paid option by default since it's already selected
+      // User can still toggle back to Free if they want
+      // setForSubscribers(true); // Uncomment if you want it automatically enabled
+    }
+  }, [mediaSelected, isMediaVideo]);
 
   const [sendMassMessage] = useSendMassMessageMutation();
 
@@ -242,11 +312,25 @@ const MassMessageMedia = ({route}) => {
         await displayNotificationProgressIndicator();
 
         async function videoFormatter(uri) {
-          const result = await videoReducer(uri);
-          return result;
+          let normalizedUri = uri;
+
+          // Android fix: Copy content:// to file://
+          if (Platform.OS === 'android' && uri.startsWith('content://')) {
+            try {
+              const localPath = `${RNFS.CachesDirectoryPath}/video_mass_${Date.now()}.mp4`;
+              await RNFS.copyFile(uri, localPath);
+              normalizedUri = `file://${localPath}`;
+              console.log('📁 Mass: Copied content:// to local path:', normalizedUri);
+            } catch (copyErr) {
+              console.error('❌ Mass: Failed to copy video:', copyErr);
+            }
+          }
+
+          const compressedVideoUrl = await videoReducer(normalizedUri);
+          return {normalizedUri, compressedVideoUrl};
         }
 
-        videoFormatter(videoUrl).then(async compressedVideoUrl => {
+        videoFormatter(videoUrl).then(async ({normalizedUri, compressedVideoUrl}) => {
           if (compressedVideoUrl) {
             let compressedVideoThumbnail = await generateVideoThumbnail(compressedVideoUrl);
 
@@ -255,7 +339,7 @@ const MassMessageMedia = ({route}) => {
             formData.append('keyName', 'mass_msg_vido_thmbnl');
 
             formData.append('file', {
-              uri: compressedVideoThumbnail,
+              uri: compressedVideoThumbnail.startsWith('file://') || compressedVideoThumbnail.startsWith('content://') ? compressedVideoThumbnail : `file://${compressedVideoThumbnail}`,
               type: 'image/jpg',
               name: 'image.jpg',
             });
@@ -279,7 +363,7 @@ const MassMessageMedia = ({route}) => {
                 formData.append('keyName', 'message_attachment');
 
                 formData.append('file', {
-                  uri: compressedVideoUrl,
+                  uri: compressedVideoUrl.startsWith('file://') || compressedVideoUrl.startsWith('content://') ? compressedVideoUrl : `file://${compressedVideoUrl}`,
                   type: 'video/mp4',
                   name: 'attachmentVideo.mp4',
                 });
@@ -314,6 +398,7 @@ const MassMessageMedia = ({route}) => {
                       dispatch(deleteCachedMessages());
                       dispatch(toggleShowChatRoomSelector({show: false}));
                       dispatch(toggleFloatingViews({show: 'showMessageFloat'}));
+                      dispatch(setSelectedAudience({audienceNumber: 1}));
                       dispatch(resetMassMessage());
                       setLoading(false);
                       navigate('chatRoomTab');
@@ -344,84 +429,119 @@ const MassMessageMedia = ({route}) => {
           return;
         }
 
-        let formData = new FormData();
-
         await displayNotificationProgressIndicator();
 
-        formData.append('keyName', 'create_post');
+        // 1. Resize Image before Mass Message upload
+        resizeImageForPost(mediaUri, width, height)
+          .then(resizedUri => {
+            const finalUri = resizedUri || mediaUri;
+            console.log('📤 Mass Image Upload URI:', finalUri);
 
-        formData.append('file', {
-          name: 'ddfhlf.jpeg',
-          type: 'image/jpeg',
-          uri: `file://${mediaUri}`,
-        });
+            let formData = new FormData();
+            formData.append('keyName', 'create_post');
+            formData.append('file', {
+              name: 'attachmentImage.jpeg',
+              type: 'image/jpeg',
+              uri: finalUri.startsWith('file://') || finalUri.startsWith('content://') ? finalUri : `file://${finalUri}`,
+            });
 
-        RNFS.stat(mediaUri)
-          .then(stat => {
-            console.log(`File size: ${stat.size} bytes`);
-            console.log(`File size: ${(stat.size / 1024).toFixed(2)} KB`);
-            console.log(`File size: ${(stat.size / (1024 * 1024)).toFixed(2)} MB`);
+            uploadAttachment({token, formData}).then(async e => {
+              if (e?.error?.data?.status_code === 2044) {
+                autoLogout();
+              }
+
+              if (e?.error?.status === 'FETCH_ERROR') {
+                LoginPageErrors('Please check your network');
+                setLoading(false);
+                dismissProgressNotification();
+                return;
+              }
+
+              if (e?.data?.statusCode === 200) {
+                let tty = {
+                  _body: {
+                    attachment: {
+                      url: e?.data?.data?.url,
+                      format: 'image',
+                      is_charagble: forSubscribers ? true : false,
+                      charge_amount: forSubscribers ? amountSub : 0,
+                      preview: '',
+                    },
+                    message: caption || '',
+                  },
+                  target,
+                  status,
+                };
+
+                if (forSubscribers) {
+                  let url = finalUri.startsWith('file://') ? finalUri : `file://${finalUri}`;
+                  let previewImage = await generateBase64Image(url);
+                  tty._body.attachment.preview = previewImage;
+                }
+
+                const {data, error} = await sendMassMessage({token, data: tty});
+
+                if (error) {
+                  setLoading(false);
+                  ChatWindowError('Something went wrong!!@');
+                  console.log(error?.data);
+                  dismissProgressNotification();
+                }
+
+                if (data) {
+                  dispatch(removeRoomList());
+                  dispatch(deleteCachedMessages());
+                  dispatch(toggleShowChatRoomSelector({show: false}));
+                  dispatch(toggleFloatingViews({show: 'showMessageFloat'}));
+                  dispatch(resetMassMessage());
+                  setLoading(false);
+                  console.log(data?.statusCode);
+                  navigate('chatRoomTab');
+                  chatRoomSuccess('Mass message sent successfully!');
+                  dismissProgressNotification();
+                }
+              }
+            });
           })
-          .catch(error => {
-            console.error('Error getting file size:', error);
-          });
-
-        uploadAttachment({token, formData}).then(async e => {
-          if (e?.error?.data?.status_code === 401) {
-            autoLogout();
-          }
-
-          if (e?.error?.status === 'FETCH_ERROR') {
-            LoginPageErrors('Please check your network');
+          .catch(err => {
+            console.error('Mass Image Resize Error:', err);
             setLoading(false);
             dismissProgressNotification();
-          }
-
-          let tty = {
-            _body: {
-              attachment: {
-                url: e?.data?.data?.url,
-                format: 'image',
-                is_charagble: forSubscribers ? true : false,
-                charge_amount: forSubscribers ? amountSub : 0,
-                preview: '',
-              },
-              message: caption || '',
-            },
-            target,
-            status,
-          };
-
-          if (forSubscribers) {
-            let url = `file://${mediaUri}`;
-            let previewImage = await generateBase64Image(url);
-            tty._body.attachment.preview = previewImage;
-          }
-
-          const {data, error} = await sendMassMessage({token, data: tty});
-
-          if (error) {
-            setLoading(false);
-            ChatWindowError('Something went wrong!!@');
-            console.log(error?.data);
-          }
-
-          if (data) {
-            dispatch(removeRoomList());
-            dispatch(deleteCachedMessages());
-            dispatch(toggleShowChatRoomSelector({show: false}));
-            dispatch(toggleFloatingViews({show: 'showMessageFloat'}));
-            dispatch(resetMassMessage());
-            setLoading(false);
-            console.log(data?.statusCode);
-            navigate('chatRoomTab');
-            chatRoomSuccess('Mass message sent successfully!');
-          }
-        });
+          });
       }
     } else {
-      LoginPageErrors('Please select media');
-      setLoading(false);
+      if (caption === '') {
+        LoginPageErrors('Please write a message!');
+        setLoading(false);
+        return;
+      }
+
+      let textOnlyMessage = {
+        _body: {
+          message: caption,
+        },
+        target,
+        status,
+      };
+
+      const {data, error} = await sendMassMessage({token, data: textOnlyMessage});
+
+      if (error) {
+        setLoading(false);
+        ChatWindowError('Something went wrong!');
+        console.log(error?.data);
+      }
+
+      if (data) {
+        dispatch(removeRoomList());
+        dispatch(deleteCachedMessages());
+        dispatch(toggleShowChatRoomSelector({show: false}));
+        dispatch(toggleFloatingViews({show: 'showMessageFloat'}));
+        dispatch(resetMassMessage());
+        setLoading(false);
+        navigate('chatRoomTab');
+        chatRoomSuccess('Mass message sent successfully!');
+      }
     }
   };
 
@@ -435,120 +555,193 @@ const MassMessageMedia = ({route}) => {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 50}}>
-        <View style={{borderWidth: responsiveWidth(0.5), borderRadius: responsiveWidth(3.73), width: responsiveWidth(92)}}>
-          <View style={styles.FollowersSubScribersToggle}>
-            <TouchableOpacity onPress={() => setForSubscribers(!forSubscribers)} style={[styles.Followers, forSubscribers === false ? {backgroundColor: '#FFA86B', borderWidth: responsiveWidth(0.3), borderRadius: responsiveWidth(2.5)} : null]}>
-              <Text style={{fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES[14], color: '#282828'}} key={'1Followers'}>
-                Free
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setForSubscribers(!forSubscribers)} style={[styles.SubScribers, forSubscribers === true ? {backgroundColor: '#FFA86B', borderWidth: responsiveWidth(0.3), borderRadius: responsiveWidth(2.5)} : null]}>
-              <Text key={'2SubScribers'} style={{fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES[14], color: '#282828'}}>
-                Paid
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.textInputContainer}>
-          {mediaUri ? (
-            <View style={[styles.selectImageBox, route?.params && {flexDirection: 'row', alignItems: 'center'}, !isMediaVideo ? {aspectRatio: `${width}/${height}`} : {aspectRatio: '16/9'}]}>
-              <View style={styles.imageContainer}>
-                <Image source={{uri: `file://${mediaUri}`}} resizeMethod="resize" resizeMode="contain" style={{height: '100%', width: '100%', resizeMode: 'cover'}} />
-                <TouchableOpacity onPress={selectMedia} style={styles.selectMedia}>
-                  <Image source={require('../../Assets/Images/ChangeProfile.png')} style={{height: responsiveWidth(8), width: responsiveWidth(8), resizeMode: 'contain', zIndex: 8, alignSelf: 'center', marginRight: responsiveWidth(1)}} />
-                </TouchableOpacity>
-              </View>
-
-              {isMediaVideo && (
-                <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1), marginTop: responsiveWidth(2), position: 'absolute', alignSelf: 'center'}} onPress={() => openVideoPreview()}>
-                  <DIcon name={'play-circle'} provider={'FontAwesome5'} color="#fff" size={WIDTH_SIZES['36']} />
-                </TouchableOpacity>
-              )}
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.selectImageBox} onPress={selectMedia}>
-              <View style={[styles.imageContainer, {marginVertical: WIDTH_SIZES['10'], marginTop: WIDTH_SIZES['84']}]}>
-                {/* <Image source={require("../../Assets/Images/selectMedia.png")} resizeMethod="resize" resizeMode="contain" style={{ width: "100%" }} /> */}
-                <Upload />
-              </View>
-              <Text style={{fontFamily: 'Rubik-Medium', textAlign: 'center', color: '#282828', fontSize: 14, marginBottom: 80}}>Click to upload your files </Text>
-            </TouchableOpacity>
-          )}
-
-          <TextInput
-            inputAccessoryViewID={inputAccessoryViewID}
-            value={caption}
-            style={styles.textInputStyle}
-            maxLength={120}
-            placeholder="Write caption here..."
-            multiline
-            onChangeText={x => handleTextInput(x)}
-            autoCorrect={false}
-            placeholderTextColor="#B2B2B2"
-            selectionColor={selectionTwin()}
-            cursorColor={'#1e1e1e'}
-          />
-          <Text style={styles.charCount}>{`${count}/120`}</Text>
-
-          {Platform.OS === 'ios' && (
-            <InputAccessoryView nativeID={inputAccessoryViewID}>
-              <Pressable onPress={() => Keyboard.dismiss()} style={{alignSelf: 'center', borderRadius: responsiveWidth(2)}}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{flex: 1}}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} // Adjust this value based on your header height
+      >
+        <ScrollView keyboardDismissMode="on-drag" ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: Platform.OS === 'ios' ? 250 : 350}} keyboardShouldPersistTaps="handled">
+          <View
+            style={{
+              borderWidth: responsiveWidth(0.5),
+              borderRadius: responsiveWidth(3.73),
+              width: responsiveWidth(92),
+            }}>
+            <View style={styles.FollowersSubScribersToggle}>
+              <TouchableOpacity
+                onPress={() => setForSubscribers(false)}
+                style={[
+                  styles.Followers,
+                  forSubscribers === false
+                    ? {
+                        backgroundColor: '#FFA86B',
+                        borderWidth: responsiveWidth(0.3),
+                        borderRadius: responsiveWidth(2.5),
+                      }
+                    : null,
+                ]}>
                 <Text
                   style={{
-                    textAlign: 'center',
-                    backgroundColor: '#f2f2f2',
-                    alignSelf: 'flex-end',
-                    padding: responsiveWidth(2),
-                    overflow: 'hidden',
+                    fontFamily: 'Rubik-SemiBold',
+                    fontSize: FONT_SIZES[14],
+                    color: '#282828',
                   }}>
-                  Done
+                  Free
                 </Text>
-              </Pressable>
-            </InputAccessoryView>
-          )}
-        </View>
-        {forSubscribers && (
-          <View style={styles.box}>
-            <Text style={styles.heading}>Set Price</Text>
+              </TouchableOpacity>
 
-            <Text style={styles.insideBoxTitle}>Set fee for the attachment</Text>
-
-            <View style={[styles.amountInput, {alignSelf: 'center', width: '100%'}]}>
-              <View style={{flexDirection: 'row'}}>
-                <View style={[styles.titleback]}>
-                  <Text style={[styles.titleSetPrice]}>Set Price</Text>
-                </View>
-              </View>
-              <View style={{flexDirection: 'row', alignItems: 'center', marginRight: responsiveWidth(2), gap: Platform.OS == 'ios' ? responsiveWidth(2) : null}}>
-                <TextInput
-                  maxLength={6}
-                  keyboardType="number-pad"
-                  autoCorrect={false}
-                  placeholderTextColor="#B2B2B2"
-                  selectionColor={selectionTwin()}
-                  cursorColor={'#1e1e1e'}
-                  style={[styles.amountStyle]}
-                  textAlign="right"
-                  value={amountSub}
-                  onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''), true)}
-                />
-                <Paisa />
-              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  if (!mediaSelected && !videoUrl) {
+                    LoginPageErrors('Please attach media for paid messages');
+                  } else {
+                    setForSubscribers(true);
+                  }
+                }}
+                style={[
+                  styles.SubScribers,
+                  forSubscribers === true
+                    ? {
+                        backgroundColor: '#FFA86B',
+                        borderWidth: responsiveWidth(0.3),
+                        borderRadius: responsiveWidth(2.5),
+                      }
+                    : null,
+                  !mediaSelected && !videoUrl && {opacity: 0.5},
+                ]}>
+                <Text
+                  style={{
+                    fontFamily: 'Rubik-SemiBold',
+                    fontSize: FONT_SIZES[14],
+                    color: '#282828',
+                  }}>
+                  Paid
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
-        )}
-        <View style={styles.box}>
-          <Text style={styles.heading}>Audience</Text>
-          <Text style={styles.insideBoxTitle}>Whom you want to send it to</Text>
 
-          <BubbleView selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
-        </View>
-        <View style={{width: '99%', justifyContent: 'center'}}>
-          <AnimatedButton title={'Send'} buttonMargin={0} loading={loading} onPress={() => handleSendPost()} disabled={!mediaSelected} />
-        </View>
-      </ScrollView>
+          <View style={styles.textInputContainer}>
+            {mediaUri ? (
+              <View style={[styles.selectImageBox, route?.params && {flexDirection: 'row', alignItems: 'center'}, !isMediaVideo ? {aspectRatio: `${width}/${height}`} : {aspectRatio: '16/9'}]}>
+                <View style={styles.imageContainer}>
+                  <Image source={{uri: `file://${mediaUri}`}} resizeMethod="resize" resizeMode="contain" style={{height: '100%', width: '100%', resizeMode: 'cover'}} />
+                  <TouchableOpacity onPress={selectMedia} style={styles.selectMedia}>
+                    <Image
+                      source={require('../../Assets/Images/ChangeProfile.png')}
+                      style={{
+                        height: responsiveWidth(8),
+                        width: responsiveWidth(8),
+                        resizeMode: 'contain',
+                        zIndex: 8,
+                        alignSelf: 'center',
+                        marginRight: responsiveWidth(1),
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {isMediaVideo && (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: responsiveWidth(1),
+                      marginTop: responsiveWidth(2),
+                      position: 'absolute',
+                      alignSelf: 'center',
+                    }}
+                    onPress={() => openVideoPreview()}>
+                    <DIcon name={'play-circle'} provider={'FontAwesome5'} color="#fff" size={WIDTH_SIZES['36']} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.selectImageBox} onPress={selectMedia}>
+                <View style={[styles.imageContainer, {marginVertical: WIDTH_SIZES['10'], marginTop: WIDTH_SIZES['84']}]}>
+                  <Upload />
+                </View>
+                <Text
+                  style={{
+                    fontFamily: 'Rubik-Medium',
+                    textAlign: 'center',
+                    color: '#282828',
+                    fontSize: 14,
+                    marginBottom: 80,
+                  }}>
+                  Click to upload your files
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TextInput
+              ref={textInputRef}
+              inputAccessoryViewID={inputAccessoryViewID}
+              value={caption}
+              style={styles.textInputStyle}
+              maxLength={250}
+              placeholder="Write caption here..."
+              multiline
+              onChangeText={x => handleTextInput(x)}
+              onFocus={handleTextInputFocus}
+              autoCorrect={false}
+              placeholderTextColor="#B2B2B2"
+              selectionColor={selectionTwin()}
+              cursorColor={'#1e1e1e'}
+            />
+            <Text style={styles.charCount}>{`${count}/250`}</Text>
+          </View>
+
+          {forSubscribers && (
+            <View style={styles.box}>
+              <Text style={styles.heading}>Set Price</Text>
+              <Text style={styles.insideBoxTitle}>Set fee for the attachment</Text>
+
+              <View style={[styles.amountInput, {alignSelf: 'center', width: '100%'}]}>
+                <View style={{flexDirection: 'row'}}>
+                  <View style={[styles.titleback]}>
+                    <Text style={[styles.titleSetPrice]}>Set Price</Text>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginRight: responsiveWidth(2),
+                    flex: 1,
+                    gap: Platform.OS === 'ios' ? responsiveWidth(2) : 8,
+                  }}>
+                  <TextInput
+                    maxLength={6}
+                    keyboardType="number-pad"
+                    autoCorrect={false}
+                    placeholderTextColor="#B2B2B2"
+                    selectionColor={selectionTwin()}
+                    cursorColor={'#1e1e1e'}
+                    style={[styles.amountStyle]}
+                    textAlign="right"
+                    value={amountSub}
+                    onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''), true)}
+                  />
+                  <View style={{alignSelf: 'center'}}>
+                    <Paisa />
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          <View style={styles.box}>
+            <Text style={styles.heading}>Audience</Text>
+            <Text style={styles.insideBoxTitle}>Whom you want to send it to</Text>
+            <BubbleView selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+          </View>
+
+          <View style={{width: '99%', justifyContent: 'center'}}>
+            <AnimatedButton title={'Send'} buttonMargin={0} loading={loading} onPress={() => handleSendPost()} disabled={caption.trim().length === 0 && !mediaSelected} />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </GestureHandlerRootView>
   );
 };
@@ -594,8 +787,8 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(4),
     // height: 275,
   },
+
   textInputStyle: {
-    // backgroundColor: 'green',
     width: '100%',
     paddingLeft: responsiveWidth(2),
     fontFamily: 'Rubik-Regular',
@@ -603,6 +796,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#1e1e1e',
+    minHeight: 120, // Add this - adjust the value as needed (e.g., 150, 200)
+    maxHeight: 300, // Optional: add max height to prevent it from growing too large
   },
 
   charCount: {
@@ -826,11 +1021,16 @@ const styles = StyleSheet.create({
     top: WIDTH_SIZES['2'],
   },
   amountStyle: {
-    fontFamily: 'MabryPro-Bold',
+    fontFamily: 'Rubik-SemiBold',
     color: '#282828',
     marginRight: responsiveWidth(1),
     height: '100%',
     fontSize: FONT_SIZES['16'],
-    // backgroundColor : 'red'
+    width: '72%',
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 16,
+    textAlign: 'right',
+    color: '#000',
   },
 });

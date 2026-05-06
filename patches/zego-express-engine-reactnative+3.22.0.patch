@@ -1,0 +1,2156 @@
+diff --git a/node_modules/zego-express-engine-reactnative/android/.classpath b/node_modules/zego-express-engine-reactnative/android/.classpath
+new file mode 100644
+index 0000000..bbe97e5
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/.classpath
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<classpath>
++	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17/"/>
++	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
++	<classpathentry kind="output" path="bin/default"/>
++</classpath>
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/checksums.lock b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/checksums.lock
+new file mode 100644
+index 0000000..ec0b38e
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/checksums.lock differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/md5-checksums.bin b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/md5-checksums.bin
+new file mode 100644
+index 0000000..77e8828
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/md5-checksums.bin differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/sha1-checksums.bin b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/sha1-checksums.bin
+new file mode 100644
+index 0000000..95a53ef
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/checksums/sha1-checksums.bin differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/dependencies-accessors/gc.properties b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/dependencies-accessors/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/fileChanges/last-build.bin b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/fileChanges/last-build.bin differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/fileHashes/fileHashes.lock b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..07c81a4
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/gc.properties b/node_modules/zego-express-engine-reactnative/android/.gradle/8.9/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/zego-express-engine-reactnative/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..e3d2ba8
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/zego-express-engine-reactnative/android/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..ab7e837
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Wed May 06 03:27:16 IST 2026
++gradle.version=8.9
+diff --git a/node_modules/zego-express-engine-reactnative/android/.gradle/vcs-1/gc.properties b/node_modules/zego-express-engine-reactnative/android/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/zego-express-engine-reactnative/android/.project b/node_modules/zego-express-engine-reactnative/android/.project
+new file mode 100644
+index 0000000..886d138
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/.project
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>zego-express-engine-reactnative</name>
++	<comment>Project zego-express-engine-reactnative created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1778024270768</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/zego-express-engine-reactnative/android/.settings/org.eclipse.buildship.core.prefs b/node_modules/zego-express-engine-reactnative/android/.settings/org.eclipse.buildship.core.prefs
+new file mode 100644
+index 0000000..1675490
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/.settings/org.eclipse.buildship.core.prefs
+@@ -0,0 +1,2 @@
++connection.project.dir=../../../android
++eclipse.preferences.version=1
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..e9818d7
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/4cce298d15a33e1d41b02e336b254d98/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..92c327c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/b4ccfe52e1bd9eaac88629e0bb3cce98/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/results.bin b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/transformed/classes/classes_dex/classes.dex b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..de38a70
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/.transforms/e47e8c26e4d7ac29e4b757d9605aed64/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/generated/source/buildConfig/debug/im/zego/reactnative/BuildConfig.java b/node_modules/zego-express-engine-reactnative/android/build/generated/source/buildConfig/debug/im/zego/reactnative/BuildConfig.java
+new file mode 100644
+index 0000000..520da26
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/generated/source/buildConfig/debug/im/zego/reactnative/BuildConfig.java
+@@ -0,0 +1,12 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package im.zego.reactnative;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "im.zego.reactnative";
++  public static final String BUILD_TYPE = "debug";
++  // Field from default config.
++  public static final boolean IS_NEW_ARCHITECTURE_ENABLED = true;
++}
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..c2075fc
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="im.zego.reactnative" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++
++    <application>
++        <activity
++            android:name="im.zego.internal.screencapture.ZegoScreenCaptureManager$ZegoScreenCaptureAssistantActivity"
++            android:configChanges="screenSize|orientation"
++            android:exported="false"
++            android:screenOrientation="fullUser"
++            android:theme="@android:style/Theme.Translucent" />
++
++        <service
++            android:name="im.zego.internal.screencapture.ZegoScreenCaptureService"
++            android:enabled="true"
++            android:exported="false"
++            android:foregroundServiceType="mediaProjection" >
++            <intent-filter>
++                <action android:name="android.intent.action.screenshare" />
++            </intent-filter>
++        </service>
++    </application>
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..45f9503
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "im.zego.reactnative",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar
+new file mode 100644
+index 0000000..745e575
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_main_jar/debug/syncDebugLibJars/classes.jar differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..7f27147
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..8c49df2
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state
+new file mode 100644
+index 0000000..1c983fc
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug-mergeJavaRes/merge-state differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..3e7e089
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Wed May 06 15:45:22 IST 2026
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..a267ab8
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..bc0a92d
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..e7c4165
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/packageDebugAssets/merger.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+new file mode 100644
+index 0000000..ab54c8c
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/BuildConfig.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/BuildConfig.class
+new file mode 100644
+index 0000000..fce280b
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/BuildConfig.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomAudioProcessHandler.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomAudioProcessHandler.class
+new file mode 100644
+index 0000000..7edef42
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomAudioProcessHandler.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomVideoCaptureHandler.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomVideoCaptureHandler.class
+new file mode 100644
+index 0000000..a5076fe
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomVideoCaptureHandler.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomVideoProcessHandler.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomVideoProcessHandler.class
+new file mode 100644
+index 0000000..b30187a
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/IZegoReactNativeCustomVideoProcessHandler.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressEnginePackage.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressEnginePackage.class
+new file mode 100644
+index 0000000..f33bd3b
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressEnginePackage.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$1.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$1.class
+new file mode 100644
+index 0000000..83cd65f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$1.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$10.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$10.class
+new file mode 100644
+index 0000000..6f7f1d0
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$10.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$11.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$11.class
+new file mode 100644
+index 0000000..9deb052
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$11.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$12.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$12.class
+new file mode 100644
+index 0000000..7076756
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$12.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$14.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$14.class
+new file mode 100644
+index 0000000..f64bde0
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$14.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$15.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$15.class
+new file mode 100644
+index 0000000..e8611eb
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$15.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$16.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$16.class
+new file mode 100644
+index 0000000..fda6117
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$16.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$17.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$17.class
+new file mode 100644
+index 0000000..9eb1ac3
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$17.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$18.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$18.class
+new file mode 100644
+index 0000000..9bf1a93
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$18.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$19.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$19.class
+new file mode 100644
+index 0000000..82c0bf7
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$19.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$2.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$2.class
+new file mode 100644
+index 0000000..b03c71f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$2.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$21.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$21.class
+new file mode 100644
+index 0000000..66c49b1
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$21.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$22.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$22.class
+new file mode 100644
+index 0000000..7ccd0b5
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$22.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$23.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$23.class
+new file mode 100644
+index 0000000..623c523
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$23.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$24.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$24.class
+new file mode 100644
+index 0000000..91d0dfa
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$24.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$25.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$25.class
+new file mode 100644
+index 0000000..6ec2429
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$25.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$26.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$26.class
+new file mode 100644
+index 0000000..8438c38
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$26.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$27.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$27.class
+new file mode 100644
+index 0000000..0253f7a
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$27.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$28.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$28.class
+new file mode 100644
+index 0000000..04a45dd
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$28.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$29.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$29.class
+new file mode 100644
+index 0000000..555f12c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$29.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$3.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$3.class
+new file mode 100644
+index 0000000..4b1e45c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$3.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$30.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$30.class
+new file mode 100644
+index 0000000..902f99b
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$30.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$31.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$31.class
+new file mode 100644
+index 0000000..ab7346a
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$31.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$32.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$32.class
+new file mode 100644
+index 0000000..7015eb4
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$32.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$33.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$33.class
+new file mode 100644
+index 0000000..5b2dbc2
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$33.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$34.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$34.class
+new file mode 100644
+index 0000000..9eb304d
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$34.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$35.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$35.class
+new file mode 100644
+index 0000000..2cc256c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$35.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$36.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$36.class
+new file mode 100644
+index 0000000..3d14dda
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$36.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$37.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$37.class
+new file mode 100644
+index 0000000..b28a6e9
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$37.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$38.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$38.class
+new file mode 100644
+index 0000000..bed3075
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$38.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$39.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$39.class
+new file mode 100644
+index 0000000..d839d35
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$39.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$4.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$4.class
+new file mode 100644
+index 0000000..dbde2df
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$4.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$40.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$40.class
+new file mode 100644
+index 0000000..8195f3f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$40.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$41.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$41.class
+new file mode 100644
+index 0000000..c0eeb6f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$41.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$5.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$5.class
+new file mode 100644
+index 0000000..014d3be
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$5.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$6.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$6.class
+new file mode 100644
+index 0000000..5b97fb6
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$6.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$7.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$7.class
+new file mode 100644
+index 0000000..26ffef2
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$7.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$9.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$9.class
+new file mode 100644
+index 0000000..0753252
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule$9.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule.class
+new file mode 100644
+index 0000000..5a17377
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoExpressNativeModule.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoSurfaceViewManager.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoSurfaceViewManager.class
+new file mode 100644
+index 0000000..d2660d3
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoSurfaceViewManager.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoTextureViewManager.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoTextureViewManager.class
+new file mode 100644
+index 0000000..2bdfa17
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/RCTZegoTextureViewManager.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomAudioProcessManager.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomAudioProcessManager.class
+new file mode 100644
+index 0000000..b820ae5
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomAudioProcessManager.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoCaptureManager.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoCaptureManager.class
+new file mode 100644
+index 0000000..ad2f9d9
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoCaptureManager.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoProcessManager$1.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoProcessManager$1.class
+new file mode 100644
+index 0000000..6d14e53
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoProcessManager$1.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoProcessManager.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoProcessManager.class
+new file mode 100644
+index 0000000..8fc78f9
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoCustomVideoProcessManager.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoSurfaceView.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoSurfaceView.class
+new file mode 100644
+index 0000000..5811a9f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoSurfaceView.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoUtils.class b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoUtils.class
+new file mode 100644
+index 0000000..1dcb716
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/im/zego/reactnative/ZegoUtils.class differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..14b72a9
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,45 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="im.zego.reactnative" >
++4
++5    <uses-sdk android:minSdkVersion="24" />
++6
++7    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++7-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:4:5-76
++7-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:4:22-74
++8
++9    <application>
++9-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:6:5-22:19
++10        <activity
++10-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:7:9-12:64
++11            android:name="im.zego.internal.screencapture.ZegoScreenCaptureManager$ZegoScreenCaptureAssistantActivity"
++11-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:8:13-118
++12            android:configChanges="screenSize|orientation"
++12-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:10:13-59
++13            android:exported="false"
++13-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:9:13-37
++14            android:screenOrientation="fullUser"
++14-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:11:13-49
++15            android:theme="@android:style/Theme.Translucent" />
++15-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:12:13-61
++16
++17        <service
++17-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:13:9-21:19
++18            android:name="im.zego.internal.screencapture.ZegoScreenCaptureService"
++18-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:14:13-83
++19            android:enabled="true"
++19-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:15:13-35
++20            android:exported="false"
++20-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:16:13-37
++21            android:foregroundServiceType="mediaProjection" >
++21-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:17:13-60
++22            <intent-filter>
++22-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:18:13-20:29
++23                <action android:name="android.intent.action.screenshare" />
++23-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:19:17-76
++23-->/Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:19:25-73
++24            </intent-filter>
++25        </service>
++26    </application>
++27
++28</manifest>
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-zego-express-engine-reactnative.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-zego-express-engine-reactnative.jar
+new file mode 100644
+index 0000000..15cb0ec
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/feature-zego-express-engine-reactnative.jar differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..c2075fc
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="im.zego.reactnative" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++
++    <application>
++        <activity
++            android:name="im.zego.internal.screencapture.ZegoScreenCaptureManager$ZegoScreenCaptureAssistantActivity"
++            android:configChanges="screenSize|orientation"
++            android:exported="false"
++            android:screenOrientation="fullUser"
++            android:theme="@android:style/Theme.Translucent" />
++
++        <service
++            android:name="im.zego.internal.screencapture.ZegoScreenCaptureService"
++            android:enabled="true"
++            android:exported="false"
++            android:foregroundServiceType="mediaProjection" >
++            <intent-filter>
++                <action android:name="android.intent.action.screenshare" />
++            </intent-filter>
++        </service>
++    </application>
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/zego-express-engine-reactnative/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/zego-express-engine-reactnative/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..6d99c91
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/zego-express-engine-reactnative/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..3a37011
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1 @@
++im.zego.reactnative
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/outputs/aar/zego-express-engine-reactnative-debug.aar b/node_modules/zego-express-engine-reactnative/android/build/outputs/aar/zego-express-engine-reactnative-debug.aar
+new file mode 100644
+index 0000000..fb12985
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/outputs/aar/zego-express-engine-reactnative-debug.aar differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/zego-express-engine-reactnative/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..e5403d4
+--- /dev/null
++++ b/node_modules/zego-express-engine-reactnative/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,51 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:1:1-23:12
++INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:1:1-23:12
++	package
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:2:11-40
++		INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
++	xmlns:android
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:1:11-69
++uses-permission#android.permission.FOREGROUND_SERVICE
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:4:5-76
++	android:name
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:4:22-74
++application
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:6:5-22:19
++activity#im.zego.internal.screencapture.ZegoScreenCaptureManager$ZegoScreenCaptureAssistantActivity
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:7:9-12:64
++	android:screenOrientation
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:11:13-49
++	android:exported
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:9:13-37
++	android:configChanges
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:10:13-59
++	android:theme
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:12:13-61
++	android:name
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:8:13-118
++service#im.zego.internal.screencapture.ZegoScreenCaptureService
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:13:9-21:19
++	android:enabled
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:15:13-35
++	android:exported
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:16:13-37
++	android:foregroundServiceType
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:17:13-60
++	android:name
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:14:13-83
++intent-filter#action:name:android.intent.action.screenshare
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:18:13-20:29
++action#android.intent.action.screenshare
++ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:19:17-76
++	android:name
++		ADDED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml:19:25-73
++uses-sdk
++INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
++INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from /Users/giniedigital/Documents/fahdu79/node_modules/zego-express-engine-reactnative/android/src/main/AndroidManifest.xml
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressEnginePackage.class.uniqueId24 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressEnginePackage.class.uniqueId24
+new file mode 100644
+index 0000000..f33bd3b
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressEnginePackage.class.uniqueId24 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$1.class.uniqueId3 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$1.class.uniqueId3
+new file mode 100644
+index 0000000..83cd65f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$1.class.uniqueId3 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$10.class.uniqueId28 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$10.class.uniqueId28
+new file mode 100644
+index 0000000..e12df77
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$10.class.uniqueId28 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$11.class.uniqueId16 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$11.class.uniqueId16
+new file mode 100644
+index 0000000..bdc3653
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$11.class.uniqueId16 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$12.class.uniqueId32 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$12.class.uniqueId32
+new file mode 100644
+index 0000000..9daa925
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$12.class.uniqueId32 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$14.class.uniqueId4 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$14.class.uniqueId4
+new file mode 100644
+index 0000000..d39878b
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$14.class.uniqueId4 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$15.class.uniqueId22 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$15.class.uniqueId22
+new file mode 100644
+index 0000000..963776a
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$15.class.uniqueId22 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$16.class.uniqueId18 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$16.class.uniqueId18
+new file mode 100644
+index 0000000..310f399
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$16.class.uniqueId18 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$17.class.uniqueId36 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$17.class.uniqueId36
+new file mode 100644
+index 0000000..63d02ad
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$17.class.uniqueId36 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$18.class.uniqueId9 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$18.class.uniqueId9
+new file mode 100644
+index 0000000..9e6ce9f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$18.class.uniqueId9 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$19.class.uniqueId7 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$19.class.uniqueId7
+new file mode 100644
+index 0000000..21ec654
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$19.class.uniqueId7 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$2.class.uniqueId31 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$2.class.uniqueId31
+new file mode 100644
+index 0000000..3cb74db
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$2.class.uniqueId31 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$21.class.uniqueId11 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$21.class.uniqueId11
+new file mode 100644
+index 0000000..59cc48d
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$21.class.uniqueId11 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$22.class.uniqueId39 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$22.class.uniqueId39
+new file mode 100644
+index 0000000..7e137f8
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$22.class.uniqueId39 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$23.class.uniqueId20 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$23.class.uniqueId20
+new file mode 100644
+index 0000000..83c7a5f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$23.class.uniqueId20 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$24.class.uniqueId0 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$24.class.uniqueId0
+new file mode 100644
+index 0000000..fb1a337
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$24.class.uniqueId0 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$25.class.uniqueId23 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$25.class.uniqueId23
+new file mode 100644
+index 0000000..ddab94b
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$25.class.uniqueId23 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$26.class.uniqueId21 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$26.class.uniqueId21
+new file mode 100644
+index 0000000..ceabd51
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$26.class.uniqueId21 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$27.class.uniqueId38 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$27.class.uniqueId38
+new file mode 100644
+index 0000000..d8546fe
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$27.class.uniqueId38 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$28.class.uniqueId13 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$28.class.uniqueId13
+new file mode 100644
+index 0000000..5ff7931
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$28.class.uniqueId13 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$29.class.uniqueId5 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$29.class.uniqueId5
+new file mode 100644
+index 0000000..97e0ac1
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$29.class.uniqueId5 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$3.class.uniqueId10 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$3.class.uniqueId10
+new file mode 100644
+index 0000000..6221bac
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$3.class.uniqueId10 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$30.class.uniqueId27 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$30.class.uniqueId27
+new file mode 100644
+index 0000000..0537277
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$30.class.uniqueId27 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$31.class.uniqueId8 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$31.class.uniqueId8
+new file mode 100644
+index 0000000..14dd250
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$31.class.uniqueId8 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$32.class.uniqueId37 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$32.class.uniqueId37
+new file mode 100644
+index 0000000..056c282
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$32.class.uniqueId37 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$33.class.uniqueId25 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$33.class.uniqueId25
+new file mode 100644
+index 0000000..5309671
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$33.class.uniqueId25 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$34.class.uniqueId1 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$34.class.uniqueId1
+new file mode 100644
+index 0000000..d141360
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$34.class.uniqueId1 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$35.class.uniqueId26 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$35.class.uniqueId26
+new file mode 100644
+index 0000000..d27ed21
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$35.class.uniqueId26 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$36.class.uniqueId19 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$36.class.uniqueId19
+new file mode 100644
+index 0000000..0aeb26d
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$36.class.uniqueId19 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$37.class.uniqueId33 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$37.class.uniqueId33
+new file mode 100644
+index 0000000..b51f605
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$37.class.uniqueId33 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$38.class.uniqueId15 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$38.class.uniqueId15
+new file mode 100644
+index 0000000..d04051c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$38.class.uniqueId15 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$39.class.uniqueId6 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$39.class.uniqueId6
+new file mode 100644
+index 0000000..66c371a
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$39.class.uniqueId6 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$4.class.uniqueId35 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$4.class.uniqueId35
+new file mode 100644
+index 0000000..b09335c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$4.class.uniqueId35 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$40.class.uniqueId29 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$40.class.uniqueId29
+new file mode 100644
+index 0000000..3e4ce4f
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$40.class.uniqueId29 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$41.class.uniqueId12 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$41.class.uniqueId12
+new file mode 100644
+index 0000000..e0a9550
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$41.class.uniqueId12 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$5.class.uniqueId17 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$5.class.uniqueId17
+new file mode 100644
+index 0000000..deaf387
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$5.class.uniqueId17 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$6.class.uniqueId2 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$6.class.uniqueId2
+new file mode 100644
+index 0000000..ee0207d
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$6.class.uniqueId2 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$7.class.uniqueId30 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$7.class.uniqueId30
+new file mode 100644
+index 0000000..20d6417
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$7.class.uniqueId30 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$9.class.uniqueId34 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$9.class.uniqueId34
+new file mode 100644
+index 0000000..44b259a
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule$9.class.uniqueId34 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule.class.uniqueId14 b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule.class.uniqueId14
+new file mode 100644
+index 0000000..ffe2220
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/RCTZegoExpressNativeModule.class.uniqueId14 differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..30b220c
+Binary files /dev/null and b/node_modules/zego-express-engine-reactnative/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/zego-express-engine-reactnative/android/src/main/java/im/zego/reactnative/RCTZegoExpressNativeModule.java b/node_modules/zego-express-engine-reactnative/android/src/main/java/im/zego/reactnative/RCTZegoExpressNativeModule.java
+index 1abce24..66801db 100644
+--- a/node_modules/zego-express-engine-reactnative/android/src/main/java/im/zego/reactnative/RCTZegoExpressNativeModule.java
++++ b/node_modules/zego-express-engine-reactnative/android/src/main/java/im/zego/reactnative/RCTZegoExpressNativeModule.java
+@@ -235,67 +235,71 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     }
+ 
+     private void sendEvent(String eventName,
+-                           @Nullable WritableMap params) {
++            @Nullable WritableMap params) {
+         this.reactContext
+                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                 .emit(Prefix + eventName, params);
+     }
+ 
+-    private WritableMap getCallbackArgs(Object ...objects) {
++    private WritableMap getCallbackArgs(Object... objects) {
+         WritableMap map = Arguments.createMap();
+         WritableArray data = Arguments.createArray();
+-        for(Object obj : objects) {
+-            if(obj instanceof Integer) {
++        for (Object obj : objects) {
++            if (obj instanceof Integer) {
+                 data.pushInt((Integer) obj);
+-            } else if(obj instanceof Long) {
++            } else if (obj instanceof Long) {
+                 data.pushInt(((Long) obj).intValue());
+-            } else if(obj instanceof String) {
++            } else if (obj instanceof String) {
+                 data.pushString((String) obj);
+-            } else if(obj instanceof Double) {
+-                data.pushDouble((Double)obj);
+-            } else if(obj instanceof Float) {
+-                data.pushDouble((Float)obj);
+-            } else if(obj instanceof Boolean) {
+-                data.pushBoolean((Boolean)obj);
+-            } else if(obj instanceof ReadableArray) {
++            } else if (obj instanceof Double) {
++                data.pushDouble((Double) obj);
++            } else if (obj instanceof Float) {
++                data.pushDouble((Float) obj);
++            } else if (obj instanceof Boolean) {
++                data.pushBoolean((Boolean) obj);
++            } else if (obj instanceof ReadableArray) {
+                 data.pushArray((ReadableArray) obj);
+-            } else if(obj instanceof ReadableMap) {
+-                data.pushMap((ReadableMap)obj);
++            } else if (obj instanceof ReadableMap) {
++                data.pushMap((ReadableMap) obj);
+             }
+         }
+-        /*if(data.size() == 0) {
+-            data.pushNull();
+-        }*/
++        /*
++         * if(data.size() == 0) {
++         * data.pushNull();
++         * }
++         */
+         map.putArray("data", data);
+ 
+         return map;
+     }
+ 
+-    private WritableMap getMediaPlayerCallbackArgs(int index, Object ...objects) {
++    private WritableMap getMediaPlayerCallbackArgs(int index, Object... objects) {
+         WritableMap map = Arguments.createMap();
+         WritableArray data = Arguments.createArray();
+-        for(Object obj : objects) {
+-            if(obj instanceof Integer) {
++        for (Object obj : objects) {
++            if (obj instanceof Integer) {
+                 data.pushInt((Integer) obj);
+-            } else if(obj instanceof Long) {
++            } else if (obj instanceof Long) {
+                 data.pushInt(((Long) obj).intValue());
+-            } else if(obj instanceof String) {
++            } else if (obj instanceof String) {
+                 data.pushString((String) obj);
+-            } else if(obj instanceof Double) {
+-                data.pushDouble((Double)obj);
+-            } else if(obj instanceof Float) {
+-                data.pushDouble((Float)obj);
+-            } else if(obj instanceof Boolean) {
+-                data.pushBoolean((Boolean)obj);
+-            } else if(obj instanceof ReadableArray) {
++            } else if (obj instanceof Double) {
++                data.pushDouble((Double) obj);
++            } else if (obj instanceof Float) {
++                data.pushDouble((Float) obj);
++            } else if (obj instanceof Boolean) {
++                data.pushBoolean((Boolean) obj);
++            } else if (obj instanceof ReadableArray) {
+                 data.pushArray((ReadableArray) obj);
+-            } else if(obj instanceof ReadableMap) {
+-                data.pushMap((ReadableMap)obj);
++            } else if (obj instanceof ReadableMap) {
++                data.pushMap((ReadableMap) obj);
+             }
+         }
+-        /*if(data.size() == 0) {
+-            data.pushNull();
+-        }*/
++        /*
++         * if(data.size() == 0) {
++         * data.pushNull();
++         * }
++         */
+         map.putArray("data", data);
+         map.putInt("idx", index);
+         return map;
+@@ -303,7 +307,9 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     private void reportPluginInfo() {
+ 
+-        if (pluginReported) { return; }
++        if (pluginReported) {
++            return;
++        }
+ 
+         pluginReported = true;
+ 
+@@ -377,7 +383,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+         ZegoExpressEngine.setApiCalledCallback(zegoApiCalledEventHandler);
+ 
+-        ZegoExpressEngine.createEngine(appID.longValue(), appSign, isTestEnv, ZegoScenario.getZegoScenario(scenario), (Application) this.reactContext.getApplicationContext(), zegoEventHandler);
++        ZegoExpressEngine.createEngine(appID.longValue(), appSign, isTestEnv, ZegoScenario.getZegoScenario(scenario),
++                (Application) this.reactContext.getApplicationContext(), zegoEventHandler);
+ 
+         kIsInited = true;
+ 
+@@ -386,7 +393,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void destroyEngine(final Promise promise) {
+-        if(kIsInited) {
++        if (kIsInited) {
+             ZegoExpressEngine.destroyEngine(new IZegoDestroyCompletionCallback() {
+                 @Override
+                 public void onDestroyCompletion() {
+@@ -407,10 +414,10 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+         ZegoEngineConfig configObj = new ZegoEngineConfig();
+         ReadableMap logConfig = config.getMap("logConfig");
+-        if(logConfig != null) {
++        if (logConfig != null) {
+             ZegoLogConfig logConfigObj = new ZegoLogConfig();
+             String logPath = logConfig.getString("logPath");
+-            if(logPath != null) {
++            if (logPath != null) {
+                 logConfigObj.logPath = logPath;
+             }
+             if (logConfig.hasKey("logSize")) {
+@@ -420,9 +427,9 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         ReadableMap advancedConfig = config.getMap("advancedConfig");
+-        if(advancedConfig != null) {
++        if (advancedConfig != null) {
+             HashMap<String, Object> adMap = advancedConfig.toHashMap();
+-            for(Map.Entry<String, Object> entry: adMap.entrySet()) {
++            for (Map.Entry<String, Object> entry : adMap.entrySet()) {
+                 if (entry.getKey().equals("destroy_when_killed")) {
+                     destroyWhenKilled = entry.getValue().toString().equals("true");
+                 } else {
+@@ -451,7 +458,6 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         promise.resolve(null);
+     }
+ 
+-
+     @ReactMethod
+     public void callExperimentalAPI(String params, Promise promise) {
+         String result = ZegoExpressEngine.getEngine().callExperimentalAPI(params);
+@@ -464,7 +470,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         ZegoUser userObj = new ZegoUser(user.getString("userID"), user.getString("userName"));
+ 
+         ZegoRoomConfig roomConfigObj = new ZegoRoomConfig();
+-        if(config != null) {
++        if (config != null) {
+             if (config.hasKey("isUserStatusNotify")) {
+                 roomConfigObj.isUserStatusNotify = config.getBoolean("isUserStatusNotify");
+             }
+@@ -554,14 +560,15 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void setStreamExtraInfo(String extraInfo, int channel, final Promise promise) {
+-        ZegoExpressEngine.getEngine().setStreamExtraInfo(extraInfo, ZegoPublishChannel.getZegoPublishChannel(channel), new IZegoPublisherSetStreamExtraInfoCallback() {
+-            @Override
+-            public void onPublisherSetStreamExtraInfoResult(int i) {
+-                WritableMap returnMap = Arguments.createMap();
+-                returnMap.putInt("errorCode", i);
+-                promise.resolve(returnMap);
+-            }
+-        });
++        ZegoExpressEngine.getEngine().setStreamExtraInfo(extraInfo, ZegoPublishChannel.getZegoPublishChannel(channel),
++                new IZegoPublisherSetStreamExtraInfoCallback() {
++                    @Override
++                    public void onPublisherSetStreamExtraInfoResult(int i) {
++                        WritableMap returnMap = Arguments.createMap();
++                        returnMap.putInt("errorCode", i);
++                        promise.resolve(returnMap);
++                    }
++                });
+     }
+ 
+     @ReactMethod
+@@ -593,11 +600,20 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         if (view != null) {
+             final int viewTag = view.getInt("reactTag");
+             if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+-                UIManager uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC);
+-                View nativeView = uiManager.resolveView(viewTag);
+-                ZegoCanvas canvas = createCanvas(nativeView, view);
+-                if (ZegoExpressEngine.getEngine() != null) {
+-                    ZegoExpressEngine.getEngine().startPreview(canvas, ZegoPublishChannel.getZegoPublishChannel(channel));
++                try {
++                    UIManager uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC);
++                    View nativeView = uiManager.resolveView(viewTag);
++                    if (nativeView != null) {
++                        ZegoCanvas canvas = createCanvas(nativeView, view);
++                        if (ZegoExpressEngine.getEngine() != null) {
++                            ZegoExpressEngine.getEngine().startPreview(canvas,
++                                    ZegoPublishChannel.getZegoPublishChannel(channel));
++                        }
++                    } else {
++                        android.util.Log.w("ZegoExpressModule", "nativeView is null for reactTag: " + viewTag);
++                    }
++                } catch (Exception e) {
++                    android.util.Log.e("ZegoExpressModule", "startPreview failed: " + e.getMessage());
+                 }
+                 promise.resolve(null);
+             } else {
+@@ -608,7 +624,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                         View nativeView = nativeViewHierarchyManager.resolveView(viewTag);
+                         ZegoCanvas canvas = createCanvas(nativeView, view);
+                         if (ZegoExpressEngine.getEngine() != null) {
+-                            ZegoExpressEngine.getEngine().startPreview(canvas, ZegoPublishChannel.getZegoPublishChannel(channel));
++                            ZegoExpressEngine.getEngine().startPreview(canvas,
++                                    ZegoPublishChannel.getZegoPublishChannel(channel));
+                         }
+                         promise.resolve(null);
+                     }
+@@ -641,14 +658,15 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void removePublishCdnUrl(String streamID, String targetURL, final Promise promise) {
+-        ZegoExpressEngine.getEngine().removePublishCdnUrl(streamID, targetURL, new IZegoPublisherUpdateCdnUrlCallback() {
+-            @Override
+-            public void onPublisherUpdateCdnUrlResult(int i) {
+-                WritableMap returnMap = Arguments.createMap();
+-                returnMap.putInt("errorCode", i);
+-                promise.resolve(returnMap);
+-            }
+-        });
++        ZegoExpressEngine.getEngine().removePublishCdnUrl(streamID, targetURL,
++                new IZegoPublisherUpdateCdnUrlCallback() {
++                    @Override
++                    public void onPublisherUpdateCdnUrlResult(int i) {
++                        WritableMap returnMap = Arguments.createMap();
++                        returnMap.putInt("errorCode", i);
++                        promise.resolve(returnMap);
++                    }
++                });
+     }
+ 
+     @ReactMethod
+@@ -662,7 +680,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             cdnConfig.quicVersion = configMap.getString("quicVersion");
+         }
+ 
+-        ZegoExpressEngine.getEngine().enablePublishDirectToCDN(enable, cdnConfig, ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().enablePublishDirectToCDN(enable, cdnConfig,
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+         promise.resolve(null);
+     }
+ 
+@@ -684,7 +703,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void getVideoConfig(int channel, Promise promise) {
+-        ZegoVideoConfig config = ZegoExpressEngine.getEngine().getVideoConfig(ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoVideoConfig config = ZegoExpressEngine.getEngine()
++                .getVideoConfig(ZegoPublishChannel.getZegoPublishChannel(channel));
+ 
+         WritableMap map = Arguments.createMap();
+         map.putInt("captureWidth", config.captureWidth);
+@@ -700,14 +720,16 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void setVideoMirrorMode(int mode, int channel, Promise promise) {
+-        ZegoExpressEngine.getEngine().setVideoMirrorMode(ZegoVideoMirrorMode.getZegoVideoMirrorMode(mode), ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().setVideoMirrorMode(ZegoVideoMirrorMode.getZegoVideoMirrorMode(mode),
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+ 
+         promise.resolve(null);
+     }
+ 
+     @ReactMethod
+     public void setAppOrientation(int orientation, int channel, Promise promise) {
+-        ZegoExpressEngine.getEngine().setAppOrientation(ZegoOrientation.getZegoOrientation(orientation), ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().setAppOrientation(ZegoOrientation.getZegoOrientation(orientation),
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+ 
+         promise.resolve(null);
+     }
+@@ -814,7 +836,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void isVideoEncoderSupported(int codecID, Promise promise) {
+-        promise.resolve(ZegoExpressEngine.getEngine().isVideoEncoderSupported(ZegoVideoCodecID.getZegoVideoCodecID(codecID)));
++        promise.resolve(
++                ZegoExpressEngine.getEngine().isVideoEncoderSupported(ZegoVideoCodecID.getZegoVideoCodecID(codecID)));
+     }
+ 
+     @ReactMethod
+@@ -843,8 +866,10 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             ZegoBackgroundConfig backgroundConfig = new ZegoBackgroundConfig();
+             ReadableMap backgroundConfigMap = config.getMap("backgroundConfig");
+             if (backgroundConfigMap != null) {
+-                backgroundConfig.processType = ZegoBackgroundProcessType.getZegoBackgroundProcessType(backgroundConfigMap.getInt("processType"));
+-                backgroundConfig.blurLevel = ZegoBackgroundBlurLevel.getZegoBackgroundBlurLevel(backgroundConfigMap.getInt("blurLevel"));
++                backgroundConfig.processType = ZegoBackgroundProcessType
++                        .getZegoBackgroundProcessType(backgroundConfigMap.getInt("processType"));
++                backgroundConfig.blurLevel = ZegoBackgroundBlurLevel
++                        .getZegoBackgroundBlurLevel(backgroundConfigMap.getInt("blurLevel"));
+                 backgroundConfig.color = backgroundConfigMap.getInt("color");
+                 backgroundConfig.imageURL = backgroundConfigMap.getString("imageURL");
+                 backgroundConfig.videoURL = backgroundConfigMap.getString("videoURL");
+@@ -852,10 +877,12 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 segmentationConfig.backgroundConfig = backgroundConfig;
+             }
+ 
+-            segmentationConfig.objectSegmentationType = ZegoObjectSegmentationType.getZegoObjectSegmentationType(config.getInt("objectSegmentationType"));
++            segmentationConfig.objectSegmentationType = ZegoObjectSegmentationType
++                    .getZegoObjectSegmentationType(config.getInt("objectSegmentationType"));
+         }
+ 
+-        ZegoExpressEngine.getEngine().enableVideoObjectSegmentation(enable, segmentationConfig, ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().enableVideoObjectSegmentation(enable, segmentationConfig,
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+ 
+         promise.resolve(null);
+     }
+@@ -863,20 +890,23 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void enableAlphaChannelVideoEncoder(boolean enable, int alphaLayout, int channel, Promise promise) {
+ 
+-        ZegoExpressEngine.getEngine().enableAlphaChannelVideoEncoder(enable, ZegoAlphaLayoutType.getZegoAlphaLayoutType(alphaLayout), ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().enableAlphaChannelVideoEncoder(enable,
++                ZegoAlphaLayoutType.getZegoAlphaLayoutType(alphaLayout),
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+ 
+         promise.resolve(null);
+     }
+ 
+     @ReactMethod
+-    public void startPlayingStream(final String streamID, final ReadableMap view, final ReadableMap config, final Promise promise) {
++    public void startPlayingStream(final String streamID, final ReadableMap view, final ReadableMap config,
++            final Promise promise) {
+ 
+         ZegoPlayerConfig configObj = null;
+ 
+-        if(config != null) {
++        if (config != null) {
+             configObj = new ZegoPlayerConfig();
+             ZegoCDNConfig cdnConfigObj;
+-            if(config.hasKey("cdnConfig")) {
++            if (config.hasKey("cdnConfig")) {
+                 cdnConfigObj = new ZegoCDNConfig();
+                 ReadableMap cdnConfig = config.getMap("cdnConfig");
+                 if (cdnConfig != null) {
+@@ -892,7 +922,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 configObj.videoCodecID = ZegoVideoCodecID.getZegoVideoCodecID(config.getInt("videoCodecID"));
+             }
+             if (config.hasKey("resourceMode")) {
+-                configObj.resourceMode = ZegoStreamResourceMode.getZegoStreamResourceMode(config.getInt("resourceMode"));
++                configObj.resourceMode = ZegoStreamResourceMode
++                        .getZegoStreamResourceMode(config.getInt("resourceMode"));
+             }
+         }
+ 
+@@ -950,7 +981,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void setPlayStreamVideoType(String streamID, int streamType, Promise promise) {
+-        ZegoExpressEngine.getEngine().setPlayStreamVideoType(streamID, ZegoVideoStreamType.getZegoVideoStreamType(streamType));
++        ZegoExpressEngine.getEngine().setPlayStreamVideoType(streamID,
++                ZegoVideoStreamType.getZegoVideoStreamType(streamType));
+ 
+         promise.resolve(null);
+     }
+@@ -992,10 +1024,10 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void isVideoDecoderSupported(int codecID, Promise promise) {
+-        promise.resolve(ZegoExpressEngine.getEngine().isVideoDecoderSupported(ZegoVideoCodecID.getZegoVideoCodecID(codecID)));
++        promise.resolve(
++                ZegoExpressEngine.getEngine().isVideoDecoderSupported(ZegoVideoCodecID.getZegoVideoCodecID(codecID)));
+     }
+ 
+-
+     @ReactMethod
+     public void muteMicrophone(boolean mute, Promise promise) {
+         ZegoExpressEngine.getEngine().muteMicrophone(mute);
+@@ -1176,10 +1208,10 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     public void sendCustomCommand(String roomID, String command, ReadableArray toUserListArray, final Promise promise) {
+ 
+         ArrayList<ZegoUser> toUserList = null;
+-        if(toUserListArray != null && toUserListArray.size() > 0) {
++        if (toUserListArray != null && toUserListArray.size() > 0) {
+             toUserList = new ArrayList<>();
+-            for (Object userMapObj: toUserListArray.toArrayList()) {
+-                HashMap<String, Object> userMap = (HashMap<String, Object>)userMapObj;
++            for (Object userMapObj : toUserListArray.toArrayList()) {
++                HashMap<String, Object> userMap = (HashMap<String, Object>) userMapObj;
+                 String userID = (String) userMap.get("userID");
+                 String userName = (String) userMap.get("userName");
+                 ZegoUser user = new ZegoUser(userID, userName);
+@@ -1187,14 +1219,15 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             }
+         }
+ 
+-        ZegoExpressEngine.getEngine().sendCustomCommand(roomID, command, toUserList, new IZegoIMSendCustomCommandCallback() {
+-            @Override
+-            public void onIMSendCustomCommandResult(int errorCode) {
+-                WritableMap returnMap = Arguments.createMap();
+-                returnMap.putInt("errorCode", errorCode);
+-                promise.resolve(returnMap);
+-            }
+-        });
++        ZegoExpressEngine.getEngine().sendCustomCommand(roomID, command, toUserList,
++                new IZegoIMSendCustomCommandCallback() {
++                    @Override
++                    public void onIMSendCustomCommandResult(int errorCode) {
++                        WritableMap returnMap = Arguments.createMap();
++                        returnMap.putInt("errorCode", errorCode);
++                        promise.resolve(returnMap);
++                    }
++                });
+     }
+ 
+     @ReactMethod
+@@ -1210,7 +1243,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             }
+         }
+         ZegoExpressEngine.getEngine().setDataRecordEventHandler(zegoDataRecordEventHandler);
+-        ZegoExpressEngine.getEngine().startRecordingCapturedData(recordConfig, ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().startRecordingCapturedData(recordConfig,
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+ 
+         promise.resolve(null);
+     }
+@@ -1230,11 +1264,12 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         // MixerInput
+         ReadableArray inputListMap = taskMap.getArray("inputList");
+         if (inputListMap != null) {
+-            ArrayList<ZegoMixerInput> inputListObject= new ArrayList<>();
+-            for (Object inputMapObj: inputListMap.toArrayList()) {
+-                HashMap<String, Object> inputMap = (HashMap<String, Object>)inputMapObj;
++            ArrayList<ZegoMixerInput> inputListObject = new ArrayList<>();
++            for (Object inputMapObj : inputListMap.toArrayList()) {
++                HashMap<String, Object> inputMap = (HashMap<String, Object>) inputMapObj;
+                 String streamID = (String) inputMap.get("streamID");
+-                int contentType = ZegoUtils.intValue((Number) inputMap.get("contentType"));;
++                int contentType = ZegoUtils.intValue((Number) inputMap.get("contentType"));
++                ;
+                 HashMap rectMap = (HashMap) inputMap.get("layout");
+                 int left = ZegoUtils.intValue((Number) rectMap.get("x"));
+                 int top = ZegoUtils.intValue((Number) rectMap.get("y"));
+@@ -1242,7 +1277,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 int bottom = top + ZegoUtils.intValue((Number) rectMap.get("height"));
+                 Rect rect = new Rect(left, top, right, bottom);
+                 int soundLevelID = ZegoUtils.intValue((Number) inputMap.get("soundLevelID"));
+-                ZegoMixerInput inputObject = new ZegoMixerInput(streamID, ZegoMixerInputContentType.getZegoMixerInputContentType(contentType), rect, soundLevelID);
++                ZegoMixerInput inputObject = new ZegoMixerInput(streamID,
++                        ZegoMixerInputContentType.getZegoMixerInputContentType(contentType), rect, soundLevelID);
+                 inputListObject.add(inputObject);
+             }
+             taskObject.setInputList(inputListObject);
+@@ -1252,8 +1288,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         ReadableArray outputListMap = taskMap.getArray("outputList");
+         if (outputListMap != null) {
+             ArrayList<ZegoMixerOutput> outputListObject = new ArrayList<>();
+-            for (Object outputMapObj: outputListMap.toArrayList()) {
+-                HashMap<String, Object> outputMap = (HashMap<String, Object>)outputMapObj;
++            for (Object outputMapObj : outputListMap.toArrayList()) {
++                HashMap<String, Object> outputMap = (HashMap<String, Object>) outputMapObj;
+                 String target = (String) outputMap.get("target");
+                 ZegoMixerOutput outputObject = new ZegoMixerOutput(target);
+                 outputListObject.add(outputObject);
+@@ -1288,34 +1324,40 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         // Watermark
+-        /*HashMap<String, Object> watermarkMap = call.argument("watermark");
+-        if (watermarkMap != null && !watermarkMap.isEmpty()) {
+-            String imageURL = (String) watermarkMap.get("imageURL");
+-            if (imageURL != null && imageURL.length() > 0) {
+-                int left = ZegoUtils.intValue((Number) watermarkMap.get("left"));
+-                int top = ZegoUtils.intValue((Number) watermarkMap.get("top"));
+-                int right = ZegoUtils.intValue((Number) watermarkMap.get("right"));
+-                int bottom = ZegoUtils.intValue((Number) watermarkMap.get("bottom"));
+-                Rect rect = new Rect(left, top, right, bottom);
+-                ZegoWatermark watermarkObject = new ZegoWatermark(imageURL, rect);
+-
+-                taskObject.setWatermark(watermarkObject);
+-            }
+-        }*/
++        /*
++         * HashMap<String, Object> watermarkMap = call.argument("watermark");
++         * if (watermarkMap != null && !watermarkMap.isEmpty()) {
++         * String imageURL = (String) watermarkMap.get("imageURL");
++         * if (imageURL != null && imageURL.length() > 0) {
++         * int left = ZegoUtils.intValue((Number) watermarkMap.get("left"));
++         * int top = ZegoUtils.intValue((Number) watermarkMap.get("top"));
++         * int right = ZegoUtils.intValue((Number) watermarkMap.get("right"));
++         * int bottom = ZegoUtils.intValue((Number) watermarkMap.get("bottom"));
++         * Rect rect = new Rect(left, top, right, bottom);
++         * ZegoWatermark watermarkObject = new ZegoWatermark(imageURL, rect);
++         * 
++         * taskObject.setWatermark(watermarkObject);
++         * }
++         * }
++         */
+ 
+         // Background Image
+-        /*String backgroundImageURL = call.argument("backgroundImageURL");
+-        if (backgroundImageURL != null && backgroundImageURL.length() > 0) {
+-            taskObject.setBackgroundImageURL(backgroundImageURL);
+-        }*/
++        /*
++         * String backgroundImageURL = call.argument("backgroundImageURL");
++         * if (backgroundImageURL != null && backgroundImageURL.length() > 0) {
++         * taskObject.setBackgroundImageURL(backgroundImageURL);
++         * }
++         */
+ 
+         // Enable SoundLevel
+         boolean enableSoundLevel = taskMap.getBoolean("enableSoundLevel");
+         taskObject.enableSoundLevel(enableSoundLevel);
+ 
+         // Set AdvancedConfig
+-        /*HashMap<String, String> advancedConfig = call.argument("advancedConfig");
+-        taskObject.setAdvancedConfig(advancedConfig);*/
++        /*
++         * HashMap<String, String> advancedConfig = call.argument("advancedConfig");
++         * taskObject.setAdvancedConfig(advancedConfig);
++         */
+ 
+         ZegoExpressEngine.getEngine().startMixerTask(taskObject, new IZegoMixerStartCallback() {
+             @Override
+@@ -1336,18 +1378,20 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         // MixerInput
+         ReadableArray inputListMap = taskMap.getArray("inputList");
+         if (inputListMap != null) {
+-            ArrayList<ZegoMixerInput> inputListObject= new ArrayList<>();
+-            for (Object inputMapObj: inputListMap.toArrayList()) {
+-                HashMap<String, Object> inputMap = (HashMap<String, Object>)inputMapObj;
++            ArrayList<ZegoMixerInput> inputListObject = new ArrayList<>();
++            for (Object inputMapObj : inputListMap.toArrayList()) {
++                HashMap<String, Object> inputMap = (HashMap<String, Object>) inputMapObj;
+                 String streamID = (String) inputMap.get("streamID");
+-                int contentType = ZegoUtils.intValue((Number) inputMap.get("contentType"));;
++                int contentType = ZegoUtils.intValue((Number) inputMap.get("contentType"));
++                ;
+                 int left = ZegoUtils.intValue((Number) inputMap.get("x"));
+                 int top = ZegoUtils.intValue((Number) inputMap.get("y"));
+                 int right = left + ZegoUtils.intValue((Number) inputMap.get("width"));
+                 int bottom = top + ZegoUtils.intValue((Number) inputMap.get("height"));
+                 Rect rect = new Rect(left, top, right, bottom);
+                 int soundLevelID = ZegoUtils.intValue((Number) inputMap.get("soundLevelID"));
+-                ZegoMixerInput inputObject = new ZegoMixerInput(streamID, ZegoMixerInputContentType.getZegoMixerInputContentType(contentType), rect, soundLevelID);
++                ZegoMixerInput inputObject = new ZegoMixerInput(streamID,
++                        ZegoMixerInputContentType.getZegoMixerInputContentType(contentType), rect, soundLevelID);
+                 inputListObject.add(inputObject);
+             }
+             taskObject.setInputList(inputListObject);
+@@ -1358,7 +1402,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         if (outputListMap != null) {
+             ArrayList<ZegoMixerOutput> outputListObject = new ArrayList<>();
+             for (Object outputMapObj : outputListMap.toArrayList()) {
+-                HashMap<String, Object> outputMap = (HashMap<String, Object>)outputMapObj;
++                HashMap<String, Object> outputMap = (HashMap<String, Object>) outputMapObj;
+                 String target = (String) outputMap.get("target");
+                 ZegoMixerOutput outputObject = new ZegoMixerOutput(target);
+                 outputListObject.add(outputObject);
+@@ -1400,7 +1444,6 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         promise.resolve(null);
+     }
+ 
+-
+     @ReactMethod
+     public void enableEffectsBeauty(boolean enable, Promise promise) {
+         ZegoExpressEngine.getEngine().enableEffectsBeauty(enable);
+@@ -1559,7 +1602,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             videoProcessConfig.bufferType = ZegoVideoBufferType.getZegoVideoBufferType(bufferType);
+         }
+         if (enable) {
+-            ZegoExpressEngine.getEngine().setCustomVideoProcessHandler(ZegoCustomVideoProcessManager.getInstance().rtcVideoProcessHandler);
++            ZegoExpressEngine.getEngine()
++                    .setCustomVideoProcessHandler(ZegoCustomVideoProcessManager.getInstance().rtcVideoProcessHandler);
+         } else {
+             ZegoExpressEngine.getEngine().setCustomVideoProcessHandler(null);
+         }
+@@ -1606,7 +1650,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     }
+ 
+     @ReactMethod
+-    public void enableCustomAudioCaptureProcessingAfterHeadphoneMonitor(boolean enable, ReadableMap config, Promise promise) {
++    public void enableCustomAudioCaptureProcessingAfterHeadphoneMonitor(boolean enable, ReadableMap config,
++            Promise promise) {
+         ZegoCustomAudioProcessConfig processConfig = new ZegoCustomAudioProcessConfig();
+         if (config != null) {
+             processConfig.sampleRate = ZegoAudioSampleRate.getZegoAudioSampleRate(config.getInt("sampleRate"));
+@@ -1632,7 +1677,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 ReadableMap paramMap = config.getMap("audioParam");
+                 if (paramMap != null) {
+                     audioFrameParam.channel = ZegoAudioChannel.getZegoAudioChannel(paramMap.getInt("channel"));
+-                    audioFrameParam.sampleRate = ZegoAudioSampleRate.getZegoAudioSampleRate(paramMap.getInt("sampleRate"));
++                    audioFrameParam.sampleRate = ZegoAudioSampleRate
++                            .getZegoAudioSampleRate(paramMap.getInt("sampleRate"));
+                 }
+                 screenCaptureConfig.audioParam = audioFrameParam;
+             }
+@@ -1686,25 +1732,29 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void setStreamAlignmentProperty(int alignment, int channel, Promise promise) {
+-        ZegoExpressEngine.getEngine().setStreamAlignmentProperty(alignment, ZegoPublishChannel.getZegoPublishChannel(channel));
++        ZegoExpressEngine.getEngine().setStreamAlignmentProperty(alignment,
++                ZegoPublishChannel.getZegoPublishChannel(channel));
+         promise.resolve(null);
+     }
+ 
+     @ReactMethod
+     public void setAudioCaptureStereoMode(int mode, Promise promise) {
+-        ZegoExpressEngine.getEngine().setAudioCaptureStereoMode(ZegoAudioCaptureStereoMode.getZegoAudioCaptureStereoMode(mode));
++        ZegoExpressEngine.getEngine()
++                .setAudioCaptureStereoMode(ZegoAudioCaptureStereoMode.getZegoAudioCaptureStereoMode(mode));
+         promise.resolve(null);
+     }
+ 
+     @ReactMethod
+-    public void setPlayStreamBufferIntervalRange(String streamID, int minBufferInterval, int maxBufferInterval, Promise promise) {
++    public void setPlayStreamBufferIntervalRange(String streamID, int minBufferInterval, int maxBufferInterval,
++            Promise promise) {
+         ZegoExpressEngine.getEngine().setPlayStreamBufferIntervalRange(streamID, minBufferInterval, maxBufferInterval);
+         promise.resolve(null);
+     }
+ 
+     @ReactMethod
+     public void setPlayStreamsAlignmentProperty(int mode, Promise promise) {
+-        ZegoExpressEngine.getEngine().setPlayStreamsAlignmentProperty(ZegoStreamAlignmentMode.getZegoStreamAlignmentMode(mode));
++        ZegoExpressEngine.getEngine()
++                .setPlayStreamsAlignmentProperty(ZegoStreamAlignmentMode.getZegoStreamAlignmentMode(mode));
+         promise.resolve(null);
+     }
+ 
+@@ -1746,18 +1796,19 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void createMediaPlayer(Promise promise) {
+-        if(this.mediaPlayerMap == null) {
++        if (this.mediaPlayerMap == null) {
+             this.mediaPlayerMap = new HashMap<>();
+         }
+ 
+         ZegoMediaPlayer mediaPlayer = ZegoExpressEngine.getEngine().createMediaPlayer();
+ 
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             int index = mediaPlayer.getIndex();
+ 
+             mediaPlayer.setEventHandler(new IZegoMediaPlayerEventHandler() {
+                 @Override
+-                public void onMediaPlayerStateUpdate(ZegoMediaPlayer mediaPlayer, ZegoMediaPlayerState state, int errorCode) {
++                public void onMediaPlayerStateUpdate(ZegoMediaPlayer mediaPlayer, ZegoMediaPlayerState state,
++                        int errorCode) {
+                     super.onMediaPlayerStateUpdate(mediaPlayer, state, errorCode);
+ 
+                     WritableMap args = getMediaPlayerCallbackArgs(mediaPlayer.getIndex(), state.value(), errorCode);
+@@ -1765,7 +1816,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 }
+ 
+                 @Override
+-                public void onMediaPlayerNetworkEvent(ZegoMediaPlayer mediaPlayer, ZegoMediaPlayerNetworkEvent networkEvent) {
++                public void onMediaPlayerNetworkEvent(ZegoMediaPlayer mediaPlayer,
++                        ZegoMediaPlayerNetworkEvent networkEvent) {
+                     super.onMediaPlayerNetworkEvent(mediaPlayer, networkEvent);
+ 
+                     WritableMap args = getMediaPlayerCallbackArgs(mediaPlayer.getIndex(), networkEvent.value());
+@@ -1809,7 +1861,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 }
+ 
+                 @Override
+-                public void onMediaPlayerFirstFrameEvent(ZegoMediaPlayer mediaPlayer, ZegoMediaPlayerFirstFrameEvent event) {
++                public void onMediaPlayerFirstFrameEvent(ZegoMediaPlayer mediaPlayer,
++                        ZegoMediaPlayerFirstFrameEvent event) {
+                     super.onMediaPlayerFirstFrameEvent(mediaPlayer, event);
+ 
+                     WritableMap args = getMediaPlayerCallbackArgs(mediaPlayer.getIndex(), event.value());
+@@ -1817,10 +1870,12 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 }
+ 
+                 @Override
+-                public void onMediaPlayerLocalCache(ZegoMediaPlayer mediaPlayer, int errorCode, String resource, String cachedFile) {
++                public void onMediaPlayerLocalCache(ZegoMediaPlayer mediaPlayer, int errorCode, String resource,
++                        String cachedFile) {
+                     super.onMediaPlayerLocalCache(mediaPlayer, errorCode, resource, cachedFile);
+ 
+-                    WritableMap args = getMediaPlayerCallbackArgs(mediaPlayer.getIndex(), errorCode, resource, cachedFile);
++                    WritableMap args = getMediaPlayerCallbackArgs(mediaPlayer.getIndex(), errorCode, resource,
++                            cachedFile);
+                     sendEvent("mediaPlayerLocalCache", args);
+                 }
+ 
+@@ -1854,10 +1909,10 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     @ReactMethod
+     public void destroyMediaPlayer(int index, Promise promise) {
+-        if(this.mediaPlayerMap != null) {
++        if (this.mediaPlayerMap != null) {
+             ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+ 
+-            if(mediaPlayer != null) {
++            if (mediaPlayer != null) {
+                 ZegoExpressEngine.getEngine().destroyMediaPlayer(mediaPlayer);
+             }
+             this.mediaPlayerMap.remove(index);
+@@ -1876,7 +1931,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                 View nativeView = uiManager.resolveView(viewTag);
+                 ZegoCanvas canvas = createCanvas(nativeView, view);
+                 ZegoMediaPlayer mediaPlayer = mediaPlayerMap.get(index);
+-                if(mediaPlayer != null) {
++                if (mediaPlayer != null) {
+                     mediaPlayer.setPlayerCanvas(canvas);
+                 }
+                 promise.resolve(null);
+@@ -1888,7 +1943,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+                         View nativeView = nativeViewHierarchyManager.resolveView(viewTag);
+                         ZegoCanvas canvas = createCanvas(nativeView, view);
+                         ZegoMediaPlayer mediaPlayer = mediaPlayerMap.get(index);
+-                        if(mediaPlayer != null) {
++                        if (mediaPlayer != null) {
+                             mediaPlayer.setPlayerCanvas(canvas);
+                         }
+                         promise.resolve(null);
+@@ -1903,7 +1958,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerLoadResource(int index, String path, final Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.loadResource(path, new IZegoMediaPlayerLoadResourceCallback() {
+                 @Override
+                 public void onLoadResourceCallback(int errorCode) {
+@@ -1924,7 +1979,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             resource.filePath = configMap.getString("filePath");
+             resource.loadType = ZegoMultimediaLoadType.getZegoMultimediaLoadType(configMap.getInt("loadType"));
+             resource.alphaLayout = ZegoAlphaLayoutType.getZegoAlphaLayoutType(configMap.getInt("alphaLayout"));
+-            resource.startPosition = (long)configMap.getDouble("startPosition");
++            resource.startPosition = (long) configMap.getDouble("startPosition");
+             ReadableArray dataArray = configMap.getArray("memory");
+             if (dataArray != null) {
+                 byte[] bytes = new byte[dataArray.size()];
+@@ -1937,7 +1992,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.loadResourceWithConfig(resource, new IZegoMediaPlayerLoadResourceCallback() {
+                 @Override
+                 public void onLoadResourceCallback(int errorCode) {
+@@ -1952,7 +2007,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerStart(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.start();
+         }
+ 
+@@ -1962,7 +2017,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerStop(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.stop();
+         }
+ 
+@@ -1972,7 +2027,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerPause(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.pause();
+         }
+ 
+@@ -1982,7 +2037,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerResume(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.resume();
+         }
+ 
+@@ -1992,7 +2047,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSeekTo(int index, double millisecond, final Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.seekTo((long) millisecond, new IZegoMediaPlayerSeekToCallback() {
+                 @Override
+                 public void onSeekToTimeCallback(int errorCode) {
+@@ -2009,7 +2064,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerEnableRepeat(int index, boolean enable, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.enableRepeat(enable);
+         }
+ 
+@@ -2019,7 +2074,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSetPlaySpeed(int index, float speed, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.setPlaySpeed(speed);
+         }
+ 
+@@ -2029,7 +2084,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerEnableAux(int index, boolean enable, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.enableAux(enable);
+         }
+ 
+@@ -2039,7 +2094,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerMuteLocal(int index, boolean mute, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.muteLocal(mute);
+         }
+ 
+@@ -2049,7 +2104,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSetVolume(int index, int volume, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.setVolume(volume);
+         }
+ 
+@@ -2059,7 +2114,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSetPlayVolume(int index, int volume, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.setPlayVolume(volume);
+         }
+ 
+@@ -2069,7 +2124,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSetPublishVolume(int index, int volume, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.setPublishVolume(volume);
+         }
+ 
+@@ -2079,7 +2134,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSetProgressInterval(int index, double millisecond, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.setProgressInterval((long) millisecond);
+         }
+ 
+@@ -2089,7 +2144,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetPlayVolume(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             promise.resolve(mediaPlayer.getPlayVolume());
+         } else {
+             promise.resolve(0);
+@@ -2099,7 +2154,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetPublishVolume(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             promise.resolve(mediaPlayer.getPublishVolume());
+         } else {
+             promise.resolve(0);
+@@ -2109,7 +2164,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetTotalDuration(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             double duration = mediaPlayer.getTotalDuration();
+             promise.resolve(duration);
+         } else {
+@@ -2120,7 +2175,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetCurrentProgress(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             double progress = mediaPlayer.getCurrentProgress();
+             promise.resolve(progress);
+         } else {
+@@ -2131,7 +2186,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetAudioTrackCount(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             promise.resolve(mediaPlayer.getAudioTrackCount());
+         } else {
+             promise.resolve(0);
+@@ -2141,7 +2196,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerSetAudioTrackIndex(int index, int audioTrackIndex, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             mediaPlayer.setAudioTrackIndex(audioTrackIndex);
+         }
+ 
+@@ -2151,7 +2206,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetCurrentState(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             promise.resolve(mediaPlayer.getCurrentState().value());
+         } else {
+             promise.resolve(0);
+@@ -2161,7 +2216,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void mediaPlayerGetCurrentRenderingProgress(int index, Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+-        if(mediaPlayer != null) {
++        if (mediaPlayer != null) {
+             double progress = mediaPlayer.getCurrentRenderingProgress();
+             promise.resolve(progress);
+         } else {
+@@ -2192,14 +2247,16 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     }
+ 
+     @ReactMethod
+-    public void mediaPlayerEnableVoiceChanger(int index, int audioChannel, boolean enable, ReadableMap param, Promise promise) {
++    public void mediaPlayerEnableVoiceChanger(int index, int audioChannel, boolean enable, ReadableMap param,
++            Promise promise) {
+         ZegoMediaPlayer mediaPlayer = this.mediaPlayerMap.get(index);
+ 
+         if (mediaPlayer != null) {
+             ZegoVoiceChangerParam voiceChangerParam = new ZegoVoiceChangerParam();
+             voiceChangerParam.pitch = param.getInt("pitch");
+ 
+-            mediaPlayer.enableVoiceChanger(ZegoMediaPlayerAudioChannel.getZegoMediaPlayerAudioChannel(audioChannel), enable, voiceChangerParam);
++            mediaPlayer.enableVoiceChanger(ZegoMediaPlayerAudioChannel.getZegoMediaPlayerAudioChannel(audioChannel),
++                    enable, voiceChangerParam);
+         }
+ 
+         promise.resolve(null);
+@@ -2425,15 +2482,17 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             this.copyrightedMusic = ZegoExpressEngine.getEngine().createCopyrightedMusic();
+             this.copyrightedMusic.setEventHandler(new IZegoCopyrightedMusicEventHandler() {
+                 @Override
+-                public void onDownloadProgressUpdate(ZegoCopyrightedMusic copyrightedMusic, String resourceID, float progressRate) {
++                public void onDownloadProgressUpdate(ZegoCopyrightedMusic copyrightedMusic, String resourceID,
++                        float progressRate) {
+                     super.onDownloadProgressUpdate(copyrightedMusic, resourceID, progressRate);
+ 
+-                    WritableMap args = getMediaPlayerCallbackArgs(0, resourceID, (double)progressRate);
++                    WritableMap args = getMediaPlayerCallbackArgs(0, resourceID, (double) progressRate);
+                     sendEvent("CopyrightedMusic" + "downloadProgressUpdate", args);
+                 }
+ 
+                 @Override
+-                public void onCurrentPitchValueUpdate(ZegoCopyrightedMusic copyrightedMusic, String resourceID, int currentDuration, int pitchValue) {
++                public void onCurrentPitchValueUpdate(ZegoCopyrightedMusic copyrightedMusic, String resourceID,
++                        int currentDuration, int pitchValue) {
+                     super.onCurrentPitchValueUpdate(copyrightedMusic, resourceID, currentDuration, pitchValue);
+ 
+                     WritableMap args = getMediaPlayerCallbackArgs(0, resourceID, currentDuration, pitchValue);
+@@ -2506,16 +2565,17 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void copyrightedMusicSendExtendedRequest(String resourceID, String request, Promise promise) {
+         if (this.copyrightedMusic != null) {
+-            this.copyrightedMusic.sendExtendedRequest(resourceID, request, new IZegoCopyrightedMusicSendExtendedRequestCallback() {
+-                @Override
+-                public void onSendExtendedRequestCallback(int errorCode, String command, String result) {
+-                    WritableMap resultMap = Arguments.createMap();
+-                    resultMap.putInt("errorCode", errorCode);
+-                    resultMap.putString("command", command);
+-                    resultMap.putString("result", result);
+-                    promise.resolve(resultMap);
+-                }
+-            });
++            this.copyrightedMusic.sendExtendedRequest(resourceID, request,
++                    new IZegoCopyrightedMusicSendExtendedRequestCallback() {
++                        @Override
++                        public void onSendExtendedRequestCallback(int errorCode, String command, String result) {
++                            WritableMap resultMap = Arguments.createMap();
++                            resultMap.putInt("errorCode", errorCode);
++                            resultMap.putString("command", command);
++                            resultMap.putString("result", result);
++                            promise.resolve(resultMap);
++                        }
++                    });
+         } else {
+             WritableMap result = Arguments.createMap();
+             result.putInt("errorCode", -1);
+@@ -2798,10 +2858,12 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+             audioEffectPlayer.setEventHandler(new IZegoAudioEffectPlayerEventHandler() {
+                 @Override
+-                public void onAudioEffectPlayStateUpdate(ZegoAudioEffectPlayer audioEffectPlayer, int audioEffectID, ZegoAudioEffectPlayState state, int errorCode) {
++                public void onAudioEffectPlayStateUpdate(ZegoAudioEffectPlayer audioEffectPlayer, int audioEffectID,
++                        ZegoAudioEffectPlayState state, int errorCode) {
+                     super.onAudioEffectPlayStateUpdate(audioEffectPlayer, audioEffectID, state, errorCode);
+ 
+-                    WritableMap args = getMediaPlayerCallbackArgs(audioEffectPlayer.getIndex(), audioEffectID, state.value(), errorCode);
++                    WritableMap args = getMediaPlayerCallbackArgs(audioEffectPlayer.getIndex(), audioEffectID,
++                            state.value(), errorCode);
+                     sendEvent("audioEffectPlayerStateUpdate", args);
+                 }
+             });
+@@ -2816,7 +2878,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     @ReactMethod
+     public void destroyAudioEffectPlayer(int index, Promise promise) {
+         if (this.audioEffectPlayerMap != null) {
+-            ZegoAudioEffectPlayer audioEffectPlayer  = this.audioEffectPlayerMap.get(index);
++            ZegoAudioEffectPlayer audioEffectPlayer = this.audioEffectPlayerMap.get(index);
+ 
+             if (audioEffectPlayer != null) {
+                 ZegoExpressEngine.getEngine().destroyAudioEffectPlayer(audioEffectPlayer);
+@@ -2935,7 +2997,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         ZegoAudioEffectPlayer audioEffectPlayer = this.audioEffectPlayerMap.get(index);
+ 
+         if (audioEffectPlayer != null) {
+-            audioEffectPlayer.seekTo(audioEffectID, (long)millisecond, new IZegoAudioEffectPlayerSeekToCallback() {
++            audioEffectPlayer.seekTo(audioEffectID, (long) millisecond, new IZegoAudioEffectPlayerSeekToCallback() {
+                 @Override
+                 public void onSeekToCallback(int errorCode) {
+                     WritableMap map = Arguments.createMap();
+@@ -2998,14 +3060,16 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             this.realTimeSequentialDataManagerHashMap = new HashMap<>();
+         }
+ 
+-        ZegoRealTimeSequentialDataManager dataManager = ZegoExpressEngine.getEngine().createRealTimeSequentialDataManager(roomID);
++        ZegoRealTimeSequentialDataManager dataManager = ZegoExpressEngine.getEngine()
++                .createRealTimeSequentialDataManager(roomID);
+ 
+         if (dataManager != null) {
+             final int index = dataManager.getIndex();
+ 
+             dataManager.setEventHandler(new IZegoRealTimeSequentialDataEventHandler() {
+                 @Override
+-                public void onReceiveRealTimeSequentialData(ZegoRealTimeSequentialDataManager manager, byte[] data, String streamID) {
++                public void onReceiveRealTimeSequentialData(ZegoRealTimeSequentialDataManager manager, byte[] data,
++                        String streamID) {
+                     super.onReceiveRealTimeSequentialData(manager, data, streamID);
+                     WritableArray byteArray = Arguments.createArray();
+                     for (byte datum : data) {
+@@ -3055,7 +3119,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+     }
+ 
+     @ReactMethod
+-    public void realTimeSequentialDataManagerSendRealTimeSequentialData(int index, ReadableArray data, String streamID, Promise promise) {
++    public void realTimeSequentialDataManagerSendRealTimeSequentialData(int index, ReadableArray data, String streamID,
++            Promise promise) {
+         ZegoRealTimeSequentialDataManager dataManager = this.realTimeSequentialDataManagerHashMap.get(index);
+         if (dataManager != null) {
+             byte[] bytes = new byte[data.size()];
+@@ -3120,7 +3185,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onRoomStateChanged(String s, ZegoRoomStateChangedReason zegoRoomStateChangedReason, int i, JSONObject jsonObject) {
++        public void onRoomStateChanged(String s, ZegoRoomStateChangedReason zegoRoomStateChangedReason, int i,
++                JSONObject jsonObject) {
+             super.onRoomStateChanged(s, zegoRoomStateChangedReason, i, jsonObject);
+ 
+             WritableMap args = getCallbackArgs(s, zegoRoomStateChangedReason.value(), i, jsonObject.toString());
+@@ -3193,7 +3259,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             super.onRoomStreamExtraInfoUpdate(s, streamList);
+ 
+             WritableArray streamListArray = Arguments.createArray();
+-            for(ZegoStream stream : streamList) {
++            for (ZegoStream stream : streamList) {
+                 WritableMap streamMap = Arguments.createMap();
+                 streamMap.putString("streamID", stream.streamID);
+                 streamMap.putString("extraInfo", stream.extraInfo);
+@@ -3211,11 +3277,12 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onRoomStreamUpdate(String roomID, ZegoUpdateType updateType, ArrayList<ZegoStream> streamList, JSONObject extendedData) {
++        public void onRoomStreamUpdate(String roomID, ZegoUpdateType updateType, ArrayList<ZegoStream> streamList,
++                JSONObject extendedData) {
+             super.onRoomStreamUpdate(roomID, updateType, streamList, extendedData);
+ 
+             WritableArray streamListArray = Arguments.createArray();
+-            for(ZegoStream stream : streamList) {
++            for (ZegoStream stream : streamList) {
+                 WritableMap streamMap = Arguments.createMap();
+                 streamMap.putString("streamID", stream.streamID);
+                 streamMap.putString("extraInfo", stream.extraInfo);
+@@ -3233,7 +3300,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onPublisherStateUpdate(String streamID, ZegoPublisherState state, int errorCode, JSONObject extendedData) {
++        public void onPublisherStateUpdate(String streamID, ZegoPublisherState state, int errorCode,
++                JSONObject extendedData) {
+             super.onPublisherStateUpdate(streamID, state, errorCode, extendedData);
+ 
+             WritableMap args = getCallbackArgs(streamID, state.value(), errorCode, extendedData.toString());
+@@ -3315,10 +3383,12 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onPublisherVideoEncoderChanged(ZegoVideoCodecID zegoVideoCodecID, ZegoVideoCodecID zegoVideoCodecID1, ZegoPublishChannel zegoPublishChannel) {
++        public void onPublisherVideoEncoderChanged(ZegoVideoCodecID zegoVideoCodecID,
++                ZegoVideoCodecID zegoVideoCodecID1, ZegoPublishChannel zegoPublishChannel) {
+             super.onPublisherVideoEncoderChanged(zegoVideoCodecID, zegoVideoCodecID1, zegoPublishChannel);
+ 
+-            WritableMap args = getCallbackArgs(zegoVideoCodecID.value(), zegoVideoCodecID1.value(), zegoPublishChannel.value());
++            WritableMap args = getCallbackArgs(zegoVideoCodecID.value(), zegoVideoCodecID1.value(),
++                    zegoPublishChannel.value());
+             sendEvent("publisherVideoEncoderChanged", args);
+         }
+ 
+@@ -3331,7 +3401,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onVideoObjectSegmentationStateChanged(ZegoObjectSegmentationState state, ZegoPublishChannel channel, int errorCode) {
++        public void onVideoObjectSegmentationStateChanged(ZegoObjectSegmentationState state, ZegoPublishChannel channel,
++                int errorCode) {
+             super.onVideoObjectSegmentationStateChanged(state, channel, errorCode);
+ 
+             WritableMap args = getCallbackArgs(state.value(), channel.value(), errorCode);
+@@ -3339,7 +3410,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onPlayerStateUpdate(String streamID, ZegoPlayerState state, int errorCode, JSONObject extendedData) {
++        public void onPlayerStateUpdate(String streamID, ZegoPlayerState state, int errorCode,
++                JSONObject extendedData) {
+             super.onPlayerStateUpdate(streamID, state, errorCode, extendedData);
+ 
+             WritableMap args = getCallbackArgs(streamID, state.value(), errorCode, extendedData.toString());
+@@ -3440,16 +3512,16 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             super.onRemoteSoundLevelUpdate(soundLevels);
+ 
+             WritableMap soundLevelsMap = Arguments.createMap();
+-            for(Map.Entry<String, Float> entry: soundLevels.entrySet()) {
++            for (Map.Entry<String, Float> entry : soundLevels.entrySet()) {
+                 soundLevelsMap.putDouble(entry.getKey(), entry.getValue());
+             }
+             WritableMap args = getCallbackArgs(soundLevelsMap);
+             sendEvent("remoteSoundLevelUpdate", args);
+         }
+ 
+-
+         @Override
+-        public void onLocalDeviceExceptionOccurred(ZegoDeviceExceptionType exceptionType, ZegoDeviceType deviceType, String deviceID) {
++        public void onLocalDeviceExceptionOccurred(ZegoDeviceExceptionType exceptionType, ZegoDeviceType deviceType,
++                String deviceID) {
+             super.onLocalDeviceExceptionOccurred(exceptionType, deviceType, deviceID);
+ 
+             WritableMap args = getCallbackArgs(exceptionType.value(), deviceType.value(), deviceID);
+@@ -3481,11 +3553,11 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onIMRecvBroadcastMessage(String roomID, ArrayList<ZegoBroadcastMessageInfo> messageList){
++        public void onIMRecvBroadcastMessage(String roomID, ArrayList<ZegoBroadcastMessageInfo> messageList) {
+             super.onIMRecvBroadcastMessage(roomID, messageList);
+ 
+             WritableArray messageListArray = Arguments.createArray();
+-            for(ZegoBroadcastMessageInfo messageInfo : messageList) {
++            for (ZegoBroadcastMessageInfo messageInfo : messageList) {
+                 WritableMap messageMap = Arguments.createMap();
+                 messageMap.putString("message", messageInfo.message);
+                 messageMap.putDouble("messageID", messageInfo.messageID);
+@@ -3508,7 +3580,7 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             super.onIMRecvBarrageMessage(roomID, messageList);
+ 
+             WritableArray messageListArray = Arguments.createArray();
+-            for(ZegoBarrageMessageInfo messageInfo : messageList) {
++            for (ZegoBarrageMessageInfo messageInfo : messageList) {
+                 WritableMap messageMap = Arguments.createMap();
+                 messageMap.putString("message", messageInfo.message);
+                 messageMap.putString("messageID", messageInfo.messageID);
+@@ -3538,10 +3610,10 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+             sendEvent("IMRecvCustomCommand", args);
+         }
+ 
+-        public void onMixerRelayCDNStateUpdate(String taskID, ArrayList<ZegoStreamRelayCDNInfo> infoList){
++        public void onMixerRelayCDNStateUpdate(String taskID, ArrayList<ZegoStreamRelayCDNInfo> infoList) {
+             super.onMixerRelayCDNStateUpdate(taskID, infoList);
+             WritableArray infoListArray = Arguments.createArray();
+-            for(ZegoStreamRelayCDNInfo info : infoList) {
++            for (ZegoStreamRelayCDNInfo info : infoList) {
+                 WritableMap infoMap = Arguments.createMap();
+                 infoMap.putString("url", info.url);
+                 infoMap.putInt("state", info.state.value());
+@@ -3555,11 +3627,11 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+         }
+ 
+-        public void onMixerSoundLevelUpdate(HashMap<Integer, Float> soundLevels){
++        public void onMixerSoundLevelUpdate(HashMap<Integer, Float> soundLevels) {
+             super.onMixerSoundLevelUpdate(soundLevels);
+ 
+             WritableMap soundLevelsMap = Arguments.createMap();
+-            for(Map.Entry<Integer, Float> entry: soundLevels.entrySet()) {
++            for (Map.Entry<Integer, Float> entry : soundLevels.entrySet()) {
+                 // WritableMap 的 key 只能是 String 类型，到 JS 层会自动转换成 number
+                 soundLevelsMap.putDouble(entry.getKey().toString(), entry.getValue());
+             }
+@@ -3584,7 +3656,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onNetworkSpeedTestQualityUpdate(ZegoNetworkSpeedTestQuality zegoNetworkSpeedTestQuality, ZegoNetworkSpeedTestType zegoNetworkSpeedTestType) {
++        public void onNetworkSpeedTestQualityUpdate(ZegoNetworkSpeedTestQuality zegoNetworkSpeedTestQuality,
++                ZegoNetworkSpeedTestType zegoNetworkSpeedTestType) {
+             super.onNetworkSpeedTestQualityUpdate(zegoNetworkSpeedTestQuality, zegoNetworkSpeedTestType);
+ 
+             WritableMap qualityMap = Arguments.createMap();
+@@ -3598,7 +3671,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onNetworkQuality(String userID, ZegoStreamQualityLevel upstreamQuality, ZegoStreamQualityLevel downstreamQuality) {
++        public void onNetworkQuality(String userID, ZegoStreamQualityLevel upstreamQuality,
++                ZegoStreamQualityLevel downstreamQuality) {
+             super.onNetworkQuality(userID, upstreamQuality, downstreamQuality);
+ 
+             WritableMap args = getCallbackArgs(userID, upstreamQuality.value(), downstreamQuality.value());
+@@ -3623,7 +3697,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+ 
+     private IZegoDataRecordEventHandler zegoDataRecordEventHandler = new IZegoDataRecordEventHandler() {
+         @Override
+-        public void onCapturedDataRecordStateUpdate(ZegoDataRecordState state, int errorCode, ZegoDataRecordConfig config, ZegoPublishChannel channel) {
++        public void onCapturedDataRecordStateUpdate(ZegoDataRecordState state, int errorCode,
++                ZegoDataRecordConfig config, ZegoPublishChannel channel) {
+             super.onCapturedDataRecordStateUpdate(state, errorCode, config, channel);
+ 
+             WritableMap configMap = Arguments.createMap();
+@@ -3635,7 +3710,8 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         }
+ 
+         @Override
+-        public void onCapturedDataRecordProgressUpdate(ZegoDataRecordProgress progress, ZegoDataRecordConfig config, ZegoPublishChannel channel) {
++        public void onCapturedDataRecordProgressUpdate(ZegoDataRecordProgress progress, ZegoDataRecordConfig config,
++                ZegoPublishChannel channel) {
+             super.onCapturedDataRecordProgressUpdate(progress, config, channel);
+             WritableMap configMap = Arguments.createMap();
+             configMap.putString("filePath", config.filePath);
+@@ -3664,14 +3740,14 @@ public class RCTZegoExpressNativeModule extends ReactContextBaseJavaModule {
+         ZegoCanvas canvas = null;
+         boolean alphaBlend = view.hasKey("alphaBlend") && view.getBoolean("alphaBlend");
+ 
+-        if(nativeView instanceof ZegoSurfaceView) {
+-            ZegoSurfaceView sv = (ZegoSurfaceView)nativeView;
++        if (nativeView instanceof ZegoSurfaceView) {
++            ZegoSurfaceView sv = (ZegoSurfaceView) nativeView;
+             canvas = new ZegoCanvas(sv.getView());
+             if (alphaBlend) {
+                 sv.setPixelFormat(PixelFormat.TRANSLUCENT);
+                 sv.setZOrderOnTop(true);
+             }
+-        } else if(nativeView instanceof TextureView) {
++        } else if (nativeView instanceof TextureView) {
+             canvas = new ZegoCanvas(nativeView);
+             if (alphaBlend) {
+                 ((TextureView) nativeView).setOpaque(false);

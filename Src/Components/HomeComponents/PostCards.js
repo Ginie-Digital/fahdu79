@@ -16,7 +16,7 @@ import {LoginPageErrors} from '../ErrorSnacks';
 import {savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import {likeDislike} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import {autoLogout} from '../../../AutoLogout';
 import share from 'react-native-share';

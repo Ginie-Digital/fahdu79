@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { useSendMessageLiveStreamMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { token as memoizedToken, token } from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import Send from '../../../Assets/svg/send.svg';
 import LiveStreamComment from './LiveStreamComment';
 import Feather from 'react-native-vector-icons/Feather';

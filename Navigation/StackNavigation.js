@@ -208,7 +208,7 @@ const StackNavigation = () => {
                 title: 'Settings',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: 'white' },
@@ -224,7 +224,7 @@ const StackNavigation = () => {
                 title: 'Feedback',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: 'white' },
@@ -242,7 +242,7 @@ const StackNavigation = () => {
                 headerShown: false,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -267,7 +267,7 @@ const StackNavigation = () => {
                 title: 'Edit profile',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -298,7 +298,7 @@ const StackNavigation = () => {
                 title: 'Blocklist',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -315,7 +315,7 @@ const StackNavigation = () => {
                 title: 'Stream Settings',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -332,7 +332,7 @@ const StackNavigation = () => {
                 title: 'Select country',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -349,7 +349,7 @@ const StackNavigation = () => {
                 title: 'Document',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -366,7 +366,7 @@ const StackNavigation = () => {
                 title: 'Get Verified',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -440,7 +440,7 @@ const StackNavigation = () => {
                 title: 'Schedule Call',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.2),
+                  fontSize: Math.round(responsiveFontSize(2.2)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff9f5' },
@@ -462,7 +462,7 @@ const StackNavigation = () => {
                 title: 'Create Post',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: {
@@ -480,7 +480,7 @@ const StackNavigation = () => {
                 title: 'Mass Message',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: {
@@ -498,7 +498,7 @@ const StackNavigation = () => {
                 title: 'Subscription',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: {
@@ -518,7 +518,7 @@ const StackNavigation = () => {
                 title: 'Post video',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: {
@@ -536,7 +536,7 @@ const StackNavigation = () => {
                 title: '',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerTransparent: true,
@@ -560,7 +560,7 @@ const StackNavigation = () => {
                 title: 'Transactions',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -579,7 +579,7 @@ const StackNavigation = () => {
                 headerShown: true,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -632,7 +632,7 @@ const StackNavigation = () => {
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -649,7 +649,7 @@ const StackNavigation = () => {
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -666,7 +666,7 @@ const StackNavigation = () => {
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -683,7 +683,7 @@ const StackNavigation = () => {
                 title: '2FA',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -700,7 +700,7 @@ const StackNavigation = () => {
                 title: 'Account Deletion',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -717,7 +717,7 @@ const StackNavigation = () => {
                 title: 'Manage Account',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -734,7 +734,7 @@ const StackNavigation = () => {
                 title: 'Security',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -751,7 +751,7 @@ const StackNavigation = () => {
                 title: route.params.title,
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
@@ -768,7 +768,7 @@ const StackNavigation = () => {
                 title: 'Scheduled Contents',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
-                  fontSize: responsiveFontSize(2.7),
+                  fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },

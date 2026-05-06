@@ -26,7 +26,7 @@ import {LoginPageErrors} from '../ErrorSnacks';
 import {savePostComments, setCurrentCommentDetails} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import {autoLogout} from '../../../AutoLogout';
 import Heart from '../../../Assets/svg/heart.svg';
 import Fill from '../../../Assets/svg/fillh.svg';

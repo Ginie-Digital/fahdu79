@@ -1,7 +1,7 @@
 import {Platform, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import {nTwins} from '../../DesiginData/Utility';
 const Seprator = () => {
   return (

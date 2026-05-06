@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { LoginPageErrors } from '../ErrorSnacks';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 
 const { height, width } = Dimensions.get('window');

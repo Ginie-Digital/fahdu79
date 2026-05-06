@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Text, StyleSheet, Dimensions } from "react-native";
 import MaskedView from "@react-native-masked-view/masked-view";
-import LinearGradient from "react-native-linear-gradient";
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

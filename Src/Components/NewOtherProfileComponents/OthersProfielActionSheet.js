@@ -5,7 +5,7 @@
 // import DIcon from "../../../DesiginData/DIcons";
 // import { FlatList } from "react-native-gesture-handler";
 // import { homeBottomSheetList, homeBottomSheetListRoleUser, profileActionList } from "../../../DesiginData/Data";
-// import LinearGradient from "react-native-linear-gradient";
+// import { LinearGradient } from 'expo-linear-gradient';
 // import { useDispatch, useSelector } from "react-redux";
 // import { toggleOtherProfileActionSheet } from "../../../Redux/Slices/NormalSlices/HideShowSlice";
 

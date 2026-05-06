@@ -3,7 +3,7 @@ import React, { useMemo, useCallback, useRef, useState, useEffect } from "react"
 import { responsiveWidth, responsiveFontSize } from "react-native-responsive-dimensions";
 import { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal } from "@gorhom/bottom-sheet";
 
-import LinearGradient from "react-native-linear-gradient";
+import { LinearGradient } from 'expo-linear-gradient';
 import { useDispatch, useSelector } from "react-redux";
 import { toggleWho, toggleWhoTippedSheet } from "../../../Redux/Slices/NormalSlices/HideShowSlice";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";

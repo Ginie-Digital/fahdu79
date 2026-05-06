@@ -67,20 +67,20 @@ export const twins = (android, ios) => {
 
 export const nTwins = (android, ios) => {
   if (Platform.OS === 'ios') {
-    return responsiveWidth(ios);
-  } else return responsiveWidth(android);
+    return Math.round(responsiveWidth(ios));
+  } else return Math.round(responsiveWidth(android));
 };
 
 export const hTwins = (android, ios) => {
   if (Platform.OS === 'ios') {
-    return responsiveHeight(ios);
-  } else return responsiveHeight(android);
+    return Math.round(responsiveHeight(ios));
+  } else return Math.round(responsiveHeight(android));
 };
 
 export const nTwinsFont = (android, ios) => {
   if (Platform.OS === 'ios') {
-    return responsiveFontSize(ios);
-  } else return responsiveFontSize(android);
+    return Math.round(responsiveFontSize(ios));
+  } else return Math.round(responsiveFontSize(android));
 };
 
 export function makeid(length) {
@@ -258,54 +258,54 @@ export const getResponsiveFontSize = size => {
 };
 
 const FONT_SIZES = {
-  10: responsiveFontSize(1.25),
-  12: responsiveFontSize(1.5),
-  14: responsiveFontSize(1.75),
-  14: responsiveWidth(3.73),
-  16: responsiveWidth(4.27),
-  20: responsiveFontSize(2.34),
-  21: responsiveWidth(5.6),
-  24: responsiveWidth(6.4),
-  32: responsiveWidth(8.53),
-  40: responsiveWidth(10.67),
-  45.93: responsiveWidth(12.26),
-  50: responsiveWidth(13.33),
-  52: responsiveWidth(13.87),
-  56: responsiveWidth(14.93),
-  73: responsiveWidth(19.47),
-  16: responsiveFontSize(2),
-  18: responsiveFontSize(2.25),
-  20: responsiveFontSize(2.5),
-  22: responsiveFontSize(2.75),
-  24: responsiveFontSize(3),
+  10: Math.round(responsiveFontSize(1.25)),
+  12: Math.round(responsiveFontSize(1.5)),
+  14: Math.round(responsiveFontSize(1.75)),
+  14: Math.round(responsiveWidth(3.73)),
+  16: Math.round(responsiveWidth(4.27)),
+  20: Math.round(responsiveFontSize(2.34)),
+  21: Math.round(responsiveWidth(5.6)),
+  24: Math.round(responsiveWidth(6.4)),
+  32: Math.round(responsiveWidth(8.53)),
+  40: Math.round(responsiveWidth(10.67)),
+  45.93: Math.round(responsiveWidth(12.26)),
+  50: Math.round(responsiveWidth(13.33)),
+  52: Math.round(responsiveWidth(13.87)),
+  56: Math.round(responsiveWidth(14.93)),
+  73: Math.round(responsiveWidth(19.47)),
+  16: Math.round(responsiveFontSize(2)),
+  18: Math.round(responsiveFontSize(2.25)),
+  20: Math.round(responsiveFontSize(2.5)),
+  22: Math.round(responsiveFontSize(2.75)),
+  24: Math.round(responsiveFontSize(3)),
 };
 
 const WIDTH_SIZES = {
-  1.5: responsiveWidth(0.4),
-  2: responsiveWidth(0.53),
-  4: responsiveWidth(1.07),
-  8: responsiveWidth(2.13),
-  9: responsiveWidth(2.4),
-  10: responsiveWidth(2.67),
-  11: responsiveWidth(2.93),
-  12: responsiveWidth(3.2),
-  14: responsiveWidth(3.73),
-  16: responsiveWidth(4.27),
-  18: responsiveWidth(4.8),
-  19: responsiveWidth(5.07),
-  20: responsiveWidth(5.33),
-  24: responsiveWidth(6.12),
-  32: responsiveWidth(8.5),
-  36: responsiveWidth(9.6),
-  84: responsiveWidth(21.54),
-  136: responsiveWidth(36.27),
-  150: responsiveWidth(40),
-  154: responsiveWidth(41.07),
-  208: responsiveWidth(50.6),
-  214: responsiveWidth(57.07),
-  281: responsiveWidth(74.93),
-  284: responsiveWidth(75.73),
-  345: responsiveWidth(92),
+  1.5: Math.round(responsiveWidth(0.4)),
+  2: Math.round(responsiveWidth(0.53)),
+  4: Math.round(responsiveWidth(1.07)),
+  8: Math.round(responsiveWidth(2.13)),
+  9: Math.round(responsiveWidth(2.4)),
+  10: Math.round(responsiveWidth(2.67)),
+  11: Math.round(responsiveWidth(2.93)),
+  12: Math.round(responsiveWidth(3.2)),
+  14: Math.round(responsiveWidth(3.73)),
+  16: Math.round(responsiveWidth(4.27)),
+  18: Math.round(responsiveWidth(4.8)),
+  19: Math.round(responsiveWidth(5.07)),
+  20: Math.round(responsiveWidth(5.33)),
+  24: Math.round(responsiveWidth(6.12)),
+  32: Math.round(responsiveWidth(8.5)),
+  36: Math.round(responsiveWidth(9.6)),
+  84: Math.round(responsiveWidth(21.54)),
+  136: Math.round(responsiveWidth(36.27)),
+  150: Math.round(responsiveWidth(40)),
+  154: Math.round(responsiveWidth(41.07)),
+  208: Math.round(responsiveWidth(50.6)),
+  214: Math.round(responsiveWidth(57.07)),
+  281: Math.round(responsiveWidth(74.93)),
+  284: Math.round(responsiveWidth(75.73)),
+  345: Math.round(responsiveWidth(92)),
 };
 
 export { FONT_SIZES, WIDTH_SIZES };

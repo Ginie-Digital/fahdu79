@@ -16,7 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Image } from 'expo-image';
 import { useSelector, useDispatch } from 'react-redux';

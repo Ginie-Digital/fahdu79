@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList, Pressable, B
 import React, { useCallback, useEffect, useState } from 'react';
 import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import { useLazyGetBlockListQuery, useLazyGetFSDQuery, useLazyGetFSQuery, useLazyIsValidFollowQuery, useUnblockUserMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import DIcon from '../../DesiginData/DIcons';
 import { LoginPageErrors, chatRoomSuccess } from '../Components/ErrorSnacks';
 import { WIDTH_SIZES } from '../../DesiginData/Utility';

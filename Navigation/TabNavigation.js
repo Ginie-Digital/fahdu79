@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'MabryPro-Medium',
-    fontSize: responsiveFontSize(3),
+    fontSize: Math.round(responsiveFontSize(3)),
     color: '#28282899',
     textAlign: 'center',
   },

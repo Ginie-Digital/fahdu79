@@ -19,7 +19,7 @@ import {dismissProgressNotification, displayNotificationProgressIndicator} from 
 
 import {useUploadAttachmentMutation, useUploadWishListMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import {autoLogout} from '../../../AutoLogout';
 import {ChatWindowError, CommonSuccess, LoginPageErrors} from '../ErrorSnacks';
 import {useKeyboard} from '@react-native-community/hooks';

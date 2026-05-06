@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet, Easing } from 'react-native';
 import { responsiveWidth } from 'react-native-responsive-dimensions';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const RevenueChartShimmer = () => {
     const shimmerAnimatedValue = useRef(new Animated.Value(0)).current;

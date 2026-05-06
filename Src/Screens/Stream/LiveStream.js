@@ -3,7 +3,7 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ZegoExpressEngine, { ZegoRoomConfig, ZegoScenario, ZegoTextureView, ZegoViewMode } from 'zego-express-engine-reactnative';
 import DIcon from '../../../DesiginData/DIcons';
 import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { FONT_SIZES, formatIndianNumber, nTwins, nTwinsFont, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import { FlatList, ScrollView, TextInput, TouchableWithoutFeedback } from 'react-native-gesture-handler';

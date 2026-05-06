@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
 import { useLazyGetFSDQuery, useLazyGetFSQuery, useLazyIsValidFollowQuery, useLazyGetFollowingQuery, useLazyGetCashfreeSubscriptionQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import DIcon from '../../DesiginData/DIcons';
 import { Image } from 'expo-image';
 import { navigate } from '../../Navigation/RootNavigation';

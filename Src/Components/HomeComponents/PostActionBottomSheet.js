@@ -11,7 +11,7 @@ import {ChatWindowError, LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks'
 import PagerView from 'react-native-pager-view';
 import {useBlockUserMutation, useDeleteMyPostMutation, usePinUnPinPostMutation, usePostEditMutation, useReportPostMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import share from 'react-native-share';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import {blockPost, resetFeed} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import {padios, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import {deleteMyProfilePost, editMyPostCaption, pinMyProfilePost} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';

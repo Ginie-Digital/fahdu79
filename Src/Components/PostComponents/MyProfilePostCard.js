@@ -17,7 +17,7 @@ import {savePostComments, setCurrentCommentDetails, setTotalPages} from '../../.
 import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import {likeDislikeMyPost} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import Heart from '../../../Assets/svg/heart.svg';
 import Fill from '../../../Assets/svg/fillh.svg';

@@ -24,7 +24,7 @@ import { useRoute } from '@react-navigation/native';
 import { checkNotificationGranted, disp } from '../../Notificaton';
 import { userIdCreateSelector } from '../../Redux/Slices/NormalSlices/AuthSlice';
 
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { resetCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
 import { resetAllModal, setPostsCardType, setUnReadChatIcon, toggleFloatingViews, toggleHideShowInformationModal, toggleShowChatRoomSelector } from '../../Redux/Slices/NormalSlices/HideShowSlice';

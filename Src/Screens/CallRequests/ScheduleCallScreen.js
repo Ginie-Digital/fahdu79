@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { responsiveHeight as rh, responsiveWidth as rw, responsiveFontSize } from 'react-native-responsive-dimensions';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';

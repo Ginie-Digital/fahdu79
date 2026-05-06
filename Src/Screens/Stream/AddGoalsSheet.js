@@ -56,6 +56,18 @@ const AddGoalsSheet = () => {
 
   const [addGoalsLiveStream] = useAddGoalsLiveStreamMutation();
 
+  const resetSheet = useCallback(() => {
+    if (titleRef.current) {
+      titleRef.current.value = '';
+      titleRef.current.clear?.();
+    }
+    if (amountRef.current) {
+      amountRef.current.value = '';
+      amountRef.current.clear?.();
+    }
+    setGoalTitleLength(0);
+  }, []);
+
   const handlePresentModalPress = useCallback(() => {
     if (bottomSheetRef.current) {
       bottomSheetRef.current?.present();

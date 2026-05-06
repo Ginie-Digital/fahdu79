@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, ToastAndroid, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
 
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
@@ -533,6 +533,7 @@ const ChatWindow = ({ route, navigation }) => {
 
   return (
     <GestureHandlerRootView style={styles.wrapper}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
 
 
@@ -606,8 +607,6 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: 'white',
-    borderTopWidth: Platform.OS === 'ios' ? 0 : 1,
-    borderTopColor: '#282828',
     paddingHorizontal: WIDTH_SIZES[24] - 1.1,
   },
   leftChat: {

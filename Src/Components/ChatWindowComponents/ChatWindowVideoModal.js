@@ -1,6 +1,9 @@
-import {StyleSheet, Text, View, StatusBar} from 'react-native';
+import {StyleSheet, Text, View, StatusBar, TouchableOpacity} from 'react-native';
 import React from 'react';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { useDispatch, useSelector } from 'react-redux';
+import Modal from 'react-native-modal';
+import { toggleChatWindowVideoModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
 const ChatWindowVideoModal = ({ fullVideoModalUri }) => {
   const dispatch = useDispatch();

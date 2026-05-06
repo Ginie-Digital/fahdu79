@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { responsiveHeight as rh, responsiveWidth as rw, responsiveFontSize } from 'react-native-responsive-dimensions';
 import LinearGradient from 'react-native-linear-gradient';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -193,6 +194,7 @@ const SimpleScrollPicker = ({ data, selectedIndex, onIndexChange, scrollRef, onS
 
 
 const ScheduleCallScreen = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
   // Assuming these props come from route params
   const {
     userProfileImage = 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -410,7 +412,7 @@ const ScheduleCallScreen = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
 
 
       {/* Header */}
@@ -557,7 +559,7 @@ const ScheduleCallScreen = ({ route, navigation }) => {
         
         <View style={{ height: rh(3) }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -14,7 +14,7 @@ import { useCallback } from "react";
 import DIcon from "../../DesiginData/DIcons";
 import PostCards from "../Components/HomeComponents/PostCards";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import CreatePostBottomSheet from "../Components/HomeComponents/CreatePostBottomSheet";
+
 import WishList from "../Components/MyProfile/WishList";
 import { toggleCreatePostBottomSheet, toggleHomeBottomSheet, toggleRefreshOtherProfile, toggleWishListSheet } from "../../Redux/Slices/NormalSlices/HideShowSlice";
 import WishListCard from "../Components/MyProfile/WishListCard";
@@ -308,7 +308,7 @@ const OthersProfile = ({ route }) => {
               showsVerticalScrollIndicator={false}
             />
           )}
-          <CreatePostBottomSheet />
+
           <ProfileActionModal 
             setIsFollowing={setIsFollowing} 
             isFollowing={isFollowing} 

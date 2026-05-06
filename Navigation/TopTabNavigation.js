@@ -8,7 +8,7 @@ import WishListPostComponent from '../Src/Components/PostComponents/WishListPost
 import { responsiveWidth } from 'react-native-responsive-dimensions';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import UpperProfile from '../Src/Components/MyProfile/UpperProfile';
-import CreatePostBottomSheet from '../Src/Components/HomeComponents/CreatePostBottomSheet';
+
 import { useDispatch, useSelector } from 'react-redux';
 import WishListPreviewModal from '../Src/Components/MyProfile/WishListPreviewModal';
 import PostTipModal from '../Src/Components/HomeComponents/PostTipModal';
@@ -98,6 +98,13 @@ const TopTabNavigation = ({ notificationData }) => {
 
   const [currentTab, setCurrentTab] = useState('profile');
 
+  const commentBottomSheetVisibility = useSelector(state => state.hideShow.visibility.commentBottomSheet.show);
+  const postActionSheetBottomSheetVisibility = useSelector(state => state.hideShow.visibility.postActionBottomSheet.show);
+  const whoTippedSheetVisibility = useSelector(state => state.hideShow.visibility.whoTippedSheet.show);
+  const wishListPreviewModalVisibility = useSelector(state => state.hideShow.visibility.wishListPreviewModal);
+  const postTipModalVisibility = useSelector(state => state.hideShow.visibility.sendPostTipsModal.show);
+
+
   useEffect(() => {
     fetchContactInfo();
   }, []);
@@ -160,12 +167,12 @@ const TopTabNavigation = ({ notificationData }) => {
         />
       )}
 
-      <CreatePostBottomSheet />
-      <WishListPreviewModal />
-      <PostTipModal />
-      <CreateCommentBottomSheet fromPage={'myProfilePost'} />
-      <PostActionBottomSheet />
-      <TipSheet />
+
+      {wishListPreviewModalVisibility && <WishListPreviewModal />}
+      {postTipModalVisibility && <PostTipModal />}
+      {commentBottomSheetVisibility === 1 && <CreateCommentBottomSheet fromPage={'myProfilePost'} />}
+      {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
+      {whoTippedSheetVisibility === 1 && <TipSheet />}
     </>
   );
 };

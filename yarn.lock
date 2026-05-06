@@ -4824,7 +4824,7 @@ __metadata:
     react-native-keyboard-aware-scroll-view: "npm:^0.9.5"
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-mmkv: "npm:^4.3.1"
-    react-native-modal: "npm:^13.0.1"
+    react-native-modal: "npm:13.0.2"
     react-native-nitro-modules: "npm:^0.35.6"
     react-native-otp-textinput: "npm:^1.1.6"
     react-native-pager-view: "npm:^6.9.1"
@@ -11521,12 +11521,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-animatable@npm:1.3.3":
-  version: 1.3.3
-  resolution: "react-native-animatable@npm:1.3.3"
+"react-native-animatable@npm:1.4.0":
+  version: 1.4.0
+  resolution: "react-native-animatable@npm:1.4.0"
   dependencies:
-    prop-types: "npm:^15.7.2"
-  checksum: 10c0/ce18b871c29d17377c08aa143be64d06e20df8e669720d2fe4eed5465c37ac4e6ebbfb4464aecb23e3e22d82114768dfacb65b0c49c33dd736f54a0507265641
+    prop-types: "npm:^15.8.1"
+  checksum: 10c0/658f15aa3744c3d6a22a44ab4609afc4335ff06d0a200a1fba513e470ebb4bd561ab709204b3777ee53cad526f695e2b4290e057a50fcd461aca337e407fe2b1
   languageName: node
   linkType: hard
 
@@ -11914,16 +11914,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-modal@npm:^13.0.1":
-  version: 13.0.1
-  resolution: "react-native-modal@npm:13.0.1"
+"react-native-modal@npm:13.0.2":
+  version: 13.0.2
+  resolution: "react-native-modal@npm:13.0.2"
   dependencies:
-    prop-types: "npm:^15.6.2"
-    react-native-animatable: "npm:1.3.3"
+    react-native-animatable: "npm:1.4.0"
   peerDependencies:
     react: "*"
-    react-native: ">=0.65.0"
-  checksum: 10c0/8ec5728c2a27eb31c97451968b4ecefdf005afda51fab2fc864fc442122573c70f7bf3fa0c6e3bd1d6aab3565c684104d1d30df916c3f9a6c7c3223e4d3b9249
+    react-native: ">=0.70.0"
+  checksum: 10c0/12bedf7a5caafddf85422e928a99bf4465c050547c75dd15cfe668cc0895375aa39a0447a848c85bc75124c3652c4a81fe70b79f3c5df25ff8ccbb513a169d45
   languageName: node
   linkType: hard
 

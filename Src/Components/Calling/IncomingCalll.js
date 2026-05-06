@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Audio } from 'expo-av';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, Platform, Linking } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -123,6 +124,7 @@ const LegacyLoader = () => {
 
 // ─── Main screen ───
 const IncomingCallScreen = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
   const token = useSelector(state => state.auth.user.token);
   const currentUserId = useSelector(state => state.auth.user.data?._id);
 
@@ -489,7 +491,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <Animated.View style={[styles.containerInner, containerAnimatedStyle]}>
+      <Animated.View style={[styles.containerInner, containerAnimatedStyle, { paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         {/* ─── Profile section ─── */}

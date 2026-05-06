@@ -7,7 +7,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 
@@ -34,6 +34,7 @@ const DURATION_OPTIONS = [
 ];
 
 const SelectDuration = ({route}) => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.user.token);
   const {data: coinData, refetch} = useGetCoinsQuery({token});
@@ -198,7 +199,7 @@ const SelectDuration = ({route}) => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff9f5'}} edges={['top', 'left', 'right']}>
+    <View style={{flex: 1, backgroundColor: '#fff9f5', paddingTop: insets.top }}>
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
@@ -318,7 +319,7 @@ const SelectDuration = ({route}) => {
           initialTab={callType?.toLowerCase() === 'video' ? 'video' : 'audio'}
         />
 
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -34,7 +34,7 @@ const HeaderLeft = () => {
   }, [senderBioDetail]);
 
   return (
-    <SafeAreaView edges={['top']}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
       <View style={[styles.headerWrapper]}>
         {/* Back Button */}
         {/* <DIcon provider={'Ionicons'} name={'chevron-back'} color={'#000'} size={responsiveWidth(6)} style={styles.backIcon}  /> */}

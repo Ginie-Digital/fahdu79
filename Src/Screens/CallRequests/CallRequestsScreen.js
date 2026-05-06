@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, RefreshControl, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import PagerView from 'react-native-pager-view';
 import { responsiveWidth, responsiveFontSize } from 'react-native-responsive-dimensions';
@@ -27,6 +28,7 @@ const TABS = [
 ];
 
 const CallRequestsScreen = ({ route }) => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.user.token);
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
@@ -369,14 +371,14 @@ const CallRequestsScreen = ({ route }) => {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color="#FFA86B" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -502,7 +504,7 @@ const CallRequestsScreen = ({ route }) => {
         callType={micModalCallType}
         onCancel={() => setShowMicModal(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -85,6 +85,11 @@ const OtherProfileNew = ({route}) => {
   const [otherPostList] = useLazyOtherPostListQuery();
 
   const refreshOtherProfile = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
+  const otherProfileActionSheetVisibility = useSelector(state => state.hideShow.visibility.otherProfileActionSheet.show);
+  const otherProfileRatingSheetVisibility = useSelector(state => state.hideShow.visibility.otherProfileRatingSheet);
+  const commentBottomSheetVisibility = useSelector(state => state.hideShow.visibility.commentBottomSheet.show);
+  const postActionSheetBottomSheetVisibility = useSelector(state => state.hideShow.visibility.postActionBottomSheet.show);
+
 
   useEffect(() => {
     console.log('Called get profile');
@@ -269,11 +274,13 @@ const OtherProfileNew = ({route}) => {
         )}
       </View>
 
-      <OthersProfileActionSheet 
-        toCallApiInfo={route?.params} 
-        onUnsubscribePress={handleUnsubscribePress}
-        isFetchingSubscription={isFetchingSubscription}
-      />
+      {otherProfileActionSheetVisibility === 1 && (
+        <OthersProfileActionSheet 
+          toCallApiInfo={route?.params} 
+          onUnsubscribePress={handleUnsubscribePress}
+          isFetchingSubscription={isFetchingSubscription}
+        />
+      )}
       <UnSubscribeModal
         visible={unsubscribeModalVisible}
         onClose={() => setUnsubscribeModalVisible(false)}
@@ -284,9 +291,9 @@ const OtherProfileNew = ({route}) => {
           setUnsubscribeModalVisible(false);
         }}
       />
-      <PostActionBottomSheet />
-      <CreateCommentBottomSheet fromPage={'otherProfile'} />
-      <OtherProfileRatingSheet />
+      {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
+      {commentBottomSheetVisibility === 1 && <CreateCommentBottomSheet fromPage={'otherProfile'} />}
+      {otherProfileRatingSheetVisibility === 1 && <OtherProfileRatingSheet />}
     </>
   );
 };

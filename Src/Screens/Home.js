@@ -67,6 +67,10 @@ const PlaceHolder = ({ text }) => {
 
 
 
+const SocialPostRender = memo(({ item, index, token }) => <PostCards item={item} index={index} token={token} />);
+
+const FeedItemSeparator = () => <View style={{ backgroundColor: '#E9E9E9', height: 4 }} />;
+
 const Home = () => {
   const token = useSelector(state => state.auth.user.token);
 
@@ -216,8 +220,6 @@ const Home = () => {
 
   //Update states
 
-  const SocialPostRender = memo(({ item, index }) => <PostCards item={item} index={index} token={token} />);
-
 
   const ListHeader = () => (
     <>
@@ -245,7 +247,6 @@ const Home = () => {
 
   const userRole = useSelector(state => state.auth.user.role);
 
-  console.log(token);
 
   useFocusEffect(
     useCallback(() => {
@@ -425,7 +426,7 @@ const Home = () => {
       <FlashList
         ref={homeFlashRef}
         data={_filterPostList([...cachedFeed], [...blockedPostArr])} //Because
-        renderItem={({ item, index }) => <SocialPostRender item={item} index={index} />}
+        renderItem={({ item, index }) => <SocialPostRender item={item} index={index} token={token} />}
         keyExtractor={item => item._id}
         onViewableItemsChanged={({ changed, viewableItems }) => currentShownPost(viewableItems)}
         estimatedItemSize={434}
@@ -436,14 +437,14 @@ const Home = () => {
         ListFooterComponent={ListEndLoader}
         renderToHardwareTextureAndroid
         decelerationRate={Platform.OS === 'ios' ? 'normal' : 'fast'}
-        ItemSeparatorComponent={() => <View style={{ backgroundColor: '#E9E9E9', height: 4 }} />}
+        ItemSeparatorComponent={FeedItemSeparator}
         ListHeaderComponent={ListHeader}
       // ListHeaderComponent={() => <Button title="Dummy Cal" onPress={() => handleCall()} />}
       />
 
 
 
-      {commentBottomSheetVisibility === 1 && <CreateCommentBottomSheet />}
+      <CreateCommentBottomSheet />
       {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
       {switcherSheetVisibility === 1 && <SwitcherSheet />}
       {liveTermsHideShow === 1 && <TermsOfLive />}

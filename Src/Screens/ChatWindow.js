@@ -301,7 +301,13 @@ const ChatWindow = ({ route, navigation }) => {
               }),
             );
 
-            soundObj.play();
+            try {
+              if (soundObj) {
+                soundObj.replayAsync();
+              }
+            } catch (playError) {
+              console.log('🔊 [ChatWindow:SendMessage] Sound Play Error:', playError);
+            }
           } else if (e?.error?.data?.status_code === 2044) {
             console.log('Status Code not 200');
             autoLogout();

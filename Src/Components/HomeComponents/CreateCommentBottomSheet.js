@@ -8,6 +8,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {toggleCommentBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDoCommentMutation, useLazyGetAllCommentsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import moment from 'moment';
 import Moment from 'react-moment';
 import {LoginPageErrors} from '../ErrorSnacks';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -19,8 +20,9 @@ import {incrementCommentCount} from '../../../Redux/Slices/NormalSlices/Home/Fee
 import {myProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import {otherProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 
+const ItemSeparator = () => <View style={{height: responsiveWidth(6)}} />;
+
 const CreateCommentBottomSheet = ({fromPage}) => {
-  console.log(fromPage, ':L::::::FRom page');
 
   const bottomSheetRef = useRef(null);
 
@@ -34,13 +36,14 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
   const showCommentsShimmer = useSelector(state => state.hideShow.visibility.loadingComments);
 
+  const textRef = useRef('');
   const [text, setText] = useState('');
 
   const [doComment] = useDoCommentMutation();
 
   const dispatch = useDispatch();
 
-  const snapPoints = useMemo(() => [responsiveWidth(100), Keyboard.isVisible() ? responsiveWidth(100) : responsiveWidth(150)], []);
+  const snapPoints = useMemo(() => ['90%'], []);
 
   const [getAllComments] = useLazyGetAllCommentsQuery();
 
@@ -50,41 +53,10 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
   const [doCommentLoader, setDoCommentLoader] = useState(false);
 
-  function LoadMoreButton({loading, onPress}) {
-    return (
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 10,
-          alignSelf: 'center',
-          zIndex: 10,
-        }}>
-        <TouchableOpacity
-          onPress={onPress}
-          disabled={loading}
-          style={{
-            backgroundColor: '#fff',
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 30,
-            flexDirection: 'row',
-            alignItems: 'center',
-            opacity: loading ? 0.6 : 1,
-            borderWidth: WIDTH_SIZES['1.5'],
-            borderColor: '#1e1e1e',
-          }}>
-          {loading ? (
-            <ActivityIndicator color="#1e1e1e" />
-          ) : (
-            <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 3}}>
-              <Text style={{color: '#1e1e1e', fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES['10']}}>Load More</Text>
-              <DIcon provider={'Entypo'} name={'chevron-small-down'} />
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const handleTextChange = useCallback((t) => {
+    textRef.current = t;
+    setText(t);
+  }, []);
 
   const handleSheetChanges = useCallback(index => {
     if (index === -1) {
@@ -110,7 +82,7 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     }
   };
 
-  console.log(postData);
+
 
   useEffect(() => {
     if (inputRef.current) {
@@ -165,8 +137,9 @@ const CreateCommentBottomSheet = ({fromPage}) => {
   useEffect(() => {
     console.log('[BS_DEBUG][Comment] Visibility effect, visibility =', commentBottomSheetVisibility);
     if (commentBottomSheetVisibility === 1) {
-      console.log('[BS_DEBUG][Comment] Presenting modal');
-      bottomSheetRef.current?.present();
+      requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
       
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => {
@@ -178,25 +151,22 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     }
   }, [commentBottomSheetVisibility]);
 
-  const handleDoComment = async () => {
+  const handleDoComment = useCallback(async () => {
+    const currentText = textRef.current;
+    if (!currentText?.trim()) return;
+
     setDoCommentLoader(true);
 
     const {data, error} = await doComment({
       token,
       data: {
         postId: postData?.id,
-        text,
+        text: currentText,
       },
     });
 
-    console.log('DOOOOOOOOOOOOOOOOOO Comment', data?.statusCode);
-
     if (data?.statusCode === 200) {
-      console.log('commenting');
-
       dispatch(pushComment({comment: data?.data[0]}));
-
-      console.log('commednting2');
 
       if (fromPage === 'myProfilePost') {
         dispatch(myProfileIncrementCommentCount({postId: postData?.id}));
@@ -206,11 +176,12 @@ const CreateCommentBottomSheet = ({fromPage}) => {
         dispatch(incrementCommentCount({postId: postData?.id}));
       }
 
+      textRef.current = '';
       setText('');
     }
 
     if (error) {
-      console.log(error);
+      console.log('Comment error:', error);
       if (error?.data?.status_code === 400) {
         LoginPageErrors(error?.data?.message);
         return;
@@ -218,7 +189,7 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     }
 
     setDoCommentLoader(false);
-  };
+  }, [token, postData?.id, fromPage]);
 
   const token = useSelector(state => state.auth.user.token);
 
@@ -232,13 +203,18 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     }, 500);
   }, []);
 
-  const NoComments = () => {
-    return (
-      <View style={{alignSelf: 'center'}}>
-        <Text style={{fontFamily: 'Rubik-Medium', fontSize: 18, color: '#6d6d6d'}}>Be the first to comment!</Text>
+  const NoComments = useMemo(() => (
+    <View style={{alignItems: 'center', marginTop: responsiveWidth(25), paddingHorizontal: 40}}>
+      <View style={{backgroundColor: '#F8F8F8', padding: 24, borderRadius: 100, marginBottom: 24, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2}}>
+        <DIcon provider={'Feather'} name={'zap'} size={40} color="#FFA86B" />
       </View>
-    );
-  };
+      <Text style={{fontFamily: 'Rubik-Bold', fontSize: 22, color: '#262626', textAlign: 'center'}}>The spotlight is yours</Text>
+      <Text style={{fontFamily: 'Rubik-Regular', fontSize: 14, color: '#8E8E8E', marginTop: 10, textAlign: 'center', lineHeight: 22}}>Don't just watch from the sidelines. Be the first to share your thoughts and stand out to your favorite creator.</Text>
+      <TouchableOpacity onPress={() => inputRef.current?.focus()} style={{marginTop: 24, backgroundColor: '#262626', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25}}>
+        <Text style={{fontFamily: 'Rubik-Medium', fontSize: 14, color: '#fff'}}>Start the conversation</Text>
+      </TouchableOpacity>
+    </View>
+  ), []);
 
   const EachComments = useCallback(
     ({item}) => {
@@ -260,41 +236,48 @@ const CreateCommentBottomSheet = ({fromPage}) => {
       };
 
       return (
-        <View style={styles.eachCommentContainer}>
-          <View style={[styles.headerLeftContentContainer, {alignItems: 'flex-start'}]}>
+        <View style={{paddingHorizontal: 20, paddingVertical: 2}}>
+          <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
             <TouchableOpacity style={[styles.profileImageContainer]} onPress={goToProfile}>
               <Image placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={item?.profile_image?.url ? {uri: item?.profile_image?.url} : require('../../../Assets/Images/DefaultProfile.jpg')} resizeMethod="resize" style={[styles.profileImage]} />
             </TouchableOpacity>
 
-            <View style={{flexDirection: 'column', justifyContent: 'center', width: '100%', paddingRight: 24}}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: responsiveWidth(2),
-                  paddingRight: 34,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: 'Rubik-SemiBold',
-                    color: '#1e1e1e',
-                    fontSize: responsiveFontSize(1.5),
-                  }}>
-                  {item?.displayName}
-                </Text>
+            <View style={{flexDirection: 'column', flex: 1, marginLeft: 14, paddingRight: 10}}>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <Text
+                    style={{
+                      fontFamily: 'Rubik-Bold',
+                      color: '#1A1A1A',
+                      fontSize: 14,
+                    }}>
+                    {item?.displayName}
+                  </Text>
+                  <Text style={{color: '#B0B0B0', fontSize: 14, marginBottom: 2}}>•</Text>
+                  <Text style={styles.timiming}>
+                    {(() => {
+                      if (!item?.createdAt) return '';
+                      const now = moment();
+                      const created = moment(item.createdAt);
+                      const diffInMinutes = now.diff(created, 'minutes');
+                      const diffInHours = now.diff(created, 'hours');
+                      const diffInDays = now.diff(created, 'days');
 
-                <Moment style={styles.timiming} element={Text} fromNow>
-                  {item?.createdAt}
-                </Moment>
-              </View>
+                      if (diffInMinutes < 1) return 'now';
+                      if (diffInMinutes < 60) return `${diffInMinutes}m`;
+                      if (diffInHours < 24) return `${diffInHours}h`;
+                      if (diffInDays < 7) return `${diffInDays}d`;
+                      return created.format('MMM D');
+                    })()}
+                  </Text>
+                </View>
 
               <Text
                 style={{
-                  color: '#1e1e1e',
+                  color: '#262626',
                   fontFamily: 'Rubik-Regular',
-                  fontSize: responsiveFontSize(1.75),
-                  width: responsiveWidth(80),
+                  fontSize: 14,
+                  lineHeight: 20,
+                  marginTop: 2,
                 }}
                 numberOfLines={10}>
                 {item?.text}
@@ -311,11 +294,10 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
   const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
 
-  console.log('[BS_DEBUG][Comment] Rendering BottomSheetModal JSX (persistent)');
+
 
   return (
-    <SafeAreaView>
-      <BottomSheetModal
+    <BottomSheetModal
         keyboardBlurBehavior="restore"
         name="duck"
         backdropComponent={renderBackdrop}
@@ -328,78 +310,86 @@ const CreateCommentBottomSheet = ({fromPage}) => {
         backgroundStyle={{backgroundColor: '#fff'}}
         android_keyboardInputMode="adjustResize"
         keyboardBehavior="interactive"
-        containerStyle={{borderTopLeftRadius: 20}}
-        style={{borderRadius: 20, overflow: 'hidden'}}
-        handleIndicatorStyle={{display: 'none'}}>
+        containerStyle={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}
+        style={{borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden'}}
+        handleIndicatorStyle={{backgroundColor: '#D9D9D9', width: 40}}>
         <View style={styles.contentContainer}>
-          <Text
-            style={{
-              textAlign: 'center',
-              fontFamily: 'Rubik-Medium',
-              color: '#1e1e1e',
-              fontSize: responsiveFontSize(2),
-              marginBottom: 20,
-              marginTop: 5,
-            }}>
-            Comments
-          </Text>
+          <View style={{paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F5F5F5'}}>
+            <Text
+              style={{
+                fontFamily: 'Rubik-Bold',
+                color: '#262626',
+                fontSize: 18,
+              }}>
+              Comments
+            </Text>
+          </View>
 
           {showCommentsShimmer ? (
             <CommentShimmer />
           ) : (
             <>
               <FlatList
-                contentContainerStyle={{paddingBottom: showLoadMoreButton ? 100 : 35}}
-                ItemSeparatorComponent={() => <View style={{height: responsiveWidth(3), marginVertical: 8}} />}
+                contentContainerStyle={{paddingBottom: 120}}
+                ItemSeparatorComponent={ItemSeparator}
                 style={{
-                  height: '90%',
-                  paddingTop: responsiveWidth(4),
+                  flex: 1,
+                  paddingTop: responsiveWidth(2),
                   borderTopWidth: 1.5,
                   borderColor: '#e9e9e9',
                   paddingLeft: responsiveWidth(2),
-                  borderWidth: 1,
-                  paddingBottom: 50,
                 }}
                 data={comments}
                 renderItem={({item, index}) => <EachComments item={item} loggedInUser={loggedInUser} />}
-                ListEmptyComponent={() => <NoComments />}
+                ListEmptyComponent={NoComments}
+                onEndReached={() => {
+                  if (currentPage <= totalPages && !commentLoader) {
+                    handleCommentLoadMore();
+                  }
+                }}
+                onEndReachedThreshold={0.3}
               />
 
-              {currentPage <= totalPages && <LoadMoreButton loading={commentLoader} onPress={handleCommentLoadMore} />}
+              {commentLoader && (
+                <View style={{position: 'absolute', bottom: 80, alignSelf: 'center'}}>
+                  <ActivityIndicator size="small" color="#1e1e1e" />
+                </View>
+              )}
             </>
           )}
         </View>
 
-        <View style={{height: 1.5, backgroundColor: '#E9E9E9'}} />
+        <View style={[styles.bottomCommentBoxContainer, {borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20, alignItems: 'center'}]}>
+          <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#262626', marginBottom: 2}]} onPress={() => gotomyprofile()}>
+            <Image source={{uri: loggedInUser?.currentUserProfilePicture}} resizeMethod="resize" style={[styles.profileImage, {borderRadius: 18}]} />
+          </TouchableOpacity>
 
-        <View style={styles.bottomCommentBoxContainer}>
-          <View style={styles.headerLeftContentContainer}>
-            <TouchableOpacity style={[styles.profileImageContainer, {height: 25, width: 25, borderWidth: 1.5}]} onPress={() => gotomyprofile()}>
-              <Image source={{uri: loggedInUser?.currentUserProfilePicture}} resizeMethod="resize" style={[styles.profileImage]} />
-            </TouchableOpacity>
+          <View style={[styles.headerInformation, {flex: 1, marginLeft: 14, alignItems: 'center'}]}>
+            {Platform.OS === 'ios' ? (
+              <BottomSheetTextInput
+                ref={inputRef}
+                value={text}
+                placeholderTextColor={'#8E8E8E'}
+                onChangeText={handleTextChange}
+                style={styles.textInputCapsule}
+                placeholder="Add a Comment..."
+                selectionHandleColor={'#ffa86b'}
+                cursorColor={'#1e1e1e'}
+              />
+            ) : (
+              <TextInput autoCapitalize="sentences" ref={inputRef} value={text} onChangeText={handleTextChange} style={styles.textInputCapsule} placeholder="Add a Comment..." selectionHandleColor={'#ffa86b'} selectionColor={selectionTwin()} cursorColor={'#1e1e1e'} />
+            )}
 
-            <View style={styles.headerInformation}>
-              {Platform.OS === 'ios' ? (
-                <BottomSheetTextInput
-                  ref={inputRef}
-                  value={text}
-                  placeholderTextColor={'#4D4D4D'}
-                  onChangeText={t => setText(t)}
-                  style={[{width: responsiveWidth(68), fontFamily: 'Rubik-Regular'}, Platform.OS === 'ios' ? {height: responsiveWidth(8), fontSize: responsiveFontSize(1.5)} : {}]}
-                  placeholder="Add a Comment..."
-                  selectionHandleColor={'#ffa86b'}
-                  cursorColor={'#1e1e1e'}
-                />
+            <TouchableOpacity onPress={handleDoComment} disabled={!text.trim() || doCommentLoader} style={{paddingLeft: 10, height: 44, justifyContent: 'center', alignItems: 'center'}}>
+              {doCommentLoader ? (
+                <ActivityIndicator size="small" color={'#1E1E1E'} />
               ) : (
-                <TextInput autoCapitalize="sentences" ref={inputRef} value={text} onChangeText={t => setText(t)} style={styles.textInput} placeholder="Add a Comment..." selectionHandleColor={'#ffa86b'} selectionColor={selectionTwin()} cursorColor={'#1e1e1e'} />
+                <DIcon provider={'Feather'} name={'send'} size={24} color={text.trim().length > 0 ? '#1E1E1E' : '#D1D1D1'} />
               )}
-
-              {doCommentLoader ? <ActivityIndicator size="small" color={'#1e1e1e'} style={{marginLeft: 6}} /> : <DIcon provider={'Octicons'} name={'paper-airplane'} style={{marginLeft: 6}} onPress={handleDoComment} />}
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
       </BottomSheetModal>
-    </SafeAreaView>
   );
 };
 
@@ -429,12 +419,11 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     borderColor: '#1e1e1e',
-    height: responsiveWidth(10),
-    width: responsiveWidth(10),
-    borderRadius: responsiveWidth(10),
+    height: 36,
+    width: 36,
+    borderRadius: 18,
     overflow: 'hidden',
-    borderWidth: 1.8,
-    borderRadius: responsiveWidth(10),
+    borderWidth: 1.5,
     position: 'relative',
   },
   profileImage: {
@@ -481,14 +470,11 @@ const styles = StyleSheet.create({
     marginVertical: responsiveWidth(3),
   },
   bottomCommentBoxContainer: {
-    padding: 24,
-    height: responsiveWidth(14),
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: responsiveWidth(4),
-    marginBottom: responsiveWidth(4),
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '100%',
-    // backgroundColor : 'red'
   },
   emojiContainer: {
     flexDirection: 'row',
@@ -502,11 +488,24 @@ const styles = StyleSheet.create({
   },
 
   timiming: {
-    fontSize: responsiveFontSize(1.75),
-    color: '#7e7e7e',
+    fontSize: 12,
+    color: '#8E8E8E',
     fontFamily: 'Rubik-Regular',
   },
 
+  textInputCapsule: {
+    flex: 1,
+    height: 42,
+    fontFamily: 'Rubik-Regular',
+    backgroundColor: '#F6F6F6',
+    fontSize: 14,
+    color: '#262626',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+  },
   textInput: {
     height: '100%',
     width: responsiveWidth(70),

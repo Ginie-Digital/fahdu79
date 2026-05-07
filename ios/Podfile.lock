@@ -3240,7 +3240,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-date-picker (5.0.12):
+  - react-native-date-picker (5.0.13):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -5054,7 +5054,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: e46cff912b07dc383f04715b4225ca131b325a4a
   react-native-blob-util: e032f2a9d5779aa94934139a60fe5ed6c5071328
   react-native-capture-protection: 401831bad8778b6940ec455867b018a910616bf7
-  react-native-date-picker: c568e29cbe8203fbc94651929dac06b8d54a7aa6
+  react-native-date-picker: f32731b68a859d91282cdf77f4c74f4d0105730d
   react-native-document-picker: cf30fef688e4b6693b84b56b24c6b8a4a41953db
   react-native-image-crop-tools: 56c6d31f308e86ef8019a892d2ca2983dc1bb946
   react-native-image-picker: f6ece66f251f4a17aab08f5add7be6eb9e7f5356
@@ -5120,7 +5120,7 @@ SPEC CHECKSUMS:
   RNIap: f14cb76671570a0144bbf0cb23541f0f3364f393
   RNImageCropPicker: 2889fd7ef4b4bb7aeef8a0b598661f934f01f5e1
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
-  RNPermissions: 01e8392c280ca7d9b2b33f35458fe9102540ce28
+  RNPermissions: 0f569d94609d29dc81eda7f5d2430765b286ce7b
   RNPurchases: 6070b60f5d8f525a58905df50773f7a3252f0cfa
   RNReactNativeHapticFeedback: 972a659282afb88f2b05ca3cfc21cb3a5eb4e44f
   RNReanimated: b5e5f252891b973a5d1497f08cdecba0b42db1f5
@@ -5137,6 +5137,6 @@ SPEC CHECKSUMS:
   Yoga: b37eeaa6148984cac70ecaf8022bb209e03296cb
   ZegoExpressEngine: c1b01551fc817e6fd32b3a877a9d15de6d93f68e
 
-PODFILE CHECKSUM: b4c95298e8649c0fe10236516502febd350fd563
+PODFILE CHECKSUM: 9b37564a6cd32095c8e773191f4ececd7c7007bd
 
 COCOAPODS: 1.16.2

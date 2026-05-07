@@ -128,23 +128,24 @@ const WalletScreen = ({ route }) => {
     const os = Platform.OS;
     console.log('📱 Platform.OS detected:', os);
     
-    const { data, error } = await getWalletPack({ token, os });
+    const { data, error } = await getWalletPack({ token, os }, false); // False to skip cache
 
-    console.log('📦 Wallet Pack Response:', {
-      success: !!data,
-      packs: data?.data?.packs,
-      fullData: data,
-      error
-    });
+    console.log('📦 [Wallet:FetchPack] OS:', os);
+    console.log('📦 [Wallet:FetchPack] Response Data:', JSON.stringify(data?.data?.packs?.map(p => ({id: p._id, name: p.name, cost: p.cost})), null, 2));
+
+    if (error) {
+      console.log('📦 [Wallet:FetchPack] Error:', error);
+    }
 
     setPackages(data?.data?.packs || []);
   };
 
-  useEffect(() => {
-    fetchPack();
-    getUserCoins();
-    setBalance(350);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPack();
+      getUserCoins();
+    }, [])
+  );
 
   if (loading) {
     return (

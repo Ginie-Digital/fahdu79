@@ -4808,7 +4808,7 @@ __metadata:
     react-native-cashfree-pg-sdk: "npm:^2.2.5"
     react-native-chart-kit: "npm:^6.12.0"
     react-native-collapsible-tab-view: "npm:^8.0.0"
-    react-native-date-picker: "npm:5.0.12"
+    react-native-date-picker: "npm:5.0.13"
     react-native-device-info: "npm:^14.1.1"
     react-native-elements: "npm:^3.4.3"
     react-native-email-link: "npm:^1.16.1"
@@ -7763,11 +7763,11 @@ __metadata:
 
 "ffmpeg-kit-react-native@file:./FFMPegBuild/react-native::locator=Fahdu%40workspace%3A.":
   version: 6.0.2
-  resolution: "ffmpeg-kit-react-native@file:./FFMPegBuild/react-native#./FFMPegBuild/react-native::hash=f085ab&locator=Fahdu%40workspace%3A."
+  resolution: "ffmpeg-kit-react-native@file:./FFMPegBuild/react-native#./FFMPegBuild/react-native::hash=9c5a33&locator=Fahdu%40workspace%3A."
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/dff95d7dcdeea6e3536e42067ad2b5e7d84f3225014a43028ac570f8d0fc1c1f29a93bfc0873b50a2923f519f9a6d824fd30e0aacf53b3735e0922c014e3a09f
+  checksum: 10c0/491e9391b7599e1b108c6cf0daab47178ee6f232cee78feae45e1b94212b07ccd8868ad1ba58a14cb22339ec9f0b7b646ab296acd5c12842a42136af10e05275
   languageName: node
   linkType: hard
 
@@ -11672,13 +11672,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-date-picker@npm:5.0.12":
-  version: 5.0.12
-  resolution: "react-native-date-picker@npm:5.0.12"
+"react-native-date-picker@npm:5.0.13":
+  version: 5.0.13
+  resolution: "react-native-date-picker@npm:5.0.13"
   peerDependencies:
     react: ">= 17.0.1"
     react-native: ">= 0.64.3"
-  checksum: 10c0/d5f49d34cbf631f0240dde2e1ff8fcc3fd8cb982104fe510093b415ae359efe1b49f6b9d850b47cc09f7603da724ed28c8fe8f70f9553ba4334b5cf7f0dec34d
+  checksum: 10c0/197c807ecbf06c0c5366f79daf5d0d1d580e7a4f8b673fe4fb1d5bcc2993ff0147b823082cdb82f526bb43174dc1c6c6d041d032dada770e92ec2e614d4a8655
   languageName: node
   linkType: hard
 

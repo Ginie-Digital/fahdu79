@@ -7,8 +7,8 @@ export function navigate(name, params) {
 
   // If ready, navigate immediately
   if (navigationRef.isReady()) {
-    if (name === 'home') {
-      navigationRef.navigate('chatRoomTab', { screen: 'home' });
+    if (['home', 'profile', 'chatroom', 'discover'].includes(name)) {
+      navigationRef.navigate('chatRoomTab', { screen: name });
     } else {
       navigationRef.navigate(name, params);
     }
@@ -23,8 +23,8 @@ export function navigate(name, params) {
     if (navigationRef.isReady()) {
       console.log('✅ NavigationRef ready after', attempts, 'attempts');
       clearInterval(interval);
-      if (name === 'home') {
-        navigationRef.navigate('chatRoomTab', { screen: 'home' });
+      if (['home', 'profile', 'chatroom', 'discover'].includes(name)) {
+        navigationRef.navigate('chatRoomTab', { screen: name });
       } else {
         navigationRef.navigate(name, params);
       }

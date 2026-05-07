@@ -3,7 +3,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {useNavigation} from '@react-navigation/native';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleDateTimePicker, toggleShowProgress, resetDateTimePicker, toggleCreatorSelectorModal} from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useCreatePostMutation, useCreatePostUploadAttachmentMutation, useLazyMyPostListQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
@@ -736,7 +736,7 @@ const CreatePost = ({route}) => {
   };
 
   return (
-    <GestureHandlerRootView style={styles.container} testID="create-post-screen">
+    <View style={styles.container} testID="create-post-screen">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{flex: 1}}
@@ -902,22 +902,25 @@ const CreatePost = ({route}) => {
           </View>
 
           {isEnabled && (
-            <View style={[styles.errorContainer, isEnabled ? {marginVertical: WIDTH_SIZES['24'] + WIDTH_SIZES['2']} : null]}>
-              <Ionicons name="time-outline" size={20} color="green" style={styles.errorIconOld} />
-
-              <Text style={styles.errorText}>
-                Scheduled for {date.toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'})} at {date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})}
-              </Text>
-
-              <DIcon onPress={toggleSwitch} provider={'MaterialIcons'} name={'delete-outline'} size={20} color="#1e1e1e" style={styles.errorIcon} />
-            </View>
+            <TouchableOpacity activeOpacity={0.8} onPress={toggleSwitch} style={styles.scheduleActiveRow}>
+              <View style={styles.scheduleActiveLeft}>
+                <Ionicons name="time-outline" size={18} color="#1e1e1e" />
+                <Text style={styles.scheduleActiveText}>
+                  {date.toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'})} at {date.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})}
+                </Text>
+              </View>
+              <DIcon provider={'MaterialIcons'} name={'close'} size={18} color="#999" />
+            </TouchableOpacity>
           )}
 
           {!isEnabled && (
-            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: WIDTH_SIZES['24']}}>
-              <Text style={{fontFamily: 'Rubik-SemiBold', color: '#282828', fontSize: 16, left: responsiveWidth(1.5)}}>Schedule this Post</Text>
-              <Switch testID="create-post-schedule-switch" trackColor={{false: '#767577', true: '#1e1e1e'}} thumbColor={isEnabled ? '#ffa86b' : '#1e1e1e'} ios_backgroundColor="white" onValueChange={toggleSwitch} value={isEnabled} style={{borderWidth: 1.5, borderColor: '#1e1e1e'}} />
-            </View>
+            <TouchableOpacity activeOpacity={0.7} onPress={toggleSwitch} style={styles.scheduleRow}>
+              <View style={styles.scheduleRowLeft}>
+                <Ionicons name="time-outline" size={18} color="#1e1e1e" />
+                <Text style={styles.scheduleRowText}>Schedule this Post</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#BFBFBF" />
+            </TouchableOpacity>
           )}
 
           <View style={{width: '99%', justifyContent: 'center'}}>
@@ -931,7 +934,7 @@ const CreatePost = ({route}) => {
         onClose={() => setMentionSearchQuery('')}
         initialSearch={mentionSearchQuery} 
       />
-    </GestureHandlerRootView>
+    </View>
   );
 };
 
@@ -1153,6 +1156,49 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.8),
     color: 'green',
     flexShrink: 1,
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8F6F2',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 20,
+    marginTop: WIDTH_SIZES['24'],
+  },
+  scheduleRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  scheduleRowText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#1e1e1e',
+    fontSize: responsiveFontSize(1.8),
+  },
+  scheduleActiveRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFF4EC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#FFA86B',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginVertical: WIDTH_SIZES['24'] + WIDTH_SIZES['2'],
+  },
+  scheduleActiveLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  scheduleActiveText: {
+    fontFamily: 'Rubik-Medium',
+    color: '#1e1e1e',
+    fontSize: responsiveFontSize(1.7),
   },
   selectMedia: {
     alignSelf: 'flex-start',

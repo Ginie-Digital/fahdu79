@@ -87,6 +87,7 @@ const OtherProfileNew = ({route}) => {
   const refreshOtherProfile = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
   const otherProfileActionSheetVisibility = useSelector(state => state.hideShow.visibility.otherProfileActionSheet.show);
   const otherProfileRatingSheetVisibility = useSelector(state => state.hideShow.visibility.otherProfileRatingSheet);
+  const ratingModalVisible = useSelector(state => state.hideShow.visibility.ratingModal);
   const commentBottomSheetVisibility = useSelector(state => state.hideShow.visibility.commentBottomSheet.show);
   const postActionSheetBottomSheetVisibility = useSelector(state => state.hideShow.visibility.postActionBottomSheet.show);
 
@@ -292,8 +293,8 @@ const OtherProfileNew = ({route}) => {
         }}
       />
       {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
-      {commentBottomSheetVisibility === 1 && <CreateCommentBottomSheet fromPage={'otherProfile'} />}
-      {otherProfileRatingSheetVisibility === 1 && <OtherProfileRatingSheet />}
+      <CreateCommentBottomSheet fromPage={'otherProfile'} />
+      {ratingModalVisible && <OtherProfileRatingSheet />}
     </>
   );
 };

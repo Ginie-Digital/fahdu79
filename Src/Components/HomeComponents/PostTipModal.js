@@ -114,128 +114,122 @@ const PostTipModal = () => {
     }
   };
 
-  if (modal?.show) {
-    return (
-      <Modal
-        animationIn={'slideInUp'}
-        animationOut={'slideOutDown'}
-        animationInTiming={150}
-        animationOutTiming={150}
-        onRequestClose={() => {
+  return (
+    <Modal
+      animationIn={'slideInUp'}
+      animationOut={'slideOutDown'}
+      animationInTiming={150}
+      animationOutTiming={150}
+      onRequestClose={() => {
+        dispatch(customTipAmount({amount: 10}));
+        dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
+      }}
+      transparent={true}
+      isVisible={!!modal?.show}
+      backdropColor="#00000060"
+      avoidKeyboard={true}
+      onBackButtonPress={() => {
+        dispatch(customTipAmount({amount: 10}));
+        dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
+      }}
+      onBackdropPress={() => {
+        dispatch(customTipAmount({amount: 10}));
+        dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
+      }}
+      style={{
+        margin: 0,
+        justifyContent: 'flex-end',
+      }}>
+      <View
+        style={[
+          styles.modalInnerWrapper,
+          {paddingBottom: Platform.OS === 'ios' ? 40 : 20},
+        ]}>
+        <View style={styles.headerRow}>
+          <Text style={styles.sendTipText}>Send Tip</Text>
+          <TouchableOpacity onPress={() => {
           dispatch(customTipAmount({amount: 10}));
-          dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
-        }}
-        transparent={true}
-        isVisible={modal?.show}
-        backdropColor="#00000060"
-        avoidKeyboard={true}
-        onBackButtonPress={() => {
-          dispatch(customTipAmount({amount: 10}));
-          dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
-        }}
-        onBackdropPress={() => {
-          dispatch(customTipAmount({amount: 10}));
-          dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
-        }}
-        style={{
-          margin: 0,
-          justifyContent: 'flex-end',
-        }}>
-        <View
-          style={[
-            styles.modalInnerWrapper,
-            {paddingBottom: Platform.OS === 'ios' ? 40 : 20},
-          ]}>
-          <View style={styles.headerRow}>
-            <Text style={styles.sendTipText}>Send Tip</Text>
-            <TouchableOpacity onPress={() => {
-            dispatch(customTipAmount({amount: 10}));
-              dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
-            }}>
-              <DIcon provider={'Entypo'} name={'cross'} color={'#000'} size={responsiveFontSize(3.5)} />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tipContainer}>
-            <View style={styles.tipCounterContainer}>
-              <View style={styles.sendTipInputContainer}>
-                {tipAmount >= 0 && tipAmount < 10 && (
-                  <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: '#EAEAEA', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
-                    <Text style={{fontSize: 10, color: '#666', fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
-                  </Animated.View>
-                )}
-                <View style={styles.leftAction}>
-                  <Paisa />
-                </View>
-                <TextInput
-                  placeholder="0"
-                  maxLength={5}
-                  value={String(tipAmount)}
-                  style={styles.amountInput}
-                  onChangeText={x => dispatch(customTipAmount({amount: x.replace(/[^0-9]/g, '')}))}
-                  keyboardType="numeric"
-                  showsVerticalScrollIndicator={false}
-                />
-                <View style={styles.rightAction}>
-                  <TouchableOpacity 
-                    style={styles.plusMinusButton} 
-                    onPress={() => {
-                      dispatch(decreaseTipAmount());
-                      triggerImpactHeavy();
-                    }}>
-                    <View style={[styles.plusMinusButtonInside, {backgroundColor: '#ff6961'}]}>
-                      <DIcon provider={'Entypo'} name={'minus'} size={18} />
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.plusMinusButton} 
-                    onPress={() => {
-                      dispatch(increaseTipAmount());
-                      triggerImpactHeavy();
-                    }}>
-                    <View style={[styles.plusMinusButtonInside, {backgroundColor: '#bafca2'}]}>
-                      <DIcon provider={'Entypo'} name={'plus'} size={18} />
-                    </View>
-                  </TouchableOpacity>
-                </View>
+            dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
+          }}>
+            <DIcon provider={'Entypo'} name={'cross'} color={'#000'} size={responsiveFontSize(3.5)} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.tipContainer}>
+          <View style={styles.tipCounterContainer}>
+            <View style={styles.sendTipInputContainer}>
+              {tipAmount >= 0 && tipAmount < 10 && (
+                <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: '#EAEAEA', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
+                  <Text style={{fontSize: 10, color: '#666', fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
+                </Animated.View>
+              )}
+              <View style={styles.leftAction}>
+                <Paisa />
+              </View>
+              <TextInput
+                placeholder="0"
+                maxLength={5}
+                value={String(tipAmount)}
+                style={styles.amountInput}
+                onChangeText={x => dispatch(customTipAmount({amount: x.replace(/[^0-9]/g, '')}))}
+                keyboardType="numeric"
+                showsVerticalScrollIndicator={false}
+              />
+              <View style={styles.rightAction}>
+                <TouchableOpacity 
+                  style={styles.plusMinusButton} 
+                  onPress={() => {
+                    dispatch(decreaseTipAmount());
+                    triggerImpactHeavy();
+                  }}>
+                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#ff6961'}]}>
+                    <DIcon provider={'Entypo'} name={'minus'} size={18} />
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.plusMinusButton} 
+                  onPress={() => {
+                    dispatch(increaseTipAmount());
+                    triggerImpactHeavy();
+                  }}>
+                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#bafca2'}]}>
+                    <DIcon provider={'Entypo'} name={'plus'} size={18} />
+                  </View>
+                </TouchableOpacity>
               </View>
             </View>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(2.5), marginTop: responsiveWidth(4), justifyContent: 'center', width: responsiveWidth(80), alignSelf: 'center'}}>
-              {[10, 20, 50].map(amount => (
-                <Pressable
-                  key={amount}
-                  onPress={() => {
-                    dispatch(customTipAmount({amount}));
-                    triggerImpactHeavy();
-                  }}
-                  style={({pressed}) => ({
-                    flexDirection: 'row',
-                    gap: responsiveWidth(2),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: responsiveWidth(0.3),
-                    borderRadius: responsiveWidth(4),
-                    padding: responsiveWidth(1),
-                    width: responsiveWidth(25),
-                    backgroundColor: pressed ? '#FFA86B' : 'transparent',
-                  })}>
-                  <Paisa />
-                  <Text style={{color: 'black'}}>{amount}</Text>
-                </Pressable>
-              ))}
-            </View>
-            {/* <View style={{ position: "relative", alignSelf: "center" }}>
-            <Text style={[styles.loginButton, { backgroundColor: "#282828", position: "absolute", alignSelf: "center", transform: [{ translateX: 2 }, { translateY: 2 }] }]} />
-            <Pressable onPress={() => handleSendTipAmount()}>{!loading ? <Text style={[styles.loginButton]}>Pay</Text> : <ActivityIndicator size={"small"} color={"#282828"} style={styles.loginButton} />}</Pressable>
-          </View> */}
+          </View>
+          <View style={{flexDirection: 'row', gap: responsiveWidth(2.5), marginTop: responsiveWidth(4), justifyContent: 'center', width: responsiveWidth(80), alignSelf: 'center'}}>
+            {[10, 20, 50].map(amount => (
+              <Pressable
+                key={amount}
+                onPress={() => {
+                  dispatch(customTipAmount({amount}));
+                  triggerImpactHeavy();
+                }}
+                style={({pressed}) => ({
+                  flexDirection: 'row',
+                  gap: responsiveWidth(2),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: responsiveWidth(0.3),
+                  borderRadius: responsiveWidth(4),
+                  padding: responsiveWidth(1),
+                  width: responsiveWidth(25),
+                  backgroundColor: pressed ? '#FFA86B' : 'transparent',
+                })}>
+                <Paisa />
+                <Text style={{color: 'black'}}>{amount}</Text>
+              </Pressable>
+            ))}
+          </View>
 
-            <View style={{width: responsiveWidth(78), alignSelf: 'center', marginTop: responsiveWidth(6)}}>
-              <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} />
-            </View>
+          <View style={{width: responsiveWidth(78), alignSelf: 'center', marginTop: responsiveWidth(6)}}>
+            <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} />
           </View>
         </View>
-      </Modal>
-    );
-  }
+      </View>
+    </Modal>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -288,10 +282,6 @@ const styles = StyleSheet.create({
     borderLeftColor: '#282828',
     // elevation: 1,
     fontSize: responsiveFontSize(2),
-    // borderBottomWidth: responsiveWidth(0.6),
-    // borderRightWidth: responsiveWidth(0.6),
-    // borderTopWidth:responsiveWidth(.3),
-    // borderLeftWidth:responsiveWidth(.3),
     borderWidth: responsiveWidth(0.5),
     padding: padios(responsiveWidth(2.6)),
     overflow: 'hidden',

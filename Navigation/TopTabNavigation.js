@@ -170,7 +170,7 @@ const TopTabNavigation = ({ notificationData }) => {
 
       {wishListPreviewModalVisibility && <WishListPreviewModal />}
       {postTipModalVisibility && <PostTipModal />}
-      {commentBottomSheetVisibility === 1 && <CreateCommentBottomSheet fromPage={'myProfilePost'} />}
+      <CreateCommentBottomSheet fromPage={'myProfilePost'} />
       {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
       {whoTippedSheetVisibility === 1 && <TipSheet />}
     </>

@@ -274,4 +274,4 @@ function HeadlessCheck({ isHeadless }) {
   return <App />;
 }
 
-AppRegistry.registerComponent(appName, () => HeadlessCheck);
+AppRegistry.registerComponent('main', () => HeadlessCheck);

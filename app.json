@@ -10,5 +10,8 @@
         "supportsPictureInPicture": true
       }
     ]
-  ]
+  ],
+  "ios": {
+    "bundleIdentifier": "com.fahduindia.fahdu"
+  }
 }

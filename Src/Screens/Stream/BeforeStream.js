@@ -136,9 +136,11 @@ const BeforeStream = () => {
 
       isPermissionFetching.current = true;
 
-      await checkPermissionAndroid();
-
-      await checkPermissionIos();
+      if (Platform.OS === 'android') {
+        await checkPermissionAndroid();
+      } else {
+        await checkPermissionIos();
+      }
 
       isPermissionFetching.current = false;
     }

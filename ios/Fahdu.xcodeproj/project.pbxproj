@@ -12,7 +12,6 @@
 		0BD875F6063B4C8FBACF37EF /* Bouncy-PERSONAL_USE_ONLY.otf in Resources */ = {isa = PBXBuildFile; fileRef = 5E1E260E1F7241A1B552AAFB /* Bouncy-PERSONAL_USE_ONLY.otf */; };
 		0C8488D38AC84B8EAECC81A9 /* Rubik-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B596989A57E240AC811FDEB7 /* Rubik-ExtraBoldItalic.ttf */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		C01085A3CA45674006654EE /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C01085A2CA45674006654EE /* Colors.xcassets */; };
 		18E6711A3D034A6BAEC8C388 /* Rubik-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2C25B954F77E4F96AB9A69CB /* Rubik-Regular.ttf */; };
 		23BBA1DF83454121A7C22160 /* Rubik-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 37FED08A6066403B9C4D81E4 /* Rubik-ExtraBold.ttf */; };
 		270373F760984354A20F8F49 /* Lexend-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8D82AED1F2844BD3B8EE39D7 /* Lexend-Black.ttf */; };
@@ -38,6 +37,7 @@
 		9EB638E6D7314A3C8C3598CB /* Lexend-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4FB2389825843088E734DA7 /* Lexend-Medium.ttf */; };
 		A030360110F14C6EBAB6EA5D /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7E21E5BBCDE748EBA237B0E8 /* Rubik-Bold.ttf */; };
 		A137328CFDD1695C8ABEF715 /* Pods_Fahdu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0926DF065015B7BDE44A2A69 /* Pods_Fahdu.framework */; };
+		C01085A3CA45674006654EE /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C01085A2CA45674006654EE /* Colors.xcassets */; };
 		C1D27E93F244489FBC1A0303 /* Lexend-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B85802300D4F448DA39649CF /* Lexend-Light.ttf */; };
 		C3AA950D968F4517B2C2D8F9 /* MabryPro-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3A0C163BF8F64EFF91CC7E00 /* MabryPro-Bold.ttf */; };
 		D5ABA038D36F4096B050E942 /* Rubik-Italic-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 89E8F4B3E8BA468E8909DFD4 /* Rubik-Italic-VariableFont_wght.ttf */; };
@@ -55,7 +55,6 @@
 		111271FB302B4360926426B7 /* Lexend.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Lexend.ttf; path = ../Assets/fonts/Lexend.ttf; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Fahdu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fahdu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Fahdu/Images.xcassets; sourceTree = "<group>"; };
-		C01085A2CA45674006654EE /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = Fahdu/Colors.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Fahdu/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = Fahdu/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		24C6AF0C192CA39891F906EC /* BootSplash.storyboard */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = Fahdu/BootSplash.storyboard; sourceTree = "<group>"; };
@@ -87,6 +86,7 @@
 		A1E3FD23A6C14331BE132552 /* Rubik-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Medium.ttf"; path = "../Assets/fonts/Rubik-Medium.ttf"; sourceTree = "<group>"; };
 		B596989A57E240AC811FDEB7 /* Rubik-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-ExtraBoldItalic.ttf"; path = "../Assets/fonts/Rubik-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
 		B85802300D4F448DA39649CF /* Lexend-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Lexend-Light.ttf"; path = "../Assets/fonts/Lexend-Light.ttf"; sourceTree = "<group>"; };
+		C01085A2CA45674006654EE /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = Fahdu/Colors.xcassets; sourceTree = "<group>"; };
 		C170AAF2B5D54B37AC74F7A1 /* Rubik-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Italic.ttf"; path = "../Assets/fonts/Rubik-Italic.ttf"; sourceTree = "<group>"; };
 		D1907A54B11B47A595E0BF67 /* MabryPro-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "MabryPro-Italic.ttf"; path = "../Assets/fonts/MabryPro-Italic.ttf"; sourceTree = "<group>"; };
 		DB1C6D54506A4455BFE4CF7B /* MabryPro-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "MabryPro-Medium.ttf"; path = "../Assets/fonts/MabryPro-Medium.ttf"; sourceTree = "<group>"; };
@@ -489,7 +489,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Fahdu/Fahdu.entitlements;
-				CURRENT_PROJECT_VERSION = 80;
+				CURRENT_PROJECT_VERSION = 81;
 				DEVELOPMENT_TEAM = 59X6F8Y2M4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Fahdu/Info.plist;
@@ -500,7 +500,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 19.10.00;
+				MARKETING_VERSION = 20.01.00;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -523,7 +523,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Fahdu/Fahdu.entitlements;
-				CURRENT_PROJECT_VERSION = 80;
+				CURRENT_PROJECT_VERSION = 81;
 				DEVELOPMENT_TEAM = 59X6F8Y2M4;
 				INFOPLIST_FILE = Fahdu/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Fahdu;
@@ -533,7 +533,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 19.10.00;
+				MARKETING_VERSION = 20.01.00;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

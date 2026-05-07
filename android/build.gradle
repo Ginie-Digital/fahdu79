@@ -42,6 +42,9 @@ allprojects {
         maven { url 'https://www.jitpack.io' }
         maven { url 'https://storage.zego.im/maven' }
         maven { url "$rootDir/../node_modules/@notifee/react-native/android/libs" }
+        maven {
+            url "https://phonepe.mycloudrepo.io/public/repositories/phonepe-intentsdk-android"
+        }
         
         flatDir {
             dirs "${rootDir}/../node_modules/ffmpeg-kit-react-native/android/libs"

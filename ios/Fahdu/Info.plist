@@ -85,12 +85,24 @@
 	<string>$(PRODUCT_NAME) requires to access camera for uploading photos to your profile or posts</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>$(PRODUCT_NAME) would like to access your location to show you nearby users</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>$(PRODUCT_NAME) requires location access to provide localized content and nearby user discovery.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>$(PRODUCT_NAME) does not use your calendar directly, but it is required by some of our third-party libraries for full functionality.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>$(PRODUCT_NAME) does not use your contacts directly, but it is required by some of our third-party libraries for full functionality.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>$(PRODUCT_NAME) does not use motion data directly, but it is required by some of our third-party libraries for full functionality.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>$(PRODUCT_NAME) does not use speech recognition directly, but it is required by some of our third-party libraries for full functionality.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>$(PRODUCT_NAME) requires to access Audio recording to record and uplod videos</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>$(PRODUCT_NAME) would like to save photos to your photo gallery</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>$(PRODUCT_NAME) would like to upload photos from your photo gallery</string>
+	<key>NSVoIPUsageDescription</key>
+	<string>To wake up app from background when got incoming call from fahdu</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>INSendMessageIntent</string>

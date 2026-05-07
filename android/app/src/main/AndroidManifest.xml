@@ -59,5 +59,10 @@
 			android:name="cashfree_subscription_flow_enable"
 			android:value="true"
 			tools:replace="android:value"/>
+		<meta-data android:name="expo.modules.updates.ENABLED" android:value="true"/>
+		<meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
+		<meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
+		<meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL" android:value="https://u.expo.dev/657fd6e2-6582-4d14-8253-bd915417c996"/>
+		<meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"/>
 	</application>
 </manifest>

@@ -484,6 +484,7 @@ const LiveStream = ({ route }) => {
   };
 
   const streamHasEndedModalOkay = () => {
+    setLiveStreamEndModal(false);
     ZegoExpressEngine.instance().logoutRoom(route?.params?.data?.roomId);
     dispatch(resetStreamStates());
     clearTimeout(tokenTimeOut);

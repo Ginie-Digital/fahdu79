@@ -6,7 +6,8 @@ import {token as memoizedToken} from '../../../Redux/Slices/NormalSlices/AuthSli
 import {useDispatch, useSelector} from 'react-redux';
 import {togglePostActionBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import DIcon from '../../../DesiginData/DIcons';
-import {useFocusEffect, useNavigation, useNavigationState} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
+import { navigate } from '../../../Navigation/RootNavigation';
 import {ChatWindowError, LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
 import PagerView from 'react-native-pager-view';
 import {useBlockUserMutation, useDeleteMyPostMutation, usePinUnPinPostMutation, usePostEditMutation, useReportPostMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
@@ -20,10 +21,10 @@ import {Image} from 'expo-image';
 const PostActionBottomSheet = () => {
   const attachmentInputRef = React.useRef();
 
-  const screenName = useNavigationState(state => state.routes[state.index].name);
-  const navigation = useNavigation();
+  // const screenName = useNavigationState(state => state.routes[state.index].name);
+  // const navigation = useNavigation();
 
-  console.log(screenName, '::::');
+  // console.log(screenName, '::::');
 
   const bottomSheetModalRef = useRef(null);
 
@@ -34,6 +35,7 @@ const PostActionBottomSheet = () => {
   const {role: currentUserRole, currentUserId} = useSelector(state => state.auth.user);
 
   const dispatch = useDispatch();
+  const token = useSelector(state => state.auth.user.token);
 
   const snapPoints = useMemo(() => ['30%', '31%', '35'], []);
 
@@ -122,7 +124,6 @@ const PostActionBottomSheet = () => {
     },
   ]);
 
-  const token = useSelector(state => state.auth.user.token);
 
   const handleSheetChanges = useCallback(index => {
     console.log(index);
@@ -243,7 +244,7 @@ const PostActionBottomSheet = () => {
       console.log('Navigate to EditPostScreen');
       bottomSheetModalRef.current?.close();
       setTimeout(() => {
-        navigation.navigate('editPostScreen', {postId, postContent});
+        navigate('editPostScreen', {postId, postContent});
       }, 650);
     }
 

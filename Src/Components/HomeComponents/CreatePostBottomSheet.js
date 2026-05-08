@@ -3,7 +3,7 @@ import React, {useCallback, useRef, useState, useEffect} from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleCreatePostBottomSheet, toggleHideShowLiveTerms} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useNavigation} from '@react-navigation/native';
+import { navigate } from '../../../Navigation/RootNavigation';
 import {LoginPageErrors} from '../ErrorSnacks';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import {Alert, Linking} from 'react-native';
@@ -14,7 +14,6 @@ import {BlurView} from 'expo-blur';
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const CreatePostBottomSheet = () => {
-  const navigation = useNavigation();
   const dispatch = useDispatch();
 
   const visible = useSelector(state => state.hideShow.visibility.createPostSheet === 1);
@@ -120,13 +119,13 @@ const CreatePostBottomSheet = () => {
               }
             }
 
-            navigation.navigate('createpostpage', {
+            navigate('createpostpage', {
               uri: video.path,
               isVideo: true,
             });
           } else {
             // Images selected — go to filterScreen first
-            navigation.navigate('filterScreen', {
+            navigate('filterScreen', {
               uris: images.map(img => img.path),
               width: 4,
               height: 5,

@@ -16,7 +16,7 @@ import {BlurView} from 'expo-blur';
 import {toggleHomeBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {homeBottomSheetList, homeBottomSheetListRoleUser} from '../../../DesiginData/Data';
 import AddSvg from '../../../AddSvg';
-import {useNavigation} from '@react-navigation/native';
+import { navigate } from '../../../Navigation/RootNavigation';
 
 import {useLazyGetFSDQuery, useLazyGetFSQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 
@@ -24,7 +24,6 @@ const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const HomeBottomSheet = () => {
   const dispatch = useDispatch();
-  const navigation = useNavigation();
 
 
   const visible = useSelector(state => state.hideShow.visibility.homeBottomSheet === 1);
@@ -109,20 +108,20 @@ const HomeBottomSheet = () => {
     handleClose();
     setTimeout(() => {
       switch (id) {
-        case 99: navigation.navigate('feedback'); break;
-        case 6: navigation.navigate('About'); break;
+        case 99: navigate('feedback'); break;
+        case 6: navigate('About'); break;
         case 1:
-        case 8: navigation.navigate('settingsPage'); break;
-        case 10: navigation.navigate('verificationStepOne'); break;
-        case 5: navigation.navigate('referral'); break;
-        case 3: navigation.navigate('mrDashboard'); break;
-        case 2: navigation.navigate('scheduled'); break;
-        case 9: navigation.navigate('chooseWallet'); break;
-        case 11: navigation.navigate('userInfoForm'); break;
+        case 8: navigate('settingsPage'); break;
+        case 10: navigate('verificationStepOne'); break;
+        case 5: navigate('referral'); break;
+        case 3: navigate('mrDashboard'); break;
+        case 2: navigate('scheduled'); break;
+        case 9: navigate('chooseWallet'); break;
+        case 11: navigate('userInfoForm'); break;
         default: break;
       }
     }, 300);
-  }, [navigation]);
+  }, []);
 
   if (!shouldRender) return null;
 

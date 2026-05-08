@@ -6,7 +6,8 @@ import DIcon from '../../../DesiginData/DIcons';
 import {FlatList, TextInput} from 'react-native-gesture-handler';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleCommentBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
+import { navigate } from '../../../Navigation/RootNavigation';
 import {useDoCommentMutation, useLazyGetAllCommentsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import moment from 'moment';
 import Moment from 'react-moment';
@@ -22,19 +23,20 @@ import {otherProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSli
 
 const ItemSeparator = () => <View style={{height: responsiveWidth(6)}} />;
 
-const CreateCommentBottomSheet = ({fromPage}) => {
+const CreateCommentBottomSheet = () => {
 
   const bottomSheetRef = useRef(null);
 
   const inputRef = useRef(null);
 
-  const {show: commentBottomSheetVisibility, focus: shouldBeFocus} = useSelector(state => state.hideShow.visibility.commentBottomSheet);
+  const {show: commentBottomSheetVisibility, focus: shouldBeFocus, fromPage} = useSelector(state => state.hideShow.visibility.commentBottomSheet);
 
   const loggedInUser = useSelector(state => state.auth.user);
 
   const {data: postData, comments, totalPages} = useSelector(state => state.currentComment.content);
 
   const showCommentsShimmer = useSelector(state => state.hideShow.visibility.loadingComments);
+  const token = useSelector(state => state.auth.user.token);
 
   const textRef = useRef('');
   const [text, setText] = useState('');
@@ -68,7 +70,6 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     }
   }, []);
 
-  const navigation = useNavigation();
 
   const onBackPress = () => {
     console.log('breadd');
@@ -191,7 +192,6 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     setDoCommentLoader(false);
   }, [token, postData?.id, fromPage]);
 
-  const token = useSelector(state => state.auth.user.token);
 
   const currentUserInfo = useSelector(state => state.auth.user);
 
@@ -199,7 +199,7 @@ const CreateCommentBottomSheet = ({fromPage}) => {
     bottomSheetRef.current.close();
 
     setTimeout(() => {
-      navigation.navigate('profile');
+      navigate('profile');
     }, 500);
   }, []);
 
@@ -223,11 +223,11 @@ const CreateCommentBottomSheet = ({fromPage}) => {
 
         if (item?._id === currentUserInfo?.currentUserId) {
           setTimeout(() => {
-            navigation.navigate('profile');
+            navigate('profile');
           }, 500);
         } else {
           setTimeout(() => {
-            navigation.navigate('othersProfile', {
+            navigate('othersProfile', {
               userName: item?.displayName,
               userId: item?._id,
             });

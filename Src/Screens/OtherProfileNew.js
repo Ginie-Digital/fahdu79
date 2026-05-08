@@ -10,8 +10,7 @@ import OtherProfileFeedPost from '../Components/NewOtherProfileComponents/OtherP
 import OtherGridFeedPostComponent from '../Components/NewOtherProfileComponents/OtherGridFeedPostComponent';
 import OtherWishListPostComponent from '../Components/NewOtherProfileComponents/OtherWishListPostComponent';
 import {toggleOtherProfileActionSheet, toggleOtherProfileActionModal, toggleRefreshOtherProfile} from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import PostActionBottomSheet from '../Components/HomeComponents/PostActionBottomSheet';
-import CreateCommentBottomSheet from '../Components/HomeComponents/CreateCommentBottomSheet';
+// import CreateCommentBottomSheet from '../Components/HomeComponents/CreateCommentBottomSheet';
 import OtherProfileRatingSheet from '../Components/NewOtherProfileComponents/OtherProfileRatingSheet';
 import UnSubscribeModal from '../Components/MyProfile/UnSubscribeModal';
 import Loader from '../Components/Loader';
@@ -50,7 +49,6 @@ const showContentList = [
 const Tab = createMaterialTopTabNavigator();
 
 const OtherProfileNew = ({route}) => {
-  console.log('First step of other profile 1', route?.params);
 
   const [isLoading, setIsLoading] = useState(true);
   const [afterTime, setAfterTime] = useState(false);
@@ -87,9 +85,7 @@ const OtherProfileNew = ({route}) => {
   const refreshOtherProfile = useSelector(state => state.hideShow.visibility.refreshOtherProfile);
   const otherProfileActionSheetVisibility = useSelector(state => state.hideShow.visibility.otherProfileActionSheet.show);
   const otherProfileRatingSheetVisibility = useSelector(state => state.hideShow.visibility.otherProfileRatingSheet);
-  const ratingModalVisible = useSelector(state => state.hideShow.visibility.ratingModal);
   const commentBottomSheetVisibility = useSelector(state => state.hideShow.visibility.commentBottomSheet.show);
-  const postActionSheetBottomSheetVisibility = useSelector(state => state.hideShow.visibility.postActionBottomSheet.show);
 
 
   useEffect(() => {
@@ -116,7 +112,6 @@ const OtherProfileNew = ({route}) => {
             if (postData?.data?.metadata?.[0]) {
               const meta = postData.data.metadata[0];
               const totalPages = Math.ceil(meta.total / meta.limit);
-              console.log('Dispatching Total Pages:', totalPages);
               dispatch(manipulateTotalPagesPost({currentTotalPage: totalPages}));
               dispatch(manipulateCurrentPagePost({currentPage: 1}));
             }
@@ -292,9 +287,8 @@ const OtherProfileNew = ({route}) => {
           setUnsubscribeModalVisible(false);
         }}
       />
-      {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
-      <CreateCommentBottomSheet fromPage={'otherProfile'} />
-      {ratingModalVisible && <OtherProfileRatingSheet />}
+      {/* <CreateCommentBottomSheet fromPage={'otherProfile'} /> */}
+      <OtherProfileRatingSheet />
     </>
   );
 };

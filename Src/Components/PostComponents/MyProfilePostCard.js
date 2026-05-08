@@ -201,7 +201,7 @@ const PostCards = ({item, index, token, postId}) => {
   const handleOpenCommentSheet = async (id, focus) => {
     dispatch(toggleLoadingComments({show: true}));
 
-    dispatch(toggleCommentBottomSheet({info: {show: 1, focus}}));
+    dispatch(toggleCommentBottomSheet({info: {show: 1, focus, fromPage: 'myProfilePost'}}));
 
     const {data, error} = await getAllComments({token, _id: id});
 

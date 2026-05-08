@@ -1244,5 +1244,4 @@ const styles = StyleSheet.create({
     lineHeight: 12,
     textAlign: 'center',
   },
-
 });

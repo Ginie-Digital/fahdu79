@@ -21,16 +21,7 @@ const OtherGridFeedPostComponent = ({ toCallApiInfo }) => {
   const token = useSelector(memoizedToken);
   const [otherPostList] = useLazyOtherPostListQuery();
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [dummy, setDummy] = useState(false);
-
   const scrollY = useCurrentTabScrollY();
-
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setDummy(prev => !prev);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const loadMore = async () => {
     if (isFetchingMore || currentPage >= totalPages) return;

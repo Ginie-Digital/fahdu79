@@ -14,10 +14,8 @@ import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { resetAllModal, setCurrentVideoPlayId, setPostsCardType, setUnReadChatIcon, toggleCallAccepted } from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import { useFocusEffect, useScrollToTop } from '@react-navigation/native';
 
-import SwitcherSheet from '../Components/HomeComponents/SwitcherSheet';
 import { navigate } from '../../Navigation/RootNavigation';
-import CreateCommentBottomSheet from '../Components/HomeComponents/CreateCommentBottomSheet';
-import PostActionBottomSheet from '../Components/HomeComponents/PostActionBottomSheet';
+// import CreateCommentBottomSheet from '../Components/HomeComponents/CreateCommentBottomSheet';
 import Loader from '../Components/Loader';
 import { autoLogout } from '../../AutoLogout';
 import { Dialog } from 'react-native-simple-dialogs';
@@ -325,8 +323,8 @@ const Home = () => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log('[BS_DEBUG][Home Screen] useFocusEffect: NOT dispatching resetAllModal anymore');
-      // dispatch(resetAllModal());
+      console.log('[BS_DEBUG][Home Screen] useFocusEffect: dispatching resetAllModal');
+      dispatch(resetAllModal());
     }, []),
   );
 
@@ -444,9 +442,10 @@ const Home = () => {
 
 
 
-      <CreateCommentBottomSheet />
-      {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
-      {switcherSheetVisibility === 1 && <SwitcherSheet />}
+
+      {/* <CreateCommentBottomSheet /> */}
+      {/* {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
+      {switcherSheetVisibility === 1 && <SwitcherSheet />} */}
       {liveTermsHideShow === 1 && <TermsOfLive />}
       <LowBalanceModal />
       {currentUserDetails?.role !== 'creator' && <AreYou />}

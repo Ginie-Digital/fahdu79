@@ -85,8 +85,9 @@ const DateTimePickerSheet = () => {
 
   const handleProceed = useCallback(() => {
     if (type === 'datetime') {
-      if (tempDate.getTime() < Date.now()) {
-        setError('Please select a future time');
+      const minRequiredTime = Date.now() + 120000;
+      if (tempDate.getTime() < minRequiredTime) {
+        setError('Post must be scheduled at least 2 minutes in advance');
         return;
       }
     } else if (type === 'dob') {
@@ -102,8 +103,17 @@ const DateTimePickerSheet = () => {
 
   const handleDateChange = useCallback((newDate) => {
     setTempDate(newDate);
-    setError(null);
-  }, []);
+    if (type === 'datetime') {
+      const minRequiredTime = Date.now() + 120000;
+      if (newDate.getTime() < minRequiredTime) {
+        setError('Minimum 2 minutes gap required');
+      } else {
+        setError(null);
+      }
+    } else {
+      setError(null);
+    }
+  }, [type]);
 
   // Formatted preview of selected date + age calculation
   const {formattedDate, age} = useMemo(() => {
@@ -145,23 +155,33 @@ const DateTimePickerSheet = () => {
                 {type === 'dob' ? 'Verify your age to continue' : 'Pick a date & time to publish'}
               </Text>
             </View>
-            <View style={[styles.iconCircle, { backgroundColor: type === 'dob' ? '#F5F2ED' : '#FFF4EC' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: '#F5F2ED' }]}>
               <Ionicons 
-                name={type === 'dob' ? 'person-outline' : 'calendar-outline'} 
+                name={type === 'dob' ? 'person-outline' : 'calendar'} 
                 size={24} 
-                color={type === 'dob' ? '#1e1e1e' : '#FF7A00'} 
+                color="#1e1e1e" 
               />
             </View>
           </View>
         </View>
 
         {/* Selected date preview with Age/Context */}
-        <View style={[styles.datePreview, type === 'datetime' && styles.schedulePreview]}>
+        <View style={styles.datePreview}>
           <Text style={styles.datePreviewText}>
-            {type === 'datetime' && <Text style={styles.schedulingLabel}>Scheduling for: </Text>}
-            {formattedDate}
-            {age && (
-              <Text style={styles.ageText}>  •  {age} years old</Text>
+            {type === 'datetime' ? (
+              <>
+                <Text style={styles.schedulingLabel}>Scheduling for: </Text>
+                <Text style={styles.highlightedValue}>{dayjs(tempDate).format('MMM D, YYYY')}</Text>
+                <Text style={styles.separatorText}>  •  </Text>
+                <Text style={styles.highlightedValue}>{dayjs(tempDate).format('h:mm A')}</Text>
+              </>
+            ) : (
+              <>
+                {dayjs(tempDate).format('MMM D, YYYY')}
+                {age && (
+                  <Text style={styles.ageText}>  •  {age} years old</Text>
+                )}
+              </>
             )}
           </Text>
         </View>
@@ -170,7 +190,7 @@ const DateTimePickerSheet = () => {
         <View style={styles.pickerContainer}>
           <DatePicker
             date={tempDate}
-            minimumDate={type === 'datetime' ? currentDate : null}
+            minimumDate={type === 'datetime' ? new Date(Date.now() + 120000) : null}
             maximumDate={type === 'dob' ? currentDate : null}
             onDateChange={handleDateChange}
             style={{alignSelf: 'center'}}
@@ -254,7 +274,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: responsiveFontSize(2.2),
     color: '#1e1e1e',
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'Rubik-SemiBold',
     letterSpacing: -0.2,
   },
   subtitle: {
@@ -280,11 +300,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginBottom: 8,
   },
-  schedulePreview: {
-    backgroundColor: '#FFF4EC',
-    borderColor: '#FFE1CC',
-    borderWidth: 1,
-  },
   datePreviewText: {
     fontSize: responsiveFontSize(1.7),
     color: '#1e1e1e',
@@ -292,11 +307,19 @@ const styles = StyleSheet.create({
   },
   schedulingLabel: {
     color: '#9E9E9E',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'Rubik-Medium',
   },
   ageText: {
-    color: '#FF7A00', // Subtle brand color for age emphasis
+    color: '#FF7A00',
     fontFamily: 'Rubik-Bold',
+  },
+  highlightedValue: {
+    color: '#FF7A00',
+    fontFamily: 'Rubik-Bold',
+  },
+  separatorText: {
+    color: '#1e1e1e',
+    fontFamily: 'Rubik-Medium',
   },
   pickerContainer: {
     marginVertical: 10,

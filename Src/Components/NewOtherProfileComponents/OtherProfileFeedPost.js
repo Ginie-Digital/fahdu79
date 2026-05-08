@@ -97,7 +97,6 @@ const OtherProfileFeedPost = ({contactDescription}) => {
     // sample data (you can replace with API values)
     const sampleFeatures = ['Full access to the content of the subscription tier', 'Cancel your subscription at any time'];
 
-    console.log(item?.descriptions, 'IO');
 
     return (
       <View style={styles.card}>
@@ -164,7 +163,7 @@ const OtherProfileFeedPost = ({contactDescription}) => {
   return (
     <Tabs.FlatList
       data={contactDescription}
-      keyExtractor={item => item.id}
+      keyExtractor={item => item.type}
       renderItem={card}
       contentContainerStyle={styles.listContainer}
       style={{backgroundColor: '#fff'}}

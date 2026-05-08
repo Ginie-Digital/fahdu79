@@ -6,12 +6,10 @@ import  { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useDispatch, useSelector } from "react-redux";
 import { setPostsCardType, toggleCreatePostBottomSheet, toggleSwitchBottomSheet } from "../../../Redux/Slices/NormalSlices/HideShowSlice";
 import DIcon from "../../../DesiginData/DIcons";
-import { useNavigation } from "@react-navigation/native";
 import Bag from'../../../Assets/svg/bagFahdu.svg'
 import Logo from'../../../Assets/svg/brandFahdu.svg'
 
 const SwitcherSheet = ({}) => {
-  const navigation = useNavigation();
   const bottomSheetRef = useRef(null);
 
   const createPostBottomSheetVisibility = useSelector((state) => state.hideShow.visibility.switchBottomSheet);

@@ -30,7 +30,7 @@ import { resetCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/Messag
 import { resetAllModal, setPostsCardType, setUnReadChatIcon, toggleFloatingViews, toggleHideShowInformationModal, toggleShowChatRoomSelector } from '../../Redux/Slices/NormalSlices/HideShowSlice';
 
 import { autoLogout } from '../../AutoLogout';
-import SwitcherSheet from '../Components/HomeComponents/SwitcherSheet';
+// import SwitcherSheet from '../Components/HomeComponents/SwitcherSheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { navigate } from '../../Navigation/RootNavigation';
 import { getMessaging, requestPermission } from '@react-native-firebase/messaging';
@@ -762,7 +762,7 @@ const ChatRoom = () => {
         </View>
       )}
 
-      <SwitcherSheet />
+      {/* <SwitcherSheet /> */}
       <LabelEditsModal />
 
       {visibility === 'showMessageFloat' && role === 'creator' && !isSearchMode ? <FloatingButton onPress={() => console.log('Floating button pressed')} /> : null}

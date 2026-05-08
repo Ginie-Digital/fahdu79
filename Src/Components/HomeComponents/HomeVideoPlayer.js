@@ -7,7 +7,7 @@ import DIcon from '../../../DesiginData/DIcons';
 import {LoginPageErrors} from '../ErrorSnacks';
 import {useLazyGetAllCommentsQuery, useLazyIsValidFollowQuery, useLikeApiMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {GestureHandlerRootView, TapGestureHandler, State, Gesture} from 'react-native-gesture-handler';
-import CreateCommentBottomSheet from './CreateCommentBottomSheet';
+// import CreateCommentBottomSheet from './CreateCommentBottomSheet';
 import {toggleCommentBottomSheet, toggleLoadingComments, toggleSendPostTipModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {useDispatch, useSelector} from 'react-redux';
@@ -240,7 +240,7 @@ const HomeVideoPlayer = ({route}) => {
             </View>
           </View>
         </View>
-        <CreateCommentBottomSheet />
+        {/* <CreateCommentBottomSheet /> */}
         {!toPlay && (
           <TouchableOpacity onPressIn={() => setChildPressed(true)} onPressOut={() => setChildPressed(false)} onPress={() => setToPlay(!toPlay)} style={Platform.OS === 'android' ? styles.playPauseStyle : styles.playPauseStyleIos}>
             {buffering ? <ActivityIndicator size={'large'} color={'white'} /> : <DIcon provider={'Ionicons'} name={'play'} size={responsiveWidth(10)} color="#fff" />}

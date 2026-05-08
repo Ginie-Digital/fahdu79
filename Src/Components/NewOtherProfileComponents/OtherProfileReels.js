@@ -8,7 +8,7 @@ import MentionText from '../MentionText';
 
 import { useLazyGetAllCommentsQuery, useLazyIsValidFollowQuery, useLikeApiMutation, useLazyOtherPostListQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { GestureHandlerRootView, TapGestureHandler, State } from 'react-native-gesture-handler';
-import CreateCommentBottomSheet from '../HomeComponents/CreateCommentBottomSheet';
+// import CreateCommentBottomSheet from '../HomeComponents/CreateCommentBottomSheet';
 import { toggleCommentBottomSheet, toggleLoadingComments, toggleSendPostTipModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import { savePostComments, setCurrentCommentDetails, setTotalPages } from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import { appendFeedCachePosts, manipulateCurrentPagePost } from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
@@ -121,7 +121,7 @@ const ReelItem = React.memo(({ item, isPlaying, isActive }) => {
 
   const handleOpenCommentSheet = async () => {
     dispatch(toggleLoadingComments({ show: true }));
-    dispatch(toggleCommentBottomSheet({ info: { show: 1, focus: false } }));
+    dispatch(toggleCommentBottomSheet({ info: { show: 1, focus: false, fromPage: 'otherProfile' } }));
     const { data } = await getAllComments({ token, _id: item?._id });
     if (data) {
       const metadata = data?.data?.metadata?.[0];
@@ -450,7 +450,7 @@ const OtherProfileReels = ({ route }) => {
                 ListFooterComponent={() => isFetchingMore ? <View style={{ padding: 20, height: height, justifyContent: 'center' }}><ActivityIndicator size="large" color="#fff" /></View> : null}
             />
             
-            <CreateCommentBottomSheet />
+            {/* <CreateCommentBottomSheet /> */}
         </GestureHandlerRootView>
     </View>
   );

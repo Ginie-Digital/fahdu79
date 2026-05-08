@@ -53,6 +53,9 @@ import NicheSelectorModal from './Src/Components/Verification/NicheSelectorModal
 import CallDisconnectedModal from './Src/Components/Calling/CallDisconnectedModal';
 import HomeBottomSheet from './Src/Components/HomeComponents/HomeBottomSheet';
 import CreatePostBottomSheet from './Src/Components/HomeComponents/CreatePostBottomSheet';
+import CreateCommentBottomSheet from './Src/Components/HomeComponents/CreateCommentBottomSheet';
+import PostActionBottomSheet from './Src/Components/HomeComponents/PostActionBottomSheet';
+import SwitcherSheet from './Src/Components/HomeComponents/SwitcherSheet';
 
 const Main = () => {
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
@@ -885,6 +888,9 @@ const Main = () => {
       />
       <HomeBottomSheet />
       <CreatePostBottomSheet />
+      <CreateCommentBottomSheet />
+      <PostActionBottomSheet />
+      <SwitcherSheet />
     </View>
   );
 };

@@ -38,13 +38,15 @@ const TestPurchase = () => {
   const [coins, setCoins] = useState(0);
 
   const [packages, setPackages] = useState([
-    {id: 1, name: 'Faltu Pack', pack_id: null, cost: 49},
-    {id: 2, name: 'Farzi Pack', pack_id: null, cost: 99},
-    {id: 3, name: 'Fukrey Pack', pack_id: null, cost: 199},
+    {id: 1, name: 'Faltu Pack', pack_id: null, cost: 499},
+    {id: 2, name: 'Farzi Pack', pack_id: null, cost: 999},
+    {id: 3, name: 'Fukrey Pack', pack_id: null, cost: 1999},
+    {id: 4, name: 'Funtoosh Pack', pack_id: null, cost: 4999},
+    {id: 5, name: 'Fahdu Pack', pack_id: null, cost: 9999},
   ]);
 
   async function getUserCoins() {
-    let {data} = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {
+    let {data} = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
       timeout: 10000,
     });
@@ -62,15 +64,25 @@ const TestPurchase = () => {
         const result = await Purchases.getOfferings();
         const availablePackages = result.current?.availablePackages ?? [];
 
-        if (availablePackages.length < 3) {
-          console.warn('Expected at least 3 packages but found', availablePackages.length);
+        if (availablePackages.length < 5) {
+          console.warn('Expected at least 5 packages but found', availablePackages.length);
         }
+
+        // Sort packages by price ascending so they map correctly to our predefined packages
+        const sortedPackages = [...availablePackages].sort(
+          (a, b) => (a.product?.price ?? 0) - (b.product?.price ?? 0),
+        );
+
+        console.log('Sorted RevenueCat packages:', sortedPackages.map(p => ({
+          id: p.identifier,
+          price: p.product?.price,
+        })));
 
         // Map package ids into your predefined packages array
         const updatedPackages = packages.map((pack, index) => {
           return {
             ...pack,
-            pack_id: availablePackages[index] ?? null,
+            pack_id: sortedPackages[index] ?? null,
           };
         });
 

@@ -130,14 +130,15 @@ const WalletScreen = ({ route }) => {
     
     const { data, error } = await getWalletPack({ token, os }, false); // False to skip cache
 
+    const packs = data?.data?.packs || [];
     console.log('📦 [Wallet:FetchPack] OS:', os);
-    console.log('📦 [Wallet:FetchPack] Response Data:', JSON.stringify(data?.data?.packs?.map(p => ({id: p._id, name: p.name, cost: p.cost})), null, 2));
+    console.log('📦 [Wallet:FetchPack] Pack Count:', packs.length);
 
     if (error) {
       console.log('📦 [Wallet:FetchPack] Error:', error);
     }
 
-    setPackages(data?.data?.packs || []);
+    setPackages(packs);
   };
 
   useFocusEffect(

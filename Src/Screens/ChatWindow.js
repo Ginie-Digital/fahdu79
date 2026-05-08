@@ -594,15 +594,14 @@ const ChatWindow = ({ route, navigation }) => {
           role={role}
           onlineStatus={updatedOnlineStatus}
         />
-        <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
-      <MediaLoadingModal />
-        <ChatWindowFeeSetup />
-        <ChatWindowLabelModal roomId={chatRoomId} label={label} />
-        <LowBalanceModal />
-        {/* {doRaisedRequest?.hasCallRequest && chatThreadFromCache && doRaisedRequest?.initiator !== currentUserId && <CallRequestModal doRaisedRequest={doRaisedRequest} roomId={chatRoomId} name={name} profileImageUrl={profileImageUrl} targetUserId={id} />} */}
-        <CallPricesModal userId={id} roomId={chatRoomId} />
-        <TimeRequestModal visible={true} roomId={chatRoomId} />
       </KeyboardAvoidingView>
+      <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
+      <MediaLoadingModal />
+      <ChatWindowFeeSetup />
+      <ChatWindowLabelModal roomId={chatRoomId} label={label} />
+      <LowBalanceModal />
+      <CallPricesModal userId={id} roomId={chatRoomId} />
+      <TimeRequestModal visible={true} roomId={chatRoomId} />
     </GestureHandlerRootView>
   );
 };

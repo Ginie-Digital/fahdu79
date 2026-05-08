@@ -101,15 +101,10 @@ export function isSingleEmoji(text) {
   return emojiPattern.test(text);
 }
 
-export function _filterPostList(filterOf, filterFrom) {
-  filterFrom.forEach(x => {
-    let index = filterOf.findIndex(y => y._id === x);
-
-    if (index >= 0) {
-      filterOf.splice(index, 1);
-    }
-  });
-  return filterOf;
+export function _filterPostList(posts, blockedIds) {
+  if (!blockedIds || blockedIds.length === 0) return posts;
+  const blockedSet = new Set(blockedIds);
+  return posts.filter(post => !blockedSet.has(post._id));
 }
 
 export function millisToMinutesAndSeconds(millis) {

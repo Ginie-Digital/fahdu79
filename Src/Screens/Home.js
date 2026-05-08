@@ -9,7 +9,7 @@ import { token as memoizedToken } from '../../Redux/Slices/NormalSlices/AuthSlic
 import { useCanClearCacheMutation, useLazyGetInstagramProfileInfoQuery, useLazyGetStoriesQuery, useLazyGetUserFeedQuery, useLazyGetUnreadChatCountQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { FlashList } from '@shopify/flash-list';
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { resetAllModal, setCurrentVideoPlayId, setPostsCardType, setUnReadChatIcon, toggleCallAccepted } from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import { useFocusEffect, useScrollToTop } from '@react-navigation/native';
@@ -109,9 +109,12 @@ const Home = () => {
 
   const [refreshFeed, setRefreshFeed] = useState(false);
 
-  const [feedData, setFeedData] = useState([]);
-
   const [isLoading, setIsLoading] = useState(false);
+  const { content: cachedFeed, blockedPost: blockedPostArr, totalPages, currentPage, firstPostCreatedAt } = useSelector(state => state.feedCache.data);
+
+  const filteredFeed = useMemo(() => {
+    return _filterPostList([...cachedFeed], [...blockedPostArr]);
+  }, [cachedFeed, blockedPostArr]);
 
   // const [showStories, setShowStories] = useState(false);
 
@@ -120,8 +123,6 @@ const Home = () => {
   const [pages, setPages] = useState(1);
 
   const [mainLoading, setMainLoading] = useState(true);
-
-  const { content: cachedFeed, blockedPost: blockedPostArr, totalPages, currentPage, firstPostCreatedAt } = useSelector(state => state.feedCache.data);
 
   const [canClearCache] = useCanClearCacheMutation();
 
@@ -246,61 +247,84 @@ const Home = () => {
   const userRole = useSelector(state => state.auth.user.role);
 
 
-  useFocusEffect(
-    useCallback(() => {
-      console.log('Fetcing');
-      const fetchFeeds = async () => {
-        setIsLoading(true);
+  const fetchFeeds = useCallback(async (isInitial = false) => {
+    if (isLoading) return;
+    setIsLoading(true);
 
-        const { data: responseFeed, error } = await fetchFeedData({
-          token,
-          page: currentPage,
-          timestamp: currentPage === 1 ? '' : firstPostCreatedAt,
-        });
+    try {
+      const { data: responseFeed, error } = await fetchFeedData({
+        token,
+        page: currentPage,
+        timestamp: currentPage === 1 ? '' : firstPostCreatedAt,
+      });
 
-        console.log(error?.data, ':::::::::', error?.data);
+      if (error?.data?.status_code === 401) {
+        autoLogout();
+        return;
+      }
 
-        if (error?.data?.status_code === 401) {
-          console.log('Before logout', error?.data);
-
-          autoLogout();
+      if (responseFeed) {
+        if (currentPage === 1 && responseFeed?.data?.posts?.length > 0) {
+          dispatch(
+            mainpulateFirstPageCreatedAt({
+              timestamp: responseFeed?.data?.posts[0]?.createdAt,
+            }),
+          );
         }
 
         dispatch(
-          mainpulateFirstPageCreatedAt({
-            timestamp: responseFeed?.data?.posts[0]?.createdAt,
+          manipulateTotalPages({
+            currentTotalPage: Math.ceil(responseFeed?.data?.metadata[0]?.total / responseFeed?.data?.metadata[0]?.limit),
           }),
         );
 
-        if (responseFeed) {
-          setIsLoading(false);
-          setRefreshFeed(false);
-
-          dispatch(
-            manipulateTotalPages({
-              currentTotalPage: Number(Math.ceil(Number(responseFeed?.data?.metadata[0]?.total) / Number(responseFeed?.data?.metadata[0]?.limit))),
-            }),
-          );
-
-          if (responseFeed?.data?.posts?.length > 0) {
-            if (cachedFeed.findIndex(x => x._id === responseFeed?.data?.posts[0]?._id) === -1) {
-              dispatch(
-                setFeedCache({
-                  data: [...cachedFeed, ...responseFeed?.data?.posts],
-                }),
-              );
-            } else {
-              console.log('Duplicate');
-            }
+        if (responseFeed?.data?.posts?.length > 0) {
+          // Check if we are appending or setting (if page 1, we might want to refresh)
+          if (currentPage === 1) {
+             dispatch(setFeedCache({ data: responseFeed?.data?.posts }));
+          } else {
+             // Append logic
+             if (cachedFeed.findIndex(x => x._id === responseFeed?.data?.posts[0]?._id) === -1) {
+                dispatch(
+                  setFeedCache({
+                    data: [...cachedFeed, ...responseFeed?.data?.posts],
+                  }),
+                );
+             }
           }
         }
-      };
+      }
+    } catch (err) {
+      console.error("Fetch feed error:", err);
+    } finally {
+      setIsLoading(false);
+      setRefreshFeed(false);
+      setMainLoading(false);
+    }
+  }, [currentPage, token, firstPostCreatedAt, cachedFeed, isLoading]);
 
-      fetchFeeds().then(() => {
-        setMainLoading(false);
-      });
-    }, [refreshFeed, currentPage, token]),
+  // Handle Initial Load and Refresh
+  useFocusEffect(
+    useCallback(() => {
+      if (currentPage === 1 && cachedFeed.length === 0) {
+        fetchFeeds(true);
+      }
+    }, [refreshFeed, token])
   );
+
+  // Handle Pagination
+  useEffect(() => {
+    if (currentPage > 1) {
+      fetchFeeds();
+    }
+  }, [currentPage]);
+
+  // Handle Manual Refresh
+  useEffect(() => {
+    if (refreshFeed) {
+      fetchFeeds(true);
+    }
+  }, [refreshFeed]);
 
   //Just to remove homeBottomSheet
   useEffect(() => {
@@ -423,7 +447,7 @@ const Home = () => {
     <GestureHandlerRootView style={styles.homeContainer}>
       <FlashList
         ref={homeFlashRef}
-        data={_filterPostList([...cachedFeed], [...blockedPostArr])} //Because
+        data={filteredFeed}
         renderItem={({ item, index }) => <SocialPostRender item={item} index={index} token={token} />}
         keyExtractor={item => item._id}
         onViewableItemsChanged={({ changed, viewableItems }) => currentShownPost(viewableItems)}

@@ -18,7 +18,7 @@ import DiscoverScreen from '../Src/Screens/DiscoverScreen';
 import ProfileNew from '../Src/Screens/ProfileNew';
 import LottieView from 'lottie-react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import { nTwins, twins } from '../DesiginData/Utility';
+import { nTwins, twins, nTwinsFont } from '../DesiginData/Utility';
 import { toggleCreatePostBottomSheet } from '../Redux/Slices/NormalSlices/HideShowSlice';
 import ChatRoomHeader from '../Src/Components/ChatWindowComponents/ChatRoomHeader';
 import { navigate } from './RootNavigation';
@@ -185,13 +185,13 @@ const TabNavigation = () => {
               name="profile"
               component={ProfileNew}
               options={{
-                headerTitle: '',
-                headerLeft: () => <HeaderLeftMyProfile />,
-                headerRight: () => <HeaderRightMyProfile />,
-                headerStyle: { backgroundColor: '#fff' },
+                headerTitle: 'My Profile',
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(1.8, 2.0) },
+                headerLeft: () => null,
+                headerRight: () => null,
+                headerStyle: { backgroundColor: '#fff', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0, height: 50 },
+                headerTitleAlign: 'center',
                 headerShadowVisible: false,
-                headerShown: false,
-                headerStatusBarHeight: 0,
               }}
             />
           </>

@@ -14,14 +14,7 @@ const HeaderLeftMyProfile = () => {
   return (
     <View style={styles.headerLeftWrapper}>
       <View style={styles.headerLeftContentContainer}>
-        {/* <TouchableOpacity style={{ alignSelf: "center" }} onPress={() => navigation.goBack()}>
-          <DIcon provider={"Ionicons"} name={"chevron-back"} color={"#282828"} size={responsiveWidth(8)} />
-        </TouchableOpacity> */}
-        <View style={styles.headerInformation}>
-          <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-            My Profile
-          </Text>
-        </View>
+        {/* HeaderLeftMyProfile now empty as title is handled by navigation headerTitle */}
       </View>
     </View>
   );

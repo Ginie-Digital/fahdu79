@@ -74,7 +74,6 @@ const PostCards = ({item, index, token}) => {
 
   const [commentCount, setCommentCounts] = useState(item?.count?.comments);
 
-  const thisCachedPost = useSelector(state => state.feedCache.data.content);
 
   const [getAllComments] = useLazyGetAllCommentsQuery();
 

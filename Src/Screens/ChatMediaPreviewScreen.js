@@ -502,7 +502,22 @@ const ChatMediaPreviewScreen = () => {
                   <View style={styles.amountInputContainer}>
                     <View style={styles.titleback}><Text style={styles.titleSetPrice}>Set Price</Text></View>
                     <View style={styles.amountInputInner}>
-                      <TextInput editable={!disableSendButton} maxLength={9} keyboardType="number-pad" style={styles.amountStyle} value={formatIndianNumber(amount)} textAlign="right" selectionColor={selectionTwin()} placeholder="0" placeholderTextColor="#999" onChangeText={t => setAmount(t.replace(/[^0-9]/g, ''))} showsVerticalScrollIndicator={false} />
+                      <TextInput 
+                        editable={!disableSendButton} 
+                        maxLength={9} 
+                        keyboardType="number-pad" 
+                        style={styles.amountStyle} 
+                        value={amount ? formatIndianNumber(amount) : ''} 
+                        textAlign="right" 
+                        selectionColor={selectionTwin()} 
+                        placeholder="0" 
+                        placeholderTextColor="#999" 
+                        onChangeText={t => {
+                          const numericValue = t.replace(/[^0-9]/g, '');
+                          setAmount(numericValue);
+                        }} 
+                        showsVerticalScrollIndicator={false} 
+                      />
                       <Paisa width={responsiveWidth(5)} height={responsiveWidth(5)} style={{marginLeft: 5}} />
                     </View>
                   </View>

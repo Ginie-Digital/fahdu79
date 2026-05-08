@@ -158,135 +158,166 @@ const Main = () => {
 
   // Socket initialization and listeners
   useEffect(() => {
-    console.log('Rendered Socket');
     if (currentUserId !== undefined) {
       socketServcies.initializeSocket(currentUserId, token);
 
-      socketServcies.on('notification', data => {
+      const onNotification = data => {
         if (data?.dm > 0) {
           dispatch(toggleNewMessageRecieved());
         }
-      });
+      };
 
-      socketServcies.on('livestream_chat', data => {
+      const onLiveStreamChat = data => {
         console.log('::::::::::::::LIVESTREAM CHAT:::::::::::::', data);
         dispatch(pushChats({ chat: data }));
-      });
+      };
 
-      socketServcies.on('livestream_tip', data => {
+      const onLiveStreamTip = data => {
         console.log('::::::::::::::::::LIVE_STREAM_TIP::::::::::::::', data);
         dispatch(pushChats({ chat: data }));
-      });
+      };
 
-      socketServcies.on('new_goal', data => {
+      const onNewGoal = data => {
         console.log('::::::::::::NEW_GOAL_UPDATE::::::::::::', data);
         dispatch(pushGoals({ goals: data }));
-      });
+      };
 
-      socketServcies.on('tipped_goal', data => {
+      const onTippedGoal = data => {
         console.log('::::::::::::::::::::TIPPED_GOAL:::::::::', data);
         dispatch(updateGoals({ data }));
-      });
+      };
 
-      socketServcies.on('viewers', data => {
+      const onViewers = data => {
         console.log(':::::::::::::::::::viewers:::::::::', data);
         dispatch(setViewers({ viewers: data }));
-      });
+      };
 
-      socketServcies.on('completed_goal', data => {
+      const onCompletedGoal = data => {
         console.log('::::::::::::::::::::::::::COMPLETED_GOAL::::::::::::', data);
         dispatch(removeGoals({ data }));
         dispatch(pushChats({ chat: { ...data, type: 'completed' } }));
         dispatch(setToAnimate({ toAnimate: true }));
-      });
+      };
 
-      socketServcies.on('livestream_join', data => {
+      const onLiveStreamJoin = data => {
         console.log('::::::::::::::::::::::::::NEW_USER_JOIN::::::::::::', data);
         dispatch(pushChats({ chat: { ...data, type: 'new_user' } }));
-      });
+      };
 
-      socketServcies.on('livestream_mute', data => {
+      const onLiveStreamMute = data => {
         console.log(':::::::::::::::::::livestream_mute:::::::::', data);
         dispatch(setMuteState({ data }));
-      });
+      };
 
-      // Creator (sender) receives this via socket when the other party accepts
-      socketServcies.on('call_accepted', data => {
+      const onCallAccepted = data => {
         AppLog('SOCKET_CALL', 'Received call_accepted event (Detailed)', data);
         handleCallAccepted(data, 'SOCKET_CALL_ACCEPTED');
-      });
+      };
 
-      // initiator_accepted is now handled via Notification (FCM) instead of socket
-
-
-      socketServcies.on('call_unavailable', data => {
+      const onCallUnavailable = data => {
         AppLog('SOCKET_CALL', 'Received call_unavailable event (Detailed)', data);
         dispatch(toggleCallAccepted({ status: false }));
-        // Cleanup: allow this room to receive new calls
         if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
         navigate('home');
         LoginPageErrors('User not receiving the call');
-      });
+      };
 
-
-      socketServcies.on('CREATOR_LIVE_STARTED', data => {
+      const onCreatorLiveStarted = data => {
         AppLog('STREAM', 'Follower seen Creator started live signal', data);
-      });
+      };
 
-      socketServcies.on('call_rejected', data => {
+      const onCallRejected = data => {
         console.log(':::::::::::::::::::call_rejected:::::::::', data?.by, currentUserId, Platform.OS);
         AppLog('SOCKET_CALL', 'Received call_rejected event (Detailed)', data);
         if (currentUserId !== data?.by) {
           dispatch(toggleCallAccepted({ status: false }));
-          // Cleanup: allow this room to receive new calls
           if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
           LoginPageErrors('Call Rejected...');
           navigate('home');
         } else {
-          // Own rejection echo — still clear dedup guard so next call isn't blocked
           if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
           console.log('Ignoring own rejection event (dedup guard cleared)');
         }
-      });
+      };
 
-      socketServcies.on('call_disconnected', data => {
+      const onCallDisconnected = data => {
         console.log(':::::::::::::::::::call_disconnected:::::::::', data);
         AppLog('SOCKET_CALL', 'Received call_disconnected event (Detailed)', data);
         dispatch(toggleCallAccepted({ status: false }));
-        // Cleanup: allow this room to receive new calls
         if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
         navigate('home');
-      });
+      };
 
-      // Special handler for App Termination/Swipe-close on the other side (Socket)
-      socketServcies.on('socket_disconnect_close_app', data => {
+      const onSocketDisconnectCloseApp = data => {
         console.log(':::::::::::socket_disconnect_close_app:::::::::', data);
         AppLog('SOCKET_CALL', 'Other side swiped-closed app (socket signal)', data);
         dispatch(toggleCallAccepted({ status: false }));
-        // Cleanup: allow this room to receive new calls
         if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
         setDisconnectModalVisible(true);
-      });
+      };
 
-      socketServcies.on('incoming_caller', data => {
-        // Alert.alert("bpm,")
+      const onIncomingCaller = data => {
         AppLog('INCOMING_SOCKET_CALL', 'Received incoming_caller via socket (Detailed)', data);
         handleIncomingCall(data, 'SOCKET');
-      });
+      };
 
-      socketServcies.on('connect', data => {
+      const onConnect = data => {
         console.log('Socket Connected Main.js');
         AppLog('SOCKET', 'Socket connected to server');
-      });
-      socketServcies.on('disconnect', data => {
+      };
+
+      const onDisconnect = data => {
         console.log('Socket Disconnected Main.js');
         AppLog('SOCKET', 'Socket disconnected from server');
-      });
-      socketServcies.on('call_tip', data => {
+      };
+
+      const onCallTip = data => {
         console.log('💰 [Main] Received call tip socket:', data);
         AppLog('CALL', 'Received call tip over socket', data);
         dispatch(setLatestTip(data));
-      });
+      };
+
+      socketServcies.on('notification', onNotification);
+      socketServcies.on('livestream_chat', onLiveStreamChat);
+      socketServcies.on('livestream_tip', onLiveStreamTip);
+      socketServcies.on('new_goal', onNewGoal);
+      socketServcies.on('tipped_goal', onTippedGoal);
+      socketServcies.on('viewers', onViewers);
+      socketServcies.on('completed_goal', onCompletedGoal);
+      socketServcies.on('livestream_join', onLiveStreamJoin);
+      socketServcies.on('livestream_mute', onLiveStreamMute);
+      socketServcies.on('call_accepted', onCallAccepted);
+      socketServcies.on('call_unavailable', onCallUnavailable);
+      socketServcies.on('CREATOR_LIVE_STARTED', onCreatorLiveStarted);
+      socketServcies.on('call_rejected', onCallRejected);
+      socketServcies.on('call_disconnected', onCallDisconnected);
+      socketServcies.on('socket_disconnect_close_app', onSocketDisconnectCloseApp);
+      socketServcies.on('incoming_caller', onIncomingCaller);
+      socketServcies.on('connect', onConnect);
+      socketServcies.on('disconnect', onDisconnect);
+      socketServcies.on('call_tip', onCallTip);
+
+      return () => {
+        socketServcies.off('notification', onNotification);
+        socketServcies.off('livestream_chat', onLiveStreamChat);
+        socketServcies.off('livestream_tip', onLiveStreamTip);
+        socketServcies.off('new_goal', onNewGoal);
+        socketServcies.off('tipped_goal', onTippedGoal);
+        socketServcies.off('viewers', onViewers);
+        socketServcies.off('completed_goal', onCompletedGoal);
+        socketServcies.off('livestream_join', onLiveStreamJoin);
+        socketServcies.off('livestream_mute', onLiveStreamMute);
+        socketServcies.off('call_accepted', onCallAccepted);
+        socketServcies.off('call_unavailable', onCallUnavailable);
+        socketServcies.off('CREATOR_LIVE_STARTED', onCreatorLiveStarted);
+        socketServcies.off('call_rejected', onCallRejected);
+        socketServcies.off('call_disconnected', onCallDisconnected);
+        socketServcies.off('socket_disconnect_close_app', onSocketDisconnectCloseApp);
+        socketServcies.off('incoming_caller', onIncomingCaller);
+        socketServcies.off('connect', onConnect);
+        socketServcies.off('disconnect', onDisconnect);
+        socketServcies.off('call_tip', onCallTip);
+      };
     }
   }, [currentUserId, token]);
 

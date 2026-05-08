@@ -27,7 +27,7 @@ const ChatWindowFeeSetup = () => {
   // API
   const [updateFeeSetupChatWindow] = useUpdateFeeSetupChatWindowMutation();
 
-  // Fixed snap points — no dynamic measurement needed
+  // Set to 30% for a compact appearance
   const snapPoints = useMemo(() => ['50%'], []);
 
   // Callbacks
@@ -42,7 +42,12 @@ const ChatWindowFeeSetup = () => {
   // Handle visibility
   useEffect(() => {
     if (visible) {
-      bottomSheetRef.current?.present();
+      const timer = setTimeout(() => {
+        if (bottomSheetRef.current) {
+          bottomSheetRef.current.present();
+        }
+      }, 200);
+      return () => clearTimeout(timer);
     } else {
       bottomSheetRef.current?.dismiss();
     }
@@ -104,7 +109,6 @@ const ChatWindowFeeSetup = () => {
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      index={visible ? 0 : -1}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
@@ -179,8 +183,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: WIDTH_SIZES[32],
-    paddingBottom: 40,
-    paddingTop: 20,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
   header: {
     marginBottom: 20,
@@ -205,7 +209,7 @@ const styles = StyleSheet.create({
     height: responsiveWidth(12),
     borderRadius: responsiveWidth(3.14),
     overflow: 'hidden',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   titleback: {
     backgroundColor: '#FFE1CC',
@@ -260,7 +264,7 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(3.7),
     borderStyle: 'dashed',
     backgroundColor: '#FFF9F5',
-    marginVertical: 20,
+    marginVertical: 10,
   },
   subscriberText: {
     fontSize: responsiveFontSize(1.8),

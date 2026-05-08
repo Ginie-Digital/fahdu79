@@ -291,7 +291,7 @@ const EditProfile = ({route}) => {
           )}
 
           <View style={{padding: 24, paddingTop: 0}}>
-            <AnimatedButton title={'View Profile'} buttonMargin={0} onPress={() => navigate('profile')} />
+            <AnimatedButton title={'View Profile'} buttonMargin={0} onPress={() => navigate('chatRoomTab', {screen: 'profile'})} />
           </View>
         </View>
       </KeyboardAwareScrollView>

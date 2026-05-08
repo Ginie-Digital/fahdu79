@@ -525,6 +525,9 @@ const LiveStream = ({ route }) => {
 
         if (updateType === 1) {
           setLiveStreamEndModal(true);
+          if (streamList && streamList.length > 0) {
+            engine.stopPlayingStream(streamList[0].streamID);
+          }
         }
 
         engine.on('roomTokenWillExpire', async x => {

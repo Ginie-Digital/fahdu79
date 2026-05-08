@@ -4,6 +4,7 @@ import axios from 'axios';
 import auth from '@react-native-firebase/auth';
 import {ChatWindowError, LoginPageErrors} from '../Src/Components/ErrorSnacks';
 import {appleAuth} from '@invertase/react-native-apple-authentication';
+import { BASE_URL } from '../Src/Configs/ApiConfig';
 
 GoogleSignin.configure({
   webClientId: '244359435466-1v5qtnn5suvivvdpp4il6tnkghf2k4dt.apps.googleusercontent.com',
@@ -66,7 +67,7 @@ export const googleSignIn = async () => {
     const mainINfo = await auth().signInWithCredential(googleCredential);
 
     let {data: serverResponse} = await axios.post(
-      `https://api.fahdu.in/api/connect/social`,
+      `${BASE_URL}/api/connect/social`,
       {
         provider: 'google',
         google: {
@@ -123,7 +124,7 @@ export const appleSignIn = async () => {
       console.log(appleAuthRequestResponse);
 
       let {data: serverResponse} = await axios.post(
-        `https://api.fahdu.in/api/connect/social`,
+        `${BASE_URL}/api/connect/social`,
         {
           provider: 'apple',
           apple: appleAuthRequestResponse,

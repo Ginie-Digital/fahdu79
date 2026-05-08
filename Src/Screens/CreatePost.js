@@ -695,7 +695,7 @@ const CreatePost = ({route}) => {
                 mobilePreview: '',
             },
             for_subscribers: isCurrentlySubOnly,
-            activate_on: isEnabled ? date : '',
+            activate_on: isEnabled ? date.toISOString() : '',
             forcreator: userRole === 'admin' ? (visibility === 'all' || visibility === 'creator') : true,
             foruser: userRole === 'admin' ? (visibility === 'all' || visibility === 'user') : true,
         };

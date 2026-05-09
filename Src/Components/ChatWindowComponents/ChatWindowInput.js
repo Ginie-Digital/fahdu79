@@ -31,9 +31,7 @@ const hapticOptions = {
 
 
 const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButtonClick, disableSendButton, roomId, userId, otherUserId, name, profileImageUrl, role, onlineStatus}) => {
-  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
+
   const insets = useSafeAreaInsets();
   const typingTimerRef = useRef(null);
   const [isKeyboardShown, setIsKeyboardShown] = useState(false);

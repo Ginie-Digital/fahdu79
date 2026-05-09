@@ -1,6 +1,6 @@
 import React, {useRef, useMemo, useCallback, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Platform} from 'react-native';
-import {BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetTextInput} from '@gorhom/bottom-sheet';
+import {View, Text, StyleSheet, Platform, KeyboardAvoidingView, TextInput, ScrollView, Animated, Pressable, Dimensions} from 'react-native';
+import {BlurView} from 'expo-blur';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import Paisa from '../../../Assets/svg/paisa.svg';
@@ -12,6 +12,21 @@ import {toggleChatWindowFeeSetup} from '../../../Redux/Slices/NormalSlices/HideS
 
 const ChatWindowFeeSetup = () => {
   const visible = useSelector(state => state.hideShow.visibility.chatWindowFeeSetup);
+  const screenHeight = Dimensions.get('screen').height;
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      slideAnim.setValue(screenHeight);
+    }
+  }, [visible]);
 
   // State
   const [amount, setAmount] = useState('');
@@ -21,9 +36,6 @@ const ChatWindowFeeSetup = () => {
   const token = useSelector(state => state.auth.user.token);
   const dispatch = useDispatch();
 
-  // Refs
-  const bottomSheetRef = useRef(null);
-
   // API
   const [updateFeeSetupChatWindow] = useUpdateFeeSetupChatWindowMutation();
 
@@ -31,27 +43,10 @@ const ChatWindowFeeSetup = () => {
   const snapPoints = useMemo(() => ['50%'], []);
 
   // Callbacks
-  const handleSheetChanges = useCallback(index => {
-    if (index === -1) {
-      dispatch(toggleChatWindowFeeSetup({show: false}));
-    }
-  }, []);
-
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />, []);
-
-  // Handle visibility
-  useEffect(() => {
-    if (visible) {
-      const timer = setTimeout(() => {
-        if (bottomSheetRef.current) {
-          bottomSheetRef.current.present();
-        }
-      }, 200);
-      return () => clearTimeout(timer);
-    } else {
-      bottomSheetRef.current?.dismiss();
-    }
-  }, [visible]);
+  // Handle visibility logic is now handled by the Modal component's isVisible prop
+  const handleClose = () => {
+    dispatch(toggleChatWindowFeeSetup({show: false}));
+  };
 
   // Handle Amount Change
   const handleAmount = t => {
@@ -97,7 +92,6 @@ const ChatWindowFeeSetup = () => {
 
     if (data) {
       setLoading(false);
-      bottomSheetRef.current?.dismiss();
       dispatch(toggleChatWindowFeeSetup({show: false}));
       chatRoomSuccess('Fee updated successfully');
     }
@@ -106,62 +100,62 @@ const ChatWindowFeeSetup = () => {
   // Calculate 50% of amount (rounded down)
   const subscriberFee = amount ? Math.floor(parseInt(amount, 10) / 2) : 0;
 
+  if (!visible) return null;
+
   return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      onChange={handleSheetChanges}
-      backdropComponent={renderBackdrop}
-      enablePanDownToClose={true}
-      enableDynamicSizing={false}
-      backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.handleIndicator}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
-    >
-      <BottomSheetScrollView
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.heading}>Set Chat Fee</Text>
-          <Text style={styles.subText}>Create your custom automated message</Text>
-        </View>
-
-        <View style={styles.amountInput}>
-          <View style={styles.titleback}>
-            <Text style={styles.titleSetPrice}>Set Price</Text>
+    <View style={styles.overlay}>
+      <BlurView intensity={15} style={styles.blurBackground} />
+      <Pressable style={styles.touchOutside} onPress={handleClose} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}>
+        <Animated.View
+          style={[
+            styles.dialog,
+            {transform: [{translateY: slideAnim}]},
+          ]}>
+          <ScrollView
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.heading}>Set Chat Fee</Text>
+            <Text style={styles.subText}>Create your custom automated message</Text>
           </View>
-          <View style={styles.inputContainer}>
-            <BottomSheetTextInput
-              maxLength={6}
-              keyboardType="number-pad"
-              style={styles.amountStyle}
-              value={amount}
-              onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))}
-              placeholder="0"
-              placeholderTextColor="#888"
-            />
-            <Paisa width={20} height={20} />
+
+          <View style={styles.amountInput}>
+            <View style={styles.titleback}>
+              <Text style={styles.titleSetPrice}>Set Price</Text>
+            </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                maxLength={6}
+                keyboardType="number-pad"
+                style={styles.amountStyle}
+                value={amount}
+                onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))}
+                placeholder="0"
+                placeholderTextColor="#888"
+              />
+              <Paisa width={20} height={20} />
+            </View>
           </View>
-        </View>
 
-        {amountError ? <Text style={styles.errorText}>*{amountError}</Text> : <Text style={styles.infoText}>*Chat/Message</Text>}
+          {amountError ? <Text style={styles.errorText}>*{amountError}</Text> : <Text style={styles.infoText}>*Chat/Message</Text>}
 
-        <View style={styles.subscriberContainer}>
-          <Text style={styles.subscriberText}>Subscriber Fee</Text>
-          <View style={styles.rightSection}>
-            <Text style={styles.subscriberAmount}>{subscriberFee}</Text>
-            <Paisa width={20} height={20} />
+          <View style={styles.subscriberContainer}>
+            <Text style={styles.subscriberText}>Subscriber Fee</Text>
+            <View style={styles.rightSection}>
+              <Text style={styles.subscriberAmount}>{subscriberFee}</Text>
+              <Paisa width={20} height={20} />
+            </View>
           </View>
-        </View>
 
-        <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
-      </BottomSheetScrollView>
-    </BottomSheetModal>
+          <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
+        </ScrollView>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -283,6 +277,28 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 10,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 9999,
+  },
+  keyboardView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  touchOutside: {
+    flex: 1,
+  },
+  dialog: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: '#fff',
+    width: '100%',
+    paddingTop: 16,
   },
 });
 

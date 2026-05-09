@@ -37,9 +37,7 @@ const ChatMediaPreviewScreen = () => {
 
   const {chatRoomId, name, recipientId, profileImage, role, onlineStatus} = route.params;
 
-  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
+
 
   const [uploadAttachment] = useUploadAttachmentMutation();
   const [sendMessage] = useSendMessageMutation();

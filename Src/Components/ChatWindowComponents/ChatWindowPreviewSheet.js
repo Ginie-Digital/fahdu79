@@ -13,6 +13,9 @@ import {
   Platform,
   useWindowDimensions,
   Alert,
+  Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 import {
@@ -20,11 +23,7 @@ import {
   responsiveFontSize,
   responsiveScreenWidth,
 } from 'react-native-responsive-dimensions';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import {BlurView} from 'expo-blur';
 import {useDispatch, useSelector} from 'react-redux';
 import {
   setPostsCardType,
@@ -80,9 +79,14 @@ async function generateThumbnail(docPath) {
   return '';
 }
 
-const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
-  const bottomSheetRef = useRef(null);
+const formatIndianNumber = num => {
+  if (!num) return '';
+  let x = num.toString().replace(/[^0-9]/g, '');
+  return Number(x).toLocaleString('en-IN');
+};
 
+const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
+  // Modal visibility is controlled via Redux state 'homeBottomSheetVisibility'
   const homeBottomSheetVisibility = useSelector(
     state => state.hideShow.visibility.chatWindowPreview,
   );
@@ -96,41 +100,35 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
   }, []);
 
   const {height: windowHeight} = useWindowDimensions();
+  const screenHeight = Dimensions.get('screen').height;
   const contentRef = useRef(null);
-  const [contentHeight, setContentHeight] = useState(0);
-
-  // Calculate dynamic snap points based on content height
-  const snapPoints = useMemo(() => {
-    // Add some padding and ensure it doesn't exceed 90% of screen height
-    const calculatedHeight = Math.min(contentHeight + 100, windowHeight * 0.9);
-    return [calculatedHeight * 0.4, calculatedHeight, calculatedHeight];
-  }, [contentHeight, windowHeight]);
-
-  // Measure content height when it changes
-  const onContentLayout = useCallback(event => {
-    const {height} = event.nativeEvent.layout;
-    setContentHeight(height);
-  }, []);
-
-  const onBackPress = () => {
-    if (bottomSheetRef !== null) {
-      bottomSheetRef.current?.close();
-      handlePreviewModalClose();
-      return true;
-    }
-  };
-
-  const handlePresentModalPress = useCallback(() => {
-    if (bottomSheetRef.current) {
-      bottomSheetRef.current?.present();
-    }
-  }, []);
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
 
   useEffect(() => {
     if (homeBottomSheetVisibility === 1) {
-      handlePresentModalPress();
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      slideAnim.setValue(screenHeight);
     }
   }, [homeBottomSheetVisibility]);
+
+  // Removed onContentLayout for BottomSheet as we are using Modal now
+  const onContentLayout = () => {};
+
+  const onBackPress = () => {
+    handlePreviewModalClose();
+    return true;
+  };
+
+  // Logic for presenting modal is now declarative via isVisible prop
+  // handlePresentModalPress removed
+
+  // useEffect for presenting modal removed as it's now declarative
 
   //!<---------------------Refs--------->
 
@@ -146,9 +144,9 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
 
   const [attachmentType, setAttachmentType] = useState(undefined);
 
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState('');
 
-  const [disableSendBtton, setDisableSendButton] = useState(false);
+  const [disableSendButton, setDisableSendButton] = useState(false);
 
   const [forSubscribers, setForSubscribers] = useState(false);
 
@@ -181,23 +179,20 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
   );
 
   useEffect(() => {
-    if (bottomSheetRef.current !== null) {
-      if (homeBottomSheetVisibility === -1) {
-        bottomSheetRef.current.close();
-        handlePreviewModalClose();
-        setNext(false);
-        handleAttachmentAsPremium(false);
-        setDisableSendButton(false);
-        setAmount(0);
-        console.log('Closing');
-      } else {
-        const backHandler = BackHandler.addEventListener(
-          'hardwareBackPress',
-          onBackPress,
-        );
+    if (homeBottomSheetVisibility === -1) {
+      handlePreviewModalClose();
+      setNext(false);
+      handleAttachmentAsPremium(false);
+      setDisableSendButton(false);
+      setAmount('');
+      console.log('Closing');
+    } else if (homeBottomSheetVisibility === 1) {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
 
-        return () => backHandler.remove(); // Use .remove() instead
-      }
+      return () => backHandler.remove();
     }
   }, [homeBottomSheetVisibility]);
 
@@ -245,7 +240,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
   const handleUploadAttachment = useCallback(() => {
     console.log('🚀 Handle upload');
 
-    if (isAttachmentPremium === true && (amount < 1 || amount === undefined)) {
+    if (isAttachmentPremium === true && (!amount || parseInt(amount) < 1)) {
       ChatWindowError('You must add atleast 1 coin');
       return 0;
     }
@@ -315,7 +310,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                     senderId: e?.data?.data?.sender?._id,
                   }),
                 );
-                setAmount(undefined);
+                setAmount('');
                 setDisableSendButton(false);
                 handleAttachmentAsPremium(false);
                 setNext(false);
@@ -400,7 +395,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                       senderId: e?.data?.data?.sender?._id,
                     }),
                   );
-                  setAmount(undefined);
+                  setAmount('');
                   setDisableSendButton(false);
                   dispatch(
                     pushSentMessageResponse({
@@ -518,9 +513,8 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                               senderId: e?.data?.data?.sender?._id,
                             }),
                           );
-                          setAmount(undefined);
+                          setAmount('');
                           setDisableSendButton(false);
-                          handleAttachmentAsPremium(false);
                           handleAttachmentAsPremium(false);
                           setNext(false);
 
@@ -599,21 +593,24 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
     [],
   );
 
+  if (homeBottomSheetVisibility !== 1) return null;
+
   return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        index={homeBottomSheetVisibility === 1 ? 0 : -1}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose={true}
-        enableDynamicSizing={false}
-        backdropComponent={renderBackdrop}
-        keyboardBehavior="interactive"
-        backgroundStyle={{backgroundColor: '#fffef9'}}>
-        <View
-          ref={contentRef}
-          onLayout={onContentLayout}
-          style={styles.contentContainer}>
+    <View style={styles.overlay}>
+      <BlurView intensity={15} style={styles.blurBackground} />
+      <Pressable style={styles.touchOutside} onPress={onBackPress} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardView}>
+        <Animated.View
+          style={[
+            styles.dialog,
+            {transform: [{translateY: slideAnim}]},
+          ]}>
+          <ScrollView
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
           {!next ? (
             <Text style={styles.title}>Attach Media</Text>
           ) : (
@@ -681,24 +678,23 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                 </View>
               </View>
 
-              <BottomSheetTextInput
-                editable={!disableSendBtton}
-                style={styles.textInputStyle}
-                maxLength={120}
-                placeholder="Write caption here..."
-                multiline
-                ref={attachmentInputRef}
-                onChangeText={t => {
-                  setCount(t.length);
-                  setMessage(t);
-                }}
-                selectionColor={selectionTwin()}
-                selectionHandleColor={'#ffa86b'}
-                cursorColor={'#1e1e1e'}
-                autoCorrect={false}
-                placeholderTextColor="#B2B2B2"
-              />
-              <Text style={styles.charCount}>{`${count}/120`}</Text>
+            <TextInput
+              editable={!disableSendButton}
+              maxLength={250}
+              placeholder="Add a caption..."
+              placeholderTextColor="#B2B2B2"
+              selectionColor={selectionTwin()}
+              multiline={true}
+              style={styles.textInputStyle}
+              ref={attachmentInputRef}
+              defaultValue={message}
+              onChangeText={text => {
+                const noNewLines = text.replace(/\n/g, '');
+                setMessage(noNewLines);
+                setCount(noNewLines.length);
+              }}
+            />
+              <Text style={styles.charCount}>{`${count}/250`}</Text>
             </View>
           )}
 
@@ -762,7 +758,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
 
           {next && (
             <View style={[styles.amountInput]}>
-              <View style={{flexDirection: 'row', backgroundColor: 'red'}}>
+              <View style={{flexDirection: 'row'}}>
                 <View style={[styles.titleback]}>
                   <Text style={[styles.titleSetPrice]}>Set Price</Text>
                 </View>
@@ -774,20 +770,21 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                   marginRight: responsiveWidth(2),
                   gap: Platform.OS == 'ios' ? responsiveWidth(2) : null,
                 }}>
-                <BottomSheetTextInput
-                  maxLength={6}
+                <TextInput
+                  editable={!disableSendButton}
+                  maxLength={9}
                   keyboardType="number-pad"
-                  style={[
-                    {padding: 0, color: '#1e1e1e', fontFamily: 'Rubik-Medium'},
-                    styles.amountStyle,
-                  ]}
-                  value={amount}
+                  style={styles.amountStyle}
+                  value={amount ? formatIndianNumber(amount) : ''}
                   textAlign="right"
                   selectionColor={selectionTwin()}
-                  selectionHandleColor={'#ffa86b'}
-                  cursorColor={'#1e1e1e'}
-                  placeholderTextColor="#B2B2B2"
-                  onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))}
+                  placeholder="0"
+                  placeholderTextColor="#999"
+                  onChangeText={t => {
+                    const numericValue = t.replace(/[^0-9]/g, '');
+                    setAmount(numericValue);
+                  }}
+                  showsVerticalScrollIndicator={false}
                 />
                 <Paisa />
               </View>
@@ -813,8 +810,8 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                     title={'Send'}
                     showOverlay={false}
                     onPress={() => handleUploadAttachment()}
-                    loading={disableSendBtton}
-                    disabled={disableSendBtton}
+                    loading={disableSendButton}
+                    disabled={disableSendButton}
                     highlightOnPress={true}
                     highlightColor="#FFC399"
                   />
@@ -837,15 +834,17 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                 showOverlay={false}
                 title={'Send'}
                 onPress={() => handleUploadAttachment()}
-                loading={disableSendBtton}
-                disabled={disableSendBtton}
+                loading={disableSendButton}
+                disabled={disableSendButton}
                 highlightOnPress={true}
                 highlightColor="#FFC399"
               />
             </View>
           )}
-        </View>
-      </BottomSheetModal>
+        </ScrollView>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -1019,7 +1018,7 @@ const styles = StyleSheet.create({
     color: '#1e1e1e',
     paddingLeft: responsiveWidth(2),
     fontFamily: 'Rubik-Regular',
-    borderColor: 'red',
+    borderColor: 'transparent',
     height: responsiveWidth(19),
     textAlignVertical: 'top',
     marginTop: 8,
@@ -1070,7 +1069,6 @@ const styles = StyleSheet.create({
   amountInput: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderLeftWidth: 1,
     borderColor: '#1e1e1e',
     height: responsiveWidth(12),
     borderWidth: 1,
@@ -1103,5 +1101,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Medium',
     fontSize: FONT_SIZES[14],
     paddingRight: WIDTH_SIZES[10],
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 9999,
+  },
+  keyboardView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  touchOutside: {
+    flex: 1,
+  },
+  dialog: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: '#fffef9',
+    width: '100%',
+    paddingTop: 16,
+    maxHeight: screenHeight * 0.9,
   },
 });

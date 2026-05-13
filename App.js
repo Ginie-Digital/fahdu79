@@ -22,6 +22,8 @@ import DeviceInfo from 'react-native-device-info';
 import {createMMKV} from 'react-native-mmkv';
 import BootSplash from 'react-native-bootsplash';
 
+import {KeyboardProvider} from 'react-native-keyboard-controller';
+
 const persistor = persistStore(store);
 
 const storage = createMMKV();
@@ -55,8 +57,6 @@ const App = () => {
     if (Platform.OS === 'android') {
       try {
         let x = await checkForUpdate(UpdateFlow.FLEXIBLE);
-        console.log(x, '::::');
-        // Alert.alert(String(x));
       } catch (e) {
         // Handle error
         console.log('ERROR', e);
@@ -89,22 +89,24 @@ const App = () => {
   return (
     <Provider store={store}>
       <PersistGate persistor={persistor}>
-        <GestureHandlerRootView style={{flex: 1}}>
-          <BottomSheetModalProvider>
-            <SafeAreaProvider>
-              <NavigationContainer 
-                ref={navigationRef} 
-                fallback={<LoadingComponent />}
-                onReady={() => {
-                  BootSplash.hide({ fade: true });
-                }}
-              >
-                <Main />
-              </NavigationContainer>
-              {!isConnected && <NoInternet />}
-            </SafeAreaProvider>
-          </BottomSheetModalProvider>
-        </GestureHandlerRootView>
+        <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
+          <GestureHandlerRootView style={{flex: 1}}>
+            <BottomSheetModalProvider>
+              <SafeAreaProvider>
+                <NavigationContainer 
+                  ref={navigationRef} 
+                  fallback={<LoadingComponent />}
+                  onReady={() => {
+                    BootSplash.hide({ fade: true });
+                  }}
+                >
+                  <Main />
+                </NavigationContainer>
+                {!isConnected && <NoInternet />}
+              </SafeAreaProvider>
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
+        </KeyboardProvider>
       </PersistGate>
     </Provider>
   );

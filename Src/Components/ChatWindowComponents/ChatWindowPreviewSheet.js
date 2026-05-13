@@ -15,8 +15,8 @@ import {
   Alert,
   Dimensions,
   ScrollView,
-  KeyboardAvoidingView,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 import {
   responsiveWidth,
@@ -600,7 +600,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
       <BlurView intensity={15} style={styles.blurBackground} />
       <Pressable style={styles.touchOutside} onPress={onBackPress} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}>
         <Animated.View
           style={[

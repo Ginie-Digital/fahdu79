@@ -1,4 +1,5 @@
-import {StyleSheet, View, TouchableOpacity, Text, BackHandler, TextInput, ActivityIndicator, LayoutAnimation, Platform, useWindowDimensions, KeyboardAvoidingView, PanResponder, Keyboard, ScrollView, Animated, UIManager} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Text, BackHandler, TextInput, ActivityIndicator, LayoutAnimation, Platform, useWindowDimensions, PanResponder, Keyboard, ScrollView, Animated, UIManager} from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import RNFS from 'react-native-fs';
 import { Image } from 'expo-image';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
@@ -453,7 +454,7 @@ const ChatMediaPreviewScreen = () => {
 
   return (
     <View style={[styles.whatsappContainer, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
-      <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <TouchableOpacity onPress={onBackPress} style={styles.backButton}>

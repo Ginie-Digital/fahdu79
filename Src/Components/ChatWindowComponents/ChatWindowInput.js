@@ -1,6 +1,8 @@
 import {StyleSheet, View, TextInput, TouchableOpacity, Keyboard, ActivityIndicator, Platform, Linking, Pressable, Text, Animated, LayoutAnimation, UIManager} from 'react-native';
 import DIcon from '../../../DesiginData/DIcons';
 import React, {useEffect, useState, useCallback, useLayoutEffect, useRef} from 'react';
+import { useKeyboardHandler } from 'react-native-keyboard-controller';
+import { runOnJS } from 'react-native-reanimated';
 
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
@@ -39,14 +41,28 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
   const [isAttachmentMode, setIsAttachmentMode] = useState(false);
   const bottomPadding = useRef(new Animated.Value(Math.max(insets.bottom, 16))).current;
 
-  // Sync animation with keyboard state
-  useEffect(() => {
+  // Helper to trigger animation on JS thread
+  const animatePadding = useCallback((toValue) => {
     Animated.timing(bottomPadding, {
-      toValue: isKeyboardShown ? 16 : Math.max(insets.bottom, 16),
+      toValue,
       duration: 250,
       useNativeDriver: false,
     }).start();
-  }, [isKeyboardShown, insets.bottom]);
+  }, [bottomPadding]);
+
+  // Sync animation with keyboard state using the new library's hook
+  useKeyboardHandler({
+    onStart: (e) => {
+      "worklet";
+      if (e.height > 0) {
+        // Keyboard opening - let StickyView handle the position
+        runOnJS(animatePadding)(0);
+      } else {
+        // Keyboard closing - restore safe area padding
+        runOnJS(animatePadding)(Math.max(insets.bottom, 16));
+      }
+    },
+  }, [insets.bottom, animatePadding]);
 
   useEffect(() => {
     console.log(disableSendButton, 'DSBLSNDBTN');
@@ -142,16 +158,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
     dispatch(toggleChatWindowTipModal());
   };
 
-  // const handleOpenCamera = () => {
-  //   ReactNativeHapticFeedback.trigger("impactHeavy", hapticOptions);
-  //   request(Platform.OS === 'ios' ? PERMISSIONS.IOS.CAMERA : PERMISSIONS.ANDROID.CAMERA).then(result => {
-  //     if (result === RESULTS.BLOCKED) {
-  //       Linking.openSettings();
-  //     } else {
-  //       afterImageClipSelected(dispatch, 'camera');
-  //     }
-  //   });
-  // };
+
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -168,7 +175,6 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
     return () => {
       keyBoardShown.remove();
       keyBoardHide.remove();
-      // Cleanup timer on unmount
       if (typingTimerRef.current) {
         clearTimeout(typingTimerRef.current);
       }

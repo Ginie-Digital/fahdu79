@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, FlatList, Keyboard, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
+import { KeyboardAvoidingView, KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
@@ -114,12 +115,8 @@ const ChatWindow = ({ route, navigation }) => {
   const [getInitialChats] = useLazyGetInitialChatsQuery();
 
 
-  const [viewMargin, setViewMargin] = useState(0);
 
   const [isOldChatsFinished, setIsOldChatsFinished] = useState(false);
-
-
-  const [callTriesData, setCallTriesData] = useState({});
 
   const [callTriesStatus] = useLazyCallTriesStatusQuery();
 
@@ -201,21 +198,6 @@ const ChatWindow = ({ route, navigation }) => {
     fetchCallStatus();
   }, [token, chatRoomId]);
 
-  useEffect(() => {
-    let showIosKeyboard = Keyboard.addListener('keyboardWillShow', x => {
-      setViewMargin(x.endCoordinates.height - responsiveWidth(2));
-    });
-
-    let hideIosKeyboard = Keyboard.addListener('keyboardWillHide', x => {
-      setViewMargin(0);
-    });
-
-    return () => {
-      showIosKeyboard.remove();
-      hideIosKeyboard.remove();
-    };
-    ``;
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -580,20 +562,22 @@ const ChatWindow = ({ route, navigation }) => {
         <ChatWindowFullSizedImageModal uri={fullSizeImageUrl} />
         <ChatWindowClipModal />
         <TypingIndicator visible={isOtherUserTyping} />
-        <ChatWindowInput
-          doRaisedRequest={doRaisedRequest}
-          show={doRaisedRequest?.initiator !== currentUserId}
-          onChangeText={onChangeText}
-          onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)}
-          disableSendButton={disableSendButton}
-          roomId={chatRoomId}
-          userId={currentUserId}
-          otherUserId={id}
-          name={name}
-          profileImageUrl={profileImageUrl}
-          role={role}
-          onlineStatus={updatedOnlineStatus}
-        />
+        <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
+          <ChatWindowInput
+            doRaisedRequest={doRaisedRequest}
+            show={doRaisedRequest?.initiator !== currentUserId}
+            onChangeText={onChangeText}
+            onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)}
+            disableSendButton={disableSendButton}
+            roomId={chatRoomId}
+            userId={currentUserId}
+            otherUserId={id}
+            name={name}
+            profileImageUrl={profileImageUrl}
+            role={role}
+            onlineStatus={updatedOnlineStatus}
+          />
+        </KeyboardStickyView>
       </KeyboardAvoidingView>
       <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
       <MediaLoadingModal />

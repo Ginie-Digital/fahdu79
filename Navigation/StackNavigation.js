@@ -103,6 +103,7 @@ import IncomingCallScreen from '../Src/Components/Calling/IncomingCalll';
 import EditPostScreen from '../Src/Screens/EditPostScreen';
 import WishListDonateScreen from '../Src/Screens/WishListDonateScreen';
 import ChatMediaPreviewScreen from '../Src/Screens/ChatMediaPreviewScreen';
+import ChatPPVFeeScreen from '../Src/Screens/ChatPPVFeeScreen';
 import CompleteDetailsScreen from '../Src/Screens/CompleteDetailsScreen';
 import FeedbackScreen from '../Src/Screens/FeedbackScreen';
 
@@ -429,6 +430,16 @@ const StackNavigation = () => {
               options={{
                 headerShown: false,
                 animation: 'fade',
+                gestureEnabled: true,
+              }}
+            />
+
+            <Stack.Screen
+              name="ChatPPVFee"
+              component={ChatPPVFeeScreen}
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right',
                 gestureEnabled: true,
               }}
             />

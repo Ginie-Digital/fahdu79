@@ -30,7 +30,7 @@ import {
   toggleChatWindowPreviewSheet,
 } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {
   ChatWindowError,
   ChatWindowFollowError,
@@ -92,6 +92,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
   );
 
   const dispatch = useDispatch();
+  const navigation = useNavigation();
 
   const handleSheetChanges = useCallback(index => {
     if (index === -1) {
@@ -611,34 +612,9 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
             contentContainerStyle={styles.contentContainer}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
-          {!next ? (
-            <Text style={styles.title}>Attach Media</Text>
-          ) : (
-            <View>
-              <Text
-                style={{
-                  marginLeft: responsiveWidth(3),
-                  fontFamily: 'Rubik-SemiBold',
-                  fontSize: FONT_SIZES[20],
-                  color: '#1E1E1E',
-                  marginTop: responsiveWidth(2),
-                }}>
-                Set Chat Fee
-              </Text>
-              <Text
-                style={{
-                  marginLeft: responsiveWidth(3),
-                  fontFamily: 'Rubik-Regular',
-                  fontSize: FONT_SIZES[12],
-                  color: '#1e1e1e',
-                  marginTop: responsiveWidth(1),
-                }}>
-                Create your custom automated message
-              </Text>
-            </View>
-          )}
+          <Text style={styles.title}>Attach Media</Text>
 
-          {!next && (
+          {(
             <View style={styles.textInputContainer}>
               <View
                 style={[
@@ -698,7 +674,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
             </View>
           )}
 
-          {!next && (
+          {(
             <View
               style={{
                 borderWidth: responsiveWidth(0.5),
@@ -756,40 +732,7 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
             </View>
           )}
 
-          {next && (
-            <View style={[styles.amountInput]}>
-              <View style={{flexDirection: 'row'}}>
-                <View style={[styles.titleback]}>
-                  <Text style={[styles.titleSetPrice]}>Set Price</Text>
-                </View>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginRight: responsiveWidth(2),
-                  gap: Platform.OS == 'ios' ? responsiveWidth(2) : null,
-                }}>
-                <TextInput
-                  editable={!disableSendButton}
-                  maxLength={9}
-                  keyboardType="number-pad"
-                  style={styles.amountStyle}
-                  value={amount ? formatIndianNumber(amount) : ''}
-                  textAlign="right"
-                  selectionColor={selectionTwin()}
-                  placeholder="0"
-                  placeholderTextColor="#999"
-                  onChangeText={t => {
-                    const numericValue = t.replace(/[^0-9]/g, '');
-                    setAmount(numericValue);
-                  }}
-                  showsVerticalScrollIndicator={false}
-                />
-                <Paisa />
-              </View>
-            </View>
-          )}
+
 
           {isAttachmentPremium ? (
             <View style={styles.buttonContainer}>
@@ -798,35 +741,32 @@ const ChatWindowPreviewSheet = ({chatRoomId, name}) => {
                   title={<DIcon provider={'Feather'} name={'chevron-left'} />}
                   showOverlay={false}
                   style={{backgroundColor: 'white'}}
-                  onPress={() => setNext(false)}
+                  onPress={() => {
+                    handleAttachmentAsPremium(false);
+                  }}
                   highlightOnPress={true}
                   highlightColor="#FFF3EB"
                 />
               </View>
-
-              {next ? (
-                <View style={{flexBasis: '76%'}}>
-                  <AnimatedButton
-                    title={'Send'}
-                    showOverlay={false}
-                    onPress={() => handleUploadAttachment()}
-                    loading={disableSendButton}
-                    disabled={disableSendButton}
-                    highlightOnPress={true}
-                    highlightColor="#FFC399"
-                  />
-                </View>
-              ) : (
-                <View style={{flexBasis: '76%'}}>
-                  <AnimatedButton
-                    title={'Next'}
-                    showOverlay={false}
-                    onPress={() => setNext(true)}
-                    highlightOnPress={true}
-                    highlightColor="#FFC399"
-                  />
-                </View>
-              )}
+              <View style={{flexBasis: '76%'}}>
+                <AnimatedButton
+                  title={'Next'}
+                  showOverlay={false}
+                  onPress={() => {
+                    // Close the preview sheet and navigate to fee screen
+                    dispatch(toggleChatWindowPreviewSheet({show: -1}));
+                    navigation.navigate('ChatPPVFee', {
+                      chatRoomId,
+                      name,
+                      mediaPath,
+                      attachmentType,
+                      message,
+                    });
+                  }}
+                  highlightOnPress={true}
+                  highlightColor="#FFC399"
+                />
+              </View>
             </View>
           ) : (
             <View>

@@ -1,7 +1,7 @@
-import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
+import {GoogleSignin, statusCodes, isSuccessResponse} from '@react-native-google-signin/google-signin';
 import {memo, useMemo, useCallback} from 'react';
 import axios from 'axios';
-import auth from '@react-native-firebase/auth';
+import {getAuth, GoogleAuthProvider} from '@react-native-firebase/auth';
 import {ChatWindowError, LoginPageErrors} from '../Src/Components/ErrorSnacks';
 import {appleAuth} from '@invertase/react-native-apple-authentication';
 import { BASE_URL } from '../Src/Configs/ApiConfig';
@@ -13,13 +13,25 @@ GoogleSignin.configure({
 
 export const googleUserInfo = async () => {
   try {
-    signOutGoogle();
+    await signOutGoogle();
 
-    const {idToken} = await GoogleSignin.signIn();
+    const response = await GoogleSignin.signIn();
 
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+    if (!isSuccessResponse(response)) {
+      console.log('Google sign-in was not successful');
+      return 'cancelled';
+    }
 
-    const mainINfo = await auth().signInWithCredential(googleCredential);
+    const idToken = response.data?.idToken;
+
+    if (!idToken) {
+      console.log('No idToken received from Google');
+      return;
+    }
+
+    const googleCredential = GoogleAuthProvider.credential(idToken);
+
+    const mainINfo = await getAuth().signInWithCredential(googleCredential);
 
     if (idToken && mainINfo) {
       return {
@@ -37,11 +49,11 @@ export const googleUserInfo = async () => {
       };
     }
   } catch (e) {
-    if (e.code === statusCodes.SIGN_IN_CANCELLED) {
+    if (e?.code === statusCodes.SIGN_IN_CANCELLED) {
       console.log('cancelled');
       return 'cancelled';
     } else {
-      console.log('GetGoogleUserInfo');
+      console.log('GetGoogleUserInfo error:', e);
     }
   }
 };
@@ -51,20 +63,33 @@ export const googleSignIn = async () => {
     /**
      * todo1: generated Id token from googleSignin
      * todo2:  Create a Google credential with the token
-     * todo3: Sign-in to firebase the user with the credential
+     * todo3: Sign-in the user with the credential
      * !->uid: mainINfo.user.uid [User Id]
      * todo4: Get access token for server verification
      * !->firebaseAuthToken [token for sending to server],
      * @auth : Refers to firebaseStuff
      * */
 
-    signOutGoogle();
+    await signOutGoogle();
 
-    const {idToken} = await GoogleSignin.signIn();
+    const response = await GoogleSignin.signIn();
 
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+    if (!isSuccessResponse(response)) {
+      console.log('Google sign-in was not successful');
+      return 'cancelled';
+    }
 
-    const mainINfo = await auth().signInWithCredential(googleCredential);
+    const idToken = response.data?.idToken;
+
+    if (!idToken) {
+      console.log('No idToken received from Google');
+      LoginPageErrors('Google Sign-In failed - no token received');
+      return;
+    }
+
+    const googleCredential = GoogleAuthProvider.credential(idToken);
+
+    const mainINfo = await getAuth().signInWithCredential(googleCredential);
 
     let {data: serverResponse} = await axios.post(
       `${BASE_URL}/api/connect/social`,
@@ -92,9 +117,9 @@ export const googleSignIn = async () => {
 
     return serverResponse;
   } catch (e) {
-    console.log('🚀 ~ file: Plus.js:81 ~ signInErrors ~ e:', e);
+    console.log('🚀 ~ googleSignIn error:', e);
 
-    if (e.code === statusCodes.SIGN_IN_CANCELLED) {
+    if (e?.code === statusCodes.SIGN_IN_CANCELLED) {
       console.log('cancelled');
       return 'cancelled';
     }
@@ -148,11 +173,11 @@ export const appleSignIn = async () => {
 
 export const signOutGoogle = async () => {
   try {
-    let signedInWithGoogle = auth().currentUser;
+    let signedInWithGoogle = getAuth().currentUser;
 
     if (signedInWithGoogle) {
       await GoogleSignin.signOut();
-      await auth().signOut();
+      await getAuth().signOut();
     } else {
       console.log('User not signed in with Google to logout');
     }

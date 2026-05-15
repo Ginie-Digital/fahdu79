@@ -4,7 +4,7 @@ import StackNavigation from './Navigation/StackNavigation';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import socketServcies from './SocketServices';
-import { getMessaging, onMessage, getToken } from '@react-native-firebase/messaging';
+import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission } from '@react-native-firebase/messaging';
 import {dismissProgressNotification, displayNotificationProgressIndicator, showMentionNotification, showOthersCategoryNotification, showSubscriptionNotification, showCallRelatedNotification, showCallReminderNotification, liveStreamNotification, onDisplayNotification, showPostInteractionNotification} from './Notificaton';
 import { enableNotificationModal, resetAllModal, setLatestTip, setUnReadChatIcon, toggleCallAccepted, toggleEmailVerificationModal, toggleNewMessageRecieved } from './Redux/Slices/NormalSlices/HideShowSlice';
 import { authLogout, currentUserInformation, token as memoizedToken } from './Redux/Slices/NormalSlices/AuthSlice';
@@ -556,7 +556,7 @@ const Main = () => {
 
       try {
         // 1. Request OS-level notification permissions (iOS & Android 13+)
-        const authStatus = await getMessaging().requestPermission();
+        const authStatus = await requestPermission(getMessaging());
         const enabled =
           authStatus === 1 || // messaging.AuthorizationStatus.AUTHORIZED
           authStatus === 2;   // messaging.AuthorizationStatus.PROVISIONAL
@@ -602,7 +602,7 @@ const Main = () => {
     registerFCM();
 
     // Listen for FCM token refreshes
-    const unsubscribeTokenRefresh = getMessaging().onTokenRefresh(async (newFcmToken) => {
+    const unsubscribeTokenRefresh = onTokenRefresh(getMessaging(), async (newFcmToken) => {
       console.log('🔄 FCM token natively refreshed by Firebase:', newFcmToken?.substring(0, 20) + '...');
       if (currentUserId && token) {
         try {

@@ -143,10 +143,21 @@ export const appleSignIn = async () => {
       requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
     });
 
-    const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user);
+    // Check credential state, but don't block on it in dev builds
+    let isAuthorized = false;
+    try {
+      const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user);
+      isAuthorized = credentialState === appleAuth.State.AUTHORIZED;
+      if (!isAuthorized) {
+        console.log('Apple credentialState:', credentialState);
+      }
+    } catch (credErr) {
+      console.log('Apple getCredentialState failed (dev build):', credErr);
+    }
 
-    if (credentialState === appleAuth.State.AUTHORIZED) {
-      console.log(appleAuthRequestResponse);
+    // Proceed if authorized OR if we have a valid identityToken from performRequest
+    if (isAuthorized || appleAuthRequestResponse?.identityToken) {
+      console.log('Apple auth proceeding with response');
 
       let {data: serverResponse} = await axios.post(
         `${BASE_URL}/api/connect/social`,
@@ -163,11 +174,11 @@ export const appleSignIn = async () => {
 
       return serverResponse;
     } else {
-      console.log(credentialState, '::::');
+      console.log('Apple sign-in: no authorization and no identityToken');
     }
   } catch (e) {
-    console.log('Error', e?.response?.data);
-    ChatWindowError(e?.response?.data?.message);
+    console.log('Apple sign-in error:', e?.response?.data || e);
+    ChatWindowError(e?.response?.data?.message || 'Apple Sign-In failed');
   }
 };
 

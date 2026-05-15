@@ -3347,6 +3347,55 @@ PODS:
     - React-Core
     - React-RCTFabric
     - ReactCommon/turbomodule/core
+  - react-native-keyboard-controller (1.21.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - react-native-keyboard-controller/common (= 1.21.7)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - react-native-keyboard-controller/common (1.21.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-netinfo (11.4.1):
     - React-Core
   - react-native-pager-view (6.9.1):
@@ -4552,6 +4601,7 @@ DEPENDENCIES:
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-in-app-updates (from `../node_modules/react-native-in-app-updates`)
   - "react-native-keep-awake (from `../node_modules/@sayem314/react-native-keep-awake`)"
+  - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-pdf (from `../node_modules/react-native-pdf`)
@@ -4815,6 +4865,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-in-app-updates"
   react-native-keep-awake:
     :path: "../node_modules/@sayem314/react-native-keep-awake"
+  react-native-keyboard-controller:
+    :path: "../node_modules/react-native-keyboard-controller"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
@@ -5060,6 +5112,7 @@ SPEC CHECKSUMS:
   react-native-image-picker: f6ece66f251f4a17aab08f5add7be6eb9e7f5356
   react-native-in-app-updates: 85ca45a2bb9ca090d5cd7a70e4029f2c1dc066e2
   react-native-keep-awake: a351e6f67006b47f316ae2b17ee8ee69386167f4
+  react-native-keyboard-controller: d428b3a15a17b0178e24d8dc1ad7fe57e10dfdf1
   react-native-netinfo: cec9c4e86083cb5b6aba0e0711f563e2fbbff187
   react-native-pager-view: af0a410629d77bcfeec1383d9109a2c5264b8a49
   react-native-pdf: 7ae461505b57c78c8ff3f79d9e69c7a7c35d7f7b

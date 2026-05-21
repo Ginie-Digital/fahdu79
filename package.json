@@ -48,6 +48,7 @@
     "expo-image": "~2.4.1",
     "expo-linear-gradient": "^55.0.13",
     "expo-status-bar": "^3.0.8",
+    "expo-updates": "~0.28.18",
     "expo-video": "~2.2.2",
     "ffmpeg-kit-react-native": "./FFMPegBuild/react-native",
     "lottie-react-native": "^7.3.4",

@@ -16,6 +16,7 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {withIAPContext} from 'react-native-iap';
 import {checkForUpdate, UpdateFlow} from 'react-native-in-app-updates';
+import * as Updates from 'expo-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import DeviceInfo from 'react-native-device-info';
@@ -81,8 +82,29 @@ const App = () => {
     }
   }
 
+  async function checkForOTAUpdate() {
+    if (__DEV__) return;
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        Alert.alert(
+          'Update Available',
+          'A new update has been downloaded. Restart the app to apply?',
+          [
+            { text: 'Later', style: 'cancel' },
+            { text: 'Restart', onPress: () => Updates.reloadAsync() },
+          ]
+        );
+      }
+    } catch (e) {
+      console.log('OTA update check failed:', e);
+    }
+  }
+
   useEffect(() => {
     getData();
+    checkForOTAUpdate();
     clearRNCacheOnUpdate();
   }, []);
 

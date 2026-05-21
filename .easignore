@@ -1,0 +1,51 @@
+# Node modules (EAS reinstalls)
+**/node_modules
+
+# Git
+**/.git
+
+# iOS Pods and local builds
+**/ios/Pods
+**/ios/build
+**/ios/DerivedData
+
+# Android local builds and caches
+**/android/.gradle
+**/android/build
+**/android/app/build
+**/android/local.properties
+**/android/key.properties
+**/*.ap_
+**/*.apk
+**/*.aab
+
+# OS files
+**/.DS_Store
+
+# Expo cache and local exports
+**/.expo
+**/dist
+**/web-build
+
+# IDE files
+**/.idea
+**/.vscode
+
+# Build artifacts
+**/*.hprof
+
+# Testing
+**/coverage
+**/__tests__
+
+# Gemini / IDE agent
+**/.gemini
+
+# Scratch / old reference files
+**/scratch
+**/old_android_perms.txt
+**/old_app_delegate.txt
+**/old_ios_usage.txt
+**/current_android_perms.txt
+**/current_app_delegate.txt
+**/current_ios_usage.txt

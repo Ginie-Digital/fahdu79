@@ -13,7 +13,8 @@
           "supportsBackgroundPlayback": true,
           "supportsPictureInPicture": true
         }
-      ]
+      ],
+      "expo-updates"
     ],
     "android": {
       "package": "com.fahdu",

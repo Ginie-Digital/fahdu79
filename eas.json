@@ -22,12 +22,21 @@
         "buildType": "apk"
       }
     },
+    "staging_store": {
+      "distribution": "store",
+      "channel": "staging"
+    },
     "production": {
       "channel": "production",
       "autoIncrement": true
     }
   },
   "submit": {
+    "staging_store": {
+      "android": {
+        "track": "internal"
+      }
+    },
     "production": {
       "android": {
         "track": "internal"

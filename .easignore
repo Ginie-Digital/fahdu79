@@ -24,7 +24,6 @@
 
 # Expo cache and local exports
 **/.expo
-**/dist
 **/web-build
 
 # IDE files

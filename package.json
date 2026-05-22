@@ -9,7 +9,9 @@
     "start": "react-native start",
     "test": "jest",
     "start-reset": "react-native start --reset-cache",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "update-staging": "rm -rf dist && npx eas-cli update --channel staging",
+    "update-production": "rm -rf dist && npx eas-cli update --channel production"
   },
   "dependencies": {
     "@fawazahmed/react-native-read-more": "^3.0.4",

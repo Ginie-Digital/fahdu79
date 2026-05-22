@@ -99,7 +99,7 @@ const Home = () => {
   const [removePostId, setRemovePostId] = useState(undefined);
 
   const [refreshing, setRefreshing] = useState(false);
-  
+
 
 
   const { show: commentBottomSheetVisibility } = useSelector(state => state.hideShow.visibility.commentBottomSheet);
@@ -281,16 +281,16 @@ const Home = () => {
         if (responseFeed?.data?.posts?.length > 0) {
           // Check if we are appending or setting (if page 1, we might want to refresh)
           if (currentPage === 1) {
-             dispatch(setFeedCache({ data: responseFeed?.data?.posts }));
+            dispatch(setFeedCache({ data: responseFeed?.data?.posts }));
           } else {
-             // Append logic
-             if (cachedFeed.findIndex(x => x._id === responseFeed?.data?.posts[0]?._id) === -1) {
-                dispatch(
-                  setFeedCache({
-                    data: [...cachedFeed, ...responseFeed?.data?.posts],
-                  }),
-                );
-             }
+            // Append logic
+            if (cachedFeed.findIndex(x => x._id === responseFeed?.data?.posts[0]?._id) === -1) {
+              dispatch(
+                setFeedCache({
+                  data: [...cachedFeed, ...responseFeed?.data?.posts],
+                }),
+              );
+            }
           }
         }
       }
@@ -482,7 +482,7 @@ export default Home;
 const styles = StyleSheet.create({
   homeContainer: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#EDE9FE',
     borderTopColor: '#282828',
   },
 });

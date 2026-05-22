@@ -482,7 +482,7 @@ export default Home;
 const styles = StyleSheet.create({
   homeContainer: {
     flex: 1,
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#FFFFFF',
     borderTopColor: '#282828',
   },
 });

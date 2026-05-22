@@ -18,6 +18,7 @@ import { withIAPContext } from 'react-native-iap';
 import { checkForUpdate, UpdateFlow } from 'react-native-in-app-updates';
 import * as Updates from 'expo-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import dayjs from 'dayjs';
 import RNFS from 'react-native-fs';
 import DeviceInfo from 'react-native-device-info';
 import { createMMKV } from 'react-native-mmkv';
@@ -80,6 +81,15 @@ const App = () => {
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [modalType, setModalType] = useState('pending'); // 'pending' | 'installed'
+
+  const updateDate = Updates.createdAt
+    ? dayjs(Updates.createdAt).format('DD MMM YYYY, hh:mm A')
+    : null;
+
+  const updateMessage = Updates.manifest?.extra?.eas?.message
+    || Updates.manifest?.metadata?.message
+    || Updates.manifest?.message
+    || "Performance optimizations and styling enhancements.";
 
   async function checkForOTAUpdate() {
     if (__DEV__) return;
@@ -171,11 +181,28 @@ const App = () => {
                       <Text style={styles.modalTitle}>
                         {modalType === 'installed' ? 'App Updated!' : 'App Update Ready!'}
                       </Text>
-                      <Text style={styles.modalDescription}>
+                      <Text style={[styles.modalDescription, (updateDate || updateMessage) && { marginBottom: 16 }]}>
                         {modalType === 'installed'
                           ? "Fahdu has been updated successfully with the latest improvements. Enjoy the fresh new experience!"
                           : "A new version of Fahdu is available with exciting improvements. Restart the app now to apply the update immediately!"}
                       </Text>
+
+                      {(updateDate || updateMessage) && (
+                        <View style={styles.changelogCard}>
+                          {updateDate && (
+                            <View style={styles.changelogRow}>
+                              <Text style={styles.changelogLabel}>Published</Text>
+                              <Text style={styles.changelogValue}>{updateDate}</Text>
+                            </View>
+                          )}
+                          {updateMessage && (
+                            <View style={[styles.changelogRow, { flexDirection: 'column', alignItems: 'flex-start', marginTop: updateDate ? 8 : 0 }]}>
+                              <Text style={styles.changelogLabel}>What's New</Text>
+                              <Text style={styles.changelogMessage}>"{updateMessage}"</Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
 
                       <View style={styles.buttonContainer}>
                         {modalType === 'installed' ? (
@@ -187,17 +214,17 @@ const App = () => {
                             <Text style={styles.updateButtonText}>Awesome!</Text>
                           </TouchableOpacity>
                         ) : (
-                          <>
+                          <View style={styles.horizontalButtonContainer}>
                             <TouchableOpacity
-                              style={styles.cancelButton}
+                              style={styles.textOnlyButton}
                               activeOpacity={0.7}
                               onPress={() => setShowUpdateModal(false)}
                             >
-                              <Text style={styles.cancelButtonText}>Later</Text>
+                              <Text style={styles.textOnlyButtonText}>Later</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                              style={styles.updateButton}
+                              style={styles.smallUpdateButton}
                               activeOpacity={0.8}
                               onPress={async () => {
                                 setShowUpdateModal(false);
@@ -206,7 +233,7 @@ const App = () => {
                             >
                               <Text style={styles.updateButtonText}>Restart Now</Text>
                             </TouchableOpacity>
-                          </>
+                          </View>
                         )}
                       </View>
                     </View>
@@ -288,7 +315,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     width: '100%',
     paddingVertical: 15,
-    borderRadius: 16,
+    borderRadius: 24,
     borderWidth: 1.5,
     borderColor: '#E4E4E7',
     alignItems: 'center',
@@ -304,7 +331,7 @@ const styles = StyleSheet.create({
   updateButton: {
     width: '100%',
     paddingVertical: 15,
-    borderRadius: 16,
+    borderRadius: 24,
     backgroundColor: '#18181B', // Premium high-contrast near black
     alignItems: 'center',
     justifyContent: 'center',
@@ -321,16 +348,87 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   singleButton: {
-    width: '100%',
-    paddingVertical: 15,
-    borderRadius: 16,
-    backgroundColor: '#6366F1', // Premium Indigo
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: '#18181B', // Premium Black
+    alignSelf: 'flex-end', // Push to the right side!
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  horizontalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    width: '100%',
+    gap: 8,
+  },
+  textOnlyButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textOnlyButtonText: {
+    fontFamily: 'MabryPro-Bold',
+    fontSize: 15,
+    color: '#18181B', // Pure black text as requested
+    fontWeight: '700',
+  },
+  smallUpdateButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: '#18181B', // Premium Black
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  changelogCard: {
+    backgroundColor: '#F8FAFC', // Very soft slate blue-grey
+    borderRadius: 16,
+    padding: 16,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 24,
+  },
+  changelogRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  changelogLabel: {
+    fontFamily: 'MabryPro-Bold',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    color: '#64748B', // Soft slate gray
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  changelogValue: {
+    fontFamily: 'MabryPro-Regular',
+    fontSize: 12,
+    color: '#334155', // Charcoal
+    fontWeight: '500',
+  },
+  changelogMessage: {
+    fontFamily: 'MabryPro-Regular',
+    fontSize: 13,
+    color: '#0F172A', // Dark slate/black
+    fontStyle: 'italic',
+    lineHeight: 18,
+    marginTop: 4,
+    width: '100%',
   },
 });

@@ -5,6 +5,7 @@ import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
 import RNBootSplash
+import EXUpdates
 
 @main
 class AppDelegate: ExpoAppDelegate {
@@ -80,7 +81,7 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 #if DEBUG
     RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    return AppController.sharedInstance.launchAssetUrl() ?? Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
 }

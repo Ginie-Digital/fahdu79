@@ -19,6 +19,7 @@ import { checkForUpdate, UpdateFlow } from 'react-native-in-app-updates';
 import * as Updates from 'expo-updates';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
+import Clipboard from '@react-native-clipboard/clipboard';
 import RNFS from 'react-native-fs';
 import DeviceInfo from 'react-native-device-info';
 import { createMMKV } from 'react-native-mmkv';
@@ -28,7 +29,27 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 const persistor = persistStore(store);
 
-const storage = createMMKV();
+let capturedLogs = [];
+const logListeners = new Set();
+
+const addCapturedLog = (type, args) => {
+  const msg = args.map(arg => {
+    if (arg instanceof Error) {
+      return arg.message + '\nStack: ' + arg.stack;
+    }
+    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+  }).join(' ');
+  
+  capturedLogs = [
+    { id: Math.random().toString(), type, message: msg, time: new Date().toLocaleTimeString() },
+    ...capturedLogs
+  ].slice(0, 100);
+
+  // Defer listener execution to the next tick to completely prevent "Cannot update during render" warnings!
+  setTimeout(() => {
+    logListeners.forEach(listener => listener(capturedLogs));
+  }, 0);
+};
 
 const App = () => {
   const [isConnected, setIsConnected] = useState(true);
@@ -82,6 +103,10 @@ const App = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [modalType, setModalType] = useState('pending'); // 'pending' | 'installed'
 
+
+
+
+
   const updateDate = Updates.createdAt
     ? dayjs(Updates.createdAt).format('DD MMM YYYY, hh:mm A')
     : null;
@@ -93,6 +118,10 @@ const App = () => {
 
   async function checkForOTAUpdate() {
     if (__DEV__) return;
+    if (!Updates.isEnabled) {
+      console.log('[EAS-OTA] OTA updates are disabled or not supported in this environment.');
+      return;
+    }
     try {
       console.log('[EAS-OTA] Checking for updates...');
       const update = await Updates.checkForUpdateAsync();
@@ -239,6 +268,7 @@ const App = () => {
                     </View>
                   </View>
                 </Modal>
+
               </SafeAreaProvider>
             </BottomSheetModalProvider>
           </GestureHandlerRootView>
@@ -247,6 +277,8 @@ const App = () => {
     </Provider>
   );
 };
+
+
 
 export default App;
 
@@ -430,5 +462,119 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 4,
     width: '100%',
+  },
+  floatingDebugBtn: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    backgroundColor: '#18181B',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+    zIndex: 9999,
+  },
+  floatingDebugBtnText: {
+    color: '#FFFFFF',
+    fontFamily: 'MabryPro-Bold',
+    fontSize: 12,
+  },
+  debugPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 380,
+    backgroundColor: 'rgba(9, 9, 11, 0.95)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    zIndex: 9999,
+    borderTopWidth: 1,
+    borderColor: '#27272A',
+  },
+  debugHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  debugHeaderTitle: {
+    color: '#FFFFFF',
+    fontFamily: 'MabryPro-Bold',
+    fontSize: 14,
+  },
+  debugHeaderBtn: {
+    backgroundColor: '#27272A',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  debugHeaderBtnText: {
+    color: '#E4E4E7',
+    fontFamily: 'MabryPro-Regular',
+    fontSize: 12,
+  },
+  debugHeaderBtnClose: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  debugHeaderBtnCloseText: {
+    color: '#FFFFFF',
+    fontFamily: 'MabryPro-Bold',
+    fontSize: 12,
+  },
+  debugMetadataBox: {
+    backgroundColor: '#18181B',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#27272A',
+  },
+  metadataText: {
+    color: '#A1A1AA',
+    fontFamily: 'MabryPro-Regular',
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  logsList: {
+    flex: 1,
+    backgroundColor: '#09090B',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#27272A',
+  },
+  logRow: {
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#18181B',
+    paddingBottom: 4,
+  },
+  logTime: {
+    color: '#71717A',
+    fontFamily: 'MabryPro-Bold',
+    fontSize: 10,
+  },
+  logMsg: {
+    color: '#E4E4E7',
+    fontFamily: 'MabryPro-Regular',
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  emptyLogsText: {
+    color: '#71717A',
+    fontFamily: 'MabryPro-Regular',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 40,
   },
 });

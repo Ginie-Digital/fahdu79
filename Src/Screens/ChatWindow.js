@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Button, FlatList, Keyboard, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
-
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
 import { responsiveWidth } from 'react-native-responsive-dimensions';
 import { LeftChatBubble, RightChatBubble } from '../Components/ChatWindowComponents/ChatWindowElements';
 
 import { useSendMessageMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
+import { useHeaderHeight } from '@react-navigation/elements';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { userIdCreateSelector } from '../../Redux/Slices/NormalSlices/AuthSlice';
@@ -50,7 +50,7 @@ import CallRequestModal from '../Components/ChatWindowComponents/CallRequestModa
 import CallPricesModal from '../Components/ChatWindowComponents/CallPricesModal';
 import TimeRequestModal from '../Components/Calling/TimeRequestModal';
 import LowBalanceModal from '../Components/LowBalanceModal';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import socketServices from '../../SocketServices';
 import TypingIndicator from '../Components/ChatWindowComponents/TypingIndicator';
 
@@ -65,8 +65,8 @@ const Loader = () => {
 let timer;
 
 const ChatWindow = ({ route, navigation }) => {
-  const insets = useSafeAreaInsets();
   const messageInputRef = useRef(null);
+  const headerHeight = useHeaderHeight();
 
   const flatlistThreadListRef = useRef();
 
@@ -524,10 +524,8 @@ const ChatWindow = ({ route, navigation }) => {
   return (
     <GestureHandlerRootView style={styles.wrapper}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.top + 48}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={'padding'} keyboardVerticalOffset={headerHeight}>
+
 
         {/* All your modals */}
         <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />
@@ -536,7 +534,8 @@ const ChatWindow = ({ route, navigation }) => {
           <Loader />
         ) : (
           <FlatList
-            style={{ flex: 1 }}
+
+
             removeClippedSubviews={false}
             ref={flatlistThreadListRef}
             data={chatThreadFromCache ? [...chatThreadFromCache?.messages]?.reverse() : []}
@@ -558,7 +557,7 @@ const ChatWindow = ({ route, navigation }) => {
             onEndReached={endReached}
             onEndReachedThreshold={0.1}
             keyboardDismissMode="on-drag"
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={{ paddingTop: 10 }}
           />
         )}
         {/* All your remaining modals and components */}

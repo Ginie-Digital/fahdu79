@@ -1,6 +1,8 @@
 import {StyleSheet, View, TextInput, TouchableOpacity, Keyboard, ActivityIndicator, Platform, Linking, Pressable, Text, Animated, LayoutAnimation, UIManager} from 'react-native';
 import DIcon from '../../../DesiginData/DIcons';
 import React, {useEffect, useState, useCallback, useLayoutEffect, useRef} from 'react';
+import { useKeyboardHandler } from 'react-native-keyboard-controller';
+import { runOnJS } from 'react-native-reanimated';
 
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
@@ -37,6 +39,30 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
   const [isKeyboardShown, setIsKeyboardShown] = useState(false);
   const [isCallMode, setIsCallMode] = useState(false);
   const [isAttachmentMode, setIsAttachmentMode] = useState(false);
+  const bottomPadding = useRef(new Animated.Value(Math.max(insets.bottom, 16))).current;
+
+  // Helper to trigger animation on JS thread
+  const animatePadding = useCallback((toValue) => {
+    Animated.timing(bottomPadding, {
+      toValue,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [bottomPadding]);
+
+  // Sync animation with keyboard state using the new library's hook
+  useKeyboardHandler({
+    onStart: (e) => {
+      "worklet";
+      if (e.height > 0) {
+        // Keyboard opening - let StickyView handle the position
+        runOnJS(animatePadding)(8);
+      } else {
+        // Keyboard closing - restore safe area padding
+        runOnJS(animatePadding)(Math.max(insets.bottom, 16));
+      }
+    },
+  }, [insets.bottom, animatePadding]);
 
   useEffect(() => {
     console.log(disableSendButton, 'DSBLSNDBTN');
@@ -266,7 +292,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
 
   return (
     <>
-      <View style={[styles.chatInputContainer, { paddingBottom: isKeyboardShown ? 4 : Math.max(insets.bottom, 16) }]}>
+      <Animated.View style={[styles.chatInputContainer, { paddingBottom: bottomPadding }]}>
         {/* Attachment / Clip icon - acts as toggle */}
         {(userRole === 'creator' || secondUserRole === 'admin') && (
           <TouchableOpacity style={styles.iconButton} onPress={handleOpenClip}>
@@ -289,7 +315,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
             style={[
               styles.textInput, 
               Platform.OS === 'ios' ? {fontSize: responsiveFontSize(1.8)} : {},
-              (isCallMode || isAttachmentMode) && {maxHeight: 44} // Keep height stable
+              (isCallMode || isAttachmentMode) && {maxHeight: 44},
             ]}
             multiline
             showsVerticalScrollIndicator={false}
@@ -404,7 +430,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
             </Pressable>
           )}
         </View>
-      </View>
+      </Animated.View>
     </>
   );
 };
@@ -428,7 +454,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    paddingVertical: 0,
     minHeight: 44,
     maxHeight: 115, // Limit expansion to ~6 lines
   },
@@ -437,11 +463,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Regular',
     color: '#1e1e1e',
     fontSize: 14,
-    lineHeight: 17,
-    padding: 0,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    paddingHorizontal: 0,
     margin: 0,
-    textAlignVertical: 'center',
     maxHeight: 95, // Sync with pill maxHeight
+    ...Platform.select({
+      android: {
+        textAlignVertical: 'center',
+        includeFontPadding: false,
+      },
+    }),
   },
   rightIconsRow: {
     flexDirection: 'row',

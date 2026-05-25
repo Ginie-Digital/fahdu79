@@ -1,6 +1,6 @@
-import React, {useRef, useMemo, useCallback, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Platform, KeyboardAvoidingView, TextInput, ScrollView, Animated, Pressable, Dimensions} from 'react-native';
-import {BlurView} from 'expo-blur';
+import React, {useMemo, useCallback, useEffect, useState} from 'react';
+import {View, Text, StyleSheet, Platform, TextInput, ScrollView, Pressable, Dimensions, Keyboard, KeyboardAvoidingView} from 'react-native';
+import Modal from 'react-native-modal';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import Paisa from '../../../Assets/svg/paisa.svg';
@@ -12,21 +12,6 @@ import {toggleChatWindowFeeSetup} from '../../../Redux/Slices/NormalSlices/HideS
 
 const ChatWindowFeeSetup = () => {
   const visible = useSelector(state => state.hideShow.visibility.chatWindowFeeSetup);
-  const screenHeight = Dimensions.get('screen').height;
-  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      slideAnim.setValue(screenHeight);
-    }
-  }, [visible]);
 
   // State
   const [amount, setAmount] = useState('');
@@ -39,14 +24,11 @@ const ChatWindowFeeSetup = () => {
   // API
   const [updateFeeSetupChatWindow] = useUpdateFeeSetupChatWindowMutation();
 
-  // Set to 30% for a compact appearance
-  const snapPoints = useMemo(() => ['50%'], []);
-
   // Callbacks
-  // Handle visibility logic is now handled by the Modal component's isVisible prop
   const handleClose = () => {
     dispatch(toggleChatWindowFeeSetup({show: false}));
   };
+
 
   // Handle Amount Change
   const handleAmount = t => {
@@ -100,84 +82,77 @@ const ChatWindowFeeSetup = () => {
   // Calculate 50% of amount (rounded down)
   const subscriberFee = amount ? Math.floor(parseInt(amount, 10) / 2) : 0;
 
-  if (!visible) return null;
-
   return (
-    <View style={styles.overlay}>
-      <BlurView intensity={15} style={styles.blurBackground} />
-      <Pressable style={styles.touchOutside} onPress={handleClose} />
+    <Modal
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      onBackdropPress={handleClose}
+      onBackButtonPress={handleClose}
+      style={styles.modalStyle}
+      avoidKeyboard={false}
+      useNativeDriver={true}
+    >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboardView}>
-        <Animated.View
-          style={[
-            styles.dialog,
-            {transform: [{translateY: slideAnim}]},
-          ]}>
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 80}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
+      >
+        <View style={styles.dialog}>
           <ScrollView
             contentContainerStyle={styles.contentContainer}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={styles.heading}>Set Chat Fee</Text>
-            <Text style={styles.subText}>Create your custom automated message</Text>
-          </View>
-
-          <View style={styles.amountInput}>
-            <View style={styles.titleback}>
-              <Text style={styles.titleSetPrice}>Set Price</Text>
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <Text style={styles.heading}>Set Chat Fee</Text>
+              <Text style={styles.subText}>Create your custom automated message</Text>
             </View>
-            <View style={styles.inputContainer}>
-              <TextInput
-                maxLength={6}
-                keyboardType="number-pad"
-                style={styles.amountStyle}
-                value={amount}
-                onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))}
-                placeholder="0"
-                placeholderTextColor="#888"
-              />
-              <Paisa width={20} height={20} />
+
+            <View style={styles.amountInput}>
+              <View style={styles.titleback}>
+                <Text style={styles.titleSetPrice}>Set Price</Text>
+              </View>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  maxLength={6}
+                  keyboardType="number-pad"
+                  style={styles.amountStyle}
+                  value={amount}
+                  onChangeText={t => handleAmount(t.replace(/[^0-9]/g, ''))}
+                  placeholder="0"
+                  placeholderTextColor="#888"
+                />
+                <Paisa width={20} height={20} />
+              </View>
             </View>
-          </View>
 
-          {amountError ? <Text style={styles.errorText}>*{amountError}</Text> : <Text style={styles.infoText}>*Chat/Message</Text>}
+            {amountError ? <Text style={styles.errorText}>*{amountError}</Text> : <Text style={styles.infoText}>*Chat/Message</Text>}
 
-          <View style={styles.subscriberContainer}>
-            <Text style={styles.subscriberText}>Subscriber Fee</Text>
-            <View style={styles.rightSection}>
-              <Text style={styles.subscriberAmount}>{subscriberFee}</Text>
-              <Paisa width={20} height={20} />
+            <View style={styles.subscriberContainer}>
+              <Text style={styles.subscriberText}>Subscriber Fee</Text>
+              <View style={styles.rightSection}>
+                <Text style={styles.subscriberAmount}>{subscriberFee}</Text>
+                <Paisa width={20} height={20} />
+              </View>
             </View>
-          </View>
 
-          <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
-        </ScrollView>
-        </Animated.View>
+            <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
+          </ScrollView>
+        </View>
       </KeyboardAvoidingView>
-    </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  background: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  handleIndicator: {
-    backgroundColor: '#ccc',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+  modalStyle: {
+    justifyContent: 'flex-end',
+    margin: 0,
   },
   contentContainer: {
     paddingHorizontal: WIDTH_SIZES[32],
-    paddingBottom: 20,
+    paddingBottom: 24,
     paddingTop: 10,
   },
   header: {
@@ -278,27 +253,13 @@ const styles = StyleSheet.create({
   saveButton: {
     marginTop: 10,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: 9999,
-  },
-  keyboardView: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  blurBackground: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  touchOutside: {
-    flex: 1,
-  },
   dialog: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     backgroundColor: '#fff',
     width: '100%',
     paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 36,
   },
 });
 

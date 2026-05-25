@@ -1,12 +1,13 @@
-import {StyleSheet, View, TouchableOpacity, Text, BackHandler, TextInput, LayoutAnimation, Platform, useWindowDimensions, PanResponder, Keyboard, Animated, KeyboardAvoidingView} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Text, BackHandler, TextInput, LayoutAnimation, Platform, useWindowDimensions, PanResponder, Keyboard, Animated, KeyboardAvoidingView, Image as RNImage} from 'react-native';
 import RNFS from 'react-native-fs';
 import { Image } from 'expo-image';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 import {responsiveWidth, responsiveHeight} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
-import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {useFocusEffect, useNavigation, useRoute, useIsFocused} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import Pdf from 'react-native-pdf';
 
 import {ChatWindowError, ChatWindowFollowError, LoginPageErrors} from '../Components/ErrorSnacks';
 import {updateCacheRoomList} from '../../Redux/Slices/NormalSlices/RoomListSlice';
@@ -29,6 +30,7 @@ const ChatMediaPreviewScreen = () => {
   const route = useRoute();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
 
   const {chatRoomId, name, recipientId, profileImage, role, onlineStatus} = route.params;
 
@@ -266,7 +268,7 @@ const ChatMediaPreviewScreen = () => {
         const formData = new FormData();
         formData.append('keyName', 'message_attachment');
         formData.append('file', {
-          uri: selectedMedia?.pdf?.fileData?.uri,
+          uri: selectedMedia?.pdf?.fileData?.fileCopyUri || selectedMedia?.pdf?.fileData?.uri,
           type: selectedMedia?.pdf?.fileData?.type || 'application/pdf',
           name: selectedMedia?.pdf?.fileData?.name || 'document.pdf',
         });
@@ -414,7 +416,7 @@ const ChatMediaPreviewScreen = () => {
     } else if (selectedMedia?.pdf?.fileData) {
       setAttachmentType('pdf');
       // Using a static PDF icon instead of generating a thumbnail to avoid extra native libraries
-      setMediaPath(Image.resolveAssetSource(require('../../Assets/Images/pdf-thumbnail.png')).uri);
+      setMediaPath(RNImage.resolveAssetSource(require('../../Assets/Images/pdf-thumbnail.png')).uri);
     }
     setIsPaused(true);
   }, [selectedMedia]);
@@ -453,7 +455,14 @@ const ChatMediaPreviewScreen = () => {
         <View style={styles.mediaContainer} {...panResponder.panHandlers}>
           <View style={[styles.mediaInnerWrapper, attachmentType === 'pdf' && {borderWidth: 1, borderColor: '#1e1e1e'}]}>
             <View style={styles.fullMediaWrapper}>
-              {attachmentType !== 'video' ? (
+              {isFocused && attachmentType === 'pdf' ? (
+                <Pdf
+                  trustAllCerts={false}
+                  singlePage={true}
+                  source={{ uri: selectedMedia?.pdf?.fileData?.fileCopyUri || selectedMedia?.pdf?.fileData?.uri }}
+                  style={[styles.pdfPreview, { width: containerWidth, height: containerWidth * 1.25 }]}
+                />
+              ) : attachmentType === 'image' ? (
                 <Image source={!mediaPath ? require('../../Assets/Images/DefaultPost.jpg') : {uri: mediaPath}} style={styles.fullImage} contentFit="contain" />
               ) : (
                 <TouchableOpacity activeOpacity={0.9} onPress={() => setIsPaused(!isPaused)} style={styles.fullMediaWrapper}>
@@ -501,6 +510,7 @@ const styles = StyleSheet.create({
   fullImage: { width: '100%', height: '100%' },
   fullVideo: { width: '100%', height: '100%' },
   mediaInnerWrapper: { width: '100%', aspectRatio: 4 / 5, maxHeight: '100%', borderRadius: 20, overflow: 'hidden', backgroundColor: '#000' },
+  pdfPreview: { flex: 1, width: '100%', height: '100%', backgroundColor: '#fff' },
   bottomControls: { paddingHorizontal: responsiveWidth(4), paddingBottom: responsiveWidth(4) },
   captionContainer: { width: '100%' },
   headerToggleRow: { flexDirection: 'row', backgroundColor: '#F3F3F3', borderRadius: responsiveWidth(6), padding: responsiveWidth(0.8), borderWidth: 1, borderColor: '#E8E8E8', marginRight: responsiveWidth(1) },

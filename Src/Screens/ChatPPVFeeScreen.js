@@ -179,7 +179,7 @@ const ChatPPVFeeScreen = () => {
       const formData = new FormData();
       formData.append('keyName', 'message_attachment');
       formData.append('file', {
-        uri: selectedMedia?.pdf?.fileData?.uri,
+        uri: selectedMedia?.pdf?.fileData?.fileCopyUri || selectedMedia?.pdf?.fileData?.uri,
         type: selectedMedia?.pdf?.fileData?.type || 'application/pdf',
         name: selectedMedia?.pdf?.fileData?.name || 'document.pdf',
       });

@@ -9,6 +9,7 @@ import {toggleChatWindowClipModal, toggleChatWindowAttachmentPreviewModal, toggl
 import {chatWindowAttachmentList} from '../../../DesiginData/Data';
 import DIcon from '../../../DesiginData/DIcons';
 import * as DocumentPicker from '@react-native-documents/picker';
+import RNFS from 'react-native-fs';
 import {setMediaData} from '../../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowPreviewDataSlice';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {generateBase64Image} from '../../../FFMPeg/FFMPegModule';
@@ -21,17 +22,37 @@ export const selectDocument = async () => {
   try {
     const [docInfo] = await DocumentPicker.pick({
       type: [DocumentPicker.types.pdf],
-      copyTo: 'cachesDirectory',
+      mode: 'open',
       allowMultiSelection: false,
     });
-    if (docInfo?.size > 60000000) {
-      //60MB
-      ChatWindowError('PDF Size must be lower than 60 MB');
-      return 0;
+
+    if (docInfo) {
+      if (docInfo.size > 60000000) {
+        ChatWindowError('PDF Size must be lower than 60 MB');
+        return 0;
+      }
+
+      // Copy the file manually to caches directory to avoid DownloadStorageProvider direct-access bug
+      const fileName = docInfo.name || `document_${Date.now()}.pdf`;
+      const localPath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+      
+      try {
+        if (await RNFS.exists(localPath)) {
+          await RNFS.unlink(localPath);
+        }
+        await RNFS.copyFile(docInfo.uri, localPath);
+        docInfo.fileCopyUri = `file://${localPath}`;
+      } catch (copyErr) {
+        console.warn('CWClip SelectDocument Copy Error:', copyErr);
+        ChatWindowError('Failed to process document');
+        return undefined;
+      }
     }
     return docInfo;
   } catch (e) {
-    console.log('CWClip SelectDocument Error', e.message);
+    if (!DocumentPicker.isCancel(e)) {
+      console.log('CWClip SelectDocument Error', e.message);
+    }
     return undefined;
   }
 };

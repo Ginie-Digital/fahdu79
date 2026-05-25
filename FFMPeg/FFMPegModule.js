@@ -6,9 +6,10 @@ import AppLog from '../Src/Utils/Logger';
 export const generateBase64Image = async uri => {
   try {
     if (uri) {
-      console.log(uri?.split('file://').at(-1), '{}{}{}{');
+      const cleanUri = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
+      console.log(cleanUri, '{}{}{}{');
 
-      return FFmpegKit.execute(`-i ${Platform.OS === 'ios' ? uri?.split('file://').at(-1) : uri} -vf scale=15:15 ${RNFS.CachesDirectoryPath}/encodedImage%03d.jpg -loglevel quiet -y`).then(async session => {
+      return FFmpegKit.execute(`-i "${cleanUri}" -vf scale=15:15 "${RNFS.CachesDirectoryPath}/encodedImage%03d.jpg" -loglevel quiet -y`).then(async session => {
         let returnCodeBySession = await session.getReturnCode();
 
         if (ReturnCode.isSuccess(returnCodeBySession)) {
@@ -28,7 +29,11 @@ export const generateBase64Image = async uri => {
 };
 
 const getVideoInformation = async uri => {
-  return FFprobeKit.getMediaInformation(uri).then(async session => {
+  let cleanUri = uri;
+  if (cleanUri.startsWith('file://')) {
+    cleanUri = cleanUri.replace('file://', '');
+  }
+  return FFprobeKit.getMediaInformation(cleanUri).then(async session => {
     const information = session.getMediaInformation();
 
     let bitRate = information.getBitrate();
@@ -55,6 +60,12 @@ export const videoReducer = async (uri, preMetadata = null) => {
     return null;
   }
 
+  // Clean the input URI (remove file:// prefix)
+  let cleanUri = uri;
+  if (cleanUri.startsWith('file://')) {
+    cleanUri = cleanUri.replace('file://', '');
+  }
+
   try {
     let originalBitrate, width, height;
 
@@ -67,7 +78,7 @@ export const videoReducer = async (uri, preMetadata = null) => {
       console.log('⚡ videoReducer: Using pre-fetched metadata (skipped FFprobe)');
     } else {
       // Fallback: run FFprobe (backward compat if raw bitrate or null passed)
-      const sessionInfo = await FFprobeKit.getMediaInformation(uri);
+      const sessionInfo = await FFprobeKit.getMediaInformation(cleanUri);
       const information = sessionInfo.getMediaInformation();
       originalBitrate = (typeof preMetadata === 'number' ? preMetadata : null) || information.getBitrate();
       
@@ -84,7 +95,7 @@ export const videoReducer = async (uri, preMetadata = null) => {
       return null;
     }
 
-    const originalStat = await RNFS.stat(uri);
+    const originalStat = await RNFS.stat(cleanUri);
     const originalSizeMb = (originalStat.size / 1024 / 1024).toFixed(2);
 
     console.log(`📊 Original: ${width}x${height}, bitrate: ${Math.round(originalBitrate / 1024)}kbps, size: ${originalSizeMb}MB`);
@@ -113,12 +124,12 @@ export const videoReducer = async (uri, preMetadata = null) => {
       // ── Android: keep it simple, generous bitrate ──
       // Cap at 8 Mbps (8000kbps) to prevent bloated videos from staying huge
       const targetKbps = Math.min(8000, Math.round((originalBitrate * 0.95) / 1024));
-      const maxKbps = Math.min(12000, Math.round(originalBitrate / 1024));
 
-      hardwareCommand = `-i "${uri}" -c:a copy -c:v h264_mediacodec -b:v ${targetKbps}k -maxrate ${maxKbps}k -bufsize ${maxKbps * 2}k -g 50 -keyint_min 25 -threads 0 -loglevel error "${outputPath}" -y`;
+      // Clean, hardware-accelerated MediaCodec command (no incompatible rate control options)
+      hardwareCommand = `-i "${cleanUri}" -c:a copy -c:v h264_mediacodec -b:v ${targetKbps}k -g 50 -loglevel error "${outputPath}" -y`;
 
-      // Software fallback - CRF 18 (Visually near-lossless), veryfast preset for speed
-      softwareCommand = `-i "${uri}" -c:a copy -c:v libx264 -preset veryfast -crf 18 -profile:v high -pix_fmt yuv420p -maxrate ${maxKbps}k -bufsize ${maxKbps * 2}k -threads 0 -loglevel error "${outputPath}" -y`;
+      // Software fallback using mpeg4 (built-in encoder, available in every FFmpeg build)
+      softwareCommand = `-i "${cleanUri}" -c:a copy -c:v mpeg4 -b:v ${targetKbps}k -pix_fmt yuv420p -loglevel error "${outputPath}" -y`;
 
     } else {
       // ── iOS: WhatsApp/Instagram-style compression (Capped at 1080p) ──
@@ -143,12 +154,11 @@ export const videoReducer = async (uri, preMetadata = null) => {
       const iOSQualityTarget = 55; 
 
       // Hardware: VideoToolbox using constant quality (-q:v) instead of rigid bitrate
-      hardwareCommand = `-i "${uri}" -c:a copy ${scaleFilter} -c:v h264_videotoolbox -q:v ${iOSQualityTarget} -profile:v high -level 4.1 -pix_fmt yuv420p -threads 0 -loglevel error "${outputPath}" -y`;
+      hardwareCommand = `-i "${cleanUri}" -c:a copy ${scaleFilter} -c:v h264_videotoolbox -q:v ${iOSQualityTarget} -profile:v high -level 4.1 -pix_fmt yuv420p -threads 0 -loglevel error "${outputPath}" -y`;
 
-      // Software fallback: CRF 18 (Visually near-lossless), veryfast preset for speed
+      // Software fallback: mpeg4 (built-in encoder, available in every FFmpeg build)
       const maxKbps = Math.round((originalBitrate / 1024) || 12000); // Fallback max for software
-      const bufSize = maxKbps * 2;
-      softwareCommand = `-i "${uri}" -c:a copy ${scaleFilter} -c:v libx264 -preset veryfast -crf 18 -profile:v high -pix_fmt yuv420p -maxrate ${maxKbps}k -bufsize ${bufSize}k -threads 0 -loglevel error "${outputPath}" -y`;
+      softwareCommand = `-i "${cleanUri}" -c:a copy ${scaleFilter} -c:v mpeg4 -b:v ${maxKbps}k -pix_fmt yuv420p -loglevel error "${outputPath}" -y`;
     }
 
     // --- 4. Try Hardware Encoding First ---
@@ -238,12 +248,17 @@ export const generateVideoThumbnail = async uri => {
   try {
     const outputPath = `${RNFS.CachesDirectoryPath}/${Date.now()}.jpg`;
 
+    let cleanUri = uri;
+    if (cleanUri.startsWith('file://')) {
+      cleanUri = cleanUri.replace('file://', '');
+    }
+
     // -ss 00:00:00.000: Seeks to the first frame.
     // Placing -ss BEFORE -i makes the seek operation nearly instantaneous.
     // -frames:v 1: Extracts only one frame.
     // -vf scale=320:-1: Scales to 320px wide, auto height (smaller file, faster load)
     // -q:v 8: JPEG quality (2=best, 31=worst). 8 is good for thumbnails.
-    const command = `-ss 00:00:00.000 -i "${uri}" -frames:v 1 -vf scale=320:-1 -q:v 8 "${outputPath}" -y`;
+    const command = `-ss 00:00:00.000 -i "${cleanUri}" -frames:v 1 -vf scale=320:-1 -q:v 8 "${outputPath}" -y`;
 
     const session = await FFmpegKit.execute(command);
     const returnCode = await session.getReturnCode();
@@ -271,10 +286,15 @@ export const reduceImageSize = async uri => {
       return;
     }
 
+    let cleanUri = uri;
+    if (cleanUri.startsWith('file://')) {
+      cleanUri = cleanUri.replace('file://', '');
+    }
+
     let outputPath = `${RNFS.CachesDirectoryPath}/compressed_image.jpg`;
 
     // FFmpeg Command to compress image
-    let command = `-i ${uri} -vf "scale=iw*0.7:ih*0.7" -q:v 5 -y ${outputPath}`;
+    let command = `-i "${cleanUri}" -vf "scale=iw*0.7:ih*0.7" -q:v 5 -y "${outputPath}"`;
 
     return FFmpegKit.execute(command).then(async session => {
       let returnCodeBySession = await session.getReturnCode();
@@ -284,7 +304,7 @@ export const reduceImageSize = async uri => {
 
         // If file is still above 500KB, retry with a lower quality
         if (fileStat.size > 500 * 1024) {
-          let retryCommand = `-i ${outputPath} -vf "scale=iw*0.5:ih*0.5" -q:v 8 -y ${outputPath}`;
+          let retryCommand = `-i "${outputPath}" -vf "scale=iw*0.5:ih*0.5" -q:v 8 -y "${outputPath}"`;
           await FFmpegKit.execute(retryCommand);
         }
 
@@ -346,10 +366,19 @@ export const convertPngToJpeg = async (inputPath, outputPath) => {
       throw new Error('Invalid PNG input path');
     }
 
+    let cleanInputPath = inputPath;
+    if (cleanInputPath.startsWith('file://')) {
+      cleanInputPath = cleanInputPath.replace('file://', '');
+    }
+
     const finalOutputPath = outputPath || `${RNFS.TemporaryDirectoryPath}/${Date.now()}.jpg`;
+    let cleanOutputPath = finalOutputPath;
+    if (cleanOutputPath.startsWith('file://')) {
+      cleanOutputPath = cleanOutputPath.replace('file://', '');
+    }
 
     // FFmpeg -q:v scale: 2 = highest quality, 31 = lowest
-    const command = `-y -i "${inputPath}" -q:v ${quality} "${finalOutputPath}"`;
+    const command = `-y -i "${cleanInputPath}" -q:v ${quality} "${cleanOutputPath}"`;
 
     console.log(`Executing FFmpeg command: ${command}`);
 
@@ -373,7 +402,17 @@ export const convertPngToJpeg = async (inputPath, outputPath) => {
 export function resizeImage(inputPath, outputPath, width = 150, height = 150) {
   return new Promise(async (resolve, reject) => {
     try {
-      const fileExists = await RNFS.exists(inputPath);
+      let cleanInputPath = inputPath;
+      if (cleanInputPath.startsWith('file://')) {
+        cleanInputPath = cleanInputPath.replace('file://', '');
+      }
+
+      let cleanOutputPath = outputPath;
+      if (cleanOutputPath.startsWith('file://')) {
+        cleanOutputPath = cleanOutputPath.replace('file://', '');
+      }
+
+      const fileExists = await RNFS.exists(cleanInputPath);
       if (!fileExists) {
         reject('Input file does not exist');
         return;
@@ -385,7 +424,7 @@ export function resizeImage(inputPath, outputPath, width = 150, height = 150) {
       const quality = Platform.OS === 'ios' ? 2 : 3; // Good balance for profile thumbnails
 
       // Scale to fit target dimensions - adding -threads 0 for speed
-      const command = `-y -threads 0 -i "${inputPath}" -vf scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:white -q:v ${quality} "${outputPath}"`;
+      const command = `-y -threads 0 -i "${cleanInputPath}" -vf scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:white -q:v ${quality} "${cleanOutputPath}"`;
 
       FFmpegKit.execute(command).then(async session => {
         const returnCode = await session.getReturnCode();
@@ -409,7 +448,17 @@ export function resizeImage(inputPath, outputPath, width = 150, height = 150) {
 export function resizeImageCover(inputPath, outputPath, size = 100) {
   return new Promise(async (resolve, reject) => {
     try {
-      const fileExists = await RNFS.exists(inputPath);
+      let cleanInputPath = inputPath;
+      if (cleanInputPath.startsWith('file://')) {
+        cleanInputPath = cleanInputPath.replace('file://', '');
+      }
+
+      let cleanOutputPath = outputPath;
+      if (cleanOutputPath.startsWith('file://')) {
+        cleanOutputPath = cleanOutputPath.replace('file://', '');
+      }
+
+      const fileExists = await RNFS.exists(cleanInputPath);
       if (!fileExists) {
         reject('Input file does not exist');
         return;
@@ -420,7 +469,7 @@ export function resizeImageCover(inputPath, outputPath, size = 100) {
       // Scale to fit within max size while preserving aspect ratio (no cropping)
       // This ensures the full image is visible in the thumbnail
       // -1 maintains aspect ratio: scale=size:-1 scales width to size, height auto
-      const command = `-y -i "${inputPath}" -vf "scale=${size}:-1" -q:v ${quality} "${outputPath}"`;
+      const command = `-y -i "${cleanInputPath}" -vf "scale=${size}:-1" -q:v ${quality} "${cleanOutputPath}"`;
 
       FFmpegKit.execute(command).then(async session => {
         const returnCode = await session.getReturnCode();
@@ -460,7 +509,12 @@ export const getVideoMetadata = async filePath => {
     return null;
   }
 
-  const command = `-v quiet -print_format json -show_format -show_streams "${filePath}"`;
+  let cleanPath = filePath;
+  if (cleanPath.startsWith('file://')) {
+    cleanPath = cleanPath.replace('file://', '');
+  }
+
+  const command = `-v quiet -print_format json -show_format -show_streams "${cleanPath}"`;
 
   try {
     const session = await FFprobeKit.execute(command);
@@ -526,8 +580,14 @@ export const resizeImageForPost = async (imagePath, aspectWidth, aspectHeight) =
   try {
     console.log(`Starting resize for: ${imagePath}`);
 
+    // Clean path for FFmpeg (remove file:// prefix)
+    let cleanImagePath = imagePath;
+    if (cleanImagePath.startsWith('file://')) {
+      cleanImagePath = cleanImagePath.replace('file://', '');
+    }
+
     // Step 1: Get actual image dimensions
-    const imageSize = await getImageSize(imagePath);
+    const imageSize = await getImageSize(cleanImagePath);
 
     if (!imageSize) {
       console.log('Could not get image size, returning original');
@@ -578,7 +638,7 @@ export const resizeImageForPost = async (imagePath, aspectWidth, aspectHeight) =
       scaleFilter = `scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease`;
     }
 
-    const command = `-y -i "${imagePath}" -vf "${scaleFilter}" -q:v ${quality} "${outputPath}"`;
+    const command = `-y -i "${cleanImagePath}" -vf "${scaleFilter}" -q:v ${quality} "${outputPath}"`;
 
     console.log(`Executing resize command: ${command}`);
 
@@ -716,7 +776,17 @@ export const cropToAspectAndResize = async (imagePath) => {
 export function resizeCoverImage(inputPath, outputPath) {
   return new Promise(async (resolve, reject) => {
     try {
-      const fileExists = await RNFS.exists(inputPath);
+      let cleanInputPath = inputPath;
+      if (cleanInputPath.startsWith('file://')) {
+        cleanInputPath = cleanInputPath.replace('file://', '');
+      }
+
+      let cleanOutputPath = outputPath;
+      if (cleanOutputPath.startsWith('file://')) {
+        cleanOutputPath = cleanOutputPath.replace('file://', '');
+      }
+
+      const fileExists = await RNFS.exists(cleanInputPath);
       if (!fileExists) {
         reject('Input file does not exist');
         return;
@@ -730,7 +800,7 @@ export function resizeCoverImage(inputPath, outputPath) {
 
       // Scale to fit within bounds while maintaining aspect ratio, then pad to exact dimensions
       // Adding -threads 0 for faster processing
-      const command = `-y -threads 0 -i "${inputPath}" -vf scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:white -q:v ${quality} "${outputPath}"`;
+      const command = `-y -threads 0 -i "${cleanInputPath}" -vf scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:white -q:v ${quality} "${cleanOutputPath}"`;
 
       console.log(`Executing cover resize command: ${command}`);
 
@@ -741,10 +811,10 @@ export function resizeCoverImage(inputPath, outputPath) {
           console.log('Cover image resized successfully');
 
           // Verify output
-          const stat = await RNFS.stat(outputPath);
+          const stat = await RNFS.stat(cleanOutputPath);
           console.log(`Resized cover size: ${(stat.size / 1024).toFixed(2)} KB`);
 
-          resolve(outputPath);
+          resolve(cleanOutputPath);
         } else {
           const logs = await session.getLogsAsString();
           const failStackTrace = await session.getFailStackTrace();
@@ -765,7 +835,12 @@ export function applyImageFilter(inputPath, filterCommand) {
         return;
       }
 
-      const fileExists = await RNFS.exists(inputPath);
+      let cleanInputPath = inputPath;
+      if (cleanInputPath.startsWith('file://')) {
+        cleanInputPath = cleanInputPath.replace('file://', '');
+      }
+
+      const fileExists = await RNFS.exists(cleanInputPath);
       if (!fileExists) {
         reject('Input file does not exist');
         return;
@@ -781,7 +856,7 @@ export function applyImageFilter(inputPath, filterCommand) {
       // Note: filterCommand should be just the string for -vf, e.g., "hue=s=0"
       let fullCommand;
       if (filterCommand && filterCommand !== 'none') {
-          fullCommand = `-y -i "${inputPath}" -vf "${filterCommand}" -q:v ${quality} "${outputPath}"`;
+          fullCommand = `-y -i "${cleanInputPath}" -vf "${filterCommand}" -q:v ${quality} "${outputPath}"`;
       } else {
           // If no filter, just copy or return original (but better to copy to ensure consistent behavior if needed)
            resolve(inputPath);

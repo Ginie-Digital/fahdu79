@@ -426,7 +426,7 @@ const VerificationStepOne = ({route}) => {
 
       {!showVerifiedModal && <VerificationInformation agreeModal={agreeModal} setAgreeModal={setAgreeModal} />}
       <GetVerifiedInstagram transferObject={transferObject} setShowVerifiedModal={setShowVerifiedModal} />
-      <VerifiedModal visible={showVerifiedModal} />
+      <VerifiedModal visible={showVerifiedModal} onClose={() => setShowVerifiedModal(false)} />
     </GestureHandlerRootView>
   );
 };

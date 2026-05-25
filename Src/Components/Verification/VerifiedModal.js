@@ -10,7 +10,7 @@ import {nTwins} from '../../../DesiginData/Utility';
 import { useDispatch } from 'react-redux';
 import { toggleAppliedVerify } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
-const VerifiedModal = ({visible, type = undefined}) => {
+const VerifiedModal = ({visible, type = undefined, onClose}) => {
   console.log(visible, 'VERIFIED MODAL');
 
   const dispatch = useDispatch()
@@ -19,6 +19,10 @@ const VerifiedModal = ({visible, type = undefined}) => {
     if(type === "dashboard") {
       dispatch(toggleAppliedVerify({show: false}));
     }
+    if (onClose) {
+      onClose();
+    }
+    navigate('home');
   }
 
   return (
@@ -35,7 +39,7 @@ const VerifiedModal = ({visible, type = undefined}) => {
               {type === 'dashboard' ? "Your Bank details are updated \nsuccessfully. You will recieve a \nconfirmation email within 24-48 hours." : "Your application has been submitted successfully.You will receive a \n confirmation email within 24-48 hours."}
             </Text>
             <View style={{width: '100%', alignSelf: 'center'}}>
-              <AnimatedButton title={'Back to Home'} buttonMargin={Platform.OS === 'android' ? 5 : 3} onPress={() => navigate('home')} showOverlay={false} />
+              <AnimatedButton title={'Back to Home'} buttonMargin={Platform.OS === 'android' ? 5 : 3} onPress={handleClose} showOverlay={false} />
             </View>
           </View>
         </Dialog>

@@ -50,7 +50,7 @@ import CallRequestModal from '../Components/ChatWindowComponents/CallRequestModa
 import CallPricesModal from '../Components/ChatWindowComponents/CallPricesModal';
 import TimeRequestModal from '../Components/Calling/TimeRequestModal';
 import LowBalanceModal from '../Components/LowBalanceModal';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import socketServices from '../../SocketServices';
 import TypingIndicator from '../Components/ChatWindowComponents/TypingIndicator';
 
@@ -65,6 +65,7 @@ const Loader = () => {
 let timer;
 
 const ChatWindow = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
   const messageInputRef = useRef(null);
 
   const flatlistThreadListRef = useRef();
@@ -524,7 +525,7 @@ const ChatWindow = ({ route, navigation }) => {
     <GestureHandlerRootView style={styles.wrapper}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       {Platform.OS === 'ios' ? (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={90}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={insets.top + 48}>
 
           {/* All your modals */}
           <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />

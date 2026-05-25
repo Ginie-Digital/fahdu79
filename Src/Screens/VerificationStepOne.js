@@ -283,7 +283,13 @@ const VerificationStepOne = ({route}) => {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <KeyboardAwareScrollView style={styles.chatRoomContainer} contentContainerStyle={{flexGrow: 1}} nestedScrollEnabled={true}>
+      <KeyboardAwareScrollView
+        style={styles.chatRoomContainer}
+        contentContainerStyle={{flexGrow: 1, paddingBottom: 20}}
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+        alwaysBounceVertical={true}
+      >
         <MyProfilePicture isEditable={true} />
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>

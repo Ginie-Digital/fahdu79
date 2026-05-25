@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 5,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     minHeight: 44,
     maxHeight: 115, // Limit expansion to ~6 lines
   },
@@ -440,6 +440,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     padding: 0,
     margin: 0,
+    textAlignVertical: 'center',
     maxHeight: 95, // Sync with pill maxHeight
   },
   rightIconsRow: {

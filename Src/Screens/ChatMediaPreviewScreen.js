@@ -1,5 +1,4 @@
-import {StyleSheet, View, TouchableOpacity, Text, BackHandler, TextInput, LayoutAnimation, Platform, useWindowDimensions, PanResponder, Keyboard, Animated} from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import {StyleSheet, View, TouchableOpacity, Text, BackHandler, TextInput, LayoutAnimation, Platform, useWindowDimensions, PanResponder, Keyboard, Animated, KeyboardAvoidingView} from 'react-native';
 import RNFS from 'react-native-fs';
 import { Image } from 'expo-image';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';

@@ -25,7 +25,7 @@ import DeviceInfo from 'react-native-device-info';
 import { createMMKV } from 'react-native-mmkv';
 import BootSplash from 'react-native-bootsplash';
 
-import { KeyboardProvider } from 'react-native-keyboard-controller';
+
 
 const persistor = persistStore(store);
 
@@ -176,7 +176,6 @@ const App = () => {
   return (
     <Provider store={store}>
       <PersistGate persistor={persistor}>
-        <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
               <SafeAreaProvider>
@@ -272,7 +271,6 @@ const App = () => {
               </SafeAreaProvider>
             </BottomSheetModalProvider>
           </GestureHandlerRootView>
-        </KeyboardProvider>
       </PersistGate>
     </Provider>
   );

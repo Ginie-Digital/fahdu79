@@ -82,7 +82,6 @@
     "react-native-image-picker": "^8.2.1",
     "react-native-in-app-updates": "^0.2.2",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
-    "react-native-keyboard-controller": "^1.21.7",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-mmkv": "^4.3.1",
     "react-native-modal": "13.0.2",

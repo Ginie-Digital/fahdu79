@@ -9,8 +9,8 @@ import {
   Platform,
   BackHandler,
   Keyboard,
+  KeyboardAvoidingView,
 } from 'react-native';
-import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {useNavigation, useRoute, useFocusEffect} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';

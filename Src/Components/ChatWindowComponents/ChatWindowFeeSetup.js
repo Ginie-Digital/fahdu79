@@ -90,16 +90,11 @@ const ChatWindowFeeSetup = () => {
       onBackdropPress={handleClose}
       onBackButtonPress={handleClose}
       style={styles.modalStyle}
-      avoidKeyboard={false}
+      avoidKeyboard={Platform.OS === 'ios'}
       useNativeDriver={true}
     >
-      <KeyboardAvoidingView
-        behavior="padding"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 80}
-        style={{ flex: 1, justifyContent: 'flex-end' }}
-      >
-        <View style={styles.dialog}>
-          <ScrollView
+      <View style={styles.dialog}>
+        <ScrollView
             contentContainerStyle={styles.contentContainer}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -140,7 +135,6 @@ const ChatWindowFeeSetup = () => {
             <AnimatedButton title={'Save'} showOverlay={false} onPress={handleSave} loading={loading} buttonStyle={styles.saveButton} />
           </ScrollView>
         </View>
-      </KeyboardAvoidingView>
     </Modal>
   );
 };

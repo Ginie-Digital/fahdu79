@@ -1,8 +1,6 @@
 import {StyleSheet, View, TextInput, TouchableOpacity, Keyboard, ActivityIndicator, Platform, Linking, Pressable, Text, Animated, LayoutAnimation, UIManager} from 'react-native';
 import DIcon from '../../../DesiginData/DIcons';
 import React, {useEffect, useState, useCallback, useLayoutEffect, useRef} from 'react';
-import { useKeyboardHandler } from 'react-native-keyboard-controller';
-import { runOnJS } from 'react-native-reanimated';
 
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
@@ -50,18 +48,23 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
     }).start();
   }, [bottomPadding]);
 
-  // Sync animation with keyboard state using the new library's hook
-  useKeyboardHandler({
-    onStart: (e) => {
-      "worklet";
-      if (e.height > 0) {
-        // Keyboard opening - let StickyView handle the position
-        runOnJS(animatePadding)(8);
-      } else {
-        // Keyboard closing - restore safe area padding
-        runOnJS(animatePadding)(Math.max(insets.bottom, 16));
-      }
-    },
+  // Sync animation with keyboard state using RN's Keyboard API (iOS only)
+  // On Android, windowSoftInputMode="adjustResize" handles layout automatically
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const keyboardShowListener = Keyboard.addListener('keyboardWillShow', () => {
+      animatePadding(8);
+    });
+
+    const keyboardHideListener = Keyboard.addListener('keyboardWillHide', () => {
+      animatePadding(Math.max(insets.bottom, 16));
+    });
+
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
   }, [insets.bottom, animatePadding]);
 
   useEffect(() => {

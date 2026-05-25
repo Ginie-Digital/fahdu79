@@ -15,8 +15,8 @@ import {
   Alert,
   Dimensions,
   ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 import {
   responsiveWidth,

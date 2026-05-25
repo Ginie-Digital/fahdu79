@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Button, FlatList, Keyboard, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { ActivityIndicator, Alert, Animated, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
 
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
@@ -521,10 +520,42 @@ const ChatWindow = ({ route, navigation }) => {
     }
   }, [currentPage, chatRoomId, token]);
 
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const showListener = Keyboard.addListener('keyboardDidShow', (e) => {
+      Animated.timing(keyboardHeight, {
+        toValue: e.endCoordinates.height + 12,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    });
+
+    const hideListener = Keyboard.addListener('keyboardDidHide', () => {
+      Animated.timing(keyboardHeight, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    });
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
+  const Container = Platform.OS === 'android' ? Animated.View : KeyboardAvoidingView;
+  const containerProps = Platform.OS === 'android'
+    ? { style: { flex: 1, paddingBottom: keyboardHeight } }
+    : { style: { flex: 1 }, behavior: 'padding', keyboardVerticalOffset: headerHeight };
+
   return (
     <GestureHandlerRootView style={styles.wrapper}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={'padding'} keyboardVerticalOffset={headerHeight}>
+      <Container {...containerProps}>
 
 
         {/* All your modals */}
@@ -578,7 +609,7 @@ const ChatWindow = ({ route, navigation }) => {
           role={role}
           onlineStatus={updatedOnlineStatus}
         />
-      </KeyboardAvoidingView>
+      </Container>
       <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
       <MediaLoadingModal />
       <ChatWindowFeeSetup />

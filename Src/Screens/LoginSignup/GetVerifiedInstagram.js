@@ -5,6 +5,7 @@ import AnimatedButton from '../../Components/AnimatedButton';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
 import {Image} from 'expo-image';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import InputOverlay from '../../Components/InputOverlay';
 import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
@@ -21,6 +22,7 @@ const WINDOW_WIDTH = Dimensions.get('window').width;
 
 const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
   const [showConfirmation, setShowConfirmation] = useState('stepone');
   const [loading, setLoading] = useState(false);
@@ -135,7 +137,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
     console.log('📦 StepOneVerifyObj data:', JSON.stringify(stepOneVerifyObj, null, 2));
 
     const openInstagramDM = async () => {
-      const username = 'fahdu.co';
+      const username = 'fahduofficial';
       const directShareLink = `instagram://direct_share?username=${username}`;
       const igMeLink = `https://ig.me/m/${username}`;
       const profileLink = `instagram://user?username=${username}`;
@@ -197,7 +199,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         styles.dialog, 
         {
           transform: [{translateY: slideAnim}],
-          paddingBottom: isKeyboardVisible ? keyboardHeight + (Platform.OS === 'ios' ? 20 : 10) : (Platform.OS === 'ios' ? 40 : 20)
+          paddingBottom: isKeyboardVisible ? keyboardHeight + (Platform.OS === 'ios' ? 20 : 10) : (Math.max(insets.bottom, 20) + (Platform.OS === 'ios' ? 20 : 16))
         }
       ]}>
         <View style={styles.headerIndicator} />
@@ -267,7 +269,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         {showConfirmation === 'stepthree' && (
           <View style={styles.content}>
             <Text style={styles.titleText}>Verification Message</Text>
-            <Text style={styles.subTitleText}>Copy this message and send it to us via DM on handle @fahdu.co</Text>
+            <Text style={styles.subTitleText}>Copy this message and send it to us via DM on handle @fahduofficial</Text>
             
             <View style={styles.copyBox}>
               <View style={{flex: 1}}>

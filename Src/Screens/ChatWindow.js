@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Button, FlatList, Keyboard, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
-import { KeyboardAvoidingView, KeyboardStickyView } from 'react-native-keyboard-controller';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
@@ -524,117 +524,62 @@ const ChatWindow = ({ route, navigation }) => {
   return (
     <GestureHandlerRootView style={styles.wrapper}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-      {Platform.OS === 'ios' ? (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={insets.top + 48}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top + 48}>
 
-          {/* All your modals */}
-          <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />
-          <ChatWindowInformationModal chatRoomId={chatRoomId} followUser={followUser} unFollowUser={unFollowUser} role={role} />
-          {loading ? (
-            <Loader />
-          ) : (
-            <FlatList
-              style={{ flex: 1 }}
-              removeClippedSubviews={false}
-              ref={flatlistThreadListRef}
-              data={chatThreadFromCache ? [...chatThreadFromCache?.messages]?.reverse() : []}
-              renderItem={({ item }) => (
-                <>
-                  {currentUserId === item?.sender_id ? (
-                    <RightChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} otherUserId={id} chatRoomId={chatRoomId} />
-                  ) : (
-                    <LeftChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} chatRoomId={chatRoomId} token={token} otherUserId={id} />
-                  )}
-                </>
-              )}
-              keyboardShouldPersistTaps="always"
-              showsVerticalScrollIndicator={false}
-              keyExtractor={(item, index) => item._id ? `${item._id}` : `fallback-${index}`}
-              inverted
-              ListHeaderComponent={() => (loadingMessage ? <ActivityIndicator color={'red'} size={'small'} /> : null)}
-              ListFooterComponent={() => !isOldChatsFinished && <ActivityIndicator size={'large'} color={'#e7e8ea'} />}
-              onEndReached={endReached}
-              onEndReachedThreshold={0.1}
-              keyboardDismissMode="on-drag"
-              contentContainerStyle={{ flexGrow: 1 }}
-            />
-          )}
-          {/* All your remaining modals and components */}
-          <ChatWindowFullSizedImageModal uri={fullSizeImageUrl} />
-          <ChatWindowClipModal />
-          <TypingIndicator visible={isOtherUserTyping} />
-          <ChatWindowInput
-            doRaisedRequest={doRaisedRequest}
-            show={doRaisedRequest?.initiator !== currentUserId}
-            onChangeText={onChangeText}
-            onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)}
-            disableSendButton={disableSendButton}
-            roomId={chatRoomId}
-            userId={currentUserId}
-            otherUserId={id}
-            name={name}
-            profileImageUrl={profileImageUrl}
-            role={role}
-            onlineStatus={updatedOnlineStatus}
+        {/* All your modals */}
+        <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />
+        <ChatWindowInformationModal chatRoomId={chatRoomId} followUser={followUser} unFollowUser={unFollowUser} role={role} />
+        {loading ? (
+          <Loader />
+        ) : (
+          <FlatList
+            style={{ flex: 1 }}
+            removeClippedSubviews={false}
+            ref={flatlistThreadListRef}
+            data={chatThreadFromCache ? [...chatThreadFromCache?.messages]?.reverse() : []}
+            renderItem={({ item }) => (
+              <>
+                {currentUserId === item?.sender_id ? (
+                  <RightChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} otherUserId={id} chatRoomId={chatRoomId} />
+                ) : (
+                  <LeftChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} chatRoomId={chatRoomId} token={token} otherUserId={id} />
+                )}
+              </>
+            )}
+            keyboardShouldPersistTaps="always"
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item, index) => item._id ? `${item._id}` : `fallback-${index}`}
+            inverted
+            ListHeaderComponent={() => (loadingMessage ? <ActivityIndicator color={'red'} size={'small'} /> : null)}
+            ListFooterComponent={() => !isOldChatsFinished && <ActivityIndicator size={'large'} color={'#e7e8ea'} />}
+            onEndReached={endReached}
+            onEndReachedThreshold={0.1}
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={{ flexGrow: 1 }}
           />
-        </KeyboardAvoidingView>
-      ) : (
-        <View style={{ flex: 1 }}>
-
-          {/* All your modals */}
-          <ChatWindowVideoModal fullVideoModalUri={fullVideoModalUri} />
-          <ChatWindowInformationModal chatRoomId={chatRoomId} followUser={followUser} unFollowUser={unFollowUser} role={role} />
-          {loading ? (
-            <Loader />
-          ) : (
-            <FlatList
-              style={{ flex: 1 }}
-              removeClippedSubviews={false}
-              ref={flatlistThreadListRef}
-              data={chatThreadFromCache ? [...chatThreadFromCache?.messages]?.reverse() : []}
-              renderItem={({ item }) => (
-                <>
-                  {currentUserId === item?.sender_id ? (
-                    <RightChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} otherUserId={id} chatRoomId={chatRoomId} />
-                  ) : (
-                    <LeftChatBubble displayThread={item} setFullVideoModalUri={setFullVideoModalUri} setFullSizeImageUri={setFullSizeImageUri} chatRoomId={chatRoomId} token={token} otherUserId={id} />
-                  )}
-                </>
-              )}
-              keyboardShouldPersistTaps="always"
-              showsVerticalScrollIndicator={false}
-              keyExtractor={(item, index) => item._id ? `${item._id}` : `fallback-${index}`}
-              inverted
-              ListHeaderComponent={() => (loadingMessage ? <ActivityIndicator color={'red'} size={'small'} /> : null)}
-              ListFooterComponent={() => !isOldChatsFinished && <ActivityIndicator size={'large'} color={'#e7e8ea'} />}
-              onEndReached={endReached}
-              onEndReachedThreshold={0.1}
-              keyboardDismissMode="on-drag"
-              contentContainerStyle={{ flexGrow: 1 }}
-            />
-          )}
-          {/* All your remaining modals and components */}
-          <ChatWindowFullSizedImageModal uri={fullSizeImageUrl} />
-          <ChatWindowClipModal />
-          <TypingIndicator visible={isOtherUserTyping} />
-          <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
-            <ChatWindowInput
-              doRaisedRequest={doRaisedRequest}
-              show={doRaisedRequest?.initiator !== currentUserId}
-              onChangeText={onChangeText}
-              onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)}
-              disableSendButton={disableSendButton}
-              roomId={chatRoomId}
-              userId={currentUserId}
-              otherUserId={id}
-              name={name}
-              profileImageUrl={profileImageUrl}
-              role={role}
-              onlineStatus={updatedOnlineStatus}
-            />
-          </KeyboardStickyView>
-        </View>
-      )}
+        )}
+        {/* All your remaining modals and components */}
+        <ChatWindowFullSizedImageModal uri={fullSizeImageUrl} />
+        <ChatWindowClipModal />
+        <TypingIndicator visible={isOtherUserTyping} />
+        <ChatWindowInput
+          doRaisedRequest={doRaisedRequest}
+          show={doRaisedRequest?.initiator !== currentUserId}
+          onChangeText={onChangeText}
+          onButtonSendButtonClick={() => onButtonSendButtonClick(dispatch)}
+          disableSendButton={disableSendButton}
+          roomId={chatRoomId}
+          userId={currentUserId}
+          otherUserId={id}
+          name={name}
+          profileImageUrl={profileImageUrl}
+          role={role}
+          onlineStatus={updatedOnlineStatus}
+        />
+      </KeyboardAvoidingView>
       <ChatWindowPaymentModal token={token} chatRoomId={chatRoomId} />
       <MediaLoadingModal />
       <ChatWindowFeeSetup />

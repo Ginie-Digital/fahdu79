@@ -1,11 +1,11 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Linking, Clipboard, Platform, Pressable, ActivityIndicator, Animated, Dimensions} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Linking, Clipboard, Platform, Pressable, ActivityIndicator, Animated, Dimensions, TextInput} from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import AnimatedButton from '../../Components/AnimatedButton';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
 import {Image} from 'expo-image';
-import {TextInput} from 'react-native-gesture-handler';
+
 import InputOverlay from '../../Components/InputOverlay';
 import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
 import {hTwins, nTwins} from '../../../DesiginData/Utility';
@@ -197,7 +197,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         styles.dialog, 
         {
           transform: [{translateY: slideAnim}],
-          paddingBottom: Platform.OS === 'ios' ? (isKeyboardVisible ? keyboardHeight : 40) : 20
+          paddingBottom: isKeyboardVisible ? keyboardHeight + (Platform.OS === 'ios' ? 20 : 10) : (Platform.OS === 'ios' ? 40 : 20)
         }
       ]}>
         <View style={styles.headerIndicator} />

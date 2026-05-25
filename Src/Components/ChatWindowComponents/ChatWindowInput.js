@@ -1,8 +1,6 @@
 import {StyleSheet, View, TextInput, TouchableOpacity, Keyboard, ActivityIndicator, Platform, Linking, Pressable, Text, Animated, LayoutAnimation, UIManager} from 'react-native';
 import DIcon from '../../../DesiginData/DIcons';
 import React, {useEffect, useState, useCallback, useLayoutEffect, useRef} from 'react';
-import { useKeyboardHandler } from 'react-native-keyboard-controller';
-import { runOnJS } from 'react-native-reanimated';
 
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useDispatch, useSelector} from 'react-redux';
@@ -39,30 +37,6 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
   const [isKeyboardShown, setIsKeyboardShown] = useState(false);
   const [isCallMode, setIsCallMode] = useState(false);
   const [isAttachmentMode, setIsAttachmentMode] = useState(false);
-  const bottomPadding = useRef(new Animated.Value(Math.max(insets.bottom, 16))).current;
-
-  // Helper to trigger animation on JS thread
-  const animatePadding = useCallback((toValue) => {
-    Animated.timing(bottomPadding, {
-      toValue,
-      duration: 250,
-      useNativeDriver: false,
-    }).start();
-  }, [bottomPadding]);
-
-  // Sync animation with keyboard state using the new library's hook
-  useKeyboardHandler({
-    onStart: (e) => {
-      "worklet";
-      if (e.height > 0) {
-        // Keyboard opening - let StickyView handle the position
-        runOnJS(animatePadding)(0);
-      } else {
-        // Keyboard closing - restore safe area padding
-        runOnJS(animatePadding)(Math.max(insets.bottom, 16));
-      }
-    },
-  }, [insets.bottom, animatePadding]);
 
   useEffect(() => {
     console.log(disableSendButton, 'DSBLSNDBTN');
@@ -292,7 +266,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
 
   return (
     <>
-      <Animated.View style={[styles.chatInputContainer, { paddingBottom: bottomPadding }]}>
+      <View style={[styles.chatInputContainer, { paddingBottom: isKeyboardShown ? 4 : Math.max(insets.bottom, 16) }]}>
         {/* Attachment / Clip icon - acts as toggle */}
         {(userRole === 'creator' || secondUserRole === 'admin') && (
           <TouchableOpacity style={styles.iconButton} onPress={handleOpenClip}>
@@ -430,7 +404,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
             </Pressable>
           )}
         </View>
-      </Animated.View>
+      </View>
     </>
   );
 };

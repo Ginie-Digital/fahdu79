@@ -247,8 +247,18 @@ const Home = () => {
   const userRole = useSelector(state => state.auth.user.role);
 
 
+  const isLoadingRef = useRef(false);
+
   const fetchFeeds = useCallback(async (isInitial = false) => {
-    if (isLoading) return;
+    if (isLoadingRef.current) {
+      // Even if we skip the fetch, ensure mainLoading is cleared
+      // so shimmer doesn't get stuck
+      if (isInitial) {
+        setMainLoading(false);
+      }
+      return;
+    }
+    isLoadingRef.current = true;
     setIsLoading(true);
 
     try {
@@ -297,19 +307,23 @@ const Home = () => {
     } catch (err) {
       console.error("Fetch feed error:", err);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
       setRefreshFeed(false);
       setMainLoading(false);
     }
-  }, [currentPage, token, firstPostCreatedAt, cachedFeed, isLoading]);
+  }, [currentPage, token, firstPostCreatedAt, cachedFeed]);
 
   // Handle Initial Load and Refresh
   useFocusEffect(
     useCallback(() => {
       if (currentPage === 1 && cachedFeed.length === 0) {
         fetchFeeds(true);
+      } else {
+        // If feed is already cached, ensure shimmer is dismissed
+        setMainLoading(false);
       }
-    }, [refreshFeed, token])
+    }, [refreshFeed, token, cachedFeed.length])
   );
 
   // Handle Pagination
@@ -325,6 +339,17 @@ const Home = () => {
       fetchFeeds(true);
     }
   }, [refreshFeed]);
+
+  // Safety net: if mainLoading is stuck for more than 10 seconds, force clear it
+  useEffect(() => {
+    if (mainLoading) {
+      const timeout = setTimeout(() => {
+        console.warn('[Home] mainLoading safety timeout triggered');
+        setMainLoading(false);
+      }, 10000);
+      return () => clearTimeout(timeout);
+    }
+  }, [mainLoading]);
 
   //Just to remove homeBottomSheet
   useEffect(() => {
@@ -482,7 +507,7 @@ export default Home;
 const styles = StyleSheet.create({
   homeContainer: {
     flex: 1,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#fff',
     borderTopColor: '#282828',
   },
 });

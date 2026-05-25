@@ -84,9 +84,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
 
   const onBackPress = useCallback(() => {
     if (bottomSheetModalRef.current) {
-        // We don't want them to close this modal via back button if it's mandatory
-        // But if we want to allow it, we can navigate home
-        navigate('home');
+        bottomSheetModalRef.current.dismiss();
         return true;
     }
     return false;
@@ -140,7 +138,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
         <View style={styles.headerContainer}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
             <Text style={styles.headerText}>Eligibility</Text>
-            <TouchableOpacity onPress={() => navigate('home')} style={styles.closeIcon}>
+            <TouchableOpacity onPress={() => bottomSheetModalRef.current?.dismiss()} style={styles.closeIcon}>
               <Ionicons name="close" size={24} color="#1e1e1e" />
             </TouchableOpacity>
           </View>

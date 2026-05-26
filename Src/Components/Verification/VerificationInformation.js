@@ -113,7 +113,8 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
     <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
   ), []);
 
-  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '60%' : '65%'], []);
+  // Snap points - Android needs more space to account for system navigation bar
+  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '60%' : '75%'], []);
 
   return (
     <BottomSheetModal
@@ -157,7 +158,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
         </BottomSheetScrollView>
 
         {/* PINNED FOOTER */}
-        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.min(insets.bottom, 20) + 6 : 14}]}>
+        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) + 6 : Math.max(insets.bottom, 40) + 10}]}>
           <View style={styles.checkboxWrapper}>
             <TouchableOpacity 
               activeOpacity={0.7}

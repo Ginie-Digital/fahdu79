@@ -128,8 +128,8 @@ const TermsOfLive = () => {
     <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
   ), []);
 
-  // Snap points are safer than dynamic sizing for content that might scroll
-  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '55%' : '58%'], []);
+  // Snap points - Android needs more space to account for system navigation bar
+  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '55%' : '68%'], []);
 
   return (
     <BottomSheetModal
@@ -164,7 +164,7 @@ const TermsOfLive = () => {
         </BottomSheetScrollView>
 
         {/* PINNED FOOTER */}
-        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) + 8 : 16}]}>
+        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) + 8 : Math.max(insets.bottom, 48) + 12}]}>
           <View style={styles.checkboxWrapper}>
             <TouchableOpacity 
               activeOpacity={0.7}

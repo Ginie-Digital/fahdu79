@@ -85,9 +85,9 @@ const TabNavigation = () => {
         screenOptions={({ route }) => ({
           tabBarStyle: [
             styles.tabBarStyle,
-            {
-              paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom - 10, 5) : 8,
-              height: Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 5) : 58,
+            Platform.OS === 'ios' && {
+              paddingBottom: Math.max(insets.bottom - 10, 5),
+              height: 50 + Math.max(insets.bottom - 10, 5),
             },
             !showTabBar && { display: 'none' },
           ],
@@ -185,9 +185,9 @@ const TabNavigation = () => {
                 tabBarHideOnKeyboard: true,
                 tabBarStyle: [
                   styles.tabBarStyle,
-                  {
-                    paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom - 10, 5) : 8,
-                    height: Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 5) : 58,
+                  Platform.OS === 'ios' && {
+                    paddingBottom: Math.max(insets.bottom - 10, 5),
+                    height: 50 + Math.max(insets.bottom - 10, 5),
                   },
                   !showTabBar && { display: 'none' },
                 ],

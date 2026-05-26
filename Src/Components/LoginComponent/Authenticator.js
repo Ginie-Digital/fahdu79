@@ -123,7 +123,7 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
     if (type && authToken) {
       try {
         let { data: serverResponse } = await axios.post(
-          `https://api.fahdu.com/api/TFA/login`,
+          `https://api.fahdu.in/api/TFA/login`,
           {
             authToken,
             code: verificationCode,
@@ -153,7 +153,7 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
         console.log('Verification via Authenticator');
 
         let { data: serverResponse, status } = await axios.post(
-          `https://api.fahdu.com/api/TFA/login`,
+          `https://api.fahdu.in/api/TFA/login`,
           {
             authToken,
             code: verificationCode,

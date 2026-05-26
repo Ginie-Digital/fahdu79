@@ -15,6 +15,12 @@ class WSService {
   _heartbeatInterval = null;
 
   initializeSocket = async (currentUserId, token) => {
+    // Guard: Skip if no auth token provided
+    if (!token) {
+      console.log(':::--> No auth token provided, skipping socket init');
+      return;
+    }
+
     // Guard: If already connected with the same user, skip re-initialization
     if (this.socket?.connected && this._currentUserId === currentUserId) {
       console.log(':::-> Socket already connected, skipping re-init');
@@ -42,9 +48,17 @@ class WSService {
         transports: ['websocket'],
       });
 
+      // Wildcard listener to log EVERY arrived event from the socket server
+      this.socket.onAny((event, ...args) => {
+        console.log(`📥 [Socket Arrived] Event: [${event}] | Payload:`, JSON.stringify(args, null, 2));
+      });
+
       this.socket.on('connect', () => {
-        console.log(':::-> Socket connected:::::::::::');
-        this.socket.emit('initiateConnection', currentUserId, res => console.log('Connection Initiated', res));
+        console.log('🔌 [Socket Connection] CONNECTED | ID:', this.socket.id);
+        
+        this.socket.emit('initiateConnection', currentUserId, res => {
+          console.log('🔌 [Socket Connection] Connection Initiated response:', res);
+        });
         store.dispatch(setSocketConnect({ socketConnect: true }));
 
         // Request initial live users list
@@ -52,12 +66,12 @@ class WSService {
       });
 
       this.socket.on('disconnect', reason => {
-        console.log(':::-> Socket disconnected:', reason);
+        console.log('🔌 [Socket Connection] DISCONNECTED | Reason:', reason);
         store.dispatch(setSocketConnect({ socketConnect: false }));
       });
 
       this.socket.on('reconnect', () => {
-        console.log(':::-> Socket reconnected');
+        console.log('🔌 [Socket Connection] RECONNECTED');
         this.socket.emit('initiateConnection', currentUserId);
         // Re-fetch live users on reconnect
         this.requestLiveUsers();
@@ -65,14 +79,14 @@ class WSService {
 
       this.socket.off('message');
       this.socket.on('message', msg => {
-        console.log('CHAT MESSAGE:', msg);
+        console.log('✉️ CHAT MESSAGE RECEIVED:', msg);
       });
 
       // Setup live stream listeners
       this.setupLiveStreamListeners();
 
       this.socket.on('error', err => {
-        console.log('Socket error:', err);
+        console.log('🔌 [Socket Connection] ERROR:', err);
       });
 
       // Setup AppState listener for foreground reconnection
@@ -82,7 +96,7 @@ class WSService {
       this._startHeartbeat();
 
     } catch (error) {
-      console.log('Socket init failed', error);
+      console.log('🔌 [Socket Connection] Init failed:', error);
     }
   };
 
@@ -110,20 +124,23 @@ class WSService {
     });
   };
 
-  // Aggressive Background / Idle Heartbeat
+  // Heartbeat: Only force reconnect when socket.io's own reconnection isn't running
   _startHeartbeat = () => {
     if (this._heartbeatInterval) clearInterval(this._heartbeatInterval);
     this._heartbeatInterval = setInterval(() => {
       if (AppState.currentState === 'active' && this.socket) {
         if (!this.socket.connected) {
-          console.log('💓 [Socket Heartbeat] Detected dead socket while active! Forcing reconnect...');
-          this.socket.connect();
+          // Don't fight socket.io's own reconnection backoff
+          if (!this.socket.io?._reconnecting) {
+            console.log('💓 [Socket Heartbeat] Dead socket, no reconnection in progress. Forcing connect...');
+            this.socket.connect();
+          }
         } else {
           // Send dummy ping to keep NAT/Load Balancer alive
           this.socket.volatile.emit('client_ping', { time: Date.now() });
         }
       }
-    }, 20000); // Check every 20 seconds
+    }, 30000); // Check every 30 seconds (was 20s — reduced to avoid fighting socket.io backoff)
   };
 
   setupLiveStreamListeners = () => {
@@ -217,13 +234,42 @@ class WSService {
   }
 
   on(event, cb) {
-    console.log(`📥 LISTEN [${event}]`);
-    this.socket?.on(event, cb);
+    console.log(`📥 [Socket Listen Setup] Event: [${event}]`);
+    
+    // Wrap callback to log when the listener is triggered (what socket arrived listened to)
+    const wrappedCb = (...args) => {
+      console.log(`🔔 [Socket Listened Action] Event [${event}] callback triggered | Data:`, JSON.stringify(args, null, 2));
+      if (cb) {
+        cb(...args);
+      }
+    };
+
+    if (!this._wrappedListeners) {
+      this._wrappedListeners = new Map();
+    }
+    if (!this._wrappedListeners.has(event)) {
+      this._wrappedListeners.set(event, new Map());
+    }
+    this._wrappedListeners.get(event).set(cb, wrappedCb);
+
+    this.socket?.on(event, wrappedCb);
   }
 
   off(event, cb) {
     console.log(`🔇 UNLISTEN [${event}]`);
-    this.socket?.off(event, cb);
+    if (cb && this._wrappedListeners?.get(event)?.has(cb)) {
+      const wrappedCb = this._wrappedListeners.get(event).get(cb);
+      this.socket?.off(event, wrappedCb);
+      this._wrappedListeners.get(event).delete(cb);
+      if (this._wrappedListeners.get(event).size === 0) {
+        this._wrappedListeners.delete(event);
+      }
+    } else {
+      this.socket?.off(event);
+      if (this._wrappedListeners?.has(event)) {
+        this._wrappedListeners.delete(event);
+      }
+    }
   }
 
   isConnected() {

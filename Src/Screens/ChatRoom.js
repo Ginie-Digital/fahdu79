@@ -302,13 +302,13 @@ const ChatRoom = () => {
   let dataFromCache = useSelector(state => {
     const selectedCache = state.roomList.data[currentCacheKey];
 
-    console.log('🗂️ Using cache:', {
-      sortFilter: selectedSortForFilter,
-      audienceFilter: selectedAudinceForFilter,
-      cacheName: currentCacheKey,
-      cacheLength: selectedCache?.length,
-      sampleData: selectedCache?.slice(0, 3).map(x => ({ id: x._id, type: x.type, unread: x.unreadCounterUser })),
-    });
+    // console.log('🗂️ Using cache:', {
+    //   sortFilter: selectedSortForFilter,
+    //   audienceFilter: selectedAudinceForFilter,
+    //   cacheName: currentCacheKey,
+    //   cacheLength: selectedCache?.length,
+    //   sampleData: selectedCache?.slice(0, 3).map(x => ({ id: x._id, type: x.type, unread: x.unreadCounterUser })),
+    // });
 
     return selectedCache || [];
   });

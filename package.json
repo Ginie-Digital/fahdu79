@@ -114,7 +114,7 @@
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
     "redux-persist": "^6.0.0",
-    "socket.io-client": "^4.8.1",
+    "socket.io-client": "^4.5.3",
     "zego-express-engine-reactnative": "^3.22.0"
   },
   "devDependencies": {

@@ -84,6 +84,10 @@ const Main = () => {
   useEffect(() => { processedRoomIdsRef.current = processedRoomIds; }, [processedRoomIds]);
   useEffect(() => { acceptedRoomIdsRef.current = acceptedRoomIds; }, [acceptedRoomIds]);
 
+  // Ref for auth token so FCM effect doesn't re-run on every token change
+  const tokenRef = useRef(token);
+  useEffect(() => { tokenRef.current = token; }, [token]);
+
   // Reset persisted call state on fresh app launch
   useEffect(() => {
     dispatch(toggleCallAccepted({ status: false }));
@@ -158,7 +162,7 @@ const Main = () => {
 
   // Socket initialization and listeners
   useEffect(() => {
-    if (currentUserId !== undefined) {
+    if (currentUserId !== undefined && token) {
       socketServcies.initializeSocket(currentUserId, token);
 
       const onNotification = data => {
@@ -552,7 +556,7 @@ const Main = () => {
     const MAX_RETRIES = 3;
 
     const registerFCM = async () => {
-      if (!isMounted || currentUserId === undefined || token === undefined) return;
+      if (!isMounted || currentUserId === undefined || !tokenRef.current) return;
 
       try {
         // 1. Request OS-level notification permissions (iOS & Android 13+)
@@ -575,7 +579,7 @@ const Main = () => {
         console.log('✅ FCM token obtained:', fcmToken?.substring(0, 20) + '...');
         AppLog('FCM_INIT', 'FCM token generated successfully', { partialToken: fcmToken?.substring(0, 10), currentUserId });
 
-        const response = await sendFcmToken({ token, fcmToken });
+        const response = await sendFcmToken({ token: tokenRef.current, fcmToken });
         
         if (response?.error) {
           console.log('⚠️ FCM token API registration failed:', response?.error);
@@ -604,9 +608,9 @@ const Main = () => {
     // Listen for FCM token refreshes
     const unsubscribeTokenRefresh = onTokenRefresh(getMessaging(), async (newFcmToken) => {
       console.log('🔄 FCM token natively refreshed by Firebase:', newFcmToken?.substring(0, 20) + '...');
-      if (currentUserId && token) {
+      if (currentUserId && tokenRef.current) {
         try {
-          await sendFcmToken({ token, fcmToken: newFcmToken });
+          await sendFcmToken({ token: tokenRef.current, fcmToken: newFcmToken });
           console.log('✅ Refreshed FCM token updated in backend!');
           AppLog('FCM_REFRESH', 'Token successfully refreshed with backend', { currentUserId });
         } catch (err) {
@@ -621,7 +625,7 @@ const Main = () => {
       if (timeoutId) clearTimeout(timeoutId);
       unsubscribeTokenRefresh();
     };
-  }, [currentUserId, token]);
+  }, [currentUserId]);
 
   // Join livestream with notification handler
   const joinLiveStreamWithNotificationHandler = async (detail, token) => {

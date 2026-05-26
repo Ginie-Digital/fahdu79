@@ -27,7 +27,7 @@ import { token as memoizedToken } from '../../../Redux/Slices/NormalSlices/AuthS
 import axios from 'axios';
 import { toggleAddGoals, toggleLiveStreamTipModal, toggleSendPostTipModal, toggleShowRechargeModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import LiveStreamTip from './LiveStreamTip';
-import { navigate } from '../../../Navigation/RootNavigation';
+import { navigate, navigationRef } from '../../../Navigation/RootNavigation';
 import LiveStreamTextInput from './LiveStreamTextInput';
 import GoalsComponent from './GoalsComponent';
 import { addGoalsBeforeStream, pushGoals, resetStreamStates, setSocketConnect, setToAnimate } from '../../../Redux/Slices/NormalSlices/LiveStream/LiveChats';
@@ -406,7 +406,15 @@ const LiveStream = ({ route }) => {
         dispatch(resetStreamStates());
         clearTimeout(tokenTimeOut);
         setLoading(false);
-        navigate('afterlivestreamend', { data: data?.data });
+        // Reset navigation state: go to home with the report screen on top,
+        // so swiping back from report goes to home, not back to livestream
+        navigationRef.reset({
+          index: 1,
+          routes: [
+            { name: 'chatRoomTab' },
+            { name: 'afterlivestreamend', params: { data: data?.data } },
+          ],
+        });
       }
     } else {
       const { error, data } = await leaveLiveStream({

@@ -605,6 +605,7 @@ const StackNavigation = () => {
               component={AfterLiveStreamEnd}
               options={{
                 headerShown: false,
+                gestureEnabled: false,
                 headerShadowVisible: false,
                 headerStyle: { backgroundColor: '#fff' },
                 animation: 'slide_from_right',

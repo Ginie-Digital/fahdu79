@@ -798,6 +798,7 @@ const CreatePost = ({route}) => {
               <View style={styles.carouselContainer}>
                 <Carousel
                     loop={false}
+                    enabled={mediaUris.length > 1}
                     width={responsiveWidth(92) - 26}
                     height={isMediaVideo ? (responsiveWidth(92) - 26) * (9/16) : (responsiveWidth(92) - 26) * (305/319)}
                     autoPlay={false}

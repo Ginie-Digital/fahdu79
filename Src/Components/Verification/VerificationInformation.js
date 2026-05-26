@@ -151,7 +151,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
            contentContainerStyle={styles.scrollContent} 
            showsVerticalScrollIndicator={true}
         >
-          <EligibilityItem icon="stats-chart-outline" title="Follower Count" description="You should have a minimum of 5K followers on Instagram." />
+          <EligibilityItem icon="stats-chart-outline" title="Follower Count" description="You should have a minimum of 50K followers on Instagram." />
           <EligibilityItem icon="globe-outline" title="Public Profile" description="Your Instagram account should be public." />
           <EligibilityItem icon="shield-checkmark-outline" title="Authenticity" description="Your Instagram account should not be a 'Fan Page' or 'Meme Page'." />
         </BottomSheetScrollView>

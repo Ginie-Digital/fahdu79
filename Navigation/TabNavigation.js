@@ -83,7 +83,14 @@ const TabNavigation = () => {
     <>
       <Tab.Navigator
         screenOptions={({ route }) => ({
-          tabBarStyle: [styles.tabBarStyle, !showTabBar && { display: 'none' }],
+          tabBarStyle: [
+            styles.tabBarStyle,
+            {
+              paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom - 10, 5) : 8,
+              height: Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 5) : 58,
+            },
+            !showTabBar && { display: 'none' },
+          ],
           tabBarShowLabel: false,
           tabBarIcon: ({ color, focused }) => handleIcons(route, focused, color),
         })}
@@ -176,7 +183,14 @@ const TabNavigation = () => {
                   backgroundColor: '#fff9f5',
                 },
                 tabBarHideOnKeyboard: true,
-                tabBarStyle: [styles.tabBarStyle, !showTabBar && { display: 'none' }],
+                tabBarStyle: [
+                  styles.tabBarStyle,
+                  {
+                    paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom - 10, 5) : 8,
+                    height: Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 5) : 58,
+                  },
+                  !showTabBar && { display: 'none' },
+                ],
                 headerShadowVisible: false,
               }}
             />
@@ -231,7 +245,6 @@ export default TabNavigation;
 const styles = StyleSheet.create({
   tabBarStyle: {
     backgroundColor: '#fff',
-    height: nTwins(18, 20),
   },
   maintain: {
     flex: 1,

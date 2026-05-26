@@ -129,7 +129,7 @@ const TermsOfLive = () => {
   ), []);
 
   // Snap points are safer than dynamic sizing for content that might scroll
-  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '55%' : '52%'], []);
+  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '55%' : '58%'], []);
 
   return (
     <BottomSheetModal
@@ -164,7 +164,7 @@ const TermsOfLive = () => {
         </BottomSheetScrollView>
 
         {/* PINNED FOOTER */}
-        <View style={[styles.footer, {paddingBottom: insets.bottom + 16}]}>
+        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) + 8 : 16}]}>
           <View style={styles.checkboxWrapper}>
             <TouchableOpacity 
               activeOpacity={0.7}

@@ -113,7 +113,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
     <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
   ), []);
 
-  const snapPoints = useMemo(() => ['70%'], []);
+  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '60%' : '65%'], []);
 
   return (
     <BottomSheetModal
@@ -157,7 +157,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
         </BottomSheetScrollView>
 
         {/* PINNED FOOTER */}
-        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? insets.bottom + 8 : 12}]}>
+        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.min(insets.bottom, 20) + 6 : 14}]}>
           <View style={styles.checkboxWrapper}>
             <TouchableOpacity 
               activeOpacity={0.7}

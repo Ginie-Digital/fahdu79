@@ -81,7 +81,13 @@ const TermsOfLive = () => {
   }));
 
   const handlePresentModalPress = useCallback(() => {
-    requestAnimationFrame(() => bottomSheetModalRef.current?.present());
+    console.log('TermsOfLive: handlePresentModalPress called', {
+      refExists: !!bottomSheetModalRef.current
+    });
+    requestAnimationFrame(() => {
+      console.log('TermsOfLive: inside requestAnimationFrame presenting modal');
+      bottomSheetModalRef.current?.present();
+    });
   }, []);
 
   const onBackPress = useCallback(() => {
@@ -93,14 +99,22 @@ const TermsOfLive = () => {
   }, []);
 
   const backHandlerRef = useRef(null);
+  const wasOpenedRef = useRef(false);
 
   useEffect(() => {
+    console.log('TermsOfLive: useEffect triggered', { liveTermsHideShow });
     if (liveTermsHideShow === 1) {
+      console.log('TermsOfLive: liveTermsHideShow is 1, calling handlePresentModalPress()');
       setIsChecked(false);
+      wasOpenedRef.current = true;
       handlePresentModalPress();
       backHandlerRef.current = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     } else {
-      bottomSheetModalRef.current?.dismiss();
+      if (wasOpenedRef.current) {
+        console.log('TermsOfLive: liveTermsHideShow is not 1, calling dismiss()');
+        bottomSheetModalRef.current?.dismiss();
+        wasOpenedRef.current = false;
+      }
       backHandlerRef.current?.remove();
       backHandlerRef.current = null;
     }
@@ -115,19 +129,22 @@ const TermsOfLive = () => {
   ), []);
 
   // Snap points are safer than dynamic sizing for content that might scroll
-  const snapPoints = useMemo(() => ['65%'], []);
+  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '55%' : '52%'], []);
 
   return (
     <BottomSheetModal
       ref={bottomSheetModalRef}
-      index={liveTermsHideShow === 1 ? 0 : -1}
+      index={0}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.modalBackground}
       handleIndicatorStyle={styles.indicator}
-      onDismiss={() => dispatch(toggleHideShowLiveTerms({show: -1}))}>
+      onDismiss={() => {
+        wasOpenedRef.current = false;
+        dispatch(toggleHideShowLiveTerms({show: -1}));
+      }}>
       
       {/* Container must have flex: 1 to show children */}
       <BottomSheetView style={{ flex: 1 }}>
@@ -245,4 +262,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default memo(TermsOfLive);
+export default TermsOfLive;

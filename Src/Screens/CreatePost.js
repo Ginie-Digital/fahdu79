@@ -742,7 +742,7 @@ const CreatePost = ({route}) => {
         style={{flex: 1}}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} // Adjust this value based on your header height
       >
-        <ScrollView keyboardDismissMode="on-drag" ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: Platform.OS === 'ios' ? 20 : 40, paddingHorizontal: responsiveWidth(4), paddingTop: responsiveWidth(4)}} keyboardShouldPersistTaps="handled">
+        <ScrollView keyboardDismissMode="interactive" ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: Platform.OS === 'ios' ? 120 : 40, paddingHorizontal: responsiveWidth(4), paddingTop: responsiveWidth(4)}} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={false}>
           <View style={{borderWidth: responsiveWidth(0.5), borderRadius: responsiveWidth(3.73), width: responsiveWidth(92)}}>
             <View style={styles.FollowersSubScribersToggle}>
               {userRole === 'admin' ? (
@@ -889,13 +889,14 @@ const CreatePost = ({route}) => {
                 inputAccessoryViewID={inputAccessoryViewID}
                 onSelectionChange={(event) => setSelection(event.nativeEvent.selection)}
                 value={caption}
-                style={[styles.textInputStyle, {color: 'transparent', zIndex: 1}]}
+                style={[styles.textInputStyle, {color: 'transparent', zIndex: 1, minHeight: Platform.OS === 'ios' ? 100 : 80}]}
                 maxLength={500}
                 placeholder={caption ? "" : "Write caption here..."}
                 multiline
                 autoCorrect={false}
                 spellCheck={false}
                 onChangeText={x => handleTextInput(x)}
+                scrollEnabled={false}
               />
             </View>
             <Text style={styles.charCount}>{`${count}/500`}</Text>

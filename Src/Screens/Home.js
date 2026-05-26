@@ -495,7 +495,7 @@ const Home = () => {
       {/* <CreateCommentBottomSheet /> */}
       {/* {postActionSheetBottomSheetVisibility === 1 && <PostActionBottomSheet />}
       {switcherSheetVisibility === 1 && <SwitcherSheet />} */}
-      {liveTermsHideShow === 1 && <TermsOfLive />}
+      <TermsOfLive />
       <LowBalanceModal />
       {currentUserDetails?.role !== 'creator' && <AreYou />}
     </GestureHandlerRootView>

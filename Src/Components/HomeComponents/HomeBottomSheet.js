@@ -109,6 +109,7 @@ const HomeBottomSheet = () => {
     setTimeout(() => {
       switch (id) {
         case 99: navigate('feedback'); break;
+        case 100: navigate('NetworkLogger'); break;
         case 6: navigate('About'); break;
         case 1:
         case 8: navigate('settingsPage'); break;

@@ -106,6 +106,7 @@ import ChatMediaPreviewScreen from '../Src/Screens/ChatMediaPreviewScreen';
 import ChatPPVFeeScreen from '../Src/Screens/ChatPPVFeeScreen';
 import CompleteDetailsScreen from '../Src/Screens/CompleteDetailsScreen';
 import FeedbackScreen from '../Src/Screens/FeedbackScreen';
+import NetworkLoggerScreen from '../Src/Screens/NetworkLoggerScreen';
 
 const StackNavigation = () => {
   //Redux Work
@@ -223,6 +224,23 @@ const StackNavigation = () => {
               component={FeedbackScreen}
               options={{
                 title: 'Feedback',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: Math.round(responsiveFontSize(2.7)),
+                },
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: 'white' },
+                headerTintColor: '#1e1e1e',
+                animation: 'slide_from_right',
+                headerBackTitleVisible: false,
+              }}
+            />
+
+            <Stack.Screen
+              name="NetworkLogger"
+              component={NetworkLoggerScreen}
+              options={{
+                title: 'Network Logger',
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),

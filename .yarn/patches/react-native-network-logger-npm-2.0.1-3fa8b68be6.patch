@@ -1,0 +1,47 @@
+diff --git a/lib/module/components/ResultItem.js b/lib/module/components/ResultItem.js
+index ec073061f345ee5e79b2b88d3a101d73c8d96eac..545679650f6ea1e2b2f22c631f22495e8f283719 100644
+--- a/lib/module/components/ResultItem.js
++++ b/lib/module/components/ResultItem.js
+@@ -45,10 +45,16 @@ const ResultItem = ({
+   const getTime = time => {
+     if (time === 0) return ''; // invalid time
+     const date = new Date(time);
+-    const hours = pad(date.getHours());
++    const day = pad(date.getDate());
++    const month = pad(date.getMonth() + 1);
++    let hours = date.getHours();
+     const minutes = pad(date.getMinutes());
+     const seconds = pad(date.getSeconds());
+-    return `${hours}:${minutes}:${seconds}`;
++    const ampm = hours >= 12 ? 'PM' : 'AM';
++    hours = hours % 12;
++    hours = hours ? hours : 12; // the hour '0' should be '12'
++    const formattedHours = pad(hours);
++    return `${day}/${month} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
+   };
+   const gqlOperation = request.gqlOperation;
+   const UrlContainer = list ? View : ScrollView;
+diff --git a/src/components/ResultItem.tsx b/src/components/ResultItem.tsx
+index 0a131e97369fb7e7213394ac11bd7aebd007692a..f9cdb5209855bdc3f6c86640e9ecc80c0a3f2949 100644
+--- a/src/components/ResultItem.tsx
++++ b/src/components/ResultItem.tsx
+@@ -63,11 +63,17 @@ const ResultItem: React.FC<Props> = ({
+   const getTime = (time: number) => {
+     if (time === 0) return ''; // invalid time
+     const date = new Date(time);
+-    const hours = pad(date.getHours());
++    const day = pad(date.getDate());
++    const month = pad(date.getMonth() + 1);
++    let hours = date.getHours();
+     const minutes = pad(date.getMinutes());
+     const seconds = pad(date.getSeconds());
++    const ampm = hours >= 12 ? 'PM' : 'AM';
++    hours = hours % 12;
++    hours = hours ? hours : 12; // the hour '0' should be '12'
++    const formattedHours = pad(hours);
+ 
+-    return `${hours}:${minutes}:${seconds}`;
++    return `${day}/${month} ${formattedHours}:${minutes}:${seconds} ${ampm}`;
+   };
+ 
+   const gqlOperation = request.gqlOperation;

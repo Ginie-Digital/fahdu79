@@ -85,6 +85,7 @@
     "react-native-linear-gradient": "^2.8.3",
     "react-native-mmkv": "^4.3.1",
     "react-native-modal": "13.0.2",
+    "react-native-network-logger": "patch:react-native-network-logger@npm%3A2.0.1#~/.yarn/patches/react-native-network-logger-npm-2.0.1-3fa8b68be6.patch",
     "react-native-nitro-modules": "^0.35.6",
     "react-native-otp-textinput": "^1.1.6",
     "react-native-pager-view": "^6.9.1",
@@ -142,6 +143,7 @@
     "react-native-asset": "^2.1.1",
     "react-native-svg-transformer": "^1.5.1",
     "react-test-renderer": "19.0.0",
+    "reactotron-react-native": "^5.1.18",
     "typescript": "5.0.4"
   },
   "engines": {

@@ -1,3 +1,7 @@
+import './ReactotronConfig';
+import { startNetworkLogging } from 'react-native-network-logger';
+startNetworkLogging();
+
 import 'react-native-gesture-handler';
 import { DevLauncher, DevMenu } from 'expo-dev-client';
 // import 'react-native-url-polyfill/auto';

@@ -1,0 +1,58 @@
+diff --git a/node_modules/expo-av/android/src/main/java/expo/modules/av/AVManager.java b/node_modules/expo-av/android/src/main/java/expo/modules/av/AVManager.java
+index 964af5d..2880a27 100644
+--- a/node_modules/expo-av/android/src/main/java/expo/modules/av/AVManager.java
++++ b/node_modules/expo-av/android/src/main/java/expo/modules/av/AVManager.java
+@@ -267,25 +267,41 @@ public class AVManager implements LifecycleEventListener, AudioManager.OnAudioFo
+       mIsRegistered = false;
+     }
+ 
+-    // remove all remaining sounds
+-    Iterator<PlayerData> iter = mSoundMap.values().iterator();
+-    while (iter.hasNext()) {
+-      final PlayerData data = iter.next();
+-      iter.remove();
+-      if (data != null) {
+-        data.release();
+-      }
+-    }
++    final List<PlayerData> soundsToRelease = new ArrayList<>(mSoundMap.values());
++    mSoundMap.clear();
++
++    final List<VideoView> videoViewsToRelease = new ArrayList<>(mVideoViewSet);
++    mVideoViewSet.clear();
+ 
+-    for (final VideoView videoView : mVideoViewSet) {
+-      videoView.unloadPlayerAndMediaController();
++    if (getUIManager() != null) {
++      getUIManager().runOnUiQueueThread(() -> {
++        for (final PlayerData data : soundsToRelease) {
++          if (data != null) {
++            data.release();
++          }
++        }
++        for (final VideoView videoView : videoViewsToRelease) {
++          videoView.unloadPlayerAndMediaController();
++        }
++      });
++    } else {
++      for (final PlayerData data : soundsToRelease) {
++        if (data != null) {
++          data.release();
++        }
++      }
++      for (final VideoView videoView : videoViewsToRelease) {
++        videoView.unloadPlayerAndMediaController();
++      }
+     }
+ 
+     removeAudioRecorder();
+     abandonAudioFocus();
+ 
+     mHybridData.resetNative();
+-    getUIManager().unregisterLifecycleEventListener(this);
++    if (getUIManager() != null) {
++      getUIManager().unregisterLifecycleEventListener(this);
++    }
+   }
+ 
+   // Global audio state control API

@@ -61,6 +61,22 @@ const VideoCallScreen = ({route}) => {
   const navigation = useNavigation();
   const ringtoneRef = useRef(null);
   const callAcceptedRef = useRef(route?.params?.callAccepted || false);
+  const isCallEndedRef = useRef(false);
+
+  const stopAndUnloadRingtone = useCallback(async () => {
+    if (ringtoneRef.current) {
+      try {
+        const sound = ringtoneRef.current;
+        ringtoneRef.current = null;
+        console.log('🔇 Stopping and unloading ringtone...');
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        console.log('✅ Ringtone stopped and unloaded successfully.');
+      } catch (error) {
+        console.log('⚠️ Error stopping/unloading ringtone:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (callAccepted) {
@@ -192,8 +208,8 @@ const VideoCallScreen = ({route}) => {
           { isLooping: true }
         );
 
-        if (isCancelled || callAcceptedRef.current) {
-          console.log('🔕 Ringtone loaded but call already accepted, skipping play');
+        if (isCancelled || callAcceptedRef.current || isCallEndedRef.current) {
+          console.log('🔕 Ringtone loaded but call already accepted or ended, skipping play');
           await sound.unloadAsync();
           return;
         }
@@ -210,27 +226,14 @@ const VideoCallScreen = ({route}) => {
 
     return () => {
       isCancelled = true;
-      if (ringtoneRef.current) {
-        ringtoneRef.current.stopAsync().then(() => {
-          ringtoneRef.current?.unloadAsync();
-          ringtoneRef.current = null;
-        });
-      }
+      stopAndUnloadRingtone();
     };
   }, []);
 
   // Stop ringtone when call is accepted
   useEffect(() => {
     if (!callAccepted) return;
-    // With expo-av, ringtoneRef is only set AFTER createAsync resolves,
-    // and the playRingtone() function already checks callAcceptedRef before playing.
-    // So there is no race condition — either the ref exists and we stop it,
-    // or playRingtone() will see callAcceptedRef=true and skip playing entirely.
-    if (ringtoneRef.current) {
-      console.log('🔇 Stopping ringtone — call accepted');
-      ringtoneRef.current.stopAsync().then(() => ringtoneRef.current?.unloadAsync());
-      ringtoneRef.current = null;
-    }
+    stopAndUnloadRingtone();
     // Reset audio session for ZEGO capture/playback (both platforms)
     Audio.setAudioModeAsync({
       allowsRecordingIOS: true,
@@ -350,6 +353,8 @@ const VideoCallScreen = ({route}) => {
   const handleLogout = async (fromSocket) => {
     if (isEndingCall) return;
     setIsEndingCall(true);
+    isCallEndedRef.current = true;
+    stopAndUnloadRingtone();
     console.log(`Logging out from call_${route?.params?.roomId}`);
     isEngineActive.current = false;
 
@@ -637,13 +642,8 @@ const VideoCallScreen = ({route}) => {
         dispatch(clearAcceptedRoomId(route.params.roomId));
       }
       isMounted.current = false;
-
-      if (ringtoneRef.current) {
-        ringtoneRef.current.stopAsync().then(() => {
-          ringtoneRef.current?.unloadAsync();
-          ringtoneRef.current = null;
-        });
-      }
+      isCallEndedRef.current = true;
+      stopAndUnloadRingtone();
     };
   }, []);
 

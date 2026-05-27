@@ -70,7 +70,7 @@ const NotificationScreen = () => {
     else setLoading(true);
 
     try {
-      const { data } = await axios.get(`https://api.fahdu.in/api/notification/get-notification?filter=${myFilter}&page=${pageNum}`, {
+      const { data } = await axios.get(`https://api.fahdu.com/api/notification/get-notification?filter=${myFilter}&page=${pageNum}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -317,7 +317,7 @@
 
 //       console.log('📡 Calling API:', {roomId, callType, status});
 
-//       const response = await fetch('https://api.fahdu.in/api/stream/call/accept/manual', {
+//       const response = await fetch('https://api.fahdu.com/api/stream/call/accept/manual', {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',

@@ -4,7 +4,7 @@ export const roomListApi = createApi({
   reducerPath: 'roomListApi',
 
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.fahdu.in/api/messages/',
+    baseUrl: 'https://api.fahdu.com/api/messages/',
   }),
 
   tagTypes: ['recent', 'old', 'latestChat'],

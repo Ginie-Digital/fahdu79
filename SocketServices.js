@@ -5,7 +5,7 @@ import { setSocketConnect } from './Redux/Slices/NormalSlices/LiveStream/LiveCha
 import { addLiveUser, removeLiveUser, setLiveUsers } from './Redux/Slices/NormalSlices/LiveUsersSlice';
 
 
-const SOCKET_URL = 'https://api.fahdu.com';
+const SOCKET_URL = 'https://api.fahdu.in';
 
 class WSService {
   // Store credentials for AppState-based reconnection

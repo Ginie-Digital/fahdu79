@@ -4,7 +4,7 @@ export const audioVideoApi = createApi({
   reducerPath: 'audioVideoApi',
 
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://api.fahdu.com/api/',
+    baseUrl: 'https://api.fahdu.in/api/',
   }),
 
   endpoints: builder => ({

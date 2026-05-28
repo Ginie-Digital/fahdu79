@@ -4782,6 +4782,7 @@ __metadata:
     dayjs: "npm:^1.11.18"
     eslint: "npm:^8.19.0"
     expo: "npm:~53.0.0"
+    expo-audio: "npm:~0.4.9"
     expo-av: "npm:~15.1.7"
     expo-blur: "npm:^15.0.7"
     expo-dev-client: "npm:~5.2.4"
@@ -4827,7 +4828,7 @@ __metadata:
     react-native-linear-gradient: "npm:^2.8.3"
     react-native-mmkv: "npm:^4.3.1"
     react-native-modal: "npm:13.0.2"
-    react-native-network-logger: "npm:^2.0.1"
+    react-native-network-logger: "patch:react-native-network-logger@npm%3A2.0.1#~/.yarn/patches/react-native-network-logger-npm-2.0.1-3fa8b68be6.patch"
     react-native-nitro-modules: "npm:^0.35.6"
     react-native-otp-textinput: "npm:^1.1.6"
     react-native-pager-view: "npm:^6.9.1"
@@ -7405,6 +7406,17 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/c7851f3cf69ad2d8075908f719baf3a96660f262109374a563418912b7588a126f425225bc2126eca005873aa719c4683b99a467984e244d1931e6f1ba68655a
+  languageName: node
+  linkType: hard
+
+"expo-audio@npm:~0.4.9":
+  version: 0.4.9
+  resolution: "expo-audio@npm:0.4.9"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10/874527adcf03e044770fc64fa9d58f735528bd40ebe038635ebf5ef34a21cdbce0115c9b2b1406604b9622f665d27a3a7eda417275322f2506a77f74c359724f
   languageName: node
   linkType: hard
 
@@ -11995,13 +12007,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-network-logger@npm:^2.0.1":
+"react-native-network-logger@npm:2.0.1":
   version: 2.0.1
   resolution: "react-native-network-logger@npm:2.0.1"
   peerDependencies:
     react: "*"
     react-native: "*"
   checksum: 10/a4c231ad58c9e9221e752558de1b723fcf374ef7749806df48b1997ebeae5e015a598f05b964ec8c60b8a3004254166625bb927a905cc6a6997ded99ccf64de1
+  languageName: node
+  linkType: hard
+
+"react-native-network-logger@patch:react-native-network-logger@npm%3A2.0.1#~/.yarn/patches/react-native-network-logger-npm-2.0.1-3fa8b68be6.patch":
+  version: 2.0.1
+  resolution: "react-native-network-logger@patch:react-native-network-logger@npm%3A2.0.1#~/.yarn/patches/react-native-network-logger-npm-2.0.1-3fa8b68be6.patch::version=2.0.1&hash=9ee90c"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/9c10257ed3fdc1809308562d6133cca6a326b263d38acea25bf2e25ba9e7cb0d33064c3753cf79d0c21e1d38c9303fe427e84fdb5f7621c58f43bae3dadeaefc
   languageName: node
   linkType: hard
 

@@ -14,7 +14,8 @@
           "supportsPictureInPicture": true
         }
       ],
-      "expo-updates"
+      "expo-updates",
+      "expo-audio"
     ],
     "android": {
       "package": "com.fahdu",

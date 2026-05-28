@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Audio } from 'expo-av';
+import RingtoneManager from './RingtoneManager';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -176,28 +177,14 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
     const playRingtone = async () => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-        });
-
-        const { sound } = await Audio.Sound.createAsync(
-          require('../../../Assets/IncomingCall.wav'),
-          { isLooping: true }
-        );
-
         if (isCancelled || hasActedRef.current) {
           console.log('🔔 [IncomingCall] Cancelled before playing');
-          await sound.unloadAsync();
           return;
         }
 
-        ringtoneRef.current = sound;
-        await sound.playAsync();
+        RingtoneManager.playIncoming();
       } catch (error) {
-        console.log('❌ Failed to load incoming call ringtone:', error);
-        AppLog('AUDIO_RINGTONE_ERROR', 'Failed to load incoming call ringtone', { error: error?.message || error, os: Platform.OS });
+        console.log('❌ Failed to play incoming call ringtone:', error);
       }
     };
 
@@ -205,12 +192,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
     return () => {
       isCancelled = true;
-      if (ringtoneRef.current) {
-        ringtoneRef.current.stopAsync().then(() => {
-          ringtoneRef.current?.unloadAsync();
-          ringtoneRef.current = null;
-        });
-      }
+      RingtoneManager.stopAll();
     };
   }, []);
 
@@ -253,12 +235,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
   // Helper to stop ringtone
   const stopRingtone = useCallback(() => {
-    if (ringtoneRef.current) {
-      ringtoneRef.current.stopAsync().then(() => {
-        ringtoneRef.current?.unloadAsync();
-        ringtoneRef.current = null;
-      });
-    }
+    RingtoneManager.stopAll();
   }, []);
 
   // ─── Safety timeout (60s) ───
@@ -374,8 +351,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
   }, [handleAccept]);
 
 
-  // ─── Decline call (JS Thread) ───
-  const handleDecline = useCallback(async () => {
+  // ─── Decline call (JS Thread - Optimistic Dismissal) ───
+  const handleDecline = useCallback(() => {
     if (hasActedRef.current) return;
     hasActedRef.current = true;
     stopRingtone();
@@ -386,31 +363,21 @@ const IncomingCallScreen = ({ route, navigation }) => {
     // caller isn't silently blocked by the processedRoomIds check in Main.js
     if (callId) dispatch(clearProcessedRoomId(callId));
 
-    try {
-      const response = await callAcceptManual({
-        token,
-        data: {
-          roomId: roomId,
-          callType: callType || 'audio',
-          status: 'REJECTED',
-        },
-      });
+    // Fire decline API in background (fire-and-forget) to keep UI responsive
+    callAcceptManual({
+      token,
+      data: {
+        roomId: roomId,
+        callType: callType || 'audio',
+        status: 'REJECTED',
+      },
+    }).catch(error => {
+      console.error('Background decline API call error:', error);
+    });
 
-      if (response?.data?.success || response?.data?.statusCode === 200) {
-        navigation.goBack();
-      } else {
-        const errorMsg =
-          response?.error?.data?.message ||
-          response?.error?.message ||
-          'Failed to reject call';
-        LoginPageErrors(errorMsg);
-        navigation.goBack();
-      }
-    } catch (error) {
-      console.error('Error declining call:', error);
-      navigation.goBack();
-    }
-  }, [token, roomId, callType, callId]);
+    // Go back instantly
+    navigation.goBack();
+  }, [token, roomId, callType, callId, dispatch, navigation]);
 
   // ─── Pan gesture (vertical) ───
   const panGesture = Gesture.Pan()

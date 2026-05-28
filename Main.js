@@ -25,6 +25,7 @@ import { chatRoomSuccess, LoginPageErrors, OnlineSnack } from './Src/Components/
 import { deleteCachedMessages } from './Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
 
 import { AppLog } from './Src/Utils/Logger';
+import RingtoneManager from './Src/Components/Calling/RingtoneManager';
 import { BASE_URL } from './Src/Configs/ApiConfig';
 import DeviceInfo, { getVersion } from 'react-native-device-info';
 import { setUpdateStatus } from './Redux/Slices/NormalSlices/HasAppUpdatedSlice';
@@ -220,6 +221,7 @@ const Main = () => {
 
       const onCallUnavailable = data => {
         AppLog('SOCKET_CALL', 'Received call_unavailable event (Detailed)', data);
+        RingtoneManager.stopAll();
         dispatch(toggleCallAccepted({ status: false }));
         if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
         navigate('home');
@@ -233,6 +235,7 @@ const Main = () => {
       const onCallRejected = data => {
         console.log(':::::::::::::::::::call_rejected:::::::::', data?.by, currentUserId, Platform.OS);
         AppLog('SOCKET_CALL', 'Received call_rejected event (Detailed)', data);
+        RingtoneManager.stopAll();
         if (currentUserId !== data?.by) {
           dispatch(toggleCallAccepted({ status: false }));
           if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
@@ -247,6 +250,7 @@ const Main = () => {
       const onCallDisconnected = data => {
         console.log(':::::::::::::::::::call_disconnected:::::::::', data);
         AppLog('SOCKET_CALL', 'Received call_disconnected event (Detailed)', data);
+        RingtoneManager.stopAll();
         dispatch(toggleCallAccepted({ status: false }));
         if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
         navigate('home');
@@ -255,6 +259,7 @@ const Main = () => {
       const onSocketDisconnectCloseApp = data => {
         console.log(':::::::::::socket_disconnect_close_app:::::::::', data);
         AppLog('SOCKET_CALL', 'Other side swiped-closed app (socket signal)', data);
+        RingtoneManager.stopAll();
         dispatch(toggleCallAccepted({ status: false }));
         if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
         setDisconnectModalVisible(true);
@@ -864,6 +869,7 @@ const Main = () => {
       } else if (remoteNotificationData?.type === 'fcm_disconnect_close_app') {
         // Handle swipe-close/disconnect from other side via FCM
         AppLog('FCM_CALL', 'Other side swiped-closed app (FCM signal)', remoteNotificationData);
+        RingtoneManager.stopAll();
         dispatch(toggleCallAccepted({ status: false }));
         const callContent = remoteNotificationData?.content;
         if (callContent?.callId) dispatch(clearProcessedRoomId(callContent.callId));
@@ -871,6 +877,7 @@ const Main = () => {
       } else if (remoteNotificationData?.type === 'call_disconnected') {
         // General disconnect via FCM
         AppLog('FCM_CALL', 'Received call_disconnected via FCM', remoteNotificationData);
+        RingtoneManager.stopAll();
         dispatch(toggleCallAccepted({ status: false }));
         const callContent = remoteNotificationData?.content;
         if (callContent?.callId) dispatch(clearProcessedRoomId(callContent.callId));

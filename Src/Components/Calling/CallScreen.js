@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
+import RingtoneManager from './RingtoneManager';
 import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, BackHandler, Alert, ActivityIndicator } from 'react-native';
 import { responsiveHeight, responsiveWidth, responsiveFontSize } from 'react-native-responsive-dimensions';
 import Back from '../../../Assets/svg/back.svg';
@@ -52,18 +53,7 @@ const CallScreen = ({ route }) => {
   const isCallEndedRef = useRef(false);
 
   const stopAndUnloadRingtone = useCallback(async () => {
-    if (ringtoneRef.current) {
-      try {
-        const sound = ringtoneRef.current;
-        ringtoneRef.current = null;
-        console.log('🔇 Stopping and unloading ringtone...');
-        await sound.stopAsync();
-        await sound.unloadAsync();
-        console.log('✅ Ringtone stopped and unloaded successfully.');
-      } catch (error) {
-        console.log('⚠️ Error stopping/unloading ringtone:', error);
-      }
-    }
+    RingtoneManager.stopAll();
   }, []);
 
   useEffect(() => {
@@ -153,28 +143,14 @@ const CallScreen = ({ route }) => {
     // the same way react-native-sound does, so it's safer alongside ZEGO.
     const playRingtone = async () => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-        });
-
-        const { sound } = await Audio.Sound.createAsync(
-          require('../../Assets/Audio/ringfahdu.wav'),
-          { isLooping: true }
-        );
-
         if (isCancelled || callAcceptedRef.current || isCallEndedRef.current) {
-          console.log('🔕 Ringtone loaded but call already accepted or ended, skipping play');
-          await sound.unloadAsync();
+          console.log('🔕 Call already accepted or ended, skipping outgoing ringtone play');
           return;
         }
 
-        ringtoneRef.current = sound;
-        await sound.playAsync();
+        RingtoneManager.playOutgoing();
       } catch (error) {
-        console.log('❌ Failed to load outgoing call ringtone:', error);
-        AppLog('AUDIO_RINGTONE_ERROR', 'Failed to load outgoing call ringtone in CallScreen', { error: error?.message || error, os: Platform.OS });
+        console.log('❌ Failed to play outgoing call ringtone:', error);
       }
     };
 

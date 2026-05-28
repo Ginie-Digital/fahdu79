@@ -23,7 +23,7 @@ import CallingStatusText from './CallingStatusText';
 import CallingTip from './CallingTip';
 import {updateWallet} from '../../../Redux/Slices/NormalSlices/Wallet/WalletSlice';
 import {setLatestTip, toggleCallAccepted, toggleCallTipModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {clearAcceptedRoomId} from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
+import {clearAcceptedRoomId, clearProcessedRoomId} from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
 import {LoginPageErrors} from '../ErrorSnacks';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -32,6 +32,8 @@ import NetworkQualityBadge from './NetworkQualityBadge';
 import { ZEGO_APP_ID, ZEGO_APP_SIGN } from '../../Configs/ZegoConfig';
 import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 import { AppLog } from '../../Utils/Logger';
+import { useCallStatusPolling } from './useCallStatusPolling';
+import { CallDebugConsole } from './CallDebugConsole';
 
 const requestPermissions = async () => {
   if (Platform.OS === 'ios') {
@@ -103,6 +105,7 @@ const VideoCallScreen = ({route}) => {
 
   const [callDetails, setCallDetails] = useState({});
   const [callStreamEndModal, setCallStreamEndModal] = useState(false);
+  const [endTriggerSource, setEndTriggerSource] = useState('LOCAL');
   const [isInMute, setIsInMute] = useState(false);
   const [isSpeakerInMute, setIsSpeakerInMute] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -162,6 +165,47 @@ const VideoCallScreen = ({route}) => {
 
   const IS_STARTING = currentUserId === route?.params?.callerId;
 
+  const { logs, clearLogs } = useCallStatusPolling({
+    roomId: route?.params?.roomId,
+    token,
+    enabled: !isCallEndedRef.current && (IS_STARTING || callAccepted),
+    callAccepted,
+    onCallAccepted: () => {
+      console.log('🔄 [Polling] Call accepted, dispatching toggleCallAccepted');
+      dispatch(toggleCallAccepted({ status: true }));
+    },
+    onCallRejected: () => {
+      console.log('🔄 [Polling] Call rejected, exiting...');
+      setEndTriggerSource('POLLING');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (route?.params?.callId) dispatch(clearProcessedRoomId(route.params.callId));
+      LoginPageErrors('Call Rejected...');
+      handleLogout(true);
+    },
+    onCallUnavailable: () => {
+      console.log('🔄 [Polling] Call unavailable, exiting...');
+      setEndTriggerSource('POLLING');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (route?.params?.callId) dispatch(clearProcessedRoomId(route.params.callId));
+      LoginPageErrors('User not receiving the call');
+      handleLogout(true);
+    },
+    onCallEnded: (status) => {
+      console.log(`🔄 [Polling] Call ended with status: ${status}`);
+      setEndTriggerSource('POLLING');
+      isCallEndedRef.current = true;
+      stopAndUnloadRingtone();
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      dispatch(toggleCallAccepted({ status: false }));
+      setCallStreamEndModal(true);
+    },
+  });
+
   // 🔥 Receiver already accepted the call before landing here, so set callAccepted immediately
   useEffect(() => {
     if (!IS_STARTING) {
@@ -177,8 +221,15 @@ const VideoCallScreen = ({route}) => {
   useEffect(() => {
     callAcceptedRef.current = callAccepted;
     // 🔧 When callAccepted becomes true for the first time, trigger engine init (one-shot)
-    if (callAccepted && !shouldInitEngine) {
-      setShouldInitEngine(true);
+    if (callAccepted) {
+      if (!shouldInitEngine) {
+        setShouldInitEngine(true);
+      }
+      if (timeoutIdRef.current) {
+        console.log(`⏰ [VideoCallScreen] Call accepted! Immediately clearing the 60s ringing timeout.`);
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
     }
   }, [callAccepted]);
 
@@ -198,7 +249,7 @@ const VideoCallScreen = ({route}) => {
           return;
         }
 
-        RingtoneManager.playOutgoing();
+        await RingtoneManager.playOutgoing();
       } catch (error) {
         console.log('❌ Failed to play outgoing call ringtone:', error);
       }
@@ -344,6 +395,10 @@ const VideoCallScreen = ({route}) => {
       console.log(`⛔ [VideoCallScreen] handleLogout BLOCKED - call already ended (ref guard) [room=${route?.params?.roomId}, fromSocket=${fromSocket}]`);
       return;
     }
+    setEndTriggerSource(prev => {
+      if (prev && prev !== 'LOCAL') return prev;
+      return fromSocket ? 'SOCKET/FCM' : 'USER';
+    });
     console.log(`🔴 [VideoCallScreen:handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
     console.log(`🔴 [VideoCallScreen:handleLogout] timeoutIdRef.current = ${timeoutIdRef.current}`);
     isCallEndedRef.current = true;
@@ -587,7 +642,8 @@ const VideoCallScreen = ({route}) => {
           console.log('🎵 [roomStreamUpdate]', {roomID, updateType, streamList});
           if (!isMounted.current) return;
           if (updateType === 1) {
-            console.log('❌ Stream removed');
+            console.log('❌ Stream removed (ZEGO DISCONNECT)');
+            setEndTriggerSource('ZEGO_SDK');
             dispatch(toggleCallAccepted({status: false}));
             setCallStreamEndModal(true);
             return;
@@ -1062,7 +1118,7 @@ const VideoCallScreen = ({route}) => {
         </Animated.View>
       )}
 
-      <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title="Call terminated..." />
+      <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title={`Call terminated [Trigger: ${endTriggerSource}]`} />
 
       {/* 🎉 Confetti Lottie Overlay */}
       {confettiVisible && (
@@ -1079,6 +1135,7 @@ const VideoCallScreen = ({route}) => {
           pointerEvents="none"
         />
       )}
+      <CallDebugConsole logs={logs} onClear={clearLogs} />
     </View>
   </GestureHandlerRootView>
   );

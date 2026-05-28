@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, Animated, StyleSheet, View } from 'react-native';
-import { responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
+import { Text, Animated, StyleSheet, View, Dimensions } from 'react-native';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const responsiveHeight = (h) => SCREEN_H * (h / 100);
+const responsiveFontSize = (f) => SCREEN_W * (f / 100);
 
 const CallingStatusText = ({ username = 'User' }) => {
   const [messageIndex, setMessageIndex] = useState(0);

@@ -1,4 +1,4 @@
-import { createAudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 let activePlayer = null;
 
@@ -6,11 +6,17 @@ const RingtoneManager = {
   /**
    * Play the incoming call ringtone.
    */
-  playIncoming() {
+  async playIncoming() {
     try {
       this.stopAll();
+      console.log('🔔 [RingtoneManager] Configuring audio mode for incoming call...');
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        shouldPlayInBackground: true,
+      });
+
       console.log('🔔 [RingtoneManager] Loading incoming call ringtone...');
-      
       const source = require('../../../Assets/IncomingCall.wav');
       activePlayer = createAudioPlayer(source);
       activePlayer.loop = true;
@@ -24,11 +30,17 @@ const RingtoneManager = {
   /**
    * Play the outgoing call ringtone.
    */
-  playOutgoing() {
+  async playOutgoing() {
     try {
       this.stopAll();
+      console.log('🔔 [RingtoneManager] Configuring audio mode for outgoing call...');
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        shouldPlayInBackground: true,
+      });
+
       console.log('🔔 [RingtoneManager] Loading outgoing call ringtone...');
-      
       const source = require('../../Assets/Audio/ringfahdu.wav');
       activePlayer = createAudioPlayer(source);
       activePlayer.loop = true;

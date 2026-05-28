@@ -15,7 +15,7 @@ import DeviceInfo from 'react-native-device-info';
 import TimerText from './TimerText';
 import axios from 'axios';
 import { navigate } from '../../../Navigation/RootNavigation';
-import { setCallRejected, clearAcceptedRoomId } from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
+import { setCallRejected, clearAcceptedRoomId, clearProcessedRoomId } from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
 import StreamEndedUserModal from '../../Screens/Stream/StreamEndedUserModal';
 import { toggleCallAccepted } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import { LoginPageErrors } from '../ErrorSnacks';
@@ -24,6 +24,8 @@ import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 import { ZEGO_APP_ID, ZEGO_APP_SIGN } from '../../Configs/ZegoConfig';
 import CallingStatusText from './CallingStatusText';
 import { AppLog } from '../../Utils/Logger';
+import { useCallStatusPolling } from './useCallStatusPolling';
+import { CallDebugConsole } from './CallDebugConsole';
 
 const requestMicrophonePermission = async () => {
   if (Platform.OS === 'ios') {
@@ -74,6 +76,7 @@ const CallScreen = ({ route }) => {
 
   const [callDetails, setCallDetails] = useState({});
   const [callStreamEndModal, setCallStreamEndModal] = useState(false);
+  const [endTriggerSource, setEndTriggerSource] = useState('LOCAL');
   const [isInMute, setIsInMute] = useState(false);
   const [isSpeakerInMute, setIsSpeakerInMute] = useState(false);
   const [isOtherUserInRoom, setIsOtherUserInRoom] = useState(false);
@@ -92,6 +95,47 @@ const CallScreen = ({ route }) => {
   const [callAcceptManual] = useCallAcceptManualMutation();
 
   const IS_STARTING = currentUserId === route?.params?.callerId;
+
+  const { logs, clearLogs } = useCallStatusPolling({
+    roomId: route?.params?.roomId,
+    token,
+    enabled: !isCallEndedRef.current && (IS_STARTING || callAccepted),
+    callAccepted,
+    onCallAccepted: () => {
+      console.log('🔄 [Polling] Call accepted, dispatching toggleCallAccepted');
+      dispatch(toggleCallAccepted({ status: true }));
+    },
+    onCallRejected: () => {
+      console.log('🔄 [Polling] Call rejected, exiting...');
+      setEndTriggerSource('POLLING');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (route?.params?.callId) dispatch(clearProcessedRoomId(route.params.callId));
+      LoginPageErrors('Call Rejected...');
+      handleLogout(true);
+    },
+    onCallUnavailable: () => {
+      console.log('🔄 [Polling] Call unavailable, exiting...');
+      setEndTriggerSource('POLLING');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (route?.params?.callId) dispatch(clearProcessedRoomId(route.params.callId));
+      LoginPageErrors('User not receiving the call');
+      handleLogout(true);
+    },
+    onCallEnded: (status) => {
+      console.log(`🔄 [Polling] Call ended with status: ${status}`);
+      setEndTriggerSource('POLLING');
+      isCallEndedRef.current = true;
+      stopAndUnloadRingtone();
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      dispatch(toggleCallAccepted({ status: false }));
+      setCallStreamEndModal(true);
+    },
+  });
 
   // 🔧 One-shot trigger: when callAccepted becomes true, set this to true to trigger engine init.
   // Unlike putting callAccepted in the dep array, this only goes false→true (never back), so
@@ -156,7 +200,7 @@ const CallScreen = ({ route }) => {
           return;
         }
 
-        RingtoneManager.playOutgoing();
+        await RingtoneManager.playOutgoing();
       } catch (error) {
         console.log('❌ Failed to play outgoing call ringtone:', error);
       }
@@ -266,6 +310,10 @@ const CallScreen = ({ route }) => {
       console.log(`⛔ handleLogout BLOCKED - call already ended (ref guard) [room=${route?.params?.roomId}, fromSocket=${fromSocket}]`);
       return;
     }
+    setEndTriggerSource(prev => {
+      if (prev && prev !== 'LOCAL') return prev;
+      return fromSocket ? 'SOCKET/FCM' : 'USER';
+    });
     console.log(`🔴 [handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
     console.log(`🔴 [handleLogout] Refs: isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}, hasNavigatedAway=${hasNavigatedAwayRef.current}`);
     console.log(`🔴 [handleLogout] timeoutIdRef.current = ${timeoutIdRef.current}`);
@@ -324,8 +372,15 @@ const CallScreen = ({ route }) => {
   useEffect(() => {
     callAcceptedRef.current = callAccepted;
     // 🔧 When callAccepted becomes true for the first time, trigger engine init (one-shot)
-    if (callAccepted && !shouldInitEngine) {
-      setShouldInitEngine(true);
+    if (callAccepted) {
+      if (!shouldInitEngine) {
+        setShouldInitEngine(true);
+      }
+      if (timeoutIdRef.current) {
+        console.log(`⏰ [CallScreen] Call accepted! Immediately clearing the 60s ringing timeout.`);
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
     }
   }, [callAccepted]);
 
@@ -498,8 +553,9 @@ const CallScreen = ({ route }) => {
         engine.on('roomStreamUpdate', async (roomID, updateType, streamList) => {
           if (!isMounted.current) return;
           if (updateType === 1) { // Stream removed
-            console.log('❌ Stream removed');
+            console.log('❌ Stream removed (ZEGO DISCONNECT)');
             AppLog('CALL', 'Remote stream removed', { roomID });
+            setEndTriggerSource('ZEGO_SDK');
             dispatch(toggleCallAccepted({ status: false }));
             setCallStreamEndModal(true);
             return;
@@ -660,8 +716,9 @@ const CallScreen = ({ route }) => {
           )}
         </TouchableOpacity>
 
-        <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title="Call terminated..." />
+        <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title={`Call terminated [Trigger: ${endTriggerSource}]`} />
       </View>
+      <CallDebugConsole logs={logs} onClear={clearLogs} />
     </View>
   );
 };

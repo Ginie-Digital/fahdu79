@@ -865,6 +865,7 @@ const Main = () => {
         handleCallAccepted(remoteNotificationData, 'FCM_INITIATOR_ACCEPTED');
       } else if (remoteNotificationData?.type === 'call_completed') {
         console.log(remoteNotificationData, ':::::');
+        AppLog('FCM_CALL', 'Received call_completed via FCM (silent trigger)');
         await showCallRelatedNotification(remoteNotificationData);
       } else if (remoteNotificationData?.type === 'fcm_disconnect_close_app') {
         // Handle swipe-close/disconnect from other side via FCM

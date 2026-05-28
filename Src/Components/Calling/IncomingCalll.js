@@ -31,6 +31,8 @@ import Feather from 'react-native-vector-icons/Feather';
 import { responsiveWidth } from 'react-native-responsive-dimensions';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import MicPermissionModal from './MicPermissionModal';
+import { useCallStatusPolling } from './useCallStatusPolling';
+import { CallDebugConsole } from './CallDebugConsole';
 
 const { width, height } = Dimensions.get('window');
 const ACCEPT_THRESHOLD = 100;
@@ -144,6 +146,47 @@ const IncomingCallScreen = ({ route, navigation }) => {
   const safetyTimerRef = useRef(null);
   const hasActedRef = useRef(false);
   const ringtoneRef = useRef(null);
+
+  const { logs, clearLogs } = useCallStatusPolling({
+    roomId,
+    token,
+    enabled: !hasActedRef.current,
+    callAccepted: false,
+    onCallAccepted: () => {
+      // Receiver side never expects call to transition to ACCEPTED through polling
+      // because receiver is the one who initiates acceptance.
+    },
+    onCallRejected: () => {
+      if (hasActedRef.current) return;
+      hasActedRef.current = true;
+      console.log('🔄 [Polling] Call rejected/cancelled by caller, exiting...');
+      stopRingtone();
+      clearSafetyTimer();
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      LoginPageErrors('Caller cancelled the call');
+      navigation.goBack();
+    },
+    onCallUnavailable: () => {
+      if (hasActedRef.current) return;
+      hasActedRef.current = true;
+      console.log('🔄 [Polling] Call unavailable, exiting...');
+      stopRingtone();
+      clearSafetyTimer();
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      LoginPageErrors('Caller is no longer available');
+      navigation.goBack();
+    },
+    onCallEnded: (status) => {
+      if (hasActedRef.current) return;
+      hasActedRef.current = true;
+      console.log(`🔄 [Polling] Call ended with status: ${status}, exiting...`);
+      stopRingtone();
+      clearSafetyTimer();
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      LoginPageErrors('Caller is no longer available');
+      navigation.goBack();
+    },
+  });
   
   // State for showing loader
   const [showLoader, setShowLoader] = useState(false);
@@ -182,7 +225,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
           return;
         }
 
-        RingtoneManager.playIncoming();
+        await RingtoneManager.playIncoming();
       } catch (error) {
         console.log('❌ Failed to play incoming call ringtone:', error);
       }
@@ -532,6 +575,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
             <Text style={styles.buttonLabel}>Accept</Text>
           </View>
         </View>
+        <CallDebugConsole logs={logs} onClear={clearLogs} />
       </Animated.View>
 
       <MicPermissionModal

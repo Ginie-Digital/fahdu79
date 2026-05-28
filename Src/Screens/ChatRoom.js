@@ -28,6 +28,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { resetCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
 import { resetAllModal, setPostsCardType, setUnReadChatIcon, toggleFloatingViews, toggleHideShowInformationModal, toggleShowChatRoomSelector } from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import { CallDebugConsole } from '../Components/Calling/CallDebugConsole';
+import { getPollingLogs, clearPollingLogs, subscribePollingLogs } from '../Components/Calling/PollingLogManager';
 
 import { autoLogout } from '../../AutoLogout';
 // import SwitcherSheet from '../Components/HomeComponents/SwitcherSheet';
@@ -235,6 +237,13 @@ const ChatRoom = () => {
   const [loading, setLoading] = useState(false);
 
   const [apiError, setApiError] = useState(false);
+
+  const [logs, setLogs] = useState(getPollingLogs());
+  useEffect(() => {
+    return subscribePollingLogs((updatedLogs) => {
+      setLogs(updatedLogs);
+    });
+  }, []);
 
   const navigation = useNavigation();
 
@@ -767,9 +776,7 @@ const ChatRoom = () => {
 
       {visibility === 'showMessageFloat' && role === 'creator' && !isSearchMode ? <FloatingButton onPress={() => console.log('Floating button pressed')} /> : null}
 
-
-
-      {/* Call Requests Bottom Bar - ONLY for User role */}
+      <CallDebugConsole logs={logs} onClear={clearPollingLogs} />
     </GestureHandlerRootView>
   );
 };

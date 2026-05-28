@@ -43,6 +43,12 @@ const handleIcon = {
   speakerUnMute: require('../../../Assets/Images/speakerMuted.png'),
 };
 
+// 🔒 MODULE-LEVEL guard: tracks roomIds that have already sent UNAVAILABLE.
+// This is OUTSIDE the component so it survives re-mounts, React 19 double-invocations,
+// and any scenario where multiple component instances could exist.
+const _unavailableSentForRoom = new Set();
+let _callScreenMountCount = 0;
+
 const CallScreen = ({ route }) => {
   console.log(route?.params, '`params`');
   useKeepAwake();
@@ -51,6 +57,8 @@ const CallScreen = ({ route }) => {
   const ringtoneRef = useRef(null);
   const callAcceptedRef = useRef(route?.params?.callAccepted || false);
   const isCallEndedRef = useRef(false);
+  const timeoutIdRef = useRef(null);
+  const hasNavigatedAwayRef = useRef(false);
 
   const stopAndUnloadRingtone = useCallback(async () => {
     RingtoneManager.stopAll();
@@ -176,6 +184,8 @@ const CallScreen = ({ route }) => {
   }, [callAccepted]);
 
   async function streamHasEndedModalOkay() {
+    if (hasNavigatedAwayRef.current) return;
+    hasNavigatedAwayRef.current = true;
     try {
       if (isEngineActive.current) {
         await ZegoExpressEngine.instance().stopPlayingStream();
@@ -185,7 +195,11 @@ const CallScreen = ({ route }) => {
       console.log('⚠️ Error during stream end cleanup:', error);
     } finally {
       setCallStreamEndModal(false);
-      navigate('home');
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigate('home');
+      }
     }
   }
 
@@ -247,10 +261,24 @@ const CallScreen = ({ route }) => {
   };
 
   const handleLogout = async fromSocket => {
-    if (isEndingCall) return;
-    setIsEndingCall(true);
+    // 🔒 Use ref for SYNCHRONOUS guard - state is async/batched and allows double calls
+    if (isCallEndedRef.current) {
+      console.log(`⛔ handleLogout BLOCKED - call already ended (ref guard) [room=${route?.params?.roomId}, fromSocket=${fromSocket}]`);
+      return;
+    }
+    console.log(`🔴 [handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
+    console.log(`🔴 [handleLogout] Refs: isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}, hasNavigatedAway=${hasNavigatedAwayRef.current}`);
+    console.log(`🔴 [handleLogout] timeoutIdRef.current = ${timeoutIdRef.current}`);
     isCallEndedRef.current = true;
+    setIsEndingCall(true);
     stopAndUnloadRingtone();
+    if (timeoutIdRef.current) {
+      console.log(`🔴 [handleLogout] CLEARING timeout ID ${timeoutIdRef.current} for room ${route?.params?.roomId}`);
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    } else {
+      console.log(`🔴 [handleLogout] ⚠️ NO timeout to clear! timeoutIdRef.current was null/undefined for room ${route?.params?.roomId}`);
+    }
     console.log(`Logging out from call_${route?.params?.roomId}`);
 
     try {
@@ -260,6 +288,7 @@ const CallScreen = ({ route }) => {
           await engine.stopPlayingStream();
           await engine.logoutRoom(callDetails.callRoomId || `call_${route?.params?.roomId}`);
         }
+        isEngineActive.current = false;
       }
     } catch (error) {
       console.log('⚠️ ZEGO already destroyed or instance failed:', error.message);
@@ -280,8 +309,14 @@ const CallScreen = ({ route }) => {
       }
     }
 
-    if (isMounted.current) {
-      navigate('home');
+    // 🔒 Only navigate once
+    if (isMounted.current && !hasNavigatedAwayRef.current) {
+      hasNavigatedAwayRef.current = true;
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigate('home');
+      }
     }
   };
 
@@ -298,32 +333,63 @@ const CallScreen = ({ route }) => {
   useEffect(() => {
     if (!IS_STARTING) return; // Only for caller
 
-    console.log('⏰ Starting 60-second timeout for call acceptance (bulletproof)');
+    const mountId = ++_callScreenMountCount;
+    const roomId = route?.params?.roomId;
+    console.log(`⏰ [CallScreen:Mount#${mountId}] Starting 60-second timeout for room ${roomId}`);
+    console.log(`⏰ [CallScreen:Mount#${mountId}] Refs: isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}, hasNavigatedAway=${hasNavigatedAwayRef.current}, callAccepted=${callAcceptedRef.current}`);
+    console.log(`⏰ [CallScreen:Mount#${mountId}] Module guard _unavailableSentForRoom: [${[..._unavailableSentForRoom].join(', ')}]`);
 
-    const timeoutId = setTimeout(async () => {
-      if (!callAcceptedRef.current && isMounted.current) {
-        console.log('⏰ 60 seconds passed, call not accepted - sending UNAVAILABLE');
+    timeoutIdRef.current = setTimeout(async () => {
+      console.log(`⏰ [CallScreen:Mount#${mountId}] Timeout FIRED for room ${roomId}`);
+      console.log(`⏰ [CallScreen:Mount#${mountId}] Guard check: callAccepted=${callAcceptedRef.current}, isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}`);
+      console.log(`⏰ [CallScreen:Mount#${mountId}] Module guard has room? ${_unavailableSentForRoom.has(roomId)}`);
+
+      // 🔒 MODULE-LEVEL guard: prevent duplicate UNAVAILABLE across any re-mounts/instances
+      if (_unavailableSentForRoom.has(roomId)) {
+        console.log(`⛔ [CallScreen:Mount#${mountId}] BLOCKED by module-level guard — UNAVAILABLE already sent for room ${roomId}`);
+        return;
+      }
+
+      if (!callAcceptedRef.current && isMounted.current && !isCallEndedRef.current) {
+        // 🔒 Mark as ended FIRST so nothing else can fire
+        isCallEndedRef.current = true;
+        _unavailableSentForRoom.add(roomId);
+        console.log(`⏰ [CallScreen:Mount#${mountId}] 60 seconds passed, call not accepted - sending UNAVAILABLE for room ${roomId}`);
         try {
           await callAcceptManual({
             token,
             data: {
-              roomId: route?.params?.roomId,
+              roomId: roomId,
               callType: route?.params?.callType || 'audio',
               status: 'UNAVAILABLE',
             },
           });
+          console.log(`✅ [CallScreen:Mount#${mountId}] UNAVAILABLE API call completed for room ${roomId}`);
         } catch (error) {
-          console.log('❌ Error sending UNAVAILABLE:', error);
+          console.log(`❌ [CallScreen:Mount#${mountId}] Error sending UNAVAILABLE:`, error);
         } finally {
-          if (isMounted.current) {
+          if (isMounted.current && !hasNavigatedAwayRef.current) {
+            hasNavigatedAwayRef.current = true;
             LoginPageErrors('User not receiving the call');
-            navigate('home');
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigate('home');
+            }
           }
         }
+      } else {
+        console.log(`⛔ [CallScreen:Mount#${mountId}] Timeout SKIPPED — guards blocked. callAccepted=${callAcceptedRef.current}, isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}`);
       }
     }, 60000);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      console.log(`⏰ [CallScreen:Mount#${mountId}] Timeout CLEANUP for room ${roomId}`);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+    };
   }, []); // ← Empty deps = runs once, never resets
 
   // Disable back button
@@ -334,6 +400,19 @@ const CallScreen = ({ route }) => {
     });
     return () => x.remove();
   }, [isOtherUserInRoom]); // Dependency on isOtherUserInRoom for handleLogout
+
+  // 🧭 Navigation Blur Guard: If the screen loses focus (e.g. socket navigates away, or user leaves)
+  // we must immediately end the call context, stop ringing, and clear the 60s timeout.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      console.log(`🧭 [CallScreen] BLUR event fired - user navigated away from room ${route?.params?.roomId}`);
+      if (!isCallEndedRef.current) {
+        hasNavigatedAwayRef.current = true; // Mark as navigated away since we lost focus!
+        handleLogout(true); // End the call context (fromSocket = true skips duplicate API calls)
+      }
+    });
+    return unsubscribe;
+  }, [navigation, route?.params?.roomId]);
 
   // Fetch call token
   useEffect(() => {
@@ -513,18 +592,27 @@ const CallScreen = ({ route }) => {
     // shouldInitEngine is a one-shot trigger that only ever goes false→true.
   }, [callDetails, shouldInitEngine, currentUserId, currentUserDisplayName]);
 
-  // 🔥 Cleanup on unmount
+  // 🔥 Cleanup on unmount — mark refs FIRST to block any pending async work
   useEffect(() => {
     return () => {
-      console.log('CallScreen unmounting, resetting callAccepted');
+      console.log('CallScreen unmounting, resetting callAccepted for room', route?.params?.roomId);
+      // 🔒 Set refs FIRST so any pending setTimeout/async callbacks are blocked
+      isMounted.current = false;
+      isCallEndedRef.current = true;
+      hasNavigatedAwayRef.current = true;
+      // Clear any remaining timeout
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      stopAndUnloadRingtone();
       dispatch(toggleCallAccepted({ status: false }));
       // Clear this roomId from accepted list so the same room can be re-accepted
       if (route?.params?.roomId) {
         dispatch(clearAcceptedRoomId(route.params.roomId));
+        // 🔒 Clean up module-level guard after unmount so future calls to same room work
+        _unavailableSentForRoom.delete(route.params.roomId);
       }
-      isMounted.current = false;
-      isCallEndedRef.current = true;
-      stopAndUnloadRingtone();
     };
   }, []);
 

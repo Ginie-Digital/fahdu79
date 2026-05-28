@@ -1,4 +1,4 @@
-import { createNavigationContainerRef } from "@react-navigation/native";
+import { createNavigationContainerRef, StackActions } from "@react-navigation/native";
 import store from "../Redux/Store";
 
 export const navigationRef = createNavigationContainerRef();
@@ -31,6 +31,15 @@ export function navigate(name, params) {
   if (navigationRef.isReady()) {
     if (['home', 'profile', 'chatroom', 'discover'].includes(name)) {
       if (token) {
+        // 🧼 POP EVERYTHING above chatRoomTab to unmount nested screens (like CallScreen, VideoCallScreen)
+        try {
+          if (navigationRef.canGoBack()) {
+            console.log('🧼 Popping stack to top before switching tab to:', name);
+            navigationRef.dispatch(StackActions.popToTop());
+          }
+        } catch (e) {
+          console.log('⚠️ PopToTop failed or not supported:', e.message);
+        }
         safeNavigate('chatRoomTab', { screen: name });
       } else {
         console.log('⚠️ Ignored authenticated navigation: user is logged out');
@@ -55,6 +64,15 @@ export function navigate(name, params) {
       clearInterval(interval);
       if (['home', 'profile', 'chatroom', 'discover'].includes(name)) {
         if (token) {
+          // 🧼 POP EVERYTHING above chatRoomTab to unmount nested screens (like CallScreen, VideoCallScreen)
+          try {
+            if (navigationRef.canGoBack()) {
+              console.log('🧼 Popping stack to top before switching tab to:', name);
+              navigationRef.dispatch(StackActions.popToTop());
+            }
+          } catch (e) {
+            console.log('⚠️ PopToTop failed or not supported:', e.message);
+          }
           safeNavigate('chatRoomTab', { screen: name });
         } else {
           console.log('⚠️ Ignored authenticated navigation: user is logged out');

@@ -55,6 +55,10 @@ const DESIGN_MODE = false;
 const SAMPLE_IMAGE = 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=1200&q=90';
 const SAMPLE_IMAGE_LOCAL = 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=90';
 
+// 🔒 MODULE-LEVEL guard: tracks roomIds that have already sent UNAVAILABLE.
+const _videoUnavailableSentForRoom = new Set();
+let _videoCallScreenMountCount = 0;
+
 const VideoCallScreen = ({route}) => {
   console.log(route?.params, '`params`');
   useKeepAwake();
@@ -63,6 +67,8 @@ const VideoCallScreen = ({route}) => {
   const ringtoneRef = useRef(null);
   const callAcceptedRef = useRef(route?.params?.callAccepted || false);
   const isCallEndedRef = useRef(false);
+  const timeoutIdRef = useRef(null);
+  const hasNavigatedAwayRef = useRef(false);
 
   const stopAndUnloadRingtone = useCallback(async () => {
     RingtoneManager.stopAll();
@@ -231,6 +237,8 @@ const VideoCallScreen = ({route}) => {
   }
 
   const streamHasEndedModalOkay = useCallback(async () => {
+    if (hasNavigatedAwayRef.current) return;
+    hasNavigatedAwayRef.current = true;
     try {
       if (isEngineActive.current) {
         const engine = ZegoExpressEngine.instance();
@@ -243,9 +251,13 @@ const VideoCallScreen = ({route}) => {
       console.log('⚠️ ZEGO cleanup failed or engine already destroyed:', error.message);
     } finally {
       setCallStreamEndModal(false);
-      navigate('home');
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigate('home');
+      }
     }
-  }, [route?.params?.roomId, navigate]);
+  }, [route?.params?.roomId, navigate, navigation]);
 
   async function leaveCallHandler() {
     try {
@@ -327,10 +339,23 @@ const VideoCallScreen = ({route}) => {
   };
 
   const handleLogout = async (fromSocket) => {
-    if (isEndingCall) return;
-    setIsEndingCall(true);
+    // 🔒 Use ref for SYNCHRONOUS guard - state is async/batched and allows double calls
+    if (isCallEndedRef.current) {
+      console.log(`⛔ [VideoCallScreen] handleLogout BLOCKED - call already ended (ref guard) [room=${route?.params?.roomId}, fromSocket=${fromSocket}]`);
+      return;
+    }
+    console.log(`🔴 [VideoCallScreen:handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
+    console.log(`🔴 [VideoCallScreen:handleLogout] timeoutIdRef.current = ${timeoutIdRef.current}`);
     isCallEndedRef.current = true;
+    setIsEndingCall(true);
     stopAndUnloadRingtone();
+    if (timeoutIdRef.current) {
+      console.log(`🔴 [VideoCallScreen:handleLogout] CLEARING timeout ID ${timeoutIdRef.current}`);
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    } else {
+      console.log(`🔴 [VideoCallScreen:handleLogout] ⚠️ NO timeout to clear!`);
+    }
     console.log(`Logging out from call_${route?.params?.roomId}`);
     isEngineActive.current = false;
 
@@ -359,8 +384,14 @@ const VideoCallScreen = ({route}) => {
       }
     }
 
-    if (isMounted.current) {
-      navigate('home');
+    // 🔒 Only navigate once
+    if (isMounted.current && !hasNavigatedAwayRef.current) {
+      hasNavigatedAwayRef.current = true;
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigate('home');
+      }
     }
   };
 
@@ -369,32 +400,62 @@ const VideoCallScreen = ({route}) => {
     if (!IS_STARTING) return;
 
     if (DESIGN_MODE) return;
-    console.log('⏰ Starting 60-second timeout for call acceptance (bulletproof)');
+    const mountId = ++_videoCallScreenMountCount;
+    const roomId = route?.params?.roomId;
+    console.log(`⏰ [VideoCallScreen:Mount#${mountId}] Starting 60-second timeout for room ${roomId}`);
+    console.log(`⏰ [VideoCallScreen:Mount#${mountId}] Refs: isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}, callAccepted=${callAcceptedRef.current}`);
 
-    const timeoutId = setTimeout(async () => {
-      if (!callAcceptedRef.current && isMounted.current) {
-        console.log('⏰ 60 seconds passed, call not accepted - sending UNAVAILABLE');
+    timeoutIdRef.current = setTimeout(async () => {
+      console.log(`⏰ [VideoCallScreen:Mount#${mountId}] Timeout FIRED for room ${roomId}`);
+      console.log(`⏰ [VideoCallScreen:Mount#${mountId}] Guard check: callAccepted=${callAcceptedRef.current}, isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}`);
+      console.log(`⏰ [VideoCallScreen:Mount#${mountId}] Module guard has room? ${_videoUnavailableSentForRoom.has(roomId)}`);
+
+      // 🔒 MODULE-LEVEL guard: prevent duplicate UNAVAILABLE across any re-mounts/instances
+      if (_videoUnavailableSentForRoom.has(roomId)) {
+        console.log(`⛔ [VideoCallScreen:Mount#${mountId}] BLOCKED by module-level guard — UNAVAILABLE already sent for room ${roomId}`);
+        return;
+      }
+
+      if (!callAcceptedRef.current && isMounted.current && !isCallEndedRef.current) {
+        // 🔒 Mark as ended FIRST so nothing else can fire
+        isCallEndedRef.current = true;
+        _videoUnavailableSentForRoom.add(roomId);
+        console.log(`⏰ [VideoCallScreen:Mount#${mountId}] 60 seconds passed, call not accepted - sending UNAVAILABLE for room ${roomId}`);
         try {
           await callAcceptManual({
             token,
             data: {
-              roomId: route?.params?.roomId,
+              roomId: roomId,
               callType: route?.params?.callType || 'video',
               status: 'UNAVAILABLE',
             },
           });
+          console.log(`✅ [VideoCallScreen:Mount#${mountId}] UNAVAILABLE API call completed for room ${roomId}`);
         } catch (error) {
-          console.log('❌ Error sending UNAVAILABLE:', error);
+          console.log(`❌ [VideoCallScreen:Mount#${mountId}] Error sending UNAVAILABLE:`, error);
         } finally {
-          if (isMounted.current) {
+          if (isMounted.current && !hasNavigatedAwayRef.current) {
+            hasNavigatedAwayRef.current = true;
             LoginPageErrors('User not receiving the call');
-            navigate('home');
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigate('home');
+            }
           }
         }
+      } else {
+        console.log(`⛔ [VideoCallScreen:Mount#${mountId}] Timeout SKIPPED — guards blocked.`);
       }
     }, 60000);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      console.log(`⏰ [VideoCallScreen:Mount#${mountId}] Timeout CLEANUP for room ${roomId}`);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+    };
   }, []); // ← Empty deps = runs once, never resets
 
   // Fetch coins on mount
@@ -412,6 +473,20 @@ const VideoCallScreen = ({route}) => {
     });
     return () => x.remove();
   }, [isOtherUserInRoom]);
+
+  // 🧭 Navigation Blur Guard: If the screen loses focus (e.g. socket navigates away, or user leaves)
+  // we must immediately end the call context, stop ringing, and clear the 60s timeout.
+  useEffect(() => {
+    if (DESIGN_MODE) return;
+    const unsubscribe = navigation.addListener('blur', () => {
+      console.log(`🧭 [VideoCallScreen] BLUR event fired - user navigated away from room ${route?.params?.roomId}`);
+      if (!isCallEndedRef.current) {
+        hasNavigatedAwayRef.current = true; // Mark as navigated away since we lost focus!
+        handleLogout(true); // End the call context (fromSocket = true skips duplicate API calls)
+      }
+    });
+    return unsubscribe;
+  }, [navigation, route?.params?.roomId]);
 
   // Fetch call token
   useEffect(() => {
@@ -607,19 +682,28 @@ const VideoCallScreen = ({route}) => {
     };
   }, [callDetails, shouldInitEngine, currentUserId, currentUserDisplayName]);
 
-  // 🔥 Cleanup on unmount
+  // 🔥 Cleanup on unmount — mark refs FIRST to block any pending async work
   useEffect(() => {
     if (DESIGN_MODE) return;
     return () => {
-      console.log('VideoCallScreen unmounting, resetting callAccepted');
+      console.log('VideoCallScreen unmounting, resetting callAccepted for room', route?.params?.roomId);
+      // 🔒 Set refs FIRST so any pending setTimeout/async callbacks are blocked
+      isMounted.current = false;
+      isCallEndedRef.current = true;
+      hasNavigatedAwayRef.current = true;
+      // Clear any remaining timeout
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      stopAndUnloadRingtone();
       dispatch(toggleCallAccepted({status: false}));
       // Clear this roomId from accepted list so the same room can be re-accepted
       if (route?.params?.roomId) {
         dispatch(clearAcceptedRoomId(route.params.roomId));
+        // 🔒 Clean up module-level guard after unmount so future calls to same room work
+        _videoUnavailableSentForRoom.delete(route.params.roomId);
       }
-      isMounted.current = false;
-      isCallEndedRef.current = true;
-      stopAndUnloadRingtone();
     };
   }, []);
 

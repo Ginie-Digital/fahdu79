@@ -117,8 +117,11 @@ const CreatePassword = ({route}) => {
 
         <Text style={styles.fieldName}>New Password</Text>
 
-        <View>
-          <View style={[styles.textInputContainer, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {backgroundColor: '#FEEBEB'} : null]}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'password' && (
+            <InputOverlay isVisible />
+          )}
+          <View style={[styles.textInputContainer, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {backgroundColor: '#FEEBEB'} : null, {marginTop: 0}]}>
             <TextInput
               ref={passwordInputRef} // Ref for this input
               style={[styles.textInputs, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {color: '#FF5252', backgroundColor: '#FEEBEB'} : null]}
@@ -137,31 +140,25 @@ const CreatePassword = ({route}) => {
               {showPassword ? <Image  source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
-          {focusedInput === 'password' && (
-            <InputOverlay
-              isVisible
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.8, 4.8),
-              }}
-            />
-          )}
-
-          {password.length > 0 && (
-            <>
-              {isPasswordStrong ? null : (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                </View>
-              )}
-            </>
-          )}
         </View>
+
+        {password.length > 0 && (
+          <>
+            {isPasswordStrong ? null : (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            )}
+          </>
+        )}
 
         <Text style={styles.fieldName}>Confirm New Password</Text>
 
-        <View>
-          <View style={[styles.textInputContainer]}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'confirmPassword' && (
+            <InputOverlay isVisible />
+          )}
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               ref={confirmPasswordInputRef} // Ref for this input
               style={styles.textInputs}
@@ -180,15 +177,6 @@ const CreatePassword = ({route}) => {
               {cShowPassword ? <Image source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
-          {focusedInput === 'confirmPassword' && (
-            <InputOverlay
-              isVisible
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.8, 4.8),
-              }}
-            />
-          )}
         </View>
 
         <AnimatedButton title={'Reset Password'} onPress={setNewPasswordHandler} loading={loading} />
@@ -247,11 +235,12 @@ const styles = StyleSheet.create({
   },
 
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2.67),

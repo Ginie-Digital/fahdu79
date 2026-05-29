@@ -109,21 +109,15 @@ const ForgetPassword = ({route}) => {
             <Text style={styles.subHead}>Don’t worry! It occurs. Please enter the email address linked with your account.</Text>
             <Text style={styles.fieldName}>Email</Text>
 
-            <View>
-              <View style={styles.textInputContainer}>
+            <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+              <InputOverlay isVisible={isKeyboardVisible} />
+              <View style={[styles.textInputContainer, {marginTop: 0}]}>
                 <TextInput testID="forgot-password-email-input" accessibilityLabel="forgot-password-email-input" selectionColor={selectionTwin()}
                 
                 selectionHandleColor={'#ffa86b'}
                 
                 cursorColor={'#1e1e1e'} placeholderTextColor="#B2B2B2" placeholder="Enter Email " autoCapitalize={'none'} style={styles.textInputs} value={email} onChangeText={setEmail} keyboardType="email-address" />
               </View>
-              <InputOverlay
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.8, 4.8),
-                }}
-                isVisible={isKeyboardVisible}
-              />
             </View>
           </>
         ) : (
@@ -193,11 +187,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2.67),

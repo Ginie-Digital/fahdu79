@@ -69,8 +69,11 @@ const SignupEmail = () => {
         <Text style={styles.subHead}>Earn from your content on your terms. Sign up now!</Text>
 
         <Text style={styles.fieldName}>Email</Text>
-        <View>
-          <View style={styles.textInputContainer}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'email' && (
+            <InputOverlay isVisible={isKeyboardVisible} />
+          )}
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               testID="signup-email-input"
               accessibilityLabel="signup-email-input"
@@ -89,20 +92,14 @@ const SignupEmail = () => {
               onBlur={() => setFocusedInput(null)}
             />
           </View>
-          {focusedInput === 'email' && (
-            <InputOverlay
-              isVisible={isKeyboardVisible}
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.4, 4.8),
-              }}
-            />
-          )}
         </View>
 
         <Text style={styles.fieldName}>Who referred you? (Optional)</Text>
-        <View>
-          <View style={styles.textInputContainer}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'referral' && (
+            <InputOverlay isVisible={isKeyboardVisible} />
+          )}
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               testID="signup-referral-input"
               accessibilityLabel="signup-referral-input"
@@ -121,20 +118,10 @@ const SignupEmail = () => {
               onBlur={() => setFocusedInput(null)}
             />
           </View>
-          <Text style={styles.referralHint}>
-            Search for the creator who referred you, or simply paste their referral link here.
-          </Text>
-
-          {focusedInput === 'referral' && (
-            <InputOverlay
-              isVisible={isKeyboardVisible}
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.4, 4.8),
-              }}
-            />
-          )}
         </View>
+        <Text style={styles.referralHint}>
+          Search for the creator who referred you, or simply paste their referral link here.
+        </Text>
 
         <AnimatedButton testID="signup-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} />
 
@@ -186,11 +173,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2),

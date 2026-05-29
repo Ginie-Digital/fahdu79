@@ -36,8 +36,9 @@ const LoginEmail = () => {
         <Text style={styles.heading}>Login</Text>
         <Text style={styles.subHead}>Welcome to Fahdu, Login to Continue...</Text>
         <Text style={styles.fieldName}>Email</Text>
-        <View>
-          <View style={styles.textInputContainer}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          <InputOverlay isVisible={isKeyboardVisible} />
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               testID="login-email-input"
               accessibilityLabel="login-email-input"
@@ -55,13 +56,6 @@ const LoginEmail = () => {
               maxLength={50}
             />
           </View>
-          <InputOverlay
-            isVisible={isKeyboardVisible}
-            style={{
-              marginLeft: responsiveWidth(1.06),
-              marginTop: nTwins(4.8, 4.8),
-            }}
-          />
         </View>
 
         <AnimatedButton testID="login-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} />
@@ -114,11 +108,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2.67),

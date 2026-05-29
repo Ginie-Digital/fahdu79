@@ -296,8 +296,11 @@ const VerificationStepOne = ({route}) => {
           <View style={{marginTop: responsiveWidth(8)}}>
             <Text style={styles.titles}>Personal Information</Text>
           </View>
-          <View>
-            <View style={styles.textInputContainer}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'fullName' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}]}>
               <TextInput
                 onFocus={() => setFocusedInput('fullName')}
                 maxLength={30}
@@ -313,19 +316,13 @@ const VerificationStepOne = ({route}) => {
                 onChangeText={t => setFullName(t)}
               />
             </View>
-            {focusedInput === 'fullName' && (
-              <InputOverlay
-                isVisible={isKeyboardVisible}
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.8, 4.8),
-                }}
-              />
-            )}
           </View>
 
-          <View>
-            <View style={styles.textInputContainer}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'fahduUserName' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}]}>
               <TextInput
                 maxLength={30}
                 selectionColor={'#1e1e1e'}
@@ -340,15 +337,6 @@ const VerificationStepOne = ({route}) => {
                 onChangeText={t => setFahduUserName(t)}
               />
             </View>
-            {focusedInput === 'fahduUserName' && (
-              <InputOverlay
-                isVisible={isKeyboardVisible}
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.8, 4.8),
-                }}
-              />
-            )}
           </View>
 
           {availability === 'TAKEN' && (
@@ -454,10 +442,11 @@ const styles = StyleSheet.create({
   },
   textInputContainer: {
     borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2.67),

@@ -14,15 +14,12 @@ export default InputOverlay;
 const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
-    borderBottomWidth: responsiveWidth(1.2),
-    borderRightWidth: responsiveWidth(1.2),
-    borderWidth: 2,
-    backgroundColor: 'black',
+    top: responsiveWidth(1.06),
+    left: responsiveWidth(1.06),
+    right: -responsiveWidth(1.06),
+    bottom: -responsiveWidth(1.06),
+    backgroundColor: '#1e1e1e',
     borderRadius: responsiveWidth(3.73),
-    width: '100%',
-    height: responsiveHeight(6.65),
-    marginLeft: responsiveWidth(1.06),
-    marginTop: nTwins(2.6, 4),
     zIndex: -1,
   },
 });

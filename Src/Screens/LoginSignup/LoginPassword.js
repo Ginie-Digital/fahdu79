@@ -244,8 +244,9 @@ const LoginPassword = ({ route }) => {
         <Text style={styles.subHead}>Welcome to Fahdu, Login to Continue...</Text>
         <Text style={styles.fieldName}>Password</Text>
 
-        <View>
-          <View style={styles.textInputContainer}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          <InputOverlay isVisible={isKeyboardVisible} />
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               testID="login-password-input"
               accessibilityLabel="login-password-input"
@@ -266,26 +267,18 @@ const LoginPassword = ({ route }) => {
               {isPasswordVisible ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
-
-          <Pressable testID="login-forgot-password-link" accessibilityLabel="login-forgot-password-link" style={{ alignSelf: 'flex-end', marginTop: responsiveWidth(2.93) }} onPress={() => !isLoginDisabled && navigate('forgetPassword', { email: route?.params?.email })} disabled={isLoginDisabled}>
-            <Text
-              style={{
-                fontFamily: 'Rubik-Medium',
-                fontSize: responsiveFontSize(1.48),
-                color: isLoginDisabled ? '#B2B2B2' : '#1e1e1e',
-              }}>
-              Forgot Password?
-            </Text>
-          </Pressable>
-
-          <InputOverlay
-            style={{
-              marginLeft: responsiveWidth(1.06),
-              marginTop: nTwins(4.8, 4.8),
-            }}
-            isVisible={isKeyboardVisible}
-          />
         </View>
+
+        <Pressable testID="login-forgot-password-link" accessibilityLabel="login-forgot-password-link" style={{ alignSelf: 'flex-end', marginTop: responsiveWidth(2.93) }} onPress={() => !isLoginDisabled && navigate('forgetPassword', { email: route?.params?.email })} disabled={isLoginDisabled}>
+          <Text
+            style={{
+              fontFamily: 'Rubik-Medium',
+              fontSize: responsiveFontSize(1.48),
+              color: isLoginDisabled ? '#B2B2B2' : '#1e1e1e',
+            }}>
+            Forgot Password?
+          </Text>
+        </Pressable>
 
         <AnimatedButton testID="login-password-submit-button" title={'Login'} onPress={logInHandler} loading={loading} disabled={isLoginDisabled} />
 
@@ -344,11 +337,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2.67),

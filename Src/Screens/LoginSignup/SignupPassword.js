@@ -139,8 +139,11 @@ const SignupPassword = ({route}) => {
         <Text style={styles.subHead}>Earn from your content on your terms.</Text>
 
         <Text style={styles.fieldName}>Password</Text>
-        <View>
-          <View style={styles.textInputContainer}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'password' && (
+            <InputOverlay isVisible />
+          )}
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               testID="signup-password-input"
               accessibilityLabel="signup-password-input"
@@ -161,30 +164,24 @@ const SignupPassword = ({route}) => {
               {showPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
-          {focusedInput === 'password' && (
-            <InputOverlay
-              isVisible
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.8, 4.8),
-              }}
-            />
-          )}
-
-          {password.length > 0 && (
-            <>
-              {isPasswordStrong ? null : (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                </View>
-              )}
-            </>
-          )}
         </View>
 
+        {password.length > 0 && (
+          <>
+            {isPasswordStrong ? null : (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            )}
+          </>
+        )}
+
         <Text style={styles.fieldName}>Confirm Password</Text>
-        <View>
-          <View style={styles.textInputContainer}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'confirmPassword' && (
+            <InputOverlay isVisible />
+          )}
+          <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
               testID="signup-confirm-password-input"
               accessibilityLabel="signup-confirm-password-input"
@@ -204,15 +201,6 @@ const SignupPassword = ({route}) => {
               {cShowPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
             </Pressable>
           </View>
-          {focusedInput === 'confirmPassword' && (
-            <InputOverlay
-              isVisible
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.8, 4.8),
-              }}
-            />
-          )}
         </View>
 
         <AnimatedButton testID="signup-password-submit-button" title={'Sign Up'} onPress={handleSignup} loading={loading} />
@@ -265,11 +253,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#1e1e1e',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2.67),

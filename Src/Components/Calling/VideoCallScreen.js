@@ -1118,7 +1118,7 @@ const VideoCallScreen = ({route}) => {
         </Animated.View>
       )}
 
-      <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title={`Call terminated [Trigger: ${endTriggerSource}]`} />
+      <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title="Call terminated" />
 
       {/* 🎉 Confetti Lottie Overlay */}
       {confettiVisible && (

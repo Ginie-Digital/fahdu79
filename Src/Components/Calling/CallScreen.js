@@ -716,7 +716,7 @@ const CallScreen = ({ route }) => {
           )}
         </TouchableOpacity>
 
-        <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title={`Call terminated [Trigger: ${endTriggerSource}]`} />
+        <StreamEndedUserModal visible={callStreamEndModal} onPress={streamHasEndedModalOkay} title="Call terminated" />
       </View>
       <CallDebugConsole logs={logs} onClear={clearLogs} />
     </View>

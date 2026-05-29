@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { height: SCREEN_H } = Dimensions.get('window');
 
 export const CallDebugConsole = ({ logs, onClear }) => {
+  return null; // Hidden for production deployment
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef(null);

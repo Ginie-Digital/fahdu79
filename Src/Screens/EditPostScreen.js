@@ -7,6 +7,7 @@ import {chatRoomSuccess, LoginPageErrors} from '../Components/ErrorSnacks';
 import {editMyPostCaption} from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import AnimatedButton from '../Components/AnimatedButton';
 import {useNavigation} from '@react-navigation/native';
+import {selectionTwin, selectionHandleTwin} from '../../DesiginData/Utility';
 
 const EditPostScreen = ({route}) => {
   const {postId, postContent: initialContent} = route.params;
@@ -193,14 +194,15 @@ const EditPostScreen = ({route}) => {
               onChangeText={handleDescriptionChange}
               onSelectionChange={e => setSelection(e.nativeEvent.selection)}
               maxLength={500}
-              selectionColor={'#1e1e1e'}
+              selectionColor={selectionTwin()}
+              selectionHandleColor={selectionHandleTwin()}
               cursorColor={'#1e1e1e'}
               placeholderTextColor="#B2B2B2"
               placeholder={description ? "" : "Write your post description..."}
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'none'}
-              style={[styles.textInputs, {color: 'transparent', zIndex: 1}]}
+              style={[styles.textInputs, {color: selection.start !== selection.end ? '#1e1e1e' : 'transparent', zIndex: 1}]}
               multiline
               scrollEnabled={false}
               textAlignVertical="top"

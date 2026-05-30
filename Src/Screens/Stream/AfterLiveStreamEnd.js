@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Pressable, Platform, BackHandler } from "react-native";
+import { StyleSheet, Text, View, Image, Pressable, Platform, BackHandler, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { responsiveFontSize, responsiveWidth } from "react-native-responsive-dimensions";
@@ -83,7 +83,7 @@ const AfterLiveStreamEnd = ({ route }) => {
   return (
     <SafeAreaProvider style={styles.flexOne}>
       <SafeAreaView style={styles.flexOne}>
-        <View style={[styles.flexOne, styles.container]}>
+        <ScrollView style={styles.flexOne} contentContainerStyle={styles.container}>
 
           <Pressable
             style={{
@@ -176,7 +176,7 @@ const AfterLiveStreamEnd = ({ route }) => {
           </View>
 
 
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -194,6 +194,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     paddingHorizontal: responsiveWidth(4),
+    flexGrow: 1,
+    paddingBottom: responsiveWidth(15),
   },
 
   titleText: {

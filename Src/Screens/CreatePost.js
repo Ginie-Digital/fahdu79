@@ -12,7 +12,7 @@ import {LoginPageErrors, successSnacks} from '../Components/ErrorSnacks';
 import DIcon from '../../DesiginData/DIcons';
 import {dismissProgressNotification, displayNotificationProgressIndicator} from '../../Notificaton';
 import {autoLogout} from '../../AutoLogout';
-import {FONT_SIZES, padios, WIDTH_SIZES} from '../../DesiginData/Utility';
+import {FONT_SIZES, padios, WIDTH_SIZES, selectionTwin, selectionHandleTwin} from '../../DesiginData/Utility';
 import {PERMISSIONS, RESULTS, checkMultiple, request} from 'react-native-permissions';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import {addNewPostToMyProfileCache, setFeedCacheMyPost} from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
@@ -26,13 +26,15 @@ import {resetPostIndex, resetUploadProgress, setPostIndex, setUploadProgress, st
 import {navigate} from '../../Navigation/RootNavigation';
 import Carousel from 'react-native-reanimated-carousel';
 import CreatorSelectorModal from '../Components/Verification/CreatorSelectorModal';
+import useKeyboardHook from '../CustomHooks/useKeyboardHook';
 
 
-const CreatePost = ({route}) => {
+const CreatePost = ({route = {}}) => {
   console.log(route?.params?.uri, '{}{}{})__+_+_+_+_+');
 
   const scrollViewRef = useRef(null);
   const textInputRef = useRef(null);
+  const { isKeyboardVisible, keyboardHeight } = useKeyboardHook();
 
   if (route?.params?.uris) {
     route.params.uris.forEach((uri, i) => {
@@ -738,11 +740,11 @@ const CreatePost = ({route}) => {
   return (
     <View style={styles.container} testID="create-post-screen">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{flex: 1}}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} // Adjust this value based on your header height
       >
-        <ScrollView keyboardDismissMode="interactive" ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: Platform.OS === 'ios' ? 120 : 40, paddingHorizontal: responsiveWidth(4), paddingTop: responsiveWidth(4)}} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={false}>
+        <ScrollView keyboardDismissMode="interactive" ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: Platform.OS === 'ios' ? 120 : (isKeyboardVisible ? keyboardHeight + 100 : 80), paddingHorizontal: responsiveWidth(4), paddingTop: responsiveWidth(4)}} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={false}>
           <View style={{borderWidth: responsiveWidth(0.5), borderRadius: responsiveWidth(3.73), width: responsiveWidth(92)}}>
             <View style={styles.FollowersSubScribersToggle}>
               {userRole === 'admin' ? (
@@ -883,14 +885,15 @@ const CreatePost = ({route}) => {
               <TextInput
                 testID="create-post-caption-input"
                 ref={textInputRef}
-                selectionColor={'#1e1e1e'}
+                selectionColor={selectionTwin()}
+                selectionHandleColor={selectionHandleTwin()}
                 cursorColor={'#1e1e1e'}
                 onFocus={handleTextInputFocus}
                 placeholderTextColor={'#7e7e7e'}
                 inputAccessoryViewID={inputAccessoryViewID}
                 onSelectionChange={(event) => setSelection(event.nativeEvent.selection)}
                 value={caption}
-                style={[styles.textInputStyle, {color: 'transparent', zIndex: 1, minHeight: Platform.OS === 'ios' ? 100 : 80}]}
+                style={[styles.textInputStyle, {color: selection.start !== selection.end ? '#1e1e1e' : 'transparent', zIndex: 1, minHeight: Platform.OS === 'ios' ? 100 : 80}]}
                 maxLength={500}
                 placeholder={caption ? "" : "Write caption here..."}
                 multiline

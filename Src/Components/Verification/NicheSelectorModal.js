@@ -31,8 +31,6 @@ const NicheSelectorModal = () => {
     if (visible) {
       setTempSelected(confirmed || []);
       setSearchQuery('');
-      // Focus after animation completes
-      setTimeout(() => inputRef.current?.focus(), 250);
     }
   }, [visible, confirmed]);
 
@@ -66,10 +64,19 @@ const NicheSelectorModal = () => {
       backdropColor="#00000060"
       onBackButtonPress={handleClose}
       onBackdropPress={handleClose}
+      onModalShow={() => {
+        // Delay focus so the modal fully settles before keyboard triggers avoidKeyboard repositioning
+        setTimeout(() => inputRef.current?.focus(), 150);
+      }}
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      animationInTiming={200}
-      animationOutTiming={200}
+      animationInTiming={300}
+      animationOutTiming={250}
+      backdropTransitionInTiming={300}
+      backdropTransitionOutTiming={250}
+      hideModalContentWhileAnimating={true}
+      useNativeDriver={true}
+      useNativeDriverForBackdrop={true}
       style={styles.modalContainer}
     >
       <View style={styles.dialog}>

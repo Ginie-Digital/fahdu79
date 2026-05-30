@@ -34,8 +34,6 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
       setSearchQuery(initialSearch);
       setLocalCreators([]); // Clear old results on open
       if (initialSearch) triggerSearch({name: initialSearch});
-      // Allow modal slide-in animation to finish before focusing
-      setTimeout(() => inputRef.current?.focus(), 250);
     }
   }, [visible, initialSearch]);
 
@@ -88,10 +86,19 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
       backdropColor="#00000060"
       onBackButtonPress={handleClose}
       onBackdropPress={handleClose}
+      onModalShow={() => {
+        // Delay focus so the modal fully settles before keyboard triggers avoidKeyboard repositioning
+        setTimeout(() => inputRef.current?.focus(), 150);
+      }}
       animationIn="slideInUp"
       animationOut="slideOutDown"
-      animationInTiming={200}
-      animationOutTiming={200}
+      animationInTiming={300}
+      animationOutTiming={250}
+      backdropTransitionInTiming={300}
+      backdropTransitionOutTiming={250}
+      hideModalContentWhileAnimating={true}
+      useNativeDriver={true}
+      useNativeDriverForBackdrop={true}
       style={styles.modalContainer}
     >
       <View style={styles.dialog}>

@@ -21,6 +21,7 @@ import RevenueChartShimmer from '../Components/Shimmers/RevenueChartShimmer';
 import RevenueFilterModal from './revenue/RevenueFilterModal';
 import moment from 'moment';
 import Loader from '../Components/Loader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const earningsData = [
   {id: '1', label: 'Live', amount: '100', color: '#FFD2B2'},
@@ -41,6 +42,7 @@ const earningsDataList = [
 ];
 
 const ManageRevenueDashboard = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [graphData, setGraphData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -332,7 +334,7 @@ const ManageRevenueDashboard = () => {
   return (
     <ScrollView 
       style={{flex: 1, backgroundColor: '#fff'}} 
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) + 50 }]}
       showsVerticalScrollIndicator={false}
     >
 

@@ -199,8 +199,11 @@ const EditProfiler = ({route, navigation}) => {
       {route?.params?.type === 'personal' && (
         <>
           <Text style={styles.fieldName}>Full Name</Text>
-          <View>
-            <View style={[styles.textInputContainer, errors.fullName && styles.inputError]}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'fullName' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}, errors.fullName && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -220,24 +223,19 @@ const EditProfiler = ({route, navigation}) => {
                 }}
                 value={fullName}
                 onFocus={() => setFocusedInput('fullName')}
+                onBlur={() => setFocusedInput(null)}
                 maxLength={30}
               />
             </View>
-            {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
-            {focusedInput === 'fullName' && (
-              <InputOverlay
-                isVisible={isKeyboardVisible}
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.4, 4.8),
-                }}
-              />
-            )}
           </View>
+          {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
           <Text style={styles.fieldName}>Username</Text>
-          <View>
-            <View style={[styles.textInputContainer, errors.userName && styles.inputError]}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'userName' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}, errors.userName && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -257,27 +255,22 @@ const EditProfiler = ({route, navigation}) => {
                 }}
                 value={userName}
                 onFocus={() => setFocusedInput('userName')}
+                onBlur={() => setFocusedInput(null)}
                 maxLength={30}
               />
             </View>
-            {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
-            {focusedInput === 'userName' && (
-              <InputOverlay
-                isVisible={isKeyboardVisible}
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.4, 4.8),
-                }}
-              />
-            )}
           </View>
+          {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
         </>
       )}
 
       {route?.params?.type === 'bio' && (
         <>
-          <View>
-            <View style={[styles.textInputContainer, errors.bio && styles.inputError]}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'bio' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}, errors.bio && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -296,6 +289,8 @@ const EditProfiler = ({route, navigation}) => {
                   }
                 }}
                 value={bio}
+                onFocus={() => setFocusedInput('bio')}
+                onBlur={() => setFocusedInput(null)}
                 multiline
                 textAlignVertical="top"
                 maxLength={100}
@@ -304,24 +299,19 @@ const EditProfiler = ({route, navigation}) => {
                 {bio?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.bio}</Text>
               </Text>
             </View>
-            {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
-            <InputOverlay
-              isVisible={isKeyboardVisible}
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.4, 4.8),
-                height: 129,
-              }}
-            />
           </View>
+          {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
         </>
       )}
 
       {route?.params?.type === 'desc' && (
         <>
           <Text style={styles.fieldName}>What's your role?</Text>
-          <View>
-            <View style={[styles.textInputContainer, errors.descriptionHeading && styles.inputError]}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'descriptionHeading' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}, errors.descriptionHeading && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -341,24 +331,19 @@ const EditProfiler = ({route, navigation}) => {
                 }}
                 value={descriptionHeading}
                 onFocus={() => setFocusedInput('descriptionHeading')}
+                onBlur={() => setFocusedInput(null)}
                 maxLength={50}
               />
             </View>
-            {errors.descriptionHeading && <Text style={styles.errorText}>{errors.descriptionHeading}</Text>}
-            {focusedInput === 'descriptionHeading' && (
-              <InputOverlay
-                isVisible={isKeyboardVisible}
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.4, 4.8),
-                }}
-              />
-            )}
           </View>
+          {errors.descriptionHeading && <Text style={styles.errorText}>{errors.descriptionHeading}</Text>}
 
           <Text style={styles.fieldName}>Describe your role</Text>
-          <View>
-            <View style={[styles.textInputContainer, errors.description && styles.inputError]}>
+          <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
+            {focusedInput === 'description' && (
+              <InputOverlay isVisible={isKeyboardVisible} />
+            )}
+            <View style={[styles.textInputContainer, {marginTop: 0}, errors.description && styles.inputError]}>
               <TextInput
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
@@ -379,6 +364,7 @@ const EditProfiler = ({route, navigation}) => {
                 multiline
                 value={description}
                 onFocus={() => setFocusedInput('description')}
+                onBlur={() => setFocusedInput(null)}
                 textAlignVertical="top"
                 maxLength={500}
               />
@@ -387,18 +373,8 @@ const EditProfiler = ({route, navigation}) => {
                 {description?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.description}</Text>
               </Text>
             </View>
-            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
-            {focusedInput === 'description' && (
-              <InputOverlay
-                isVisible={isKeyboardVisible}
-                style={{
-                  marginLeft: responsiveWidth(1.06),
-                  marginTop: nTwins(4.4, 4.8),
-                  height: 205,
-                }}
-              />
-            )}
           </View>
+          {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
         </>
       )}
 
@@ -439,11 +415,11 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
+    borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2),
@@ -477,7 +453,7 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#E74C3C',
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
 });
 

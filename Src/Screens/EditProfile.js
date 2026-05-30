@@ -256,7 +256,7 @@ const EditProfile = ({route}) => {
 
   return (
     <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
-      <KeyboardAwareScrollView style={styles.container} keyboardDismissMode="interactive">
+      <KeyboardAwareScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1, paddingBottom: 60}} keyboardDismissMode="interactive">
         <MyProfilePicture setRefresh={setRefresh} isEditable={true} />
 
         <PersonalDetailsCard fullName={fullName} username={userName} emailAddress={emailAddress} errors={errors} />

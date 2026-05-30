@@ -31,7 +31,9 @@ const PhoneNumberScreen = () => {
   };
 
   const handlePhoneChange = text => {
-    setPhone(text);
+    // Only allow numbers
+    const cleaned = text.replace(/[^0-9]/g, '');
+    setPhone(cleaned);
     // Clear error when user starts typing again
     if (phoneError) setPhoneError('');
   };
@@ -67,17 +69,23 @@ const PhoneNumberScreen = () => {
         <Text style={styles.subHead}>Please submit the required details so the team can assist you better.</Text>
 
         <Text style={styles.fieldName}>Phone Number</Text>
-        <View>
-          <View style={[styles.textInputContainer, phoneError ? styles.errorInput : null]}>
+        <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
+          {focusedInput === 'phone' && (
+            <InputOverlay isVisible />
+          )}
+          <View style={[styles.textInputContainer, {marginTop: 0, overflow: 'hidden'}, phoneError ? styles.errorInput : null]}>
+            <View style={styles.countryPicker}>
+              <Text style={styles.code}>+91</Text>
+            </View>
             <TextInput
               ref={phoneInputRef}
-              style={[styles.textInputs, phoneError ? styles.errorTextInput : null]}
+              style={[styles.textInputs, {paddingLeft: responsiveWidth(4)}, phoneError ? styles.errorTextInput : null]}
               onChangeText={handlePhoneChange}
               onFocus={() => setFocusedInput('phone')}
               onBlur={() => setFocusedInput(null)}
               maxLength={10}
               value={phone}
-              keyboardType="phone-pad"
+              keyboardType="number-pad"
               placeholder="9876543210"
               selectionHandleColor={'#ffa86b'}
               cursorColor={'#1e1e1e'}
@@ -85,21 +93,12 @@ const PhoneNumberScreen = () => {
               selectionColor={selectionTwin()}
             />
           </View>
-          {focusedInput === 'phone' && (
-            <InputOverlay
-              isVisible
-              style={{
-                marginLeft: responsiveWidth(1.06),
-                marginTop: nTwins(4.8, 4.8),
-              }}
-            />
-          )}
-          {phoneError ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{phoneError}</Text>
-            </View>
-          ) : null}
         </View>
+        {phoneError ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{phoneError}</Text>
+          </View>
+        ) : null}
 
         <AnimatedButton title={'Submit'} onPress={handleSubmit} loading={loading} />
       </View>
@@ -139,15 +138,29 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: responsiveWidth(4),
-    paddingLeft: responsiveWidth(5.33),
+    borderRadius: responsiveWidth(3.73),
     width: '100%',
     marginTop: responsiveWidth(2.67),
     borderColor: '#1e1e1e',
+  },
+  countryPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: responsiveWidth(4),
+    backgroundColor: 'rgba(255, 168, 107, 0.1)',
+    borderRightWidth: 1.5,
+    borderRightColor: '#1e1e1e',
+    height: responsiveHeight(6.65),
+    gap: 6,
+  },
+  code: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: responsiveFontSize(1.8),
+    color: '#1e1e1e',
   },
   errorInput: {
     borderColor: '#FF5252',

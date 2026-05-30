@@ -10,7 +10,7 @@ import { BlurView } from 'expo-blur';
 const RIGHT_WIDTH = responsiveWidth(28); // Reserve fixed space for coin+amount
 
 // Update RenderEachItem to accept style prop
-const RenderEachItem = memo(({ item, style }) => {
+const RenderEachItem = memo(({ item, style, isFlexible }) => {
   const progressWidth =
     item.collected === 0
       ? 0
@@ -19,7 +19,9 @@ const RenderEachItem = memo(({ item, style }) => {
   return (
     <View
       style={[{
-        width: WIDTH_SIZES[345],
+        width: isFlexible ? 0 : WIDTH_SIZES[345],
+        flex: isFlexible ? 1 : undefined,
+        flexShrink: isFlexible ? 1 : undefined,
         alignSelf: 'center',
         borderWidth: responsiveWidth(0.4),
         borderRadius: responsiveWidth(3.5),
@@ -28,7 +30,7 @@ const RenderEachItem = memo(({ item, style }) => {
         borderColor: '#ffffff60',
         backgroundColor: 'transparent',
       }, style]}>
-      <BlurView intensity={30} tint="light" style={{ flex: 1 }}>
+      <BlurView intensity={30} tint="light" style={{ flex: 1, width: '100%' }}>
         {/* Progress Bar */}
         <View
           style={[
@@ -47,10 +49,12 @@ const RenderEachItem = memo(({ item, style }) => {
             flex: 1,
             alignItems: 'center',
             paddingHorizontal: responsiveWidth(4),
+            width: '100%',
+            flexShrink: 1,
           }}>
 
           {/* Title (flexible space, ellipsized if too long) */}
-          <View style={{ flex: 1, paddingRight: responsiveWidth(2) }}>
+          <View style={{ flex: 1, paddingRight: responsiveWidth(2), flexShrink: 1 }}>
             <Text
               style={[
                 styles.text,
@@ -58,6 +62,7 @@ const RenderEachItem = memo(({ item, style }) => {
                   fontSize: responsiveFontSize(2),
                   textAlignVertical: 'center',
                   lineHeight: Platform.OS === 'ios' ? 35 : undefined,
+                  flexShrink: 1,
                 },
               ]}
               numberOfLines={1}
@@ -73,6 +78,7 @@ const RenderEachItem = memo(({ item, style }) => {
               flexDirection: 'row',
               justifyContent: 'flex-end',
               alignItems: 'center',
+              flexShrink: 0,
             }}>
             <Text
               style={[
@@ -82,6 +88,7 @@ const RenderEachItem = memo(({ item, style }) => {
                   textAlignVertical: 'center',
                   lineHeight: Platform.OS === 'ios' ? 35 : undefined,
                   marginRight: responsiveWidth(1),
+                  flexShrink: 0,
                 },
               ]}>
               {item?.collected}/{item?.amount}
@@ -92,6 +99,7 @@ const RenderEachItem = memo(({ item, style }) => {
                 height: responsiveWidth(4.5),
                 width: responsiveWidth(4.5),
                 resizeMode: 'contain',
+                flexShrink: 0,
               }}
             />
           </View>
@@ -163,7 +171,8 @@ const GoalsComponent = ({ isStarting }) => {
       <View style={[styles.goalsRow, { width: '95%' }]}>
         <RenderEachItem
           item={firstUncompletedGoal}
-          style={isStarting && hasMultiplePendingGoals ? { flex: 1, width: 'auto' } : undefined}
+          isFlexible={isStarting && hasMultiplePendingGoals}
+          style={isStarting && hasMultiplePendingGoals ? { flex: 1 } : undefined}
         />
 
         {/* Show Goals button only for stream host (isStarting) */}
@@ -240,6 +249,7 @@ const styles = StyleSheet.create({
     borderWidth: responsiveWidth(0.4),
     borderColor: '#FF7819',
     gap: responsiveWidth(1.5),
+    flexShrink: 0,
   },
 
   goalsButtonText: {

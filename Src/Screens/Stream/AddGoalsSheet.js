@@ -15,11 +15,13 @@ import { ChatWindowError, LoginPageErrors } from '../../Components/ErrorSnacks';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import AnimatedButton from '../../Components/AnimatedButton';
 import CircularProgress from '../../Components/CircularProgress';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 let regex = /^[0-9]*$/;
 
 const AddGoalsSheet = () => {
   const bottomSheetRef = useRef(null);
+  const insets = useSafeAreaInsets();
 
   const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.addGoalsSheet);
 
@@ -27,7 +29,7 @@ const AddGoalsSheet = () => {
 
   const [noSlotLeft, setNoSlotLeft] = useState(false);
 
-  const snapPoints = useMemo(() => ['30%', '50%'], []);
+  const snapPoints = useMemo(() => ['55%', '70%'], []);
 
   const titleRef = useRef('');
   const amountRef = useRef('');
@@ -163,6 +165,9 @@ const AddGoalsSheet = () => {
   return (
     <BottomSheetModal
       android_keyboardInputMode="adjustResize"
+      keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}
+      keyboardBlurBehavior="restore"
+      topInset={insets.top}
       name="HOmeBottom"
       backdropComponent={renderBackdrop}
       ref={bottomSheetRef}

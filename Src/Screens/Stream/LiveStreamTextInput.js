@@ -17,22 +17,31 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
   const commentChat = useRef('');
 
   const [loading, setLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    let listener;
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    if (Platform.OS === 'ios') {
-      console.log('closing');
-      listener = Keyboard.addListener('keyboardWillHide', () => {
-        setShowCommentArea(false);
-      });
-    } else {
-      console.log('closing');
-      listener = Keyboard.addListener('keyboardDidHide', () => {
-        setShowCommentArea(false);
-      });
-    }
-    return () => listener.remove();
+    const showListener = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+
+    const hideListener = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+      setShowCommentArea(false);
+    });
+
+    // Focus programmatically AFTER listeners are registered
+    const focusTimer = setTimeout(() => {
+      commentChat.current?.focus?.();
+    }, 150);
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+      clearTimeout(focusTimer);
+    };
   }, []);
 
   const { role, currentUserDisplayName, currentUserProfilePicture } = useSelector(state => state.auth.user);
@@ -86,19 +95,15 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
   return (
     <View
       style={{
-        flex: 1,
         position: 'absolute',
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: keyboardHeight,
         top: 0,
         backgroundColor: '#00000090',
         zIndex: 2,
-        display: 'flex',
         justifyContent: 'flex-end',
-        borderWidth: 3,
         width: '100%',
-        marginBottom: 10,
       }}>
       <TouchableOpacity style={{ flex: 1, backgroundColor: 'transparent' }} onPress={() => setShowCommentArea(false)}>
         <View style={styles.overlayCommentsContainer}>
@@ -127,7 +132,7 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
         </View>
       </TouchableOpacity>
 
-      <KeyboardAvoidingView keyboardVerticalOffset={40} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+      <View>
         <View style={styles.keyboardContainer}>
           <View style={styles.inputContainer}>
             <TextInput
@@ -136,7 +141,6 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
               placeholder="Comments..."
               returnKeyType="none"
               onChangeText={t => (commentChat.current.value = t)}
-              autoFocus
               multiline={false}
               style={styles.textInput}
               ref={commentChat}
@@ -149,13 +153,13 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
             <Pressable
               style={styles.sendButton}
               onPress={() => !loading && emitMessage()} // disable press when loading
-              disabled={loading} // makes sure it’s not pressable
+              disabled={loading} // makes sure it's not pressable
             >
               {loading ? <ActivityIndicator size="small" color="#1e1e1e" /> : ({ pressed }) => <Feather name="send" size={24} color={pressed ? '#999' : '#1e1e1e'} />}
             </Pressable>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 };

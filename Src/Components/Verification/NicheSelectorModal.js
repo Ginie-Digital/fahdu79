@@ -1,8 +1,8 @@
 import React, {useEffect, useState, useRef, memo} from 'react';
-import {View, Text, StyleSheet, Pressable, Dimensions, ScrollView, Animated, TextInput} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Dimensions, ScrollView, TextInput, Platform} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
-import {BlurView} from 'expo-blur';
+import Modal from 'react-native-modal';
 import {useDispatch, useSelector} from 'react-redux';
 import {setConfirmedNiches, toggleNicheSelectorModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import CustomCheckbox from '../CustomCheckbox';
@@ -19,7 +19,7 @@ const NicheSelectorModal = () => {
   
   const [tempSelected, setTempSelected] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const slideAnim = useRef(new Animated.Value(600)).current;
+  const inputRef = useRef(null);
 
   const options = ['Health & Wellness', 'Lifestyle', 'Education & Career', 'Culinary', 'Personal Development', 'Travel', 'Entertainment', 'Astrology', 'Dating Expert'];
 
@@ -31,14 +31,8 @@ const NicheSelectorModal = () => {
     if (visible) {
       setTempSelected(confirmed || []);
       setSearchQuery('');
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      slideAnim.setValue(600);
+      // Focus after animation completes
+      setTimeout(() => inputRef.current?.focus(), 250);
     }
   }, [visible, confirmed]);
 
@@ -65,13 +59,20 @@ const NicheSelectorModal = () => {
     dispatch(toggleNicheSelectorModal({show: false}));
   };
 
-  if (!visible) return null;
-
   return (
-    <View style={styles.overlay}>
-      <BlurView intensity={15} style={styles.blurBackground} />
-      <Pressable style={styles.touchOutside} onPress={handleClose} />
-      <Animated.View style={[styles.dialog, {transform: [{translateY: slideAnim}]}]}>
+    <Modal
+      isVisible={visible}
+      avoidKeyboard={true}
+      backdropColor="#00000060"
+      onBackButtonPress={handleClose}
+      onBackdropPress={handleClose}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={200}
+      animationOutTiming={200}
+      style={styles.modalContainer}
+    >
+      <View style={styles.dialog}>
         <View style={styles.header}>
             <View style={styles.indicator} />
             <Text style={styles.mainHeading}>Select Creator's Niche</Text>
@@ -80,6 +81,7 @@ const NicheSelectorModal = () => {
             <View style={styles.searchContainer}>
                 <Ionicons name="search" size={18} color="#999" style={styles.searchIcon} />
                 <TextInput 
+                    ref={inputRef}
                     style={styles.searchInput}
                     placeholder="Search niche..."
                     placeholderTextColor="#999"
@@ -128,34 +130,23 @@ const NicheSelectorModal = () => {
             </Pressable>
           </View>
         </SafeAreaView>
-      </Animated.View>
-    </View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: 9999,
-  },
-  blurBackground: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  touchOutside: {
-    flex: 1,
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
   },
   dialog: {
     borderTopLeftRadius: responsiveWidth(8),
     borderTopRightRadius: responsiveWidth(8),
     backgroundColor: '#fff',
     width: WINDOW_WIDTH,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingTop: 12,
-    maxHeight: Dimensions.get('window').height * 0.8,
+    maxHeight: Dimensions.get('window').height * 0.7,
   },
   header: {
     alignItems: 'center',

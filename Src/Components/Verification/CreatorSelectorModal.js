@@ -1,7 +1,7 @@
 import React, {useEffect, useState, useRef, memo} from 'react';
-import {View, Text, StyleSheet, Pressable, Dimensions, FlatList, Animated, TextInput, ActivityIndicator, Keyboard, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Dimensions, FlatList, TextInput, ActivityIndicator, Keyboard, Platform} from 'react-native';
 import {responsiveFontSize, responsiveWidth, responsiveHeight} from 'react-native-responsive-dimensions';
-import {BlurView} from 'expo-blur';
+import Modal from 'react-native-modal';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleCreatorSelectorModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
@@ -10,15 +10,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useLazySearchedCreatorsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {Image} from 'expo-image';
 
-const {width: WINDOW_WIDTH, height: WINDOW_HEIGHT} = Dimensions.get('window');
+const {width: WINDOW_WIDTH} = Dimensions.get('window');
 
 const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
   const dispatch = useDispatch();
   const visible = useSelector(state => state.hideShow.visibility.creatorSelectorModal);
   
   const [searchQuery, setSearchQuery] = useState(initialSearch);
-  const slideAnim = useRef(new Animated.Value(600)).current;
-  const keyboardOffsetAnim = useRef(new Animated.Value(0)).current;
   const inputRef = useRef(null);
 
   const [triggerSearch, {data, isFetching, isLoading}] = useLazySearchedCreatorsQuery();
@@ -31,48 +29,13 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
     }
   }, [data]);
 
-  // Keyboard listeners - iOS only (Android uses adjustResize from AndroidManifest)
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    const onShow = (e) => {
-      const height = e.endCoordinates?.height || 0;
-      Animated.timing(keyboardOffsetAnim, {
-        toValue: -height,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    };
-
-    const onHide = () => {
-      Animated.timing(keyboardOffsetAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    };
-
-    const showSub = Keyboard.addListener('keyboardWillShow', onShow);
-    const hideSub = Keyboard.addListener('keyboardWillHide', onHide);
-    return () => { showSub.remove(); hideSub.remove(); };
-  }, []);
-
   useEffect(() => {
     if (visible) {
       setSearchQuery(initialSearch);
       setLocalCreators([]); // Clear old results on open
       if (initialSearch) triggerSearch({name: initialSearch});
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }).start(() => {
-        setTimeout(() => inputRef.current?.focus(), 100);
-      });
-    } else {
-      slideAnim.setValue(600);
-      keyboardOffsetAnim.setValue(0);
+      // Allow modal slide-in animation to finish before focusing
+      setTimeout(() => inputRef.current?.focus(), 250);
     }
   }, [visible, initialSearch]);
 
@@ -97,10 +60,6 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
     dispatch(toggleCreatorSelectorModal({show: false}));
   };
 
-  if (!visible) return null;
-
-  const combinedTranslateY = Animated.add(slideAnim, keyboardOffsetAnim);
-
   const renderCreator = ({item, index}) => (
     <Pressable 
       style={[styles.row, index === localCreators.length - 1 && {borderBottomWidth: 0}]} 
@@ -123,13 +82,19 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
   );
 
   return (
-    <View style={styles.overlay}>
-      <BlurView intensity={15} style={styles.blurBackground} />
-      <Pressable style={styles.touchOutside} onPress={handleClose} />
-      <Animated.View style={[
-        styles.dialog, 
-        {transform: [{translateY: combinedTranslateY}]}
-      ]}>
+    <Modal
+      isVisible={visible}
+      avoidKeyboard={true}
+      backdropColor="#00000060"
+      onBackButtonPress={handleClose}
+      onBackdropPress={handleClose}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={200}
+      animationOutTiming={200}
+      style={styles.modalContainer}
+    >
+      <View style={styles.dialog}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.indicator} />
@@ -179,32 +144,21 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
             )}
           </View>
         </View>
-      </Animated.View>
-    </View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: 9999,
-  },
-  blurBackground: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  touchOutside: {
-    flex: 1,
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
   },
   dialog: {
     borderTopLeftRadius: responsiveWidth(6),
     borderTopRightRadius: responsiveWidth(6),
     backgroundColor: '#fff',
     width: WINDOW_WIDTH,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     maxHeight: responsiveHeight(50),
   },
   header: {
@@ -284,6 +238,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#F0F0F0',
     paddingHorizontal: responsiveWidth(5),
     paddingVertical: responsiveHeight(1.2),
+    paddingBottom: Platform.OS === 'ios' ? responsiveHeight(3.5) : responsiveHeight(1.2),
   },
   searchPill: {
     flexDirection: 'row',

@@ -1,0 +1,86 @@
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useGestureEventsHandlersDefault.js b/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useGestureEventsHandlersDefault.js
+index 735c016..bc98b69 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useGestureEventsHandlersDefault.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/commonjs/hooks/useGestureEventsHandlersDefault.js
+@@ -45,6 +45,7 @@ const useGestureEventsHandlersDefault = () => {
+   const context = (0, _reactNativeReanimated.useSharedValue)({
+     ...INITIAL_CONTEXT
+   });
++  const WINDOW_HEIGHT = _reactNative.Dimensions.get('window').height;
+   //#endregion
+ 
+   //#region gesture methods
+@@ -239,7 +240,6 @@ const useGestureEventsHandlersDefault = () => {
+        *
+        * because the the keyboard dismiss is interactive in iOS.
+        */
+-      const WINDOW_HEIGHT = _reactNative.Dimensions.get('window').height;
+       if (!(_reactNative.Platform.OS === 'ios' && isScrollable && absoluteY > WINDOW_HEIGHT - animatedKeyboardState.get().heightWithinContainer)) {
+         (0, _reactNativeReanimated.runOnJS)(dismissKeyboard)();
+       }
+@@ -286,7 +286,7 @@ const useGestureEventsHandlersDefault = () => {
+       return;
+     }
+     animateToPosition(destinationPoint, _constants.ANIMATION_SOURCE.GESTURE, velocityY / 2);
+-  }, [enablePanDownToClose, isInTemporaryPosition, animatedScrollableState, animatedDetentsState, animatedKeyboardState, animatedPosition, animateToPosition, context]);
++  }, [enablePanDownToClose, isInTemporaryPosition, animatedScrollableState, animatedDetentsState, animatedKeyboardState, animatedPosition, animateToPosition, context, WINDOW_HEIGHT]);
+   const handleOnFinalize = (0, _react.useCallback)(function handleOnFinalize() {
+     'worklet';
+ 
+diff --git a/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useGestureEventsHandlersDefault.js b/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useGestureEventsHandlersDefault.js
+index 0f41e15..4cf5ccf 100644
+--- a/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useGestureEventsHandlersDefault.js
++++ b/node_modules/@gorhom/bottom-sheet/lib/module/hooks/useGestureEventsHandlersDefault.js
+@@ -41,6 +41,7 @@ export const useGestureEventsHandlersDefault = () => {
+   const context = useSharedValue({
+     ...INITIAL_CONTEXT
+   });
++  const WINDOW_HEIGHT = Dimensions.get('window').height;
+   //#endregion
+ 
+   //#region gesture methods
+@@ -235,7 +236,6 @@ export const useGestureEventsHandlersDefault = () => {
+        *
+        * because the the keyboard dismiss is interactive in iOS.
+        */
+-      const WINDOW_HEIGHT = Dimensions.get('window').height;
+       if (!(Platform.OS === 'ios' && isScrollable && absoluteY > WINDOW_HEIGHT - animatedKeyboardState.get().heightWithinContainer)) {
+         runOnJS(dismissKeyboard)();
+       }
+@@ -282,7 +282,7 @@ export const useGestureEventsHandlersDefault = () => {
+       return;
+     }
+     animateToPosition(destinationPoint, ANIMATION_SOURCE.GESTURE, velocityY / 2);
+-  }, [enablePanDownToClose, isInTemporaryPosition, animatedScrollableState, animatedDetentsState, animatedKeyboardState, animatedPosition, animateToPosition, context]);
++  }, [enablePanDownToClose, isInTemporaryPosition, animatedScrollableState, animatedDetentsState, animatedKeyboardState, animatedPosition, animateToPosition, context, WINDOW_HEIGHT]);
+   const handleOnFinalize = useCallback(function handleOnFinalize() {
+     'worklet';
+ 
+diff --git a/node_modules/@gorhom/bottom-sheet/src/hooks/useGestureEventsHandlersDefault.tsx b/node_modules/@gorhom/bottom-sheet/src/hooks/useGestureEventsHandlersDefault.tsx
+index 5f02306..8ff5154 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/hooks/useGestureEventsHandlersDefault.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/hooks/useGestureEventsHandlersDefault.tsx
+@@ -58,6 +58,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
+     const context = useSharedValue<GestureEventContextType>({
+       ...INITIAL_CONTEXT,
+     });
++    const WINDOW_HEIGHT = Dimensions.get('window').height;
+     //#endregion
+ 
+     //#region gesture methods
+@@ -345,7 +346,6 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
+            *
+            * because the the keyboard dismiss is interactive in iOS.
+            */
+-          const WINDOW_HEIGHT = Dimensions.get('window').height;
+           if (
+             !(
+               Platform.OS === 'ios' &&
+@@ -424,6 +424,7 @@ export const useGestureEventsHandlersDefault: GestureEventsHandlersHookType =
+         animatedPosition,
+         animateToPosition,
+         context,
++        WINDOW_HEIGHT,
+       ]
+     );
+     const handleOnFinalize: GestureEventHandlerCallbackType = useCallback(

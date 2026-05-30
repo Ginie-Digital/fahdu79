@@ -1,9 +1,9 @@
-import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Button, Platform, Keyboard, ActivityIndicator} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Button, Platform, Keyboard, ActivityIndicator, Animated} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
 import {BottomSheetBackdrop, BottomSheetModal, BottomSheetTextInput} from '@gorhom/bottom-sheet';
 import DIcon from '../../../DesiginData/DIcons';
-import {FlatList, TextInput} from 'react-native-gesture-handler';
+import {FlatList} from 'react-native-gesture-handler';
 import {useDispatch, useSelector} from 'react-redux';
 import {toggleCommentBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {useFocusEffect} from '@react-navigation/native';
@@ -12,7 +12,7 @@ import {useDoCommentMutation, useLazyGetAllCommentsQuery} from '../../../Redux/S
 import moment from 'moment';
 import Moment from 'react-moment';
 import {LoginPageErrors} from '../ErrorSnacks';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {deletePostComments, pushComment, savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import CommentShimmer from '../Shimmers/CommentShimmer';
 import {Image} from 'expo-image';
@@ -28,6 +28,35 @@ const CreateCommentBottomSheet = () => {
   const bottomSheetRef = useRef(null);
 
   const inputRef = useRef(null);
+
+  const insets = useSafeAreaInsets();
+
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const showListener = Keyboard.addListener('keyboardDidShow', (e) => {
+      Animated.timing(keyboardHeight, {
+        toValue: e.endCoordinates.height + 12, // +12px spacing offset to keep snug
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    });
+
+    const hideListener = Keyboard.addListener('keyboardDidHide', () => {
+      Animated.timing(keyboardHeight, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    });
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
 
   const {show: commentBottomSheetVisibility, focus: shouldBeFocus, fromPage} = useSelector(state => state.hideShow.visibility.commentBottomSheet);
 
@@ -309,7 +338,8 @@ const CreateCommentBottomSheet = () => {
         enableDynamicSizing={false}
         backgroundStyle={{backgroundColor: '#fff'}}
         android_keyboardInputMode="adjustResize"
-        keyboardBehavior="interactive"
+        keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}
+        topInset={insets.top}
         containerStyle={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}
         style={{borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden'}}
         handleIndicatorStyle={{backgroundColor: '#D9D9D9', width: 40}}>
@@ -359,26 +389,30 @@ const CreateCommentBottomSheet = () => {
           )}
         </View>
 
-        <View style={[styles.bottomCommentBoxContainer, {borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20, alignItems: 'center'}]}>
+        <Animated.View style={[styles.bottomCommentBoxContainer, {
+          borderTopWidth: 1,
+          borderTopColor: '#F0F0F0',
+          paddingHorizontal: 20,
+          paddingBottom: Platform.OS === 'ios' ? 40 : Animated.add(keyboardHeight, 20),
+          alignItems: 'center'
+        }]}>
           <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#262626', marginBottom: 2}]} onPress={() => gotomyprofile()}>
             <Image source={{uri: loggedInUser?.currentUserProfilePicture}} resizeMethod="resize" style={[styles.profileImage, {borderRadius: 18}]} />
           </TouchableOpacity>
 
           <View style={[styles.headerInformation, {flex: 1, marginLeft: 14, alignItems: 'center'}]}>
-            {Platform.OS === 'ios' ? (
-              <BottomSheetTextInput
-                ref={inputRef}
-                value={text}
-                placeholderTextColor={'#8E8E8E'}
-                onChangeText={handleTextChange}
-                style={styles.textInputCapsule}
-                placeholder="Add a Comment..."
-                selectionHandleColor={'#ffa86b'}
-                cursorColor={'#1e1e1e'}
-              />
-            ) : (
-              <TextInput autoCapitalize="sentences" ref={inputRef} value={text} onChangeText={handleTextChange} style={styles.textInputCapsule} placeholder="Add a Comment..." selectionHandleColor={'#ffa86b'} selectionColor={selectionTwin()} cursorColor={'#1e1e1e'} />
-            )}
+            <BottomSheetTextInput
+              autoCapitalize="sentences"
+              ref={inputRef}
+              value={text}
+              placeholderTextColor={'#8E8E8E'}
+              onChangeText={handleTextChange}
+              style={styles.textInputCapsule}
+              placeholder="Add a Comment..."
+              selectionHandleColor={'#ffa86b'}
+              selectionColor={selectionTwin()}
+              cursorColor={'#1e1e1e'}
+            />
 
             <TouchableOpacity onPress={handleDoComment} disabled={!text.trim() || doCommentLoader} style={{paddingLeft: 10, height: 44, justifyContent: 'center', alignItems: 'center'}}>
               {doCommentLoader ? (
@@ -388,7 +422,7 @@ const CreateCommentBottomSheet = () => {
               )}
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </BottomSheetModal>
   );
 };

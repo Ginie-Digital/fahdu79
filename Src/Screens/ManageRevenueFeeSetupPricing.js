@@ -240,7 +240,7 @@ const ManageRevenueFeeSetupPricing = ({route}) => {
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
         extraScrollHeight={Platform.OS === 'ios' ? 120 : 80}
-        enableAutomaticScroll={Platform.OS === 'ios'}>
+        enableAutomaticScroll={true}>
         {/* Subscriber Benefit Info */}
         <View style={styles.infoCard}>
           <View style={styles.infoContent}>

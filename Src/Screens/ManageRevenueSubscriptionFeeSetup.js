@@ -190,7 +190,7 @@ const ManageRevenueSubscriptionFeeSetup = () => {
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
         extraScrollHeight={Platform.OS === 'ios' ? 120 : 80}
-        enableAutomaticScroll={Platform.OS === 'ios'}>
+        enableAutomaticScroll={true}>
         <View style={styles.plansContainer}>
           {plans.map(plan => (
             <View

@@ -206,7 +206,7 @@ const SubscriptionFeeScreen = () => {
                 keyboardShouldPersistTaps="handled"
                 enableOnAndroid={true}
                 extraScrollHeight={Platform.OS === 'ios' ? 120 : 80}
-                enableAutomaticScroll={Platform.OS === 'ios'}
+                enableAutomaticScroll={true}
             >
                 <Text style={styles.title}>Set Subscription Fee</Text>
                 <Text style={styles.subtitle}>

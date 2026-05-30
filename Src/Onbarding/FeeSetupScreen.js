@@ -175,7 +175,7 @@ const FeeSetupScreen = () => {
                 keyboardShouldPersistTaps="handled"
                 enableOnAndroid={true}
                 extraScrollHeight={Platform.OS === 'ios' ? 120 : 80}
-                enableAutomaticScroll={Platform.OS === 'ios'}
+                enableAutomaticScroll={true}
             >
                 <Text style={styles.title}>Fee Setup</Text>
                 <Text style={styles.subtitle}>Set your rates for different services</Text>

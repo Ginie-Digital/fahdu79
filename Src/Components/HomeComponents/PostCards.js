@@ -370,10 +370,9 @@ const PostCards = ({item, index, token}) => {
             }}>
             <View
               style={{
-                width: responsiveWidth(30),
                 flexDirection: 'row',
-                justifyContent: 'space-between',
-                // backgroundColor : 'green',
+                alignItems: 'center',
+                gap: responsiveWidth(5.5),
                 marginLeft: 14,
               }}>
               <View
@@ -620,9 +619,9 @@ const PostCards = ({item, index, token}) => {
             }}>
             <View
               style={{
-                width: responsiveWidth(34),
                 flexDirection: 'row',
-                justifyContent: 'space-around',
+                alignItems: 'center',
+                gap: responsiveWidth(5.5),
                 marginLeft: 8,
               }}>
               <View

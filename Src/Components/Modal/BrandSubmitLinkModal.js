@@ -277,8 +277,8 @@ const BrandSubmitLinkModal = () => {
             inputCount={4}
             keyboardType="number-pad"
             textInputStyle={styles.otpInput}
-            tintColor="black"
-            offTintColor={'#FFA86B'}
+            offTintColor={Array(4).fill(0).map((_, i) => ((whatsappOtp || '')[i] ? '#FFA86B' : 'black'))}
+            tintColor={Array(4).fill(0).map((_, i) => ((whatsappOtp || '')[i] ? '#FFA86B' : 'black'))}
           />
 
           <Pressable style={{marginTop: responsiveWidth(3)}} onPress={() => handleSubmitOtp()}>
@@ -485,12 +485,12 @@ const BrandSubmitLinkModal = () => {
 
               <OTPTextView
                 containerStyle={styles.otpContainer}
-                // handleTextChange={(text) => setOtp(text)}
+                handleTextChange={(text) => setWhatsappOtp(text)}
                 inputCount={4}
                 keyboardType="number-pad"
                 textInputStyle={styles.otpInput}
-                tintColor="black"
-                offTintColor={'#FFA86B'}
+                offTintColor={Array(4).fill(0).map((_, i) => ((whatsappOtp || '')[i] ? '#FFA86B' : 'black'))}
+                tintColor={Array(4).fill(0).map((_, i) => ((whatsappOtp || '')[i] ? '#FFA86B' : 'black'))}
               />
               {/* <Pressable onPress={() => handleCheckInstaUserName()} >
   <Text style={{width:responsiveWidth(70),borderRadius:responsiveWidth(3),alignItems:'center',height:responsiveWidth(12),backgroundColor:'#FFA86B'}}> 

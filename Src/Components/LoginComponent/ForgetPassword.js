@@ -124,7 +124,17 @@ const ForgetPassword = ({route}) => {
           <>
             <Text style={styles.heading}>OTP Verification</Text>
             <Text style={styles.subHead}>Enter the verification code we just sent on your email address.</Text>
-            <OTPTextView testID="forgot-password-otp-input" accessibilityLabel="forgot-password-otp-input" containerStyle={styles.otpContainer} handleTextChange={setOtp} inputCount={4} keyboardType="number-pad" offTintColor={'#FF7F50'} textInputStyle={styles.otpInput} tintColor={'#1e1e1e'} />
+            <OTPTextView
+              testID="forgot-password-otp-input"
+              accessibilityLabel="forgot-password-otp-input"
+              containerStyle={styles.otpContainer}
+              handleTextChange={setOtp}
+              inputCount={4}
+              keyboardType="number-pad"
+              offTintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : '#1e1e1e'))}
+              textInputStyle={styles.otpInput}
+              tintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : '#1e1e1e'))}
+            />
           </>
         )}
 

@@ -310,7 +310,7 @@ const SettingsPage = () => {
           renderSectionHeader={({ section: { title } }) => <Text style={styles.header}>{title}</Text>}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
-          contentContainerStyle={{ paddingTop: WIDTH_SIZES['10'] }}
+          contentContainerStyle={{ paddingTop: WIDTH_SIZES['10'], paddingBottom: responsiveWidth(20) }}
         />
       </View>
     </View>

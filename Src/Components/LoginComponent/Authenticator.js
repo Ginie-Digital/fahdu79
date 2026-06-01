@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking } from 'react-native';
+import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking, TextInput } from 'react-native';
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
@@ -12,7 +12,6 @@ import { emptyUnreadRoomList } from '../../../Redux/Slices/NormalSlices/UnReadTh
 import { LoginPageErrors, successSnack } from '../ErrorSnacks';
 import { FONT_SIZES, padios, selectionTwin, WIDTH_SIZES } from '../../../DesiginData/Utility';
 
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedButton from '../AnimatedButton';
 import { useGetTFAEmailCodeMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { openInbox } from 'react-native-email-link';
@@ -54,55 +53,11 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
 
   //Main
 
-  const bottomSheetRef = useRef(null);
-
   const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.verficationScreen);
-  // const homeBottomSheetVisibility = 1
 
-  const snapPoints = useMemo(() => Platform.OS === 'ios' ? ['45%'] : ['40%', '50%', '60%'], []);
-
-  const handleSheetChanges = useCallback(index => {
-    if (index === -1) {
-      dispatch(toggleVerficationScreen({ show: -1 }));
-    }
-  }, []);
-
-  const onBackPress = () => {
-    if (bottomSheetRef !== null) {
-      bottomSheetRef.current?.close();
-
-      return true;
-    }
+  const handleClose = () => {
+    dispatch(toggleVerficationScreen({ show: -1 }));
   };
-
-  const handlePresentModalPress = useCallback(() => {
-    if (bottomSheetRef.current) {
-      bottomSheetRef.current?.present();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (bottomSheetRef.current !== null) {
-      if (homeBottomSheetVisibility === -1) {
-        bottomSheetRef.current.close();
-        console.log('Closing');
-      } else {
-        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-        return () => {
-          subscription.remove();
-        };
-      }
-    }
-  }, [homeBottomSheetVisibility]);
-
-  useEffect(() => {
-    if (homeBottomSheetVisibility === 1) {
-      handlePresentModalPress();
-    }
-  }, [homeBottomSheetVisibility]);
-
-  const renderBackdrop = useCallback(props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={1} />, []);
 
   //Main finish
 
@@ -182,81 +137,70 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
   };
 
   return (
-    <BottomSheetModal
-      keyboardBlurBehavior="restore"
-      name="HOmeBottom"
-      backdropComponent={renderBackdrop}
-      ref={bottomSheetRef}
-      index={homeBottomSheetVisibility === 1 ? 0 : -1}
-      snapPoints={snapPoints}
-      onChange={handleSheetChanges}
-      enablePanDownToClose={true}
-      enableDynamicSizing={false}
-      backgroundStyle={{ backgroundColor: '#fffef9' }}
-      android_keyboardInputMode="adjustResize"
-      keyboardBehavior={Platform.OS === 'ios' ? 'extend' : 'fillParent'}>
-      <View style={{ width: '100%', height: '100%' }}>
-        <View style={[styles.modalInnerWrapper]}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.heading}>Security Check</Text>
-          </View>
-          <Text style={styles.subtext}>Enter the security code we just sent on your email address.</Text>
+    <Modal
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={150}
+      animationOutTiming={150}
+      transparent={true}
+      isVisible={homeBottomSheetVisibility === 1}
+      backdropColor="black"
+      useNativeDriver
+      avoidKeyboard={true}
+      onBackdropPress={handleClose}
+      onBackButtonPress={handleClose}
+      style={{
+        margin: 0,
+        justifyContent: 'flex-end',
+      }}>
+      <View style={[styles.modalInnerWrapper]}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.heading}>Security Check</Text>
+          <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
+            <DIcon provider="Ionicons" name="close" size={20} color="black" />
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.subtext}>Enter the security code we just sent on your email address.</Text>
 
-          <View style={styles.tipContainer}>
-            <View style={styles.tipCounterContainer}>
-              <View style={styles.sendTipInputContainer}>
-                {/* <TextInput style={styles.amountInput} value={verificationCode} onChangeText={(x) => setVerificationCode(x)} keyboardType="email-address" /> */}
-
-                <View style={styles.codeInputWrapper}>
-                  {[...Array(9)].map((_, index) => (
-                    <BottomSheetTextInput
-                      key={index}
-                      ref={ref => (inputRefs.current[index] = ref)}
-                      value={verificationCode[index] || ''}
-                      onChangeText={text => handleCodeChange(text, index)}
-                      onKeyPress={({ nativeEvent }) => {
-                        if (nativeEvent.key === 'Backspace' && verificationCode[index] === '') {
-                          handleBackspace(index);
-                        }
-                      }}
-                      maxLength={1}
-                      autoCapitalize="characters"
-                      keyboardType="default"
-                      style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null]}
-                      selectionColor={selectionTwin()}
-                      selectionHandleColor={'#ffa86b'}
-                      cursorColor={'#1e1e1e'}
-                      placeholderTextColor="#B2B2B2"
-                    />
-                  ))}
-                </View>
+        <View style={styles.tipContainer}>
+          <View style={styles.tipCounterContainer}>
+            <View style={styles.sendTipInputContainer}>
+              <View style={styles.codeInputWrapper}>
+                {[...Array(9)].map((_, index) => (
+                  <TextInput
+                    key={index}
+                    ref={ref => (inputRefs.current[index] = ref)}
+                    value={verificationCode[index] || ''}
+                    onChangeText={text => handleCodeChange(text, index)}
+                    onKeyPress={({ nativeEvent }) => {
+                      if (nativeEvent.key === 'Backspace' && verificationCode[index] === '') {
+                        handleBackspace(index);
+                      }
+                    }}
+                    maxLength={1}
+                    autoCapitalize="characters"
+                    keyboardType="default"
+                    style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null]}
+                    selectionColor={selectionTwin()}
+                    selectionHandleColor={'#ffa86b'}
+                    cursorColor={'#1e1e1e'}
+                    placeholderTextColor="#B2B2B2"
+                  />
+                ))}
               </View>
             </View>
-
-            {/* <Text style={styles.fahduCoinTextTitle}>Enter security code sent to <Text style={{ fontFamily: 'MabryPro-Medium', color: 'black' }}>{viaAuthenticator ? "Authenticator App" : "Email"}</Text></Text> */}
-
-            {/* {viaAuthenticator ? (
-              <TouchableOpacity onPress={() => handleEmailInstead()}>
-                <Text style={[styles.fahduCoinTextTitle, { color: "#ffa07a", fontFamily: "MabryPro-Bold", marginVertical: responsiveWidth(0) }]}>Get code on Email</Text>
-              </TouchableOpacity>
-            ) : null} */}
-
-            {/* <View style={{ position: "relative", alignSelf: "center" }}>
-
-              <Pressable onPress={() => handleVerification()}>{!loading ? <Text style={[styles.loginButton]}>VERIFY</Text> : <ActivityIndicator size={"small"} color={"#282828"} style={styles.loginButton} />}</Pressable>
-            </View> */}
-
-            <AnimatedButton title={'Verify'} buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} />
-
-            <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => openInbox()}>
-              <View style={styles.alreadyAccountRow}>
-                <Text style={styles.forgotTextTitle}>Open Mail App</Text>
-              </View>
-            </TouchableOpacity>
           </View>
+
+          <AnimatedButton title="Verify" buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} />
+
+          <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => openInbox()}>
+            <View style={styles.alreadyAccountRow}>
+              <Text style={styles.forgotTextTitle}>Open Mail App</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
-    </BottomSheetModal>
+    </Modal>
   );
 };
 
@@ -271,6 +215,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(4),
     paddingBottom: Platform.OS === 'ios' ? responsiveWidth(10) : responsiveWidth(6),
     marginLeft: responsiveWidth(1),
+    borderWidth: 1,
+    borderColor: '#e9e9e9',
   },
 
   notch: {

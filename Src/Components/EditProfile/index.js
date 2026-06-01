@@ -76,6 +76,9 @@ const EditProfiler = ({route, navigation}) => {
     if (bioText && bioText.length > 150) {
       return 'Bio must be less than 150 characters';
     }
+    if (bioText && bioText.split('\n').length > 10) {
+      return 'Bio must be less than 10 lines';
+    }
     return '';
   };
 
@@ -282,7 +285,11 @@ const EditProfiler = ({route, navigation}) => {
                 autoCapitalize={'sentences'}
                 style={[styles.textInputs, {height: 129, paddingTop: nTwins(4, 4), paddingRight: responsiveWidth(4)}]}
                 onChangeText={t => {
-                  setBio(t);
+                  let sanitized = t.replace(/\n{3,}/g, '\n\n');
+                  if (sanitized.split('\n').length > 10) {
+                    return;
+                  }
+                  setBio(sanitized);
                   // Clear error on change
                   if (errors.bio) {
                     setErrors(prev => ({...prev, bio: ''}));

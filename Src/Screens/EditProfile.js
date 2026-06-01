@@ -127,6 +127,9 @@ const EditProfile = ({route}) => {
     if (bioText && bioText.length > 150) {
       return 'Bio must be less than 150 characters';
     }
+    if (bioText && bioText.split('\n').length > 10) {
+      return 'Bio must be less than 10 lines';
+    }
     return '';
   };
 

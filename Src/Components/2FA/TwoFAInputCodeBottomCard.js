@@ -5,7 +5,6 @@ import Modal from 'react-native-modal';
 
 import {useSelector, useDispatch} from 'react-redux';
 
-import {useKeyboard} from '@react-native-community/hooks';
 import axios from 'axios';
 
 import DIcon from '../../../DesiginData/DIcons';
@@ -38,8 +37,6 @@ const TwoFAInputCodeBottomCard = ({token}) => {
   const [validateTFA] = useValidateTFAMutation();
 
   const [validateTFAAuth] = useValidateTFAAuthMutation();
-
-  const keyboard = useKeyboard();
 
   const dispatch = useDispatch();
 
@@ -149,18 +146,12 @@ const TwoFAInputCodeBottomCard = ({token}) => {
       isVisible={show}
       backdropColor="black"
       useNativeDriver
+      avoidKeyboard={true}
       style={{
-        flex: 1,
+        margin: 0,
+        justifyContent: 'flex-end',
       }}>
-      <View
-        style={[
-          styles.modalInnerWrapper,
-          keyboard.keyboardShown
-            ? {
-                height: Platform.OS === 'ios' ? responsiveWidth(150) + keyboard.keyboardHeight : responsiveWidth(95) + keyboard.keyboardHeight,
-              }
-            : {height: responsiveWidth(95)},
-        ]}>
+      <View style={styles.modalInnerWrapper}>
         <View style={styles.headerContainer}>
           <Text style={styles.heading}>Security Check</Text>
           <TouchableOpacity style={styles.closeIcon} onPress={() => handleClose()}>
@@ -243,8 +234,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: responsiveWidth(3),
     padding: responsiveWidth(4),
     paddingTop: responsiveWidth(5),
-    marginTop: responsiveWidth(148),
+    paddingBottom: Platform.OS === 'ios' ? responsiveWidth(10) : responsiveWidth(6),
     borderWidth: 1,
+    borderColor: '#e9e9e9',
   },
 
   notch: {

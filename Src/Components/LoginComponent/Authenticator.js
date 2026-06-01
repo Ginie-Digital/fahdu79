@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, TextInput, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking } from 'react-native';
+import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking } from 'react-native';
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
@@ -6,14 +6,13 @@ import DIcon from '../../../DesiginData/DIcons';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleVerficationScreen } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
-import { useKeyboard } from '@react-native-community/hooks';
 import axios from 'axios';
 
 import { emptyUnreadRoomList } from '../../../Redux/Slices/NormalSlices/UnReadThreadSlice';
 import { LoginPageErrors, successSnack } from '../ErrorSnacks';
 import { FONT_SIZES, padios, selectionTwin, WIDTH_SIZES } from '../../../DesiginData/Utility';
 
-import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import AnimatedButton from '../AnimatedButton';
 import { useGetTFAEmailCodeMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { openInbox } from 'react-native-email-link';
@@ -193,7 +192,9 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
       onChange={handleSheetChanges}
       enablePanDownToClose={true}
       enableDynamicSizing={false}
-      backgroundStyle={{ backgroundColor: '#fffef9' }}>
+      backgroundStyle={{ backgroundColor: '#fffef9' }}
+      android_keyboardInputMode="adjustResize"
+      keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}>
       <View style={{ width: '100%', height: '100%' }}>
         <View style={[styles.modalInnerWrapper]}>
           <View style={styles.headerContainer}>
@@ -208,7 +209,7 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
 
                 <View style={styles.codeInputWrapper}>
                   {[...Array(9)].map((_, index) => (
-                    <TextInput
+                    <BottomSheetTextInput
                       key={index}
                       ref={ref => (inputRefs.current[index] = ref)}
                       value={verificationCode[index] || ''}
@@ -268,6 +269,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: responsiveWidth(3),
     padding: responsiveWidth(4),
     paddingHorizontal: responsiveWidth(4),
+    paddingBottom: Platform.OS === 'ios' ? responsiveWidth(10) : responsiveWidth(6),
     marginLeft: responsiveWidth(1),
   },
 

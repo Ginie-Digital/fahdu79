@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React, {memo, useState, useCallback} from 'react';
 import {Text, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -6,27 +6,32 @@ import {useSelector} from 'react-redux';
 /**
  * MentionText parses strings for the pattern @[Display Name](userId:65ec...)
  * and renders them as highlighted, tappable text.
+ *
+ * Props:
+ *  - maxLines (number, optional): When provided, clamps text to this many lines
+ *    and shows a "Read more" / "Read less" toggle.
  */
-const MentionText = ({content, style, mentionStyle, ...props}) => {
+
+// Regex to match the tagged format: @[Name](userId:id)
+const MENTION_REGEX = /(@\[[^\]]+?\]\(userId:[^)]+?\))/gi;
+
+const MentionText = ({content, style, mentionStyle, maxLines, ...props}) => {
   const navigation = useNavigation();
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
+  const [expanded, setExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
 
-  if (!content) return null;
+  const toggleExpanded = useCallback(() => {
+    setExpanded(prev => !prev);
+  }, []);
 
-  // Regex to match the tagged format: @[Name](userId:id)
-  // Matches: 
-  // 1. @[
-  // 2. everything up to ] -> (Display Name)
-  // 3. ](userId:
-  // 4. Any characters for the ID until the closing )
-  // 5. )
-  // Using 'gi' for global and case-insensitive matching
-  const mentionRegex = /(@\[[^\]]+?\]\(userId:[^)]+?\))/gi;
+  const onTextLayout = useCallback((e) => {
+    if (maxLines && !expanded) {
+      setIsTruncated(e.nativeEvent.lines.length > maxLines);
+    }
+  }, [maxLines, expanded]);
 
-  const parts = content.split(mentionRegex);
-
-  const handleMentionPress = (tag) => {
-    // Extract ID from tag like @[Name](userId:65ec...)
+  const handleMentionPress = useCallback((tag) => {
     const idMatch = tag.match(/\(userId:([^)]+)\)/i);
     const nameMatch = tag.match(/@\[([^\]]+)\]/i);
     
@@ -42,37 +47,61 @@ const MentionText = ({content, style, mentionStyle, ...props}) => {
         });
       }
     }
-  };
+  }, [currentUserId, navigation]);
+
+  if (!content) return null;
+
+  const parts = content.split(MENTION_REGEX);
 
   return (
-    <Text style={style} {...props}>
-      {parts.map((part, index) => {
-        if (part.match(mentionRegex)) {
-          // It's a mention tag. Extract the display name to show.
-          const displayNameMatch = part.match(/@\[([^\]]+)\]/i);
-          const displayName = displayNameMatch ? `@${displayNameMatch[1]}` : part;
+    <>
+      <Text
+        style={style}
+        numberOfLines={maxLines && !expanded ? maxLines : undefined}
+        onTextLayout={maxLines ? onTextLayout : undefined}
+        {...props}
+      >
+        {parts.map((part, index) => {
+          if (part.match(MENTION_REGEX)) {
+            const displayNameMatch = part.match(/@\[([^\]]+)\]/i);
+            const displayName = displayNameMatch ? `@${displayNameMatch[1]}` : part;
 
-          return (
-            <Text
-              key={index}
-              style={[styles.mention, mentionStyle]}
-              onPress={() => handleMentionPress(part)}
-            >
-              {displayName}
-            </Text>
-          );
-        }
-        // It's regular text
-        return <Text key={index}>{part}</Text>;
-      })}
-    </Text>
+            return (
+              <Text
+                key={index}
+                style={[styles.mention, mentionStyle]}
+                onPress={() => handleMentionPress(part)}
+              >
+                {displayName}
+              </Text>
+            );
+          }
+          return <Text key={index}>{part}</Text>;
+        })}
+      </Text>
+      {isTruncated && !expanded && (
+        <Text onPress={toggleExpanded} style={[style, styles.readMoreLess]}>
+          Read more
+        </Text>
+      )}
+      {expanded && isTruncated && (
+        <Text onPress={toggleExpanded} style={[style, styles.readMoreLess]}>
+          Read less
+        </Text>
+      )}
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   mention: {
     fontFamily: 'Rubik-Bold',
-    color: '#FFA86B', // Following the orange theme
+    color: '#FFA86B',
+  },
+  readMoreLess: {
+    fontFamily: 'Rubik-Medium',
+    color: '#FFA86B',
+    marginTop: 2,
   },
 });
 

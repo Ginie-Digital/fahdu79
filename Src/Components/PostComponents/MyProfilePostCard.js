@@ -417,7 +417,7 @@ const PostCards = ({item, index, token, postId}) => {
             </View>
             <View style={styles.cardTextWrapper}>
               {item?.postContent ? (
-                <MentionText content={item?.postContent} style={styles.cardText} />
+                <MentionText content={item?.postContent} style={styles.cardText} maxLines={3} />
               ) : null}
             </View>
           </View>
@@ -592,7 +592,7 @@ const PostCards = ({item, index, token, postId}) => {
           </View>
           <View style={styles.cardTextWrapper}>
             {item?.postContent ? (
-              <MentionText content={item?.postContent} style={styles.cardText} />
+              <MentionText content={item?.postContent} style={styles.cardText} maxLines={3} />
             ) : null}
           </View>
         </View>

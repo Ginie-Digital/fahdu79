@@ -179,7 +179,7 @@ const OtherProfileFeedPost = ({contactDescription}) => {
               </Text>
             </View>
             <View style={{width: '100%', height: 6, backgroundColor: '#ededed', marginBottom: 24, marginTop: 0}} />
-            <Text style={[styles.title, {marginLeft: 24, marginBottom: 16}]}>Contact Info</Text>
+            <Text style={[styles.title, {marginLeft: 24, marginBottom: 16}]}>My Gigs</Text>
           </>
         );
       }}

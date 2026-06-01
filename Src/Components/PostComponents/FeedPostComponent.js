@@ -16,28 +16,6 @@ const FeedPostComponent = ({navigation}) => {
   const initialServiceData = [
     {
       id: '1',
-      type: 'Video Call',
-      description: 'Video-Connect face-to-face with creators in real-time!',
-      icon: 'videocam',
-      buttonText: 'Call Now',
-      price: 2,
-      provider: 'Ionicons',
-      url: require('../../../Assets/Images/profileVideo.png'),
-      typeServer: 'videoCall_info',
-    },
-    {
-      id: '2',
-      type: 'Audio Call',
-      description: 'Audio-Discuss your passions over phone calls.',
-      icon: 'phone-call',
-      buttonText: 'Call Now',
-      price: 1,
-      provider: 'Feather',
-      url: require('../../../Assets/Images/profileCall.png'),
-      typeServer: 'audioCall_info',
-    },
-    {
-      id: '3',
       type: 'Chat',
       description: 'Chat-Spark insightful convos with creators',
       icon: 'message1',
@@ -48,13 +26,35 @@ const FeedPostComponent = ({navigation}) => {
       typeServer: 'chat_info',
     },
     {
-      id: '4',
+      id: '2',
       type: 'Live Stream',
       description: 'Livestream-Time to interact and experience exclusive content!',
       icon: 'live-tv',
       buttonText: 'Stream',
       price: null,
       typeServer: 'liveStream_info',
+    },
+    {
+      id: '3',
+      type: 'Audio Call',
+      description: 'Audio-Discuss your passions over phone calls.',
+      icon: 'phone-call',
+      buttonText: 'Call Now',
+      price: 1,
+      provider: 'Feather',
+      url: require('../../../Assets/Images/profileCall.png'),
+      typeServer: 'audioCall_info',
+    },
+    {
+      id: '4',
+      type: 'Video Call',
+      description: 'Video-Connect face-to-face with creators in real-time!',
+      icon: 'videocam',
+      buttonText: 'Call Now',
+      price: 2,
+      provider: 'Ionicons',
+      url: require('../../../Assets/Images/profileVideo.png'),
+      typeServer: 'videoCall_info',
     },
   ];
 
@@ -68,22 +68,20 @@ const FeedPostComponent = ({navigation}) => {
 
   console.log(userDetail, 'myProfileFee');
 
-  const handlePressEditDescription = index => {
-    console.log(index);
-
+  const handlePressEditDescription = item => {
     let type;
 
-    switch (index + 1) {
-      case 1:
+    switch (item.typeServer) {
+      case 'videoCall_info':
         type = 'video';
         break;
-      case 2:
+      case 'audioCall_info':
         type = 'audio';
         break;
-      case 3:
+      case 'chat_info':
         type = 'chat';
         break;
-      case 4:
+      case 'liveStream_info':
         type = 'liveStream';
         break;
       default:
@@ -126,7 +124,7 @@ const FeedPostComponent = ({navigation}) => {
             <View style={styles.priceRightContainer}>
               <Text style={styles.priceValue}>{userDetail?.followerFee?.[typeKey] || 0}</Text>
               <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
-              <Text style={styles.priceLabel}>/{`${index === 2 ? 'msg' : 'min'}`}</Text>
+              <Text style={styles.priceLabel}>/{`${typeKey === 'chat' ? 'msg' : 'min'}`}</Text>
             </View>
           </View>
 
@@ -136,12 +134,12 @@ const FeedPostComponent = ({navigation}) => {
             <View style={styles.priceRightContainer}>
               <Text style={styles.priceValue}>{userDetail?.subscriberFee?.[typeKey] || 0}</Text>
               <Image source={require('../../../Assets/Images/Coins2.png')} style={styles.coinIcon} contentFit="contain" />
-              <Text style={styles.priceLabel}>/{`${index === 2 ? 'msg' : 'min'}`}</Text>
+              <Text style={styles.priceLabel}>/{`${typeKey === 'chat' ? 'msg' : 'min'}`}</Text>
             </View>
           </View>
         </View>
 
-        <TouchableOpacity style={[styles.callButton, item.price ? {} : styles.liveStreamButton]} onPress={() => handlePressEditDescription(index)}>
+        <TouchableOpacity style={[styles.callButton, item.price ? {} : styles.liveStreamButton]} onPress={() => handlePressEditDescription(item)}>
           <View style={styles.priceTag}>
             <View style={{height: 17.83, width: 17.83, backgroundColor: 'transparent', marginRight: 10}}>
               <Image source={require('../../../Assets/Images/edit.png')} contentFit="contain" style={{flex: 1}} />

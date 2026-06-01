@@ -192,7 +192,7 @@
 // };
 
 import {StyleSheet, Text, TouchableOpacity, View, FlatList, SectionList, Image, Pressable, ActivityIndicator} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef, useMemo} from 'react';
 import {FONT_SIZES, WIDTH_SIZES} from '../../DesiginData/Utility';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import TransactionDetailsModal from './revenue/TransactionDetailsModal';
@@ -201,6 +201,7 @@ import {useDispatch, useSelector} from 'react-redux';
 
 import moment from 'moment';
 import {toggleTransactionDetailModal} from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import TransactionShimmer from '../Components/Shimmers/TransactionShimmer';
 
 function formatTransactionData(rawData) {
   return rawData?.map(monthObj => {
@@ -227,12 +228,9 @@ function formatTransactionData(rawData) {
 
 const Transactions = () => {
   const [selected, setSelected] = useState('All');
+  const filterListRef = useRef(null);
 
   const [detailsData, setDetailsData] = useState({});
-
-  const options = ['All', 'Transfer', 'Earnings', 'Deposit', 'Withdrawal', 'Reversal'];
-
-  const optionUser = ['All', 'Transfer', 'Deposit', 'Withdrawal', 'Reversal'];
 
   const [loading, setLoading] = useState(false);
 
@@ -250,23 +248,30 @@ const Transactions = () => {
 
   const userRole = useSelector(state => state.auth.user.role);
 
+  const filters = useMemo(() => {
+    return userRole === 'user'
+      ? ['All', 'Transfer', 'Deposit', 'Withdrawal', 'Reversal']
+      : ['All', 'Transfer', 'Earnings', 'Deposit', 'Withdrawal', 'Reversal'];
+  }, [userRole]);
+
+  useEffect(() => {
+    const index = filters.indexOf(selected);
+    if (index !== -1 && filterListRef.current) {
+      filterListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }
+  }, [selected, filters]);
+
   const changeFilter = async filter => {
-    // console.log(filter)
-
-    // console.log(filter)
-
     setLoading(true);
-
     setSelected(filter);
 
     const {data, error} = await transactionData({token, page: 1, filter: String(filter).toLowerCase()});
 
-    // console.log(JSON.stringify(data?.data, null, 2));  // The 'null' is for replacer, '2' is for indentation level
-
-    // console.log(data?.data?.data);
-
     setActualTransactionData(data?.data?.data);
-
     setLoading(false);
   };
 
@@ -278,20 +283,12 @@ const Transactions = () => {
 
   const formatedData = formatTransactionData(actualTransactionData);
 
-  if (loading) {
-    return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff'}}>
-        <ActivityIndicator color={'#1e1e1e'} size={'large'} />
-        <Text style={styles.loadingText}>Loading Transactions...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <View style={{marginVertical: WIDTH_SIZES[24]}}>
         <FlatList
-          data={userRole === 'user' ? optionUser : options}
+          ref={filterListRef}
+          data={filters}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.containerSelector}
@@ -301,35 +298,51 @@ const Transactions = () => {
               <Text style={[styles.text, selected === item && styles.selectedText]}>{item}</Text>
             </TouchableOpacity>
           )}
+          onScrollToIndexFailed={info => {
+            filterListRef.current?.scrollToOffset({
+              offset: info.averageItemLength * info.index,
+              animated: true,
+            });
+          }}
         />
       </View>
 
-      <SectionList
-        sections={formatedData}
-        keyExtractor={item => item.id}
-        renderSectionHeader={({section}) => (
-          <View style={styles.header}>
-            <Text style={styles.headerText}>{section.month}</Text>
-            <Text style={styles.headerAmount}>{'₹ ' + Math.abs(Number(section.totalEarning)).toLocaleString('en-IN')}</Text>
-          </View>
-        )}
-        ItemSeparatorComponent={() => <View style={{height: WIDTH_SIZES[1.5], backgroundColor: '#E9E9E9'}} />}
-        renderItem={({item}) => (
-          <Pressable
-            onPress={() => {
-              dispatch(toggleTransactionDetailModal({show: true}));
-              setDetailsData(item);
-            }}
-            style={({pressed}) => [styles.item, {backgroundColor: pressed ? '#FFA86B1C' : 'transparent'}]}>
-            <Image source={{uri: item.image}} style={styles.image} />
-            <View style={styles.details}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.date}>{item.date}</Text>
+      {loading ? (
+        <TransactionShimmer />
+      ) : (
+        <SectionList
+          sections={formatedData}
+          keyExtractor={item => item.id}
+          renderSectionHeader={({section}) => (
+            <View style={styles.header}>
+              <Text style={styles.headerText}>{section.month}</Text>
+              <Text style={styles.headerAmount}>{'₹ ' + Math.abs(Number(section.totalEarning)).toLocaleString('en-IN')}</Text>
             </View>
-            <Text style={[styles.amount, {color: item?.type === 'CR' ? '#3EB150' : '#FA3535'}]}>₹{item.amount}</Text>
-          </Pressable>
-        )}
-      />
+          )}
+          ItemSeparatorComponent={() => <View style={{height: WIDTH_SIZES[1.5], backgroundColor: '#E9E9E9'}} />}
+          renderItem={({item}) => (
+            <Pressable
+              onPress={() => {
+                dispatch(toggleTransactionDetailModal({show: true}));
+                setDetailsData(item);
+              }}
+              style={({pressed}) => [styles.item, {backgroundColor: pressed ? '#FFA86B1C' : 'transparent'}]}>
+              <Image source={{uri: item.image}} style={styles.image} />
+              <View style={styles.details}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.date}>{item.date}</Text>
+              </View>
+              <Text style={[styles.amount, {color: item?.type === 'CR' ? '#3EB150' : '#FA3535'}]}>₹{item.amount}</Text>
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Nothing to show</Text>
+              <Text style={styles.emptySubText}>There are no transactions recorded for this filter category yet.</Text>
+            </View>
+          }
+        />
+      )}
       <TransactionDetailsModal visible={showModal} transaction={detailsData} />
     </View>
   );
@@ -437,5 +450,25 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     fontFamily: 'Rubik-SemiBold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 80,
+    paddingHorizontal: 30,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontFamily: 'Rubik-Medium',
+    color: '#1e1e1e',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    fontFamily: 'Rubik-Regular',
+    color: '#7e7e7e',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

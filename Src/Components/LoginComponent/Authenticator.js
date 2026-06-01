@@ -59,7 +59,7 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
   const homeBottomSheetVisibility = useSelector(state => state.hideShow.visibility.verficationScreen);
   // const homeBottomSheetVisibility = 1
 
-  const snapPoints = useMemo(() => ['40%', '50%', '60%'], []);
+  const snapPoints = useMemo(() => Platform.OS === 'ios' ? ['45%'] : ['40%', '50%', '60%'], []);
 
   const handleSheetChanges = useCallback(index => {
     if (index === -1) {
@@ -194,7 +194,7 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
       enableDynamicSizing={false}
       backgroundStyle={{ backgroundColor: '#fffef9' }}
       android_keyboardInputMode="adjustResize"
-      keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}>
+      keyboardBehavior={Platform.OS === 'ios' ? 'extend' : 'fillParent'}>
       <View style={{ width: '100%', height: '100%' }}>
         <View style={[styles.modalInnerWrapper]}>
           <View style={styles.headerContainer}>

@@ -85,6 +85,8 @@ const myProfileFeedCacheSlice = createSlice({
       if (action.payload.postId) {
         let index = state.data.content.findIndex(x => x._id === action.payload.postId);
 
+        if (index === -1) return;
+
         if (!state.data.content[index].pinned) {
           state.data.content[index].pinned = true;
 
@@ -94,7 +96,15 @@ const myProfileFeedCacheSlice = createSlice({
 
           let tempPinnedArr = state.data.content.filter(x => x.pinned === true);
 
-          let tempNonPinnedArr = state.data.content.filter(x => x.pinned === false);
+          let tempNonPinnedArr = state.data.content.filter(x => !x.pinned);
+
+          // Sort non-pinned posts by date so the unpinned post
+          // returns to its correct chronological position
+          tempNonPinnedArr.sort((a, b) => {
+            const dateA = new Date(b.createdAt || b.postedAt || 0);
+            const dateB = new Date(a.createdAt || a.postedAt || 0);
+            return dateA - dateB;
+          });
 
           let finalTempArr = [...tempPinnedArr, ...tempNonPinnedArr];
 

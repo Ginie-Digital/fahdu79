@@ -20,16 +20,22 @@ const MentionText = ({content, style, mentionStyle, maxLines, ...props}) => {
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
+  // Track whether we've completed the initial measurement pass.
+  // On iOS, onTextLayout only reports the clamped line count when
+  // numberOfLines is set, so we must measure WITHOUT numberOfLines first.
+  const [measured, setMeasured] = useState(!maxLines);
 
   const toggleExpanded = useCallback(() => {
     setExpanded(prev => !prev);
   }, []);
 
   const onTextLayout = useCallback((e) => {
-    if (maxLines && !expanded) {
+    if (maxLines && !measured) {
+      // First render has no numberOfLines, so we get the TRUE line count
       setIsTruncated(e.nativeEvent.lines.length > maxLines);
+      setMeasured(true);
     }
-  }, [maxLines, expanded]);
+  }, [maxLines, measured]);
 
   const handleMentionPress = useCallback((tag) => {
     const idMatch = tag.match(/\(userId:([^)]+)\)/i);
@@ -53,12 +59,17 @@ const MentionText = ({content, style, mentionStyle, maxLines, ...props}) => {
 
   const parts = content.split(MENTION_REGEX);
 
+  // During the measurement pass (measured === false), render WITHOUT
+  // numberOfLines so onTextLayout reports all lines. Use opacity 0
+  // to avoid a visual flash of the full unclamped text.
+  const isClampActive = measured && maxLines && !expanded;
+
   return (
     <>
       <Text
-        style={style}
-        numberOfLines={maxLines && !expanded ? maxLines : undefined}
-        onTextLayout={maxLines ? onTextLayout : undefined}
+        style={[style, !measured && { opacity: 0 }]}
+        numberOfLines={isClampActive ? maxLines : undefined}
+        onTextLayout={maxLines && !measured ? onTextLayout : undefined}
         {...props}
       >
         {parts.map((part, index) => {
@@ -79,12 +90,12 @@ const MentionText = ({content, style, mentionStyle, maxLines, ...props}) => {
           return <Text key={index}>{part}</Text>;
         })}
       </Text>
-      {isTruncated && !expanded && (
+      {measured && isTruncated && !expanded && (
         <Text onPress={toggleExpanded} style={[style, styles.readMoreLess]}>
           Read more
         </Text>
       )}
-      {expanded && isTruncated && (
+      {measured && expanded && isTruncated && (
         <Text onPress={toggleExpanded} style={[style, styles.readMoreLess]}>
           Read less
         </Text>

@@ -43,7 +43,7 @@ const EditProfiler = ({route, navigation}) => {
   });
 
   const characterLimits = {
-    bio: 100,
+    bio: 150,
     descriptionHeading: 50,
     description: 500,
   };
@@ -73,8 +73,8 @@ const EditProfiler = ({route, navigation}) => {
   };
 
   const validateBio = bioText => {
-    if (bioText && bioText.length > 100) {
-      return 'Bio must be less than 100 characters';
+    if (bioText && bioText.length > 150) {
+      return 'Bio must be less than 150 characters';
     }
     return '';
   };
@@ -293,7 +293,7 @@ const EditProfiler = ({route, navigation}) => {
                 onBlur={() => setFocusedInput(null)}
                 multiline
                 textAlignVertical="top"
-                maxLength={100}
+                maxLength={150}
               />
               <Text style={styles.characterCount}>
                 {bio?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.bio}</Text>

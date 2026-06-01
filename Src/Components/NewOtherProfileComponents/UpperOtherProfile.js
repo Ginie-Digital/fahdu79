@@ -328,6 +328,17 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
   //   return <View style={styles.socialRatingContainer}></View>;
   // }, [userProfileDetails, thisUserRating]);
 
+  // Collapse 3+ consecutive newlines into 2, trim, and cap at 10 lines
+  const sanitizeBio = (text) => {
+    if (!text) return text;
+    let cleaned = text.replace(/\n{3,}/g, '\n\n').trim();
+    const lines = cleaned.split('\n');
+    if (lines.length > 10) {
+      cleaned = lines.slice(0, 10).join('\n') + '...';
+    }
+    return cleaned;
+  };
+
   const BioMyProfile = useCallback(() => {
     // Don't show bio for blocked profiles (when displayName is undefined)
     if (!userProfileDetails?.displayName) {
@@ -336,11 +347,13 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
 
     // Default bio text if none is provided
     const defaultBio = 'Sharing unique content and engaging with my community. Join me on this journey! 🌟🎨';
+    const rawBio = userProfileDetails?.aboutUser || defaultBio;
+    const bioText = sanitizeBio(rawBio);
 
     return (
       <View style={styles.bioContainer}>
         <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
-          {userProfileDetails?.aboutUser || defaultBio}
+          {bioText}
         </ReadMore>
         {userProfileDetails?.username && <Text style={styles.usernameLink}>@{'YellowDimond'}</Text>}
       </View>
@@ -498,7 +511,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
   }, [userProfileDetails, isFollowing, subscribed, loggedInUserRole]);
 
   return (
-    <View style={{ maxHeight: responsiveHeight(64), backgroundColor: '#fff' }}>
+    <View style={{ backgroundColor: '#fff' }}>
       <OtherProfilePicture displayName={userProfileDetails?.displayName} userId={userProfileDetails?._id} />
       <UserDetailMyProfile />
       <View style={{ flexDirection: 'column' }}>

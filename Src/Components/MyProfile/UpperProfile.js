@@ -146,15 +146,28 @@ const UpperProfile = ({isFocused}) => {
     );
   }, [userProfileDetails, loggedUserDetail]);
 
+  // Collapse 3+ consecutive newlines into 2, trim, and cap at 10 lines
+  const sanitizeBio = (text) => {
+    if (!text) return text;
+    let cleaned = text.replace(/\n{3,}/g, '\n\n').trim();
+    const lines = cleaned.split('\n');
+    if (lines.length > 10) {
+      cleaned = lines.slice(0, 10).join('\n') + '...';
+    }
+    return cleaned;
+  };
+
   const BioMyProfile = useCallback(
     ({ userProfileDetails }) => {
       // Default bio text if none is provided
       const defaultBio = 'Sharing unique content and engaging with my community. Join me on this journey! 🌟🎨';
+      const rawBio = loggedUserDetail?.aboutUser || userProfileDetails?.aboutUser || defaultBio;
+      const bioText = sanitizeBio(rawBio);
 
       return (
         <View style={styles.bioContainer}>
           <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
-            {loggedUserDetail?.aboutUser || userProfileDetails?.aboutUser || defaultBio}
+            {bioText}
           </ReadMore>
           {userProfileDetails?.username && <Text style={styles.usernameLink}>@{userProfileDetails.username}</Text>}
         </View>
@@ -164,7 +177,7 @@ const UpperProfile = ({isFocused}) => {
   );
 
   return (
-    <View ref={ref} style={{maxHeight: responsiveHeight(60), backgroundColor: '#fff'}}>
+    <View ref={ref} style={{backgroundColor: '#fff'}}>
       <MyProfilePicture userProfileDetails={userProfileDetails} />
 
       <UserDetailMyProfile userProfileDetails={userProfileDetails} currentUserRole={userProfileDetails?.role} />

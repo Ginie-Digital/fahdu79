@@ -1,5 +1,5 @@
 import { FlatList, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,36 +32,26 @@ const NotificationScreen = () => {
 
   const suspended = useSelector(state => state.auth.user.suspended);
 
-  const filters = ['All', 'Like', 'Comments', 'liveStream', 'Chats', 'Subscription', 'Calls', 'Wishlist'];
-  if (userRole === 'creator') {
-    filters.splice(3, 0, 'Payments');
-  }
+  const filterListRef = useRef(null);
 
-  const FilterNotifications = () => (
-    <FlatList
-      data={filters}
-      keyExtractor={(item, index) => `${item}-${index}`}
-      horizontal
-      style={{ maxHeight: responsiveWidth(14) }}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingVertical: 10, alignItems: 'center' }}
-      ItemSeparatorComponent={() => <View style={{ width: responsiveWidth(3) }} />}
-      renderItem={({ item }) => {
-        const isActive = selectedFilter === item;
-        return (
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedFilter(item);
-              setPage(1);
-              setHasMore(true);
-            }}
-            style={[styles.filterButton, isActive ? styles.activeFilterButton : styles.inactiveFilterButton]}>
-            <Text style={[styles.filterText, isActive && styles.activeFilterText]}>{item}</Text>
-          </TouchableOpacity>
-        );
-      }}
-    />
-  );
+  const filters = useMemo(() => {
+    const list = ['All', 'Like', 'Comments', 'liveStream', 'Chats', 'Subscription', 'Calls', 'Wishlist'];
+    if (userRole === 'creator') {
+      list.splice(3, 0, 'Payments');
+    }
+    return list;
+  }, [userRole]);
+
+  useEffect(() => {
+    const index = filters.indexOf(selectedFilter);
+    if (index !== -1 && filterListRef.current) {
+      filterListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }
+  }, [selectedFilter, filters]);
 
   const fetchNotifications = async (filter, pageNum = 1, isLoadMore = false) => {
     let myFilter = filter === 'All' ? '' : filter === 'liveStream' ? filter : filter.toLowerCase();
@@ -266,7 +256,36 @@ const NotificationScreen = () => {
   return (
     <View style={styles.container}>
       <View style={{ paddingLeft: 24, justifyContent: 'center', paddingRight: WIDTH_SIZES['10'] }}>
-        <FilterNotifications />
+        <FlatList
+          ref={filterListRef}
+          data={filters}
+          keyExtractor={(item, index) => `${item}-${index}`}
+          horizontal
+          style={{ maxHeight: responsiveWidth(14) }}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingVertical: 10, alignItems: 'center' }}
+          ItemSeparatorComponent={() => <View style={{ width: responsiveWidth(3) }} />}
+          renderItem={({ item }) => {
+            const isActive = selectedFilter === item;
+            return (
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedFilter(item);
+                  setPage(1);
+                  setHasMore(true);
+                }}
+                style={[styles.filterButton, isActive ? styles.activeFilterButton : styles.inactiveFilterButton]}>
+                <Text style={[styles.filterText, isActive && styles.activeFilterText]}>{item}</Text>
+              </TouchableOpacity>
+            );
+          }}
+          onScrollToIndexFailed={info => {
+            filterListRef.current?.scrollToOffset({
+              offset: info.averageItemLength * info.index,
+              animated: true,
+            });
+          }}
+        />
       </View>
 
       {loading && page === 1 ? (

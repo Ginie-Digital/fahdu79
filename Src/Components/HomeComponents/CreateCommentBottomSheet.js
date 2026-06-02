@@ -1,4 +1,4 @@
-import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Button, Platform, Keyboard, ActivityIndicator, Animated} from 'react-native';
+import {StyleSheet, View, TouchableOpacity, Text, Pressable, BackHandler, Button, Platform, ActivityIndicator} from 'react-native';
 import React, {useMemo, useCallback, useRef, useState, useEffect} from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
 import {BottomSheetBackdrop, BottomSheetModal, BottomSheetTextInput} from '@gorhom/bottom-sheet';
@@ -31,32 +31,7 @@ const CreateCommentBottomSheet = () => {
 
   const insets = useSafeAreaInsets();
 
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-
-    const showListener = Keyboard.addListener('keyboardDidShow', (e) => {
-      Animated.timing(keyboardHeight, {
-        toValue: e.endCoordinates.height + 12, // +12px spacing offset to keep snug
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    });
-
-    const hideListener = Keyboard.addListener('keyboardDidHide', () => {
-      Animated.timing(keyboardHeight, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    });
-
-    return () => {
-      showListener.remove();
-      hideListener.remove();
-    };
-  }, []);
 
   const {show: commentBottomSheetVisibility, focus: shouldBeFocus, fromPage} = useSelector(state => state.hideShow.visibility.commentBottomSheet);
 
@@ -338,7 +313,7 @@ const CreateCommentBottomSheet = () => {
         enableDynamicSizing={false}
         backgroundStyle={{backgroundColor: '#fff'}}
         android_keyboardInputMode="adjustResize"
-        keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}
+        keyboardBehavior="interactive"
         topInset={insets.top}
         containerStyle={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}
         style={{borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden'}}
@@ -389,11 +364,11 @@ const CreateCommentBottomSheet = () => {
           )}
         </View>
 
-        <Animated.View style={[styles.bottomCommentBoxContainer, {
+        <View style={[styles.bottomCommentBoxContainer, {
           borderTopWidth: 1,
           borderTopColor: '#F0F0F0',
           paddingHorizontal: 20,
-          paddingBottom: Platform.OS === 'ios' ? 40 : Animated.add(keyboardHeight, 20),
+          paddingBottom: Platform.OS === 'ios' ? 40 : 20,
           alignItems: 'center'
         }]}>
           <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#262626', marginBottom: 2}]} onPress={() => gotomyprofile()}>
@@ -422,7 +397,7 @@ const CreateCommentBottomSheet = () => {
               )}
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        </View>
       </BottomSheetModal>
   );
 };

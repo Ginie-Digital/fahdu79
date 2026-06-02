@@ -277,6 +277,13 @@ const VerificationStepOne = ({route}) => {
     }
   }, [fullName, fahduUserName, dob, selectedItems, currentUserCoverPicture, currentUserProfilePicture, token, dispatch, checkUserNameAvailability]);
 
+  const isAgeValid = (() => {
+    if (!dob || typeof dob !== 'string' || !dob.trim()) return false;
+    const birthDate = dayjs(dob, 'DD-MM-YYYY');
+    const age = dayjs().diff(birthDate, 'year');
+    return age >= 16;
+  })();
+
   if (loading) {
     return <Loader />;
   }
@@ -412,7 +419,7 @@ const VerificationStepOne = ({route}) => {
         </View>
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
-          <AnimatedButton title={'Next'} onPress={() => updateProfileHandler()} />
+          <AnimatedButton title={'Next'} onPress={() => updateProfileHandler()} disabled={!isAgeValid} />
         </View>
 
         <View style={{height: responsiveWidth(16)}} />

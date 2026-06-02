@@ -27,7 +27,7 @@ const DateTimePickerSheet = () => {
   // Stable limits
   const currentDate = useMemo(() => new Date(), []);
   const maxDate = useMemo(() => {
-    return dayjs().subtract(13, 'year').endOf('day').toDate();
+    return dayjs().subtract(16, 'year').endOf('day').toDate();
   }, []);
 
   useEffect(() => {
@@ -91,8 +91,9 @@ const DateTimePickerSheet = () => {
         return;
       }
     } else if (type === 'dob') {
-      if (tempDate.getTime() > maxDate.getTime()) {
-        setError('You must be at least 13 years old');
+      const calculatedAge = dayjs().diff(tempDate, 'year');
+      if (calculatedAge < 16) {
+        setError('You must be at least 16 years old');
         return;
       }
     }
@@ -129,6 +130,8 @@ const DateTimePickerSheet = () => {
       age: null
     };
   }, [tempDate, type]);
+
+  const isAgeInvalid = type === 'dob' && (!age || age < 16);
 
   if (!shouldRender) return null;
 
@@ -208,15 +211,18 @@ const DateTimePickerSheet = () => {
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={handleProceed} 
+            disabled={isAgeInvalid}
             style={[
               styles.doneButton, 
-              error && styles.errorButton
+              error && styles.errorButton,
+              isAgeInvalid && { backgroundColor: '#CBCBCB' }
             ]}
             activeOpacity={0.8}
           >
             <Text style={[
               styles.doneText,
-              error && styles.errorText
+              error && styles.errorText,
+              isAgeInvalid && { color: '#8E8E8E' }
             ]}>
               {error ? error : (type === 'dob' ? 'Confirm' : 'Apply')}
             </Text>

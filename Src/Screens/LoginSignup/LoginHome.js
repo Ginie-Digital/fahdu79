@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, Pressable, S
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { googleSignIn, signOutGoogle, appleSignIn } from '../../../OAuth';
-import { currentUserInformation, enableNotificationModal, setPostsCardType, toggleVerficationScreen } from '../../../Redux/Slices/NormalSlices/AuthSlice';
+import { currentUserInformation } from '../../../Redux/Slices/NormalSlices/AuthSlice';
 import { setSharedCampaignId, setUserFromCampaignLink, setYlyticInstagramUserId } from '../../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
 import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
 import Authenticator from '../../Components/LoginComponent/Authenticator';
@@ -12,7 +12,7 @@ import { LoginPageErrors } from '../../Components/ErrorSnacks';
 import { nTwins, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import ChevronLoader from '../../ChevronLoader';
 import AlertBox from '../../AlertBox';
-import { toggleAlertModal, toggleShowOnboarding } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { toggleAlertModal, toggleShowOnboarding, toggleVerficationScreen } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 
 const LoginHome = () => {
   const dispatcher = useDispatch();
@@ -111,7 +111,13 @@ const LoginHome = () => {
                   setLoader(true);
                   const data = await appleSignIn();
 
-                  if (data?.data) afterLoginProcess(data);
+                  if (data?.statusCode === 200) {
+                    afterLoginProcess(data);
+                  } else if (data?.statusCode === 202) {
+                    setAuthToken(data?.data?.authToken);
+                    setType(data?.data?.email);
+                    dispatcher(toggleVerficationScreen({ show: 1 }));
+                  }
 
                   setLoader(false);
                 }}>

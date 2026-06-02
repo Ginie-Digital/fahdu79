@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef, memo} from 'react';
-import {View, Text, StyleSheet, Pressable, Dimensions, FlatList, TextInput, ActivityIndicator, Keyboard, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Dimensions, FlatList, TextInput, ActivityIndicator, Keyboard, Platform, useWindowDimensions} from 'react-native';
 import {responsiveFontSize, responsiveWidth, responsiveHeight} from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
 import {useDispatch, useSelector} from 'react-redux';
@@ -13,10 +13,31 @@ import {Image} from 'expo-image';
 const {width: WINDOW_WIDTH} = Dimensions.get('window');
 
 const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
+  const {width: windowWidth, height: windowHeight} = useWindowDimensions();
   const dispatch = useDispatch();
   const visible = useSelector(state => state.hideShow.visibility.creatorSelectorModal);
   
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      e => setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0),
+    );
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
+  const dialogMaxHeight = keyboardHeight > 0 
+    ? (windowHeight * 0.42) 
+    : (windowHeight * 0.5);
   const inputRef = useRef(null);
 
   const [triggerSearch, {data, isFetching, isLoading}] = useLazySearchedCreatorsQuery();
@@ -82,7 +103,7 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
   return (
     <Modal
       isVisible={visible}
-      avoidKeyboard={true}
+      avoidKeyboard={Platform.OS === 'ios'}
       backdropColor="#00000060"
       onBackButtonPress={handleClose}
       onBackdropPress={handleClose}
@@ -101,7 +122,7 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
       useNativeDriverForBackdrop={true}
       style={styles.modalContainer}
     >
-      <View style={styles.dialog}>
+      <View style={[styles.dialog, { width: windowWidth, maxHeight: dialogMaxHeight }]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.indicator} />
@@ -167,6 +188,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     width: WINDOW_WIDTH,
     maxHeight: responsiveHeight(50),
+    overflow: 'hidden',
   },
   header: {
     alignItems: 'center',
@@ -191,6 +213,7 @@ const styles = StyleSheet.create({
   },
   listStyle: {
     flexGrow: 0,
+    flexShrink: 1,
   },
   listContent: {
     paddingHorizontal: responsiveWidth(5),

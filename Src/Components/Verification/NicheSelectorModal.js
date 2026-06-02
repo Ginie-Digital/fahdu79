@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef, memo} from 'react';
-import {View, Text, StyleSheet, Pressable, Dimensions, ScrollView, TextInput, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Dimensions, ScrollView, TextInput, Platform, useWindowDimensions, Keyboard} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
@@ -13,11 +13,32 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 const WINDOW_WIDTH = Dimensions.get('window').width;
 
 const NicheSelectorModal = () => {
+  const {width: windowWidth, height: windowHeight} = useWindowDimensions();
   const dispatch = useDispatch();
   const visible = useSelector(state => state.hideShow.visibility.nicheSelectorModal);
   const confirmed = useSelector(state => state.hideShow.visibility.confirmedNiches);
   
   const [tempSelected, setTempSelected] = useState([]);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      e => setKeyboardHeight(e.endCoordinates.height),
+    );
+    const hideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0),
+    );
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
+  const dialogMaxHeight = keyboardHeight > 0 
+    ? (windowHeight * 0.48) 
+    : (windowHeight * 0.7);
   const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef(null);
 
@@ -60,7 +81,7 @@ const NicheSelectorModal = () => {
   return (
     <Modal
       isVisible={visible}
-      avoidKeyboard={true}
+      avoidKeyboard={Platform.OS === 'ios'}
       backdropColor="#00000060"
       onBackButtonPress={handleClose}
       onBackdropPress={handleClose}
@@ -79,7 +100,7 @@ const NicheSelectorModal = () => {
       useNativeDriverForBackdrop={true}
       style={styles.modalContainer}
     >
-      <View style={styles.dialog}>
+      <View style={[styles.dialog, { width: windowWidth, maxHeight: dialogMaxHeight }]}>
         <View style={styles.header}>
             <View style={styles.indicator} />
             <Text style={styles.mainHeading}>Select Creator's Niche</Text>
@@ -154,6 +175,7 @@ const styles = StyleSheet.create({
     width: WINDOW_WIDTH,
     paddingTop: 12,
     maxHeight: Dimensions.get('window').height * 0.7,
+    overflow: 'hidden',
   },
   header: {
     alignItems: 'center',

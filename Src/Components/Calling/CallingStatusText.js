@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, Animated, StyleSheet, View, Dimensions } from 'react-native';
+import { Text, Animated, StyleSheet, View, Dimensions, Platform } from 'react-native';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const responsiveHeight = (h) => SCREEN_H * (h / 100);
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   ringingText: {
     marginTop: 4,
-    fontSize: responsiveFontSize(3.2),
+    fontSize: Platform.OS === 'ios' ? responsiveFontSize(4.6) : responsiveFontSize(3.2),
     color: '#A0A0A0',
     fontFamily: 'Rubik-Regular',
     textAlign: 'center',

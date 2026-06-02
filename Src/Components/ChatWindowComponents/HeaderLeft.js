@@ -14,16 +14,44 @@ import Back from '../../../Assets/svg/back.svg';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import axios from 'axios';
 import {useLazyOnlineStatusQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { BASE_URL } from '../../Configs/ApiConfig';
 
 const HeaderLeft = () => {
   const navigation = useNavigation();
   const senderBioDetail = useSelector(state => state.senderDetail.bio);
 
   const currentUserRole = useSelector(state => state.auth.user.role);
+  const token = useSelector(state => state.auth.user.token);
 
   const dispatcher = useDispatch();
 
   const isOnline = useSelector(state => state.hideShow.visibility.onlineStatus);
+  const [relationship, setRelationship] = useState(null);
+
+  useEffect(() => {
+    if (token && senderBioDetail?.id) {
+      const fetchRelationshipStatus = async () => {
+        try {
+          console.log(`🔄 [Relationship] Fetching for userId: ${senderBioDetail.id}`);
+          const response = await axios.get(
+            `${BASE_URL}/api/messages/chat/user/status?userId=${senderBioDetail.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (response.data?.statusCode === 200) {
+            console.log('✅ [Relationship] Status:', response.data?.data?.relationship);
+            setRelationship(response.data?.data?.relationship);
+          }
+        } catch (error) {
+          console.log('❌ [Relationship] Failed to fetch relationship status:', error?.response?.data || error?.message);
+        }
+      };
+      fetchRelationshipStatus();
+    }
+  }, [token, senderBioDetail?.id]);
 
   const handleGoToOthersProfile = useCallback(() => {
     navigation.navigate('othersProfile', {
@@ -31,7 +59,7 @@ const HeaderLeft = () => {
       userId: senderBioDetail?.id,
       role: senderBioDetail?.role,
     });
-  }, [senderBioDetail]);
+  }, [senderBioDetail, navigation]);
 
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
@@ -68,16 +96,27 @@ const HeaderLeft = () => {
         <View style={styles.profileInfo}>
           <Pressable style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(0.8)}} onPress={handleGoToOthersProfile}>
             {({pressed}) => (
-              <Text
-                style={[
-                  styles.profileName,
-                  {maxWidth: responsiveWidth(36)},
-                  pressed && {color: '#999999'}, // change to desired color on press
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {senderBioDetail?.name}
-              </Text>
+              <>
+                <Text
+                  style={[
+                    styles.profileName,
+                    {maxWidth: responsiveWidth(36)},
+                    pressed && {color: '#999999'}, // change to desired color on press
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {senderBioDetail?.name?.length > 8
+                    ? `${senderBioDetail?.name.substring(0, 8)}...`
+                    : senderBioDetail?.name}
+                </Text>
+                {relationship === 'SUBSCRIBER' && (
+                  <Image
+                    source={require('../../../Assets/Images/subscriber.png')}
+                    contentFit="contain"
+                    style={styles.subscriberIcon}
+                  />
+                )}
+              </>
             )}
           </Pressable>
 
@@ -180,7 +219,6 @@ const styles = StyleSheet.create({
     height: WIDTH_SIZES[36],
     borderRadius: responsiveWidth(30),
     marginRight: WIDTH_SIZES[14],
-    borderWidth: responsiveWidth(0.4),
     overflow: 'hidden',
     borderWidth: responsiveWidth(0.53),
     position: 'relative',
@@ -196,6 +234,10 @@ const styles = StyleSheet.create({
     color: '#1e1e1e',
     fontFamily: 'Rubik-Bold',
     includeFontPadding: false,
+  },
+  subscriberIcon: {
+    width: 16,
+    height: 16,
   },
   profileCategory: {
     color: '#1e1e1e',

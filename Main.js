@@ -94,6 +94,29 @@ const Main = () => {
     dispatch(toggleCallAccepted({ status: false }));
   }, []);
 
+  // Settle any stuck calls on cold start (handles force-quit scenarios)
+  const hasSettledRef = useRef(false);
+  useEffect(() => {
+    if (token && !hasSettledRef.current) {
+      hasSettledRef.current = true;
+      const settleCallOnStartup = async () => {
+        try {
+          console.log('🔄 [Settle] Calling settle call API on startup...');
+          const response = await axios.post(`${BASE_URL}/api/stream/call/settle`, {}, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            timeout: 10000,
+          });
+          console.log('✅ [Settle] API response:', response.data);
+        } catch (error) {
+          console.log('❌ [Settle] Failed:', error?.response?.data || error?.message);
+        }
+      };
+      settleCallOnStartup();
+    }
+  }, [token]);
+
   // Unified incoming call handler to prevent duplicates (Socket vs FCM)
   // Uses callId from backend (same across Socket & FCM) for reliable deduplication
   const handleIncomingCall = useCallback((callData, source) => {

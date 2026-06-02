@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   ringingText: {
     marginTop: 4,
-    fontSize: responsiveFontSize(2.1), // Approx 16px responsive
+    fontSize: responsiveFontSize(3.2),
     color: '#A0A0A0',
     fontFamily: 'Rubik-Regular',
     textAlign: 'center',

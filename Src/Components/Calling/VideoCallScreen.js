@@ -1033,13 +1033,15 @@ const VideoCallScreen = ({route}) => {
                 <NetworkQualityBadge quality={networkQuality} />
               </View>
               
-              {/* 💳 Wallet Badge (Moved Below Network) */}
-              <View style={styles.headerWalletBadge}>
-                <Wall width={14} height={14} style={{color: '#000'}} />
-                <Text style={styles.headerWalletText}>
-                  {Number(coins).toLocaleString('en-IN', {maximumFractionDigits: 0})}
-                </Text>
-              </View>
+              {/* 💳 Wallet Badge - Hidden for creator */}
+              {!IS_STARTING && (
+                <View style={styles.headerWalletBadge}>
+                  <Wall width={14} height={14} style={{color: '#000'}} />
+                  <Text style={styles.headerWalletText}>
+                    {Number(coins).toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

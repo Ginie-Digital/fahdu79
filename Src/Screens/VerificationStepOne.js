@@ -48,7 +48,7 @@ const VerificationStepOne = ({route}) => {
   useEffect(() => {
     const currentDate = new Date();
     const maxDate = new Date(
-      currentDate.getFullYear() - 13, // Subtract 13 years
+      currentDate.getFullYear() - 16, // Subtract 16 years
       currentDate.getMonth(),
       currentDate.getDate(),
     );
@@ -235,8 +235,8 @@ const VerificationStepOne = ({route}) => {
 
     const birthDate = dayjs(dob, 'DD-MM-YYYY');
     const age = dayjs().diff(birthDate, 'year');
-    if (age < 13) {
-      return LoginPageErrors('You must be at least 13 years old');
+    if (age < 16) {
+      return LoginPageErrors('You must be at least 16 years old');
     }
 
     if (selectedItems.length === 0) {

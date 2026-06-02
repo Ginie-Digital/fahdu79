@@ -207,7 +207,8 @@ const styles = StyleSheet.create({
     minHeight: 100,
   },
   scrollView: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
     backgroundColor: '#fff',
   },
   row: {

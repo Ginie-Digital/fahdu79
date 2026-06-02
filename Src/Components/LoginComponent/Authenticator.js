@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
   tipContainer: {
     marginTop: responsiveWidth(1),
     width: responsiveWidth(85),
+    alignSelf: 'center',
   },
   tipCounterContainer: {
     flexDirection: 'row',

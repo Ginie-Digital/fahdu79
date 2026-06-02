@@ -71,7 +71,6 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
   function copyToClipboard(code) {
     const message = `I have applied for verification on Fahdu on ${getReadableDateTime()}.${'\n'}My unique code is ${code}.`;
     Clipboard.setString(message);
-    chatRoomSuccess('Message copied to clipboard!');
   }
 
   const handleVerify = async () => {
@@ -199,7 +198,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         styles.dialog, 
         {
           transform: [{translateY: slideAnim}],
-          paddingBottom: isKeyboardVisible ? keyboardHeight + (Platform.OS === 'ios' ? 20 : 10) : (Math.max(insets.bottom, 20) + (Platform.OS === 'ios' ? 20 : 16))
+          paddingBottom: isKeyboardVisible ? keyboardHeight + (Platform.OS === 'ios' ? 55 : 45) : (Math.max(insets.bottom, 20) + (Platform.OS === 'ios' ? 20 : 16))
         }
       ]}>
         <View style={styles.headerIndicator} />
@@ -215,8 +214,8 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
                   value={instagram}
                   onChangeText={setInstagram}
                   maxLength={30}
-                  selectionColor={'#1e1e1e'}
-                  cursorColor={'#1e1e1e'}
+                  selectionColor={'#FFA86B'}
+                  cursorColor={'#FFA86B'}
                   placeholderTextColor="#B2B2B2"
                   placeholder="e.g. fahduIndia"
                   spellCheck={false}

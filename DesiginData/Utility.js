@@ -371,7 +371,7 @@ export function isVersionGreaterOrEqual(v1, v2) {
 export const joinLivestream = async (token, roomId) => {
   console.log('TOKEN', token);
   try {
-    const response = await axios.get(`https://api.fahdu.in/api/stream/livestream/join?roomId=${roomId}`, {
+    const response = await axios.get(`https://api.fahdu.com/api/stream/livestream/join?roomId=${roomId}`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,

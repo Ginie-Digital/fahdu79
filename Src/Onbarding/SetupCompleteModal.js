@@ -19,7 +19,7 @@ const SetupCompleteModal = () => {
     // Display link shown in UI
     const displayLink = `@${displayName || userId}`;
     // Full URL for sharing
-    const shareLink = `https://creators.fahdu.com/${displayName || userId}`;
+    const shareLink = `https://web.fahdu.com/${displayName || userId}`;
 
     const handleShareLink = async () => {
         try {

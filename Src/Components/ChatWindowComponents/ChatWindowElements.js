@@ -332,7 +332,8 @@ export const LeftChatBubble = ({ displayThread, setFullVideoModalUri, token, cha
     );
   }
   if (displayThread?.coinDetail === true) {
-    const userName = displayThread.message.split(' tipped ')[0];
+    const rawUserName = displayThread.message.split(' tipped ')[0];
+    const userName = rawUserName.length > 5 ? rawUserName.substring(0, 5) + '...' : rawUserName;
     const coinAmount = displayThread?.attachment?.charge_amount || displayThread.message.match(/tipped (\d+)/)?.[1] || "";
     const profileImage = displayThread?.attachment?.profileImage || displayThread?.sender?.profile_image?.url;
 
@@ -345,11 +346,7 @@ export const LeftChatBubble = ({ displayThread, setFullVideoModalUri, token, cha
               style={styles.profileImage}
             />
             <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
-              <Text
-                style={[styles.chatText, { maxWidth: responsiveWidth(30) }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
+              <Text style={styles.chatText}>
                 {userName}
               </Text>
               <Text style={styles.chatText}> tipped </Text>
@@ -964,7 +961,8 @@ export const RightChatBubble = ({ displayThread, setFullVideoModalUri, setFullSi
 
   if (displayThread.attachment.format === '') {
     if (displayThread?.message?.search('tipped') > 0) {
-      const userName = displayThread.message.split(' tipped ')[0];
+      const rawUserName = displayThread.message.split(' tipped ')[0];
+      const userName = rawUserName.length > 5 ? rawUserName.substring(0, 5) + '...' : rawUserName;
       const coinAmount = displayThread?.attachment?.charge_amount || displayThread.message.match(/tipped (\d+)/)?.[1] || "";
       const profileImage = displayThread?.attachment?.profileImage || displayThread?.sender?.profile_image?.url;
 
@@ -978,11 +976,7 @@ export const RightChatBubble = ({ displayThread, setFullVideoModalUri, setFullSi
                 style={styles.profileImage}
               />
               <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
-                <Text
-                  style={[styles.chatText, { maxWidth: responsiveWidth(30) }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
+                <Text style={styles.chatText}>
                   {userName}
                 </Text>
                 <Text style={styles.chatText}> tipped </Text>

@@ -66,11 +66,6 @@ export const homeBottomSheetList = [
     // provider: "AntDesign",
     iconName: 'PositiveReview',
   },
-  {
-    id: 100,
-    name: 'Network Logger',
-    iconName: 'Info',
-  },
 ];
 
 export const homeBottomSheetListRoleUser = [
@@ -109,11 +104,6 @@ export const homeBottomSheetListRoleUser = [
     name: 'Feedback',
     // provider: "AntDesign",
     iconName: 'PositiveReview',
-  },
-  {
-    id: 100,
-    name: 'Network Logger',
-    iconName: 'Info',
   },
 ];
 

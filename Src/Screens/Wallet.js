@@ -120,6 +120,7 @@ const WalletScreen = ({ route }) => {
       }
     } catch (error) {
       setLoading(false);
+      dispatch(toggleWalletLoader({ packId: null }));
       console.error('Payment Error:', error);
     }
   };
@@ -133,6 +134,9 @@ const WalletScreen = ({ route }) => {
     const packs = data?.data?.packs || [];
     console.log('📦 [Wallet:FetchPack] OS:', os);
     console.log('📦 [Wallet:FetchPack] Pack Count:', packs.length);
+    packs.forEach((pack, i) => {
+      console.log(`📦 Pack[${i}]: name=${pack.name}, cost=${pack.cost}, amount=${pack.amount}, packId=${pack.packId}, discount=${pack.discount}`);
+    });
 
     if (error) {
       console.log('📦 [Wallet:FetchPack] Error:', error);
@@ -157,20 +161,12 @@ const WalletScreen = ({ route }) => {
     );
   }
 
-  const limitedPackages = packages?.slice(0, 5) || [];
+  const limitedPackages = packages || [];
 
   const getOfferData = item => {
-    const name = item?.name?.toLowerCase() || '';
     const discount = item?.discount || 0;
-
-    let isFahdu = false;
-    if (name.includes('fahdu') || (name.includes('fukrey') && (item?.cost || item?.amount) > 8000)) {
-      isFahdu = true;
-    }
-
     if (discount === 0) return null;
-
-    return {text: `+${discount}% EXTRA`, isFahdu};
+    return {text: `+${discount}% EXTRA`};
   };
 
   const offerData = (item) => getOfferData(item);
@@ -207,7 +203,6 @@ const WalletScreen = ({ route }) => {
               isLastItem={index === limitedPackages.length - 1 && limitedPackages.length % 2 !== 0} 
               handler={checkoutPayment} 
               offerText={data?.text}
-              isFahdu={data?.isFahdu}
             />
           );
         }}        numColumns={2}

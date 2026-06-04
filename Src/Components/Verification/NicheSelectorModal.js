@@ -85,10 +85,7 @@ const NicheSelectorModal = () => {
       backdropColor="#00000060"
       onBackButtonPress={handleClose}
       onBackdropPress={handleClose}
-      onModalShow={() => {
-        // Delay focus so the modal fully settles before keyboard triggers avoidKeyboard repositioning
-        setTimeout(() => inputRef.current?.focus(), 150);
-      }}
+      onModalShow={() => {}}
       animationIn="slideInUp"
       animationOut="slideOutDown"
       animationInTiming={300}

@@ -3,8 +3,9 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {LoginPageErrors, chatRoomSuccess} from '../Components/ErrorSnacks';
-import {useCoverUpdateProfileMutation, useLazyCheckUserNameAvailabilityQuery, useLazyGetNoOnceQuery, useLazyGetUserDocQuery, useLazyInstaVerifyQuery, useLazyUserProfileQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useCoverUpdateProfileMutation, useLazyCheckVerificationImageStatusQuery, useLazyCheckUserNameAvailabilityQuery, useLazyGetNoOnceQuery, useLazyGetUserDocQuery, useLazyInstaVerifyQuery, useLazyUserProfileQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
+import {updateCoverProfilePicture} from '../../Redux/Slices/NormalSlices/AuthSlice';
 import {autoLogout} from '../../AutoLogout';
 import {toggleDateTimePicker, toggleInstagramVerification, toggleIsThisYou, toggleVerificatinInformation, toggleNicheSelectorModal, setConfirmedNiches} from '../../Redux/Slices/NormalSlices/HideShowSlice';
 import {GestureHandlerRootView, ScrollView} from 'react-native-gesture-handler';
@@ -160,6 +161,58 @@ const VerificationStepOne = ({route}) => {
     getSettingProfile();
 
     dispatch(toggleVerificatinInformation());
+  }, [token]);
+
+  // Check if profile/cover images have been deleted from server
+  const [checkVerificationImageStatus] = useLazyCheckVerificationImageStatusQuery();
+
+  useEffect(() => {
+    const defaultCoverUrl = 'https://fahdu-bucket.s3.us-east-1.amazonaws.com/assets/Untitleddesign.jpg';
+    const defaultProfileUrl = 'https://fahdu-bucket.s3.us-east-1.amazonaws.com/assets/default-avatar-profile-icon-1.jpg';
+
+    async function checkImageDeletion() {
+      try {
+        const {data, error} = await checkVerificationImageStatus({token, time: Date.now()});
+
+        if (error) {
+          console.log('⚠️ Failed to check verification image status:', error);
+          return;
+        }
+
+        // data.data === false means images are deleted from server
+        if (data?.data === false) {
+          console.log('🔄 Images deleted on server (false), clearing local cache...');
+          
+          // Clear expo-image cache to remove stale images
+          if (
+            (currentUserProfilePicture && currentUserProfilePicture !== defaultProfileUrl) ||
+            (currentUserCoverPicture && currentUserCoverPicture !== defaultCoverUrl)
+          ) {
+            try {
+              await Image.clearDiskCache();
+              await Image.clearMemoryCache();
+              console.log('✅ Expo-image cache cleared for deleted images');
+            } catch (cacheError) {
+              console.log('⚠️ Failed to clear image cache:', cacheError);
+            }
+          }
+
+          // Update Redux store to defaults
+          dispatch(
+            updateCoverProfilePicture({
+              coverUrl: defaultCoverUrl,
+              profileUrl: defaultProfileUrl,
+            }),
+          );
+        } else {
+          console.log('✅ Images exist on server (true), no cache clearing needed');
+        }
+      } catch (err) {
+        console.log('⚠️ Error checking verification image status:', err);
+      }
+    }
+
+    checkImageDeletion();
   }, [token]);
 
   useEffect(() => {

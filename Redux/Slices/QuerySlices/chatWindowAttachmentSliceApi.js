@@ -1025,6 +1025,18 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    checkVerificationImageStatus: builder.query({
+      query: ({ token, time }) => {
+        return {
+          url: `/api/document-verification/check/verification?time=${time || Date.now()}`,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
     getOwnPackage: builder.query({
       query: ({ token }) => {
         return {
@@ -2590,4 +2602,5 @@ export const {
   useLazyGetCashfreeSubscriptionQuery,
   useManageSubscriptionMutation,
   useSubmitFeedbackMutation,
+  useLazyCheckVerificationImageStatusQuery,
 } = chatWindowAttachmentApi;

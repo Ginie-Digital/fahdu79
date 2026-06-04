@@ -11,7 +11,12 @@
     "start-reset": "react-native start --reset-cache",
     "postinstall": "patch-package",
     "update-staging": "rm -rf dist && npx eas-cli update --channel staging",
-    "update-production": "rm -rf dist && npx eas-cli update --channel production"
+    "update-production": "rm -rf dist && npx eas-cli update --channel production",
+    "channel:staging": "./scripts/switch-channel.sh staging",
+    "channel:production": "./scripts/switch-channel.sh production",
+    "build:staging": "./scripts/switch-channel.sh staging && npx eas-cli build --profile staging --platform android",
+    "build:production": "./scripts/switch-channel.sh production && npx eas-cli build --profile production --platform android",
+    "build:production:all": "./scripts/switch-channel.sh production && npx eas-cli build --profile production --platform all"
   },
   "dependencies": {
     "@fawazahmed/react-native-read-more": "^3.0.4",

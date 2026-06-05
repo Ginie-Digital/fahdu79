@@ -22,7 +22,13 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # Android: AndroidManifest.xml
 MANIFEST="$PROJECT_DIR/android/app/src/main/AndroidManifest.xml"
 if [ -f "$MANIFEST" ]; then
-  sed -i '' "s/expo-channel-name\&quot;:\&quot;[a-z]*/expo-channel-name\&quot;:\&quot;$CHANNEL/" "$MANIFEST"
+  if grep -q "UPDATES_CONFIGURATION_REQUEST_HEADERS_KEY" "$MANIFEST"; then
+    # Entry exists — replace the channel value
+    sed -i '' "s/expo-channel-name\&quot;:\&quot;[a-z]*/expo-channel-name\&quot;:\&quot;$CHANNEL/" "$MANIFEST"
+  else
+    # Entry missing — insert before </application>
+    sed -i '' "s|</application>|    <meta-data android:name=\"expo.modules.updates.UPDATES_CONFIGURATION_REQUEST_HEADERS_KEY\" android:value=\"{\&quot;expo-channel-name\&quot;:\&quot;$CHANNEL\&quot;}\"/>\n  </application>|" "$MANIFEST"
+  fi
   echo "✅ Android AndroidManifest.xml → channel: $CHANNEL"
 else
   echo "⚠️  AndroidManifest.xml not found"

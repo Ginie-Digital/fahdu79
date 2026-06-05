@@ -24,7 +24,6 @@
 | [HideShowSlice.js](file:///Users/giniedigital/Documents/fahdu79/Redux/Slices/NormalSlices/HideShowSlice.js) | Redux slice containing `callAccepted` boolean |
 | [chatWindowAttachmentSliceApi.js](file:///Users/giniedigital/Documents/fahdu79/Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi.js) | RTK Query API definitions for all call endpoints |
 | [SocketServices.js](file:///Users/giniedigital/Documents/fahdu79/SocketServices.js) | Socket.io client — connects to `api.fahdu.in`, handles reconnection |
-| [CallKeepService.js](file:///Users/giniedigital/Documents/fahdu79/service/CallKeepService.js) | RNCallKeep for native call UI (mostly Android) |
 | [StackNavigation.js](file:///Users/giniedigital/Documents/fahdu79/Navigation/StackNavigation.js) | Screen registration: `callScreen`, `videoCallScreen`, `incomingCall` |
 | [ZegoConfig.js](file:///Users/giniedigital/Documents/fahdu79/Src/Configs/ZegoConfig.js) | ZEGO App ID and App Sign |
 
@@ -73,11 +72,10 @@
 |------|--------|
 | `call` | Same as `incoming_caller` socket — navigates to incoming call |
 | `initiator_accepted` | Same as `call_accepted` socket — dispatches call accepted |
-| `call_rejected` | Platform-specific handling (Android CallKeep) |
+| `call_rejected` | Stop ringtone, reset state, navigate home |
 | `call_completed` | Show notification |
 | `fcm_disconnect_close_app` | Same as `socket_disconnect_close_app` |
 | `call_disconnected` | Same as socket `call_disconnected` |
-| `call_unavailable` | CallKeep handling |
 | `missed_call` | Show notification |
 | `call_request` / `call_request_accepted` | Show notification |
 | `10_reminder` / `5_reminder` / `1_reminder` | Show call reminder notification |

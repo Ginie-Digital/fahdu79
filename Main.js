@@ -856,10 +856,6 @@ const Main = () => {
         await showMentionNotification(remoteNotificationData);
       } else if (remoteNotificationData?.type === 'subscription') {
         await showSubscriptionNotification(remoteNotificationData);
-      } else if (remoteNotificationData?.type === 'call_rejected') {
-        if (Platform.OS === 'android') {
-          // CallKeep stuff removed
-        }
       } else if (remoteNotificationData?.type === 'call') {
         console.log('📱 [Main:FCM] --- INCOMING CALL SIGNAL RECEIVED ---');
         console.log('📱 [Main:FCM] Full Payload:', JSON.stringify(remoteNotificationData, null, 2));
@@ -909,8 +905,6 @@ const Main = () => {
       } else if (remoteNotificationData?.type === 'missed_call') {
         console.log(remoteNotificationData, ':::::');
         await showCallRelatedNotification(remoteNotificationData);
-      } else if (remoteNotificationData?.type === 'call_unavailable') {
-        // CallKeep stuff removed
       } else if (remoteNotificationData?.type === '10_reminder' || remoteNotificationData?.type === '5_reminder' || remoteNotificationData?.type === '1_reminder') {
         await showCallReminderNotification(remoteNotificationData);
       } else {

@@ -151,20 +151,11 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
           }),
         );
 
-        // CallKeep logic removed
-        // CallKeepService.latestNotificationData = ... 
-        // await CallKeepService.displayIncomingCall(...)
-
-        // Navigate directly if app is in foreground, or show local notification
-        // For now, relying on in-app UI which is already triggered by the socket/FCM
-        
         isProcessingAndroidCall = false;
       }
     } else if (remoteNotificationData?.type === 'call_rejected') {
       if (Platform.OS === 'android') {
         callCutFromCaller = true;
-        // CallKeepService.callCutFromCaller = true;
-        // RNCallKeep.endAllCalls();
         isProcessingAndroidCall = false;
         AppLog('FCM_CALL_BG', 'Received call_rejected background notification', remoteNotificationData);
       }

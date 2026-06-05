@@ -1,4 +1,4 @@
-import {createSelector, createSlice} from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
 import {resetAll} from '../../Actions';
 
 const initialState = {
@@ -187,12 +187,6 @@ export const {
 
 export default authSlice.reducer;
 
-const ini = state => state.auth.user.token;
+export const token = state => state.auth.user.token;
 
-export const token = createSelector([ini], token => {
-  return token;
-});
-
-const forCurrentUserId = state => state.auth.user.currentUserId;
-
-export const userIdCreateSelector = createSelector([forCurrentUserId], currentUserId => currentUserId);
+export const userIdCreateSelector = state => state.auth.user.currentUserId;

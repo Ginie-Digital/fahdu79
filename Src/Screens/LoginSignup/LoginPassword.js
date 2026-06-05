@@ -54,7 +54,7 @@ const LoginPassword = ({ route }) => {
   useEffect(() => {
     const checkLoginAvailability = async () => {
       try {
-        const response = await axios.post('https://api.fahdu.com/api/user/login/check', {
+        const response = await axios.post('https://api.fahdu.in/api/user/login/check', {
           email: route?.params?.email?.trim(),
         });
 
@@ -153,7 +153,7 @@ const LoginPassword = ({ route }) => {
 
         try {
           const { data, status, request } = await axios.post(
-            'https://api.fahdu.com/api/user/signin',
+            'https://api.fahdu.in/api/user/signin',
             { 
               email: route?.params?.email?.trim(), 
               password: password.trim(), 

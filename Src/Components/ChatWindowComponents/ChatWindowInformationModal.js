@@ -35,7 +35,7 @@ const ChatWindowInformationModal = ({ chatRoomId, followUser, unFollowUser, role
   const fetchCoins = async () => {
     try {
       setFetchingCoins(true);
-      let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}` } });
+      let { data } = await axios.get('https://api.fahdu.in/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}` } });
       setCoins(data?.data);
       setFetchingCoins(false);
     } catch (e) {
@@ -46,7 +46,7 @@ const ChatWindowInformationModal = ({ chatRoomId, followUser, unFollowUser, role
   const fetchIsFollowing = async () => {
     try {
       setFetchingCoins(true);
-      let { data } = await axios.get(`https://api.fahdu.com/api/user/valid-follow-check?id=${senderBioDetail?.name}`, { headers: { Authorization: `Bearer ${token}` } });
+      let { data } = await axios.get(`https://api.fahdu.in/api/user/valid-follow-check?id=${senderBioDetail?.name}`, { headers: { Authorization: `Bearer ${token}` } });
       setFollowing(data?.data?.follow);
     } catch (e) {
       console.log('Get Coin Error ', e);

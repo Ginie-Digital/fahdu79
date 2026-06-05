@@ -164,6 +164,8 @@ const TopTabNavigation = ({ notificationData }) => {
             </>
           }
           showsVerticalScrollIndicator={false}
+          style={{backgroundColor: '#fff'}}
+          contentContainerStyle={{backgroundColor: '#fff'}}
         />
       )}
 

@@ -115,7 +115,7 @@ const CompleteDetailsScreen = ({ route }) => {
     const verifyPayment = async () => {
       try {
         const verifyResponse = await fetch(
-          `https://api.fahdu.com/api/payments/cashfree/subscription?creatorId=${userId}`,
+          `https://api.fahdu.in/api/payments/cashfree/subscription?creatorId=${userId}`,
           {
             headers: {
               'Content-Type': 'application/json',

@@ -13,6 +13,20 @@ import share from 'react-native-share';
 import {Image} from 'expo-image';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {formatNiche} from '../../../DesiginData/Utility';
+import axios from 'axios';
+import {BASE_URL} from '../../Configs/ApiConfig';
+
+// Badge image mapping
+const BADGE_IMAGES = {
+  DIAMOND: require('../../../Assets/Images/Badges/Diamond.png'),
+  PLATINUM: require('../../../Assets/Images/Badges/Platinum.png'),
+  BRONZE: require('../../../Assets/Images/Badges/Bronze.png'),
+  GOLD: require('../../../Assets/Images/Badges/Gold.png'),
+  SILVER: require('../../../Assets/Images/Badges/Silver.png'),
+  ELITE: require('../../../Assets/Images/Badges/Elite.png'),
+  LEGEND: require('../../../Assets/Images/Badges/Legend.png'),
+  ROYAL: require('../../../Assets/Images/Badges/Royal.png'),
+};
 
 const UpperProfile = ({isFocused}) => {
   const ref = React.useRef();
@@ -30,6 +44,23 @@ const UpperProfile = ({isFocused}) => {
   // const userInformation = useSelector(state => state.auth.user);
 
   const dispatch = useDispatch();
+
+  const [walletBadges, setWalletBadges] = useState([]);
+
+  // Fetch wallet badges for user role
+  const fetchWalletBadges = useCallback(async () => {
+    try {
+      const {data} = await axios.get(`${BASE_URL}/api/wallet/latest/recharge`, {
+        headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+        timeout: 10000,
+      });
+      if (data?.statusCode === 200 && data?.data) {
+        setWalletBadges(data.data);
+      }
+    } catch (e) {
+      console.log('Error fetching wallet badges:', e?.message);
+    }
+  }, [token]);
 
   const handlePostActionHandler = async userId => {
     try {
@@ -77,6 +108,11 @@ const UpperProfile = ({isFocused}) => {
       }
 
       getUserProfileDetails();
+
+      // Fetch badges for user role
+      if (loggedUserDetail?.role !== 'creator' && loggedUserDetail?.role !== 'admin') {
+        fetchWalletBadges();
+      }
     }, [token, loggedUserDetail?.currentUserDisplayName]),
   );
 
@@ -163,28 +199,84 @@ const UpperProfile = ({isFocused}) => {
       const defaultBio = 'Sharing unique content and engaging with my community. Join me on this journey! 🌟🎨';
       const rawBio = loggedUserDetail?.aboutUser || userProfileDetails?.aboutUser || defaultBio;
       const bioText = sanitizeBio(rawBio);
+      const centered = loggedUserDetail?.role !== 'creator' && loggedUserDetail?.role !== 'admin';
 
       return (
-        <View style={styles.bioContainer}>
-          <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
+        <View style={[styles.bioContainer, centered && {alignItems: 'center', marginTop: 0, marginBottom: 0}]}>
+          <ReadMore animate numberOfLines={5} style={[styles.bioText, centered && {textAlign: 'center', fontSize: 16, lineHeight: 22}]} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
             {bioText}
           </ReadMore>
-          {userProfileDetails?.username && <Text style={styles.usernameLink}>@{userProfileDetails.username}</Text>}
+          {userProfileDetails?.username && <Text style={[styles.usernameLink, centered && {textAlign: 'center'}]}>@{userProfileDetails.username}</Text>}
         </View>
       );
     },
-    [userProfileDetails, loggedUserDetail?.aboutUser],
+    [userProfileDetails, loggedUserDetail?.aboutUser, loggedUserDetail?.role],
   );
+
+  // Wallet Badges Component for user role
+  const WalletBadges = useCallback(() => {
+    if (!walletBadges || walletBadges.length === 0) return null;
+
+    return (
+      <View style={styles.badgesContainer}>
+        {walletBadges.map((badge, index) => {
+          const badgeImage = BADGE_IMAGES[badge.badgeCode?.toUpperCase()];
+          if (!badgeImage) return null;
+          return (
+            <Image
+              key={index}
+              source={badgeImage}
+              style={styles.badgeIcon}
+              contentFit="contain"
+            />
+          );
+        })}
+      </View>
+    );
+  }, [walletBadges]);
+
+  const isUserRole = loggedUserDetail?.role !== 'creator' && loggedUserDetail?.role !== 'admin';
 
   return (
     <View ref={ref} style={{backgroundColor: '#fff'}}>
-      <MyProfilePicture userProfileDetails={userProfileDetails} />
+      {isUserRole ? (
+        // User role: Centered layout without cover photo
+        <View style={styles.userRoleContainer}>
+          {/* Centered Profile Picture */}
+          <View style={styles.userProfilePicWrapper}>
+            <View style={styles.userProfilePicContainer}>
+              <Image
+                placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
+                source={loggedUserDetail?.currentUserProfilePicture ? {uri: loggedUserDetail?.currentUserProfilePicture} : require('../../../Assets/Images/DefaultProfile.jpg')}
+                style={styles.userProfilePic}
+                contentFit="cover"
+              />
+            </View>
+            {/* Online Indicator */}
+            <View style={styles.onlineDot} />
+          </View>
 
-      <UserDetailMyProfile userProfileDetails={userProfileDetails} currentUserRole={userProfileDetails?.role} />
+          {/* Username */}
+          <Text style={styles.userRoleUsername}>{loggedUserDetail?.currentUserDisplayName}</Text>
 
-      <View style={{flexDirection: 'column'}}>
-        <BioMyProfile userProfileDetails={userProfileDetails} />
-      </View>
+          {/* Bio */}
+          <BioMyProfile userProfileDetails={userProfileDetails} />
+
+          {/* Wallet Badges */}
+          <WalletBadges />
+        </View>
+      ) : (
+        // Creator/Admin role: Original layout with cover photo
+        <>
+          <MyProfilePicture userProfileDetails={userProfileDetails} />
+
+          <UserDetailMyProfile userProfileDetails={userProfileDetails} currentUserRole={userProfileDetails?.role} />
+
+          <View style={{flexDirection: 'column'}}>
+            <BioMyProfile userProfileDetails={userProfileDetails} />
+          </View>
+        </>
+      )}
     </View>
   );
 };
@@ -358,5 +450,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 40,
+  },
+  // User role styles
+  userRoleContainer: {
+    alignItems: 'center',
+    paddingTop: responsiveWidth(10),
+    paddingBottom: responsiveWidth(2),
+    backgroundColor: '#fff',
+  },
+  userProfilePicWrapper: {
+    position: 'relative',
+    width: 119,
+    height: 119,
+    marginBottom: 24,
+  },
+  userProfilePicContainer: {
+    width: 119,
+    height: 119,
+    borderRadius: 60,
+    overflow: 'hidden',
+    borderWidth: 1.72,
+    borderColor: '#1E1E1E',
+    backgroundColor: '#fff',
+  },
+  userProfilePic: {
+    width: '100%',
+    height: '100%',
+  },
+  onlineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#52E13B',
+    borderWidth: 3.2,
+    borderColor: '#FFFFFF',
+    position: 'absolute',
+    bottom: 15,
+    right: 6,
+  },
+  userRoleUsername: {
+    fontSize: 20,
+    fontFamily: 'Rubik-SemiBold',
+    color: '#1E1E1E',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  badgesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 16,
+    marginBottom: 0,
+  },
+  badgeIcon: {
+    width: 66,
+    height: 66,
   },
 });

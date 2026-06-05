@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Pressable } from 'react-native';
-import { responsiveFontSize, responsiveWidth } from 'react-native-responsive-dimensions';
+import { View, Text, StyleSheet, FlatList, Pressable, Platform } from 'react-native';
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import WalletSVG from '../../../Assets/svg/WalletIcon.svg';
-import { useLazyRecommendedCreatorsQuery, useLazyTrendingCreatorsQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useLazyRecommendedCreatorsQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { useSelector } from 'react-redux';
 import { Image } from 'expo-image';
 import UserProfileTrendingShimmer from '../Shimmers/UserProfileTrendingShimmer';
 import { navigate } from '../../../Navigation/RootNavigation';
 import axios from 'axios';
 import AnimatedNumber from '../AnimatedNumber';
-import {formatNiche, nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
+
 import { LoginPageErrors } from '../ErrorSnacks';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ProfileUser = () => {
   const token = useSelector(state => state.auth.user.token);
@@ -38,7 +39,7 @@ const ProfileUser = () => {
   const suspended = useSelector(state => state.auth.user.suspended);
 
   async function getUserCoins() {
-    let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
+    let { data } = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       timeout: 10000,
     });
@@ -89,46 +90,41 @@ const ProfileUser = () => {
 
   const renderItem = ({ index, item }) => (
     <Pressable
-      style={[styles.recommendationCard, clickRecommendation.id === index && clickRecommendation.click && { backgroundColor: '#FFF3EB' }]}
+      style={[styles.recCard, clickRecommendation.id === index && clickRecommendation.click && { opacity: 0.8 }]}
       onPressIn={() => setClickRecommendation({ click: true, id: index })}
       onPressOut={() => setClickRecommendation({ click: false, id: index })}
       onPress={() => handleGoToOthersProfile(item?.displayName, item?._id)}>
-      <View style={styles.profileImage}>
-        <Image style={{ flex: 1, width: '100%' }} placeholderContentFit="cover" contentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{ uri: item?.profile_image?.url }} />
-      </View>
-      <View style={styles.profileInfo}>
-        <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={styles.profileName}>{item?.displayName}</Text>
-
-          <View style={styles.verifyContainer}>
-            <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{ flex: 1 }} />
-          </View>
+      <Image style={styles.recImage} placeholderContentFit="cover" contentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{ uri: item?.profile_image?.url }} />
+      {/* Gradient overlay matching Figma: transparent → 0.2 → 0.8 */}
+      <LinearGradient
+        colors={['rgba(30,30,30,0)', 'rgba(30,30,30,0.2)', 'rgba(30,30,30,0.8)']}
+        locations={[0, 0.5, 1]}
+        style={styles.recGradient}
+      />
+      <View style={styles.recInfoContainer}>
+        <View style={styles.recNameRow}>
+          <Text style={styles.recName} numberOfLines={1}>{item?.displayName}</Text>
+          <View style={styles.recOnlineDot} />
         </View>
-
-        <Text style={styles.profileCategory}>{formatNiche(item?.niche?.[0])}</Text>
       </View>
-      <Ionicons name="arrow-forward" size={24} color="black" />
     </Pressable>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.walletCard}>
-        <View style={styles.walletHeader}>
-          <Text style={styles.walletText}>Wallet Balance</Text>
-        </View>
-
-        <View style={styles.priceWallet}>
-          <Text style={styles.balance}>
-            ₹
-            <AnimatedNumber target={coins} style={styles.balance} />
-          </Text>
-
-          <WalletSVG />
+        <View style={styles.walletInner}>
+          <View style={styles.walletLeft}>
+            <Text style={styles.walletLabel}>Wallet Balance</Text>
+            <Text style={styles.balance}>
+              ₹ <AnimatedNumber target={coins} style={styles.balance} />
+            </Text>
+          </View>
+          <WalletSVG width={24} height={24} />
         </View>
 
         <Pressable
-          style={[styles.rechargeButton, buttonClickRecharge && { backgroundColor: '#1e1e1e' }]}
+          style={[styles.addCoinsButton, buttonClickRecharge && { backgroundColor: '#1e1e1e' }]}
           onPressIn={() => setButtonClickRecharge(true)}
           onPressOut={() => setButtonClickRecharge(false)}
           onPress={() => {
@@ -136,28 +132,31 @@ const ProfileUser = () => {
               LoginPageErrors('Your account is suspended');
               return;
             }
-
             navigate('wallet');
           }}>
-          <Text style={[styles.rechargeText, buttonClickRecharge && { color: '#fff' }]}>Recharge Now</Text>
+          <View style={styles.addCoinsRow}>
+            <Ionicons name="add" size={16} color={buttonClickRecharge ? '#fff' : '#1E1E1E'} />
+            <Text style={[styles.addCoinsText, buttonClickRecharge && { color: '#fff' }]}>Add Coins</Text>
+          </View>
         </Pressable>
       </View>
-      <Text style={styles.recommendationText}>Recommendations</Text>
+
+      <Text style={styles.recommendationTitle}>Recommendations</Text>
       {!loading && (
         <FlatList
           data={creatorsList}
           renderItem={renderItem}
-          scrollEnabled={false}
-          // keyExtractor={item => item?.id.toString()}
+          keyExtractor={(item, index) => item?._id || index.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.recListContainer}
           ListEmptyComponent={<Text style={styles.noDataText}>No recommendations available</Text>}
-          showsVerticalScrollIndicator={false}
           onEndReached={handleFetchNext}
-
-        // style = {{flex : 1}}
+          onEndReachedThreshold={0.5}
         />
       )}
 
-      {loading && <FlatList data={[1, 2, 3, 4, 5]} renderItem={() => <UserProfileTrendingShimmer />} />}
+      {loading && <FlatList data={[1, 2, 3, 4]} horizontal renderItem={() => <UserProfileTrendingShimmer />} />}
     </View>
   );
 };
@@ -166,106 +165,139 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
 
+  // Wallet Card — Figma specs
   walletCard: {
     backgroundColor: '#FFA86B',
-    borderRadius: 15,
-    paddingHorizontal: responsiveWidth(5),
-    paddingVertical: nTwins(4, 5),
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: responsiveWidth(0.4),
-    borderColor: '#282828',
+    borderRadius: 16,
+    padding: 24,
+    gap: 16,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: '#1E1E1E',
   },
-  walletHeader: {
+  walletInner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
+    alignItems: 'center',
   },
-  walletText: {
-    fontSize: responsiveFontSize(1.6),
-    color: '#000',
+  walletLeft: {
+    gap: 14,
+  },
+  walletLabel: {
+    fontSize: 12,
+    lineHeight: 12,
+    color: '#000000',
     fontFamily: 'Rubik-Medium',
   },
   balance: {
     fontSize: 32,
-    marginVertical: 10,
+    lineHeight: 32,
     fontFamily: 'Rubik-Bold',
-    color: '#000',
+    color: '#000000',
   },
-  rechargeButton: {
-    backgroundColor: '#fff',
-    paddingVertical: nTwins(2.8, 4),
-    width: responsiveWidth(80),
-    borderRadius: responsiveWidth(4),
-    borderWidth: responsiveWidth(0.6),
-    borderColor: '#282828',
+  addCoinsButton: {
+    backgroundColor: '#FFFFFF',
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rechargeText: {
+  addCoinsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  addCoinsText: {
     fontFamily: 'Rubik-Bold',
-    color: '#000',
-    fontSize: responsiveFontSize(2),
-  },
-  recommendationText: {
-    fontSize: responsiveFontSize(2.1),
-    fontFamily: 'Rubik-Medium',
-    marginBottom: 16,
-    color: '#000',
-  },
-  recommendationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    borderWidth: responsiveWidth(0.4),
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: responsiveWidth(2),
-    marginRight: 10,
-    borderWidth: responsiveWidth(0.4),
-    overflow: 'hidden',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: responsiveFontSize(1.97),
-    color: '#282828',
-    fontFamily: 'Rubik-Medium',
-  },
-  profileCategory: {
     color: '#1E1E1E',
-    fontFamily: 'Rubik-Regular',
-    fontSize: responsiveFontSize(1.23),
-    marginTop: nTwins(0, 1),
+    fontSize: 13,
+    lineHeight: 13,
+    textAlign: 'center',
   },
-  priceWallet: {
+
+  // Recommendations — Figma specs
+  recommendationTitle: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: 'Rubik-SemiBold',
+    marginBottom: 16,
+    color: '#000000',
+  },
+  recListContainer: {
+    gap: 16,
+    paddingRight: 24,
+  },
+  recCard: {
+    width: 163,
+    height: 163,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#000000',
+  },
+  recImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    borderRadius: 15,
+  },
+  recInfoContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+  },
+  recNameRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    width: responsiveWidth(82),
-    justifyContent: 'space-between',
-    paddingHorizontal: responsiveWidth(2),
+    gap: 7,
+  },
+  recName: {
+    fontSize: 14,
+    lineHeight: 14,
+    color: '#FFFFFF',
+    fontFamily: 'Rubik-Medium',
+    flexShrink: 1,
+  },
+  recOnlineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 9999,
+    backgroundColor: '#00C950',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(34, 197, 94, 0.6)',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
 
   noDataText: {
     textAlign: 'center',
     fontFamily: 'Rubik-Regular',
-    fontSize: responsiveFontSize(2),
+    fontSize: 14,
     color: '#888',
     marginTop: 20,
-  },
-  verifyContainer: {
-    width: 15,
-    height: 14.32,
-    marginLeft: WIDTH_SIZES[4],
+    width: 200,
   },
 });
 

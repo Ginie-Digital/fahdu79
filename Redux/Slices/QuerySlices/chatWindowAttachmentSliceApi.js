@@ -2246,7 +2246,7 @@ REJECTED, UNAVAILABLE
       },
     }),
 
-    // https://api.fahdu.com
+    // https://api.fahdu.in
 
     liveStatus: builder.query({
       query: ({ token, userId }) => {

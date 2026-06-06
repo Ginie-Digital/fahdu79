@@ -89,8 +89,8 @@ android {
         applicationId "com.fahdu"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 483
-        versionName "50.40.01"
+        versionCode 484
+        versionName "50.50.01"
         missingDimensionStrategy 'react-native-capture-protection', 'base'
     }
     signingConfigs {

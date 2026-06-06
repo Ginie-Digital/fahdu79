@@ -97,7 +97,7 @@ export const chatWindowAttachmentApi = createApi({
     }),
 
     createPostUploadAttachment: builder.mutation({
-      queryFn: async ({ token, formData }, { dispatch }) => {
+      queryFn: async ({ token, formData }, { dispatch, getState }) => {
         try {
           const response = await axios.post(`${BASE_URL}/api/upload`, formData, {
             headers: {

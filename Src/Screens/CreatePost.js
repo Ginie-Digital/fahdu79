@@ -248,6 +248,8 @@ const CreatePost = ({route = {}}) => {
 
   const [visibility, setVisibility] = useState('all'); // 'all' | 'user' | 'creator' (Admin only)
   const [forSubscribers, setForSubscribers] = useState(false); // (Non-Admin only)
+  const [isAllowFollowersToUnlock, setIsAllowFollowersToUnlock] = useState(false);
+  const [coinsAmount, setCoinsAmount] = useState('199');
 
   const [isEnabled, setIsEnabled] = useState(false);
 
@@ -281,6 +283,12 @@ const CreatePost = ({route = {}}) => {
       dispatch(resetDateTimePicker());
     };
   }, []);
+
+  useEffect(() => {
+    if (!forSubscribers) {
+      setIsAllowFollowersToUnlock(false);
+    }
+  }, [forSubscribers]);
 
   const resetMediaState = () => {
     console.log('Resetting all media states...');
@@ -543,6 +551,19 @@ const CreatePost = ({route = {}}) => {
       return;
     }
 
+    const isCurrentlySubOnly = userRole === 'admin' ? false : forSubscribers;
+    if (isCurrentlySubOnly && isAllowFollowersToUnlock) {
+        const numericCoins = Number(coinsAmount);
+        if (!coinsAmount || isNaN(numericCoins) || numericCoins < 1) {
+            LoginPageErrors('Please set at least 1 coin for followers to unlock.');
+            return;
+        }
+        if (numericCoins > 50000) {
+            LoginPageErrors('Please set coins under 50,000.');
+            return;
+        }
+    }
+
     dispatch(resetUploadProgress());
 
     if (!mediaUris || mediaUris.length === 0) {
@@ -679,6 +700,8 @@ const CreatePost = ({route = {}}) => {
                 hasThumbnail: true,
                 hasPreview: isCurrentlySubOnly,
                 hasImage: true,
+                is_charagble: isCurrentlySubOnly ? isAllowFollowersToUnlock : false,
+                charge_amount: (isCurrentlySubOnly && isAllowFollowersToUnlock) ? Number(coinsAmount) : 0,
             } : undefined,
             video: isMediaVideo ? {
                 thumbnail: {
@@ -689,6 +712,8 @@ const CreatePost = ({route = {}}) => {
                 hasPreview: isCurrentlySubOnly,
                 hasThumbnail: true,
                 hasVideo: true,
+                is_charagble: isCurrentlySubOnly ? isAllowFollowersToUnlock : false,
+                charge_amount: (isCurrentlySubOnly && isAllowFollowersToUnlock) ? Number(coinsAmount) : 0,
             } : undefined,
             image_preview: {
                 url: imagePreviewUrl,
@@ -697,6 +722,12 @@ const CreatePost = ({route = {}}) => {
                 mobilePreview: '',
             },
             for_subscribers: isCurrentlySubOnly,
+            is_charagble: isCurrentlySubOnly ? isAllowFollowersToUnlock : false,
+            charge_amount: (isCurrentlySubOnly && isAllowFollowersToUnlock) ? Number(coinsAmount) : 0,
+            unlockSettings: {
+                enabled: isCurrentlySubOnly ? isAllowFollowersToUnlock : false,
+                unlockAmount: (isCurrentlySubOnly && isAllowFollowersToUnlock) ? Number(coinsAmount) : 0,
+            },
             activate_on: isEnabled ? date.toISOString() : '',
             forcreator: userRole === 'admin' ? (visibility === 'all' || visibility === 'creator') : true,
             foruser: userRole === 'admin' ? (visibility === 'all' || visibility === 'user') : true,
@@ -720,6 +751,8 @@ const CreatePost = ({route = {}}) => {
             setVisibility('all');
             setForSubscribers(false);
             setActiveIndex(0);
+            setIsAllowFollowersToUnlock(false);
+            setCoinsAmount('199');
             dispatch(resetDateTimePicker());
             
             dismissProgressNotification();
@@ -905,6 +938,51 @@ const CreatePost = ({route = {}}) => {
             </View>
             <Text style={styles.charCount}>{`${count}/500`}</Text>
           </View>
+
+          {forSubscribers && (
+            <View style={styles.followersUnlockCard}>
+              <View style={styles.followersUnlockHeader}>
+                <View style={styles.followersUnlockTitleContainer}>
+                  <Text style={styles.followersUnlockTitle}>Allow Followers to Unlock</Text>
+                  <Text style={styles.followersUnlockSubtitle}>Set Coins for Followers</Text>
+                </View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setIsAllowFollowersToUnlock(prev => !prev)}
+                  style={styles.customSwitchTrack}
+                >
+                  <View
+                    style={[
+                      styles.customSwitchThumb,
+                      isAllowFollowersToUnlock
+                        ? { left: 11.5, backgroundColor: '#FFA86B' }
+                        : { left: -1.5, backgroundColor: '#BFBFBF' }
+                    ]}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {isAllowFollowersToUnlock && (
+                <View style={styles.coinsInputContainer}>
+                  <TextInput
+                    keyboardType="number-pad"
+                    style={styles.coinsTextInput}
+                    value={coinsAmount}
+                    onChangeText={text => setCoinsAmount(text.replace(/[^0-9]/g, ''))}
+                    maxLength={5}
+                    placeholder="199"
+                    placeholderTextColor="#7e7e7e"
+                  />
+                  <View style={styles.customCoinIconContainer}>
+                    <View style={styles.customCoinEllipse20} />
+                    <View style={styles.customCoinEllipse21}>
+                      <Text style={styles.customCoinText}>₹</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
 
           {isEnabled && (
             <TouchableOpacity activeOpacity={0.8} onPress={toggleSwitch} style={styles.scheduleActiveRow}>
@@ -1246,6 +1324,115 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontFamily: 'Rubik-Medium',
+    lineHeight: 12,
+    textAlign: 'center',
+  },
+  followersUnlockCard: {
+    backgroundColor: '#FFF9F5',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    borderRadius: 14,
+    padding: 24,
+    gap: 16,
+    marginTop: 16,
+    width: '100%',
+  },
+  followersUnlockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  followersUnlockTitleContainer: {
+    flexDirection: 'column',
+    gap: 8,
+    flex: 1,
+  },
+  followersUnlockTitle: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 16,
+    lineHeight: 16,
+    color: '#1E1E1E',
+  },
+  followersUnlockSubtitle: {
+    fontFamily: 'Rubik-Regular',
+    fontSize: 12,
+    lineHeight: 12,
+    color: '#1E1E1E',
+    marginTop: 4,
+  },
+  customSwitchTrack: {
+    width: 30,
+    height: 17,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    backgroundColor: '#FFFFFF',
+    position: 'relative',
+  },
+  customSwitchThumb: {
+    width: 17,
+    height: 17,
+    borderRadius: 8.5,
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    position: 'absolute',
+    top: -1.5,
+  },
+  coinsInputContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#1E1E1E',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    height: 43,
+    width: '100%',
+    marginTop: 12,
+  },
+  coinsTextInput: {
+    fontFamily: 'Rubik-Bold',
+    fontSize: 14,
+    color: '#1E1E1E',
+    padding: 0,
+    flex: 1,
+  },
+  customCoinIconContainer: {
+    width: 22,
+    height: 22,
+    position: 'relative',
+  },
+  customCoinEllipse20: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+  },
+  customCoinEllipse21: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFE72D',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customCoinText: {
+    fontFamily: 'Rubik-Bold',
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1E1E1E',
     lineHeight: 12,
     textAlign: 'center',
   },

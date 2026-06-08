@@ -399,7 +399,7 @@ export const convertPngToJpeg = async (inputPath, outputPath) => {
   }
 };
 
-export function resizeImage(inputPath, outputPath, width = 150, height = 150) {
+export function resizeImage(inputPath, outputPath, width = 512, height = 512) {
   return new Promise(async (resolve, reject) => {
     try {
       let cleanInputPath = inputPath;
@@ -792,10 +792,9 @@ export function resizeCoverImage(inputPath, outputPath) {
         return;
       }
 
-      // Cover photos need higher resolution (16:9 aspect ratio)
-      // Using 1280x720 for good quality without huge file size
-      const targetWidth = 1280;
-      const targetHeight = 720;
+      // Cover photos: 800x400 as per design spec
+      const targetWidth = 800;
+      const targetHeight = 400;
       const quality = Platform.OS === 'ios' ? 2 : 3; // Good balance for cover images
 
       // Scale to fit within bounds while maintaining aspect ratio, then pad to exact dimensions

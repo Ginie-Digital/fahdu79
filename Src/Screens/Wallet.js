@@ -304,6 +304,7 @@ const styles = StyleSheet.create({
   columnWrapper: {
     justifyContent: 'space-between',
     marginBottom: responsiveWidth(4),
+    alignItems: 'flex-start',
   },
 });
 

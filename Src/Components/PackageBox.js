@@ -8,21 +8,32 @@ import Svg, {Circle} from 'react-native-svg';
 
 // Color config for each pack index (Android new design)
 const PACK_COLORS = [
-  { bg: '#5BE79F', circle: 'rgba(255,255,255,0.25)' }, // Faltu - Green
-  { bg: '#FFD93D', circle: 'rgba(255,255,255,0.2)' },  // Farzi - Yellow
-  { bg: '#FFA5CA', circle: 'rgba(255,255,255,0.2)' },  // Fukrey - Pink
-  { bg: '#9B6BFF', circle: 'rgba(255,255,255,0.15)' }, // Funtoosh - Purple
-  { bg: '#FF9B5E', circle: 'rgba(255,255,255,0.2)' },  // Fahdu - Orange
-  { bg: '#A4E4FF', circle: 'rgba(255,255,255,0.3)' },  // Fantom - Light Blue
-  { bg: '#5695EC', circle: 'rgba(255,255,255,0.2)' },  // Fataaka - Blue
-  { bg: '#CFEE67', circle: 'rgba(255,255,255,0.4)' },  // Fanatix - Lime
+  { bg: '#EFFBF2', circle: '#D6F5DE', badgeBorder: '#CEF3D7' }, // Faltu - Green
+  { bg: '#FFFEEB', circle: '#FFFDDB', badgeBorder: '#FFE899' }, // Farzi - Yellow
+  { bg: '#FFE0F0', circle: '#FFCCE6', badgeBorder: '#FFBDDF' }, // Fukrey - Pink
+  { bg: '#F2EBFF', circle: '#E4D6FF', badgeBorder: '#D7C2FF' }, // Funtoosh - Purple
+  { bg: '#FFECE0', circle: '#FFDCC7', badgeBorder: '#FFD9C2' }, // Fahdu - Orange
+  { bg: '#EBF7FF', circle: '#CCEBFF', badgeBorder: '#C2E7FF' }, // Fantom - Light Blue
+  { bg: '#FCFFEB', circle: '#F4FFB8', badgeBorder: '#F0FF99' }, // Fataaka - Yellow/Green
+  { bg: '#FEE2E2', circle: '#FDC4C4', badgeBorder: '#FDBFBF' }, // Fanatix - Rose
+];
+
+const BADGE_IMAGES = [
+  require('../../Assets/Images/Badges/Bronze.png'),
+  require('../../Assets/Images/Badges/Silver.png'),
+  require('../../Assets/Images/Badges/Gold.png'),
+  require('../../Assets/Images/Badges/Platinum.png'),
+  require('../../Assets/Images/Badges/Diamond.png'),
+  require('../../Assets/Images/Badges/Elite.png'),
+  require('../../Assets/Images/Badges/Royal.png'),
+  require('../../Assets/Images/Badges/Legend.png'),
 ];
 
 const CircleDecoration = ({ color }) => (
   <View style={androidStyles.circleContainer} pointerEvents="none">
-    <Svg width={65} height={99} viewBox="0 0 65 99">
-      <Circle cx={44} cy={22} r={38} stroke={color} strokeWidth={12} fill="none" />
-      <Circle cx={56} cy={55} r={38} stroke={color} strokeWidth={12} fill="none" />
+    <Svg width={100} height={190} viewBox="0 0 100 190">
+      <Circle cx={79} cy={22} r={38} stroke={color} strokeWidth={12} fill="none" />
+      <Circle cx={91} cy={55} r={38} stroke={color} strokeWidth={12} fill="none" />
     </Svg>
   </View>
 );
@@ -38,20 +49,37 @@ const CoinIcon = () => (
 
 const AndroidPackageBox = ({ item, index, isLastItem, handler, offerText }) => {
   const colorConfig = PACK_COLORS[index] || PACK_COLORS[0];
-  const cost = Number(item?.cost || 0).toLocaleString('en-IN');
+  const cost = Number(item?.cost || item?.amount || 0).toLocaleString('en-IN');
   const hasBadge = !!offerText;
 
   return (
-    <Pressable style={[
-      androidStyles.cardOuter,
-      { backgroundColor: colorConfig.bg },
-      isLastItem && { width: responsiveWidth(88), marginHorizontal: responsiveWidth(2) },
-    ]}>
+    <Pressable
+      style={[
+        androidStyles.cardOuter,
+        { backgroundColor: colorConfig.bg },
+        isLastItem && { width: responsiveWidth(88), marginHorizontal: responsiveWidth(2) },
+      ]}
+      onPress={() => handler(item?.packId || item?.pack_id)}
+    >
       {/* Circle decoration */}
       <CircleDecoration color={colorConfig.circle} />
 
-      {/* Content - always reserve space for badge to keep buttons aligned */}
-      <View style={[androidStyles.content, { paddingTop: 36 }]}>
+      {/* Badge Container */}
+      <View style={[
+        androidStyles.badgeContainer,
+        { borderColor: colorConfig.badgeBorder }
+      ]}>
+        <Image
+          source={BADGE_IMAGES[index % BADGE_IMAGES.length]}
+          style={androidStyles.badgeIcon}
+        />
+      </View>
+
+      {/* Content */}
+      <View style={[
+        androidStyles.content,
+        { paddingBottom: hasBadge ? 42 : 16 }
+      ]}>
         <Text style={androidStyles.packName}>{item.name}</Text>
         <View style={androidStyles.priceRow}>
           <Text style={androidStyles.priceText}>{cost}</Text>
@@ -66,14 +94,14 @@ const AndroidPackageBox = ({ item, index, isLastItem, handler, offerText }) => {
               androidStyles.buyButton,
               pressed && { transform: [{ translateX: 2 }, { translateY: 2 }] },
             ]}
-            onPress={() => handler(item?.packId)}
+            onPress={() => handler(item?.packId || item?.pack_id)}
           >
             <Text style={androidStyles.buyButtonText}>Buy Now</Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Discount badge - absolute overlay at top */}
+      {/* Discount badge - absolute overlay at bottom */}
       {hasBadge ? (
         <View style={androidStyles.badgeBar}>
           <Text style={androidStyles.badgeText}>{offerText}</Text>
@@ -157,11 +185,12 @@ const androidStyles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#000000',
-    minHeight: 148,
+    height: 188,
+    position: 'relative',
   },
   badgeBar: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#1E1E1E',
@@ -169,8 +198,8 @@ const androidStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
+    borderBottomLeftRadius: 14.5,
+    borderBottomRightRadius: 14.5,
   },
   badgeText: {
     color: '#FFFFFF',
@@ -183,17 +212,19 @@ const androidStyles = StyleSheet.create({
   },
   circleContainer: {
     position: 'absolute',
-    right: -10,
-    top: -5,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 100,
+    zIndex: 1,
   },
   content: {
     flexDirection: 'column',
     width: '100%',
     alignItems: 'flex-start',
-    paddingTop: responsiveWidth(8),
-    paddingBottom: responsiveWidth(4),
-    paddingLeft: responsiveWidth(5),
-    paddingRight: responsiveWidth(3),
+    paddingTop: 58,
+    paddingLeft: 20,
+    paddingRight: 12,
     zIndex: 2,
   },
   packName: {
@@ -211,8 +242,8 @@ const androidStyles = StyleSheet.create({
   },
   priceText: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: responsiveFontSize(2.8),
-    lineHeight: 28,
+    fontSize: 24,
+    lineHeight: 24,
     color: '#000000',
   },
   coinWrapper: {
@@ -276,6 +307,24 @@ const androidStyles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
     color: '#000000',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 3,
+  },
+  badgeIcon: {
+    width: 90,
+    height: 90,
+    resizeMode: 'contain',
   },
 });
 

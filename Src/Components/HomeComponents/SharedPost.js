@@ -11,7 +11,8 @@ import {useNavigation, useNavigationState} from '@react-navigation/native';
 import {
   useGetPostDetailsMutation,
   useLazyGetAllCommentsQuery,
-  useLikeApiMutation
+  useLikeApiMutation,
+  usePostPaymentMutation
 } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -22,12 +23,13 @@ import {
   toggleWhoTippedSheet
 } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import Pinchable from 'react-native-pinchable';
-import {LoginPageErrors} from '../ErrorSnacks';
+import {LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
 import {savePostComments, setCurrentCommentDetails} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import {autoLogout} from '../../../AutoLogout';
+import {unlockPost} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import Heart from '../../../Assets/svg/heart.svg';
 import Fill from '../../../Assets/svg/fillh.svg';
 import Comment from '../../../Assets/svg/comm.svg';
@@ -68,6 +70,9 @@ const SharedPost = ({route}) => {
   const [doLiked, setDoLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCounts] = useState(0);
+  const [postPayment, {isLoading: isUnlocking}] = usePostPaymentMutation();
+  const [unlockClick, setUnlockClick] = useState(false);
+  const [subscribeClick, setSubscribeClick] = useState(false);
 
   const heartSize = useSharedValue(0);
   const heartDisplay = useSharedValue('none');
@@ -188,6 +193,46 @@ const SharedPost = ({route}) => {
     }
   }, [screenName, item?._id]);
 
+  const handleUnlockPost = useCallback(async () => {
+    if (isUnlocking) return;
+    try {
+      console.log('Unlocking post:', item?._id);
+      const { data, error } = await postPayment({
+        token,
+        data: { postId: item?._id },
+      });
+
+      if (error) {
+        console.log('Unlock post error:', error);
+        LoginPageErrors(error?.data?.message || 'Failed to unlock post');
+        if (error?.data?.status_code === 2044) {
+          autoLogout();
+        }
+        return;
+      }
+
+      if (data && data.statusCode === 200) {
+        console.log('Unlock post success data:', data);
+        chatRoomSuccess(data?.message || 'Post unlocked successfully');
+        setItem(prev => ({
+          ...prev,
+          post_content_files: data?.data?.post_content_files,
+        }));
+        dispatch(
+          unlockPost({
+            postId: item?._id,
+            post_content_files: data?.data?.post_content_files,
+          })
+        );
+      } else {
+        LoginPageErrors(data?.message || 'Failed to unlock post');
+      }
+    } catch (err) {
+      console.log('Unlock post exception:', err);
+      LoginPageErrors('An unexpected error occurred');
+    }
+  }, [item?._id, token, postPayment, isUnlocking, dispatch]);
+
   if (loading) {
     return (
       <View style={[styles.cardContainer, {justifyContent: 'center', alignItems: 'center', flex: 1}]}>
@@ -257,24 +302,46 @@ const SharedPost = ({route}) => {
               />
 
               <View style={styles.subPlaceHolder}>
-                <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" style={{alignSelf: 'center', marginBottom: responsiveWidth(2)}} size={responsiveWidth(8)} />
-                <Text style={[styles.subscribeMessage, {fontSize: responsiveFontSize(2)}]}>{`Unlock Exclusive Content`}</Text>
+                <View style={styles.exclusiveOverlayContent}>
+                  <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" size={25} />
+                  <Text style={styles.exclusiveTitle}>Unlock Exclusive Content</Text>
 
-                <TouchableOpacity
-                  style={styles.subscribeBox}
-                  onPress={() =>
-                    navigate('subscribeCreator', {
-                      name: item?.createdBy?.displayName,
-                      profileImageUrl: item?.createdBy?.profile_image?.url,
-                      role: item?.createdBy?.role,
-                      id: item?.createdBy?._id,
-                    })
-                  }>
-                  <Text style={[styles.subscribeMessage]}>
-                    SUBSCRIBE
-                    <Text style={[styles.subscribeMessage, {color: '#ffa07a'}]}> NOW</Text>
-                  </Text>
-                </TouchableOpacity>
+                  <View style={styles.exclusiveButtonsRow}>
+                    <Pressable
+                      style={[styles.exclusiveSubscribeBtn, subscribeClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
+                      onPressIn={() => setSubscribeClick(true)}
+                      onPressOut={() => setSubscribeClick(false)}
+                      onPress={() =>
+                        navigate('subscribeCreator', {
+                          name: item?.createdBy?.displayName,
+                          profileImageUrl: item?.createdBy?.profile_image?.url,
+                          role: item?.createdBy?.role,
+                          id: item?.createdBy?._id,
+                        })
+                      }>
+                      <Text style={styles.exclusiveBtnText}>Subscribe Now</Text>
+                    </Pressable>
+
+                    {item?.unlockSettings?.enabled && (
+                      <Pressable
+                        style={[styles.exclusiveUnlockBtn, unlockClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
+                        onPressIn={() => setUnlockClick(true)}
+                        onPressOut={() => setUnlockClick(false)}
+                        onPress={handleUnlockPost}
+                        disabled={isUnlocking}
+                      >
+                        <Text style={styles.exclusiveBtnText}>
+                          {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || 0}`}
+                        </Text>
+                        {!isUnlocking && (
+                          <View style={styles.exclusiveCoinCircle}>
+                            <Text style={styles.exclusiveCoinSymbol}>₹</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
               </View>
             </View>
           ) : (
@@ -475,15 +542,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.1)',
   },
-  subscribeBox: {
+  exclusiveOverlayContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 16,
+  },
+  exclusiveTitle: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 16,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  exclusiveButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  exclusiveSubscribeBtn: {
     borderWidth: 2,
-    borderColor: 'white',
-    alignSelf: 'center',
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: responsiveWidth(4),
-    padding: responsiveWidth(2),
-    borderRadius: responsiveWidth(2),
+  },
+  exclusiveUnlockBtn: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  exclusiveBtnText: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  exclusiveCoinCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FFE72D',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exclusiveCoinSymbol: {
+    fontSize: 8,
+    color: '#1E1E1E',
+    fontFamily: 'Rubik-Medium',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 10,
   },
   videoImage: {
     flex: 1,

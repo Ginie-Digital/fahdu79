@@ -81,6 +81,9 @@ const PostCards = ({item, index, token, postId}) => {
 
   const [commentCount, setCommentCounts] = useState(item?.count?.comments);
 
+  const [subscribeClick, setSubscribeClick] = useState(false);
+  const [unlockClick, setUnlockClick] = useState(false);
+
   const toggleIndex = useCallback(
     async s => {
       setShowHeart(s);
@@ -613,24 +616,43 @@ const PostCards = ({item, index, token, postId}) => {
             />
 
             <View style={styles.subPlaceHolder}>
-              <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" style={{alignSelf: 'center', marginBottom: responsiveWidth(2)}} size={responsiveWidth(8)} />
-              <Text style={[styles.subscribeMessage, {fontSize: responsiveFontSize(2)}]}>{`Unlock Exclusive Content`}</Text>
+              <View style={styles.exclusiveOverlayContent}>
+                <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" size={25} />
+                <Text style={styles.exclusiveTitle}>Unlock Exclusive Content</Text>
 
-              <TouchableOpacity
-                style={styles.subscribeBox}
-                onPress={() =>
-                  navigate('subscribeCreator', {
-                    name: item?.createdBy?.displayName,
-                    profileImageUrl: item?.createdBy?.profile_image?.url,
-                    role: item?.createdBy?.role,
-                    id: item?.createdBy?._id,
-                  })
-                }>
-                <Text style={[styles.subscribeMessage]}>
-                  SUBSCRIBE
-                  <Text style={[styles.subscribeMessage, {color: '#ffa07a'}]}> NOW</Text>
-                </Text>
-              </TouchableOpacity>
+                <View style={styles.exclusiveButtonsRow}>
+                  <Pressable
+                    style={[styles.exclusiveSubscribeBtn, subscribeClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
+                    onPressIn={() => setSubscribeClick(true)}
+                    onPressOut={() => setSubscribeClick(false)}
+                    onPress={() =>
+                      navigate('subscribeCreator', {
+                        name: item?.createdBy?.displayName,
+                        profileImageUrl: item?.createdBy?.profile_image?.url,
+                        role: item?.createdBy?.role,
+                        id: item?.createdBy?._id,
+                      })
+                    }>
+                    <Text style={styles.exclusiveBtnText}>Subscribe Now</Text>
+                  </Pressable>
+
+                  {item?.unlockSettings?.enabled && (
+                    <Pressable
+                      style={[styles.exclusiveUnlockBtn, unlockClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
+                      onPressIn={() => setUnlockClick(true)}
+                      onPressOut={() => setUnlockClick(false)}
+                      disabled={true}
+                    >
+                      <Text style={styles.exclusiveBtnText}>
+                        {item?.unlockSettings?.unlockAmount || 0}
+                      </Text>
+                      <View style={styles.exclusiveCoinCircle}>
+                        <Text style={styles.exclusiveCoinSymbol}>₹</Text>
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -845,21 +867,77 @@ const styles = StyleSheet.create({
   },
   subPlaceHolder: {
     position: 'absolute',
-    top: '30%',
-    alignSelf: 'center',
-    width: '100%',
-    padding: responsiveWidth(2),
-    // borderWidth : 1
-  },
-  subscribeBox: {
-    borderWidth: 2,
-    borderColor: 'white',
-    alignSelf: 'center',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: responsiveWidth(4),
+    width: '100%',
     padding: responsiveWidth(2),
-    borderRadius: responsiveWidth(2),
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  exclusiveOverlayContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 16,
+  },
+  exclusiveTitle: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 16,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  exclusiveButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  exclusiveSubscribeBtn: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exclusiveUnlockBtn: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  exclusiveBtnText: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  exclusiveCoinCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FFE72D',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exclusiveCoinSymbol: {
+    fontSize: 8,
+    color: '#1E1E1E',
+    fontFamily: 'Rubik-Medium',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 10,
   },
 
   videoImage: {

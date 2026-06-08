@@ -677,10 +677,24 @@ const CreatePost = ({route = {}}) => {
         // All files uploaded, now create the post
         let imagePreviewUrl = '';
         const isCurrentlySubOnly = userRole === 'admin' ? false : forSubscribers;
-        if (isCurrentlySubOnly && mediaUris.length > 0) {
+        const isUnlockable = isCurrentlySubOnly && isAllowFollowersToUnlock;
+        if ((isCurrentlySubOnly || isUnlockable) && mediaUris.length > 0) {
             // Generate preview from the first media item (if video, this is the thumbnail)
             const firstImageUri = mediaUris[0].startsWith('file://') || mediaUris[0].startsWith('content://') ? mediaUris[0] : `file://${mediaUris[0]}`;
-            imagePreviewUrl = await generateBase64Image(firstImageUri);
+            try {
+                imagePreviewUrl = await generateBase64Image(firstImageUri);
+            } catch (previewErr) {
+                console.warn('Preview generation failed:', previewErr);
+            }
+            // Fallback: if base64 generation failed, use the first uploaded file URL
+            if (!imagePreviewUrl && uploadedFiles.length > 0) {
+                imagePreviewUrl = uploadedFiles[0]?.url || '';
+            }
+        }
+
+        // Validate: unlockable posts MUST have a preview
+        if (isUnlockable && !imagePreviewUrl) {
+            throw new Error('Could not generate preview for unlockable post. Please try again.');
         }
 
         const mediaObject = {
@@ -715,12 +729,12 @@ const CreatePost = ({route = {}}) => {
                 is_charagble: isCurrentlySubOnly ? isAllowFollowersToUnlock : false,
                 charge_amount: (isCurrentlySubOnly && isAllowFollowersToUnlock) ? Number(coinsAmount) : 0,
             } : undefined,
-            image_preview: {
+            image_preview: imagePreviewUrl ? [{
                 url: imagePreviewUrl,
                 type: 'image',
                 format: 'png',
                 mobilePreview: '',
-            },
+            }] : [],
             for_subscribers: isCurrentlySubOnly,
             is_charagble: isCurrentlySubOnly ? isAllowFollowersToUnlock : false,
             charge_amount: (isCurrentlySubOnly && isAllowFollowersToUnlock) ? Number(coinsAmount) : 0,

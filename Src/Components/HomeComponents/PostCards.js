@@ -8,16 +8,16 @@ import {Gesture} from 'react-native-gesture-handler';
 import {GestureDetector} from 'react-native-gesture-handler';
 import Animated, {runOnJS, useAnimatedStyle, useSharedValue, withSpring} from 'react-native-reanimated';
 import {useNavigation, useNavigationState} from '@react-navigation/native';
-import {useLazyGetAllCommentsQuery, useLazyGetSelfLikeQuery, useLazyIsValidFollowQuery, useLikeApiMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useLazyGetAllCommentsQuery, useLazyGetSelfLikeQuery, useLazyIsValidFollowQuery, useLikeApiMutation, usePostPaymentMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
 import {setCurrentVideoPlayId, toggleCommentBottomSheet, toggleLoadingComments, togglePostActionBottomSheet, toggleSendPostTipModal, toggleWhoTippedSheet} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import Pinchable from 'react-native-pinchable';
-import {LoginPageErrors} from '../ErrorSnacks';
+import {LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
 import {savePostComments, setCurrentCommentDetails, setTotalPages} from '../../../Redux/Slices/NormalSlices/CurrentCommentSlice';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import {likeDislike} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
+import {likeDislike, unlockPost} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import {autoLogout} from '../../../AutoLogout';
 import share from 'react-native-share';
 import Play from '../../../Assets/svg/play.svg';
@@ -50,7 +50,16 @@ const handlePostActionHandler = async (postId, image, displayName, description) 
 
 const PostCards = ({item, index, token}) => {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [postPayment, {isLoading: isUnlocking}] = usePostPaymentMutation();
+  const [unlockClick, setUnlockClick] = useState(false);
+  const [unlockedFiles, setUnlockedFiles] = useState(item?.post_content_files);
+
+  useEffect(() => {
+    setUnlockedFiles(item?.post_content_files);
+  }, [item?.post_content_files]);
+
   console.log(item);
+  console.log('UNLOCK_SETTINGS_DEBUG:', item?._id, item?.unlockSettings, 'is_charagble:', item?.is_charagble, 'for_subscribers:', item?.for_subscribers);
 
   const screenName = useNavigationState(state => state.routes[state.index].name);
 
@@ -260,8 +269,45 @@ const PostCards = ({item, index, token}) => {
     [screenName, item?._id],
   );
 
-  if (item?.post_content_files) {
-    if (item?.post_content_files?.[0]?.format === 'video') {
+  const handleUnlockPost = useCallback(async () => {
+    if (isUnlocking) return;
+    try {
+      console.log('Unlocking post:', item?._id);
+      const { data, error } = await postPayment({
+        token,
+        data: { postId: item?._id },
+      });
+
+      if (error) {
+        console.log('Unlock post error:', error);
+        LoginPageErrors(error?.data?.message || 'Failed to unlock post');
+        if (error?.data?.status_code === 2044) {
+          autoLogout();
+        }
+        return;
+      }
+
+      if (data && data.statusCode === 200) {
+        console.log('Unlock post success data:', data);
+        chatRoomSuccess(data?.message || 'Post unlocked successfully');
+        setUnlockedFiles(data?.data?.post_content_files);
+        dispatch(
+          unlockPost({
+            postId: item?._id,
+            post_content_files: data?.data?.post_content_files,
+          })
+        );
+      } else {
+        LoginPageErrors(data?.message || 'Failed to unlock post');
+      }
+    } catch (err) {
+      console.log('Unlock post exception:', err);
+      LoginPageErrors('An unexpected error occurred');
+    }
+  }, [item?._id, token, postPayment, isUnlocking, dispatch]);
+
+  if (unlockedFiles) {
+    if (unlockedFiles?.[0]?.format === 'video') {
       return (
         <View style={[styles.cardContainer, {marginTop: responsiveWidth(2), marginBottom: responsiveWidth(2), borderColor: '#E9E9E9'}]}>
           <View>
@@ -344,7 +390,7 @@ const PostCards = ({item, index, token}) => {
               }}
               onPress={() =>
                 navigation.navigate('homevideoplayer', {
-                  videoUrl: item?.post_content_files?.[0]?.url,
+                  videoUrl: unlockedFiles?.[0]?.url,
                   coverUrl: item?.video?.thumbnail?.url,
                   userImage: item?.createdBy?.profile_image?.url,
                   displayName: item?.createdBy?.displayName,
@@ -532,7 +578,7 @@ const PostCards = ({item, index, token}) => {
           </View>
 
           <View style={[styles.imageContainer]}>
-            {item?.post_content_files?.length > 1 ? (
+            {unlockedFiles?.length > 1 ? (
               <View style={{width: '100%', position: 'relative'}}>
                 <Carousel
                   loop={false}
@@ -543,7 +589,7 @@ const PostCards = ({item, index, token}) => {
                       : Dimensions.get('window').width * 1.25
                   }
                   autoPlay={false}
-                  data={item?.post_content_files}
+                  data={unlockedFiles}
                   scrollAnimationDuration={300}
                   onSnapToItem={index => setActiveSlide(index)}
                   onConfigurePanGesture={(g) => {
@@ -570,11 +616,11 @@ const PostCards = ({item, index, token}) => {
                 />
                 <View style={styles.paginationBadge}>
                   <Text style={styles.paginationText}>
-                    {activeSlide + 1}/{item?.post_content_files?.length}
+                    {activeSlide + 1}/{unlockedFiles?.length}
                   </Text>
                 </View>
                 <View style={styles.dotsContainer}>
-                  {item?.post_content_files?.map((_, i) => (
+                  {unlockedFiles?.map((_, i) => (
                     <View
                       key={i}
                       style={[
@@ -592,7 +638,7 @@ const PostCards = ({item, index, token}) => {
                     cachePolicy="memory-disk"
                     placeholderContentFit="cover"
                     placeholder={require('../../../Assets/Images/DefaultPost.jpg')}
-                    source={!item?.post_content_files?.[0]?.url ? require('../../../Assets/Images/DefaultPost.jpg') : {uri: item?.post_content_files[0]?.url}}
+                    source={!unlockedFiles?.[0]?.url ? require('../../../Assets/Images/DefaultPost.jpg') : {uri: unlockedFiles[0].url}}
                     contentFit="cover"
                     style={{
                       width: '100%',
@@ -787,23 +833,135 @@ const PostCards = ({item, index, token}) => {
             />
 
             <View style={styles.subPlaceHolder}>
-              <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" style={{alignSelf: 'center', marginBottom: responsiveWidth(2)}} size={responsiveWidth(8)} />
-              <Text style={[styles.subscribeMessage, {fontSize: responsiveFontSize(2)}]}>{`Unlock Exclusive ${item?.video?.hasVideo ? 'Video' : 'Image'} Content`}</Text>
+              <View style={styles.exclusiveOverlayContent}>
+                <DIcon provider={'SimpleLineIcons'} name={'lock'} color="#fff" size={25} />
+                <Text style={styles.exclusiveTitle}>Unlock Exclusive Content</Text>
 
-              <Pressable
-                style={[styles.subscribeBox, subscribeClick && {backgroundColor: '#fff'}]}
-                onPressIn={() => setSubscribeClick(true)}
-                onPressOut={() => setSubscribeClick(false)}
-                onPress={() =>
-                  navigate('subscribeCreator', {
-                    name: item?.createdBy?.displayName,
-                    profileImageUrl: item?.createdBy?.profile_image?.url,
-                    role: item?.createdBy?.role,
-                    id: item?.createdBy?._id,
-                  })
-                }>
-                <Text style={[styles.subscribeMessage, , subscribeClick && {color: '#1e1e1e'}]}>SUBSCRIBE NOW</Text>
-              </Pressable>
+                <View style={styles.exclusiveButtonsRow}>
+                  <Pressable
+                    style={[styles.exclusiveSubscribeBtn, subscribeClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
+                    onPressIn={() => setSubscribeClick(true)}
+                    onPressOut={() => setSubscribeClick(false)}
+                    onPress={() =>
+                      navigate('subscribeCreator', {
+                        name: item?.createdBy?.displayName,
+                        profileImageUrl: item?.createdBy?.profile_image?.url,
+                        role: item?.createdBy?.role,
+                        id: item?.createdBy?._id,
+                      })
+                    }>
+                    <Text style={styles.exclusiveBtnText}>Subscribe Now</Text>
+                  </Pressable>
+
+                  {item?.unlockSettings?.enabled && (
+                    <Pressable
+                      style={[styles.exclusiveUnlockBtn, unlockClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
+                      onPressIn={() => setUnlockClick(true)}
+                      onPressOut={() => setUnlockClick(false)}
+                      onPress={handleUnlockPost}
+                      disabled={isUnlocking}
+                    >
+                      <Text style={styles.exclusiveBtnText}>
+                        {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || 0}`}
+                      </Text>
+                      {!isUnlocking && (
+                        <View style={styles.exclusiveCoinCircle}>
+                          <Text style={styles.exclusiveCoinSymbol}>₹</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View
+          style={{
+            paddingHorizontal: responsiveWidth(2),
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: responsiveWidth(4),
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: responsiveWidth(5.5),
+              marginLeft: 8,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: responsiveWidth(1),
+                alignItems: 'center',
+              }}>
+              <TouchableOpacity onPressIn={() => sendLike()}>
+                {doLiked ? (
+                  <View style={styles.bottomIconContainer}>
+                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartFill.png')} contentFit="contain" style={{flex: 1}} />
+                  </View>
+                ) : (
+                  <View style={styles.bottomIconContainer}>
+                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={{flex: 1}} />
+                  </View>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
+            </View>
+
+            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+              <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
+                <View style={styles.bottomIconContainer}>
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={{flex: 1}} />
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
+            </View>
+
+            <View style={{flexDirection: 'row', marginTop: responsiveWidth(0.83)}}>
+              <TouchableOpacity onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
+                <View style={styles.bottomIconContainer}>
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1}} />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {item?.createdBy?.role !== 'admin' && (
+            <TouchableOpacity onPress={() => handleCoinClicks()}>
+              <View style={{right: responsiveWidth(3.2)}}>
+                <View style={styles.coinContainer}>
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/Coins.png')} contentFit="contain" style={{flex: 1}} />
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: responsiveWidth(1),
+          }}>
+          <View
+            style={{
+              width: responsiveWidth(40),
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', marginLeft: 22}}>
+              <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5}}>
+                <Image source={{uri: item?.createdBy?.profile_image?.url}} contentFit="contain" style={{flex: 1}} />
+              </View>
+
+              <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular'}]}>
+                Add a Comment...
+              </Text>
             </View>
           </View>
         </View>
@@ -991,6 +1149,41 @@ const styles = StyleSheet.create({
     padding: responsiveWidth(2),
     borderRadius: responsiveWidth(2),
   },
+  unlockBox: {
+    backgroundColor: '#FFA86B',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: responsiveWidth(4),
+    paddingHorizontal: responsiveWidth(5),
+    paddingVertical: responsiveWidth(2.5),
+    borderRadius: responsiveWidth(2),
+    shadowColor: '#FFA86B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+    minWidth: responsiveWidth(60),
+  },
+  unlockContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: responsiveWidth(2),
+  },
+  unlockCoinIcon: {
+    width: responsiveWidth(5.5),
+    height: responsiveWidth(5.5),
+  },
+  unlockMessage: {
+    fontFamily: 'Rubik-Bold',
+    color: 'white',
+    fontSize: responsiveFontSize(1.8),
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   multiImageIndicator: {
     position: 'absolute',
     top: responsiveWidth(3),
@@ -1029,7 +1222,6 @@ const styles = StyleSheet.create({
   },
   videoPostDescription: {
     color: 'white',
-    fontFamily: 'Rubik-Medium',
     width: responsiveWidth(60),
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.72),
@@ -1056,5 +1248,67 @@ const styles = StyleSheet.create({
     color: '#b2b2b2',
     fontSize: responsiveFontSize(1.5),
     fontFamily: 'Rubik-Medium',
+  },
+  exclusiveOverlayContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 16,
+  },
+  exclusiveTitle: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 16,
+    lineHeight: 16,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  exclusiveButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  exclusiveSubscribeBtn: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exclusiveUnlockBtn: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  exclusiveBtnText: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: '#FFFFFF',
+  },
+  exclusiveCoinCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#FFE72D',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exclusiveCoinSymbol: {
+    fontSize: 8,
+    color: '#1E1E1E',
+    fontFamily: 'Rubik-Medium',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 10,
   },
 });

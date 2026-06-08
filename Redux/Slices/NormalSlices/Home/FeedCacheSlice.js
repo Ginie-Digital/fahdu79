@@ -71,6 +71,18 @@ const feedCacheSlice = createSlice({
         state.data.blockedPost.push(action.payload.postId);
       }
     },
+
+    unlockPost: (state, action) => {
+      const { postId, post_content_files } = action.payload;
+      const post = state.data.content.find((p) => p._id === postId);
+      if (post) {
+        post.post_content_files = post_content_files;
+        post.for_subscribers = false;
+        if (post.unlockSettings) {
+          post.unlockSettings.enabled = false;
+        }
+      }
+    },
   },
 
   extraReducers(builder) {
@@ -80,6 +92,6 @@ const feedCacheSlice = createSlice({
   },
 });
 
-export const { setFeedCache, resetFeed, likeDislike, manipulateTotalPages, blockPost, manipulateCurrentPage, mainpulateFirstPageCreatedAt, incrementCommentCount } = feedCacheSlice.actions;
+export const { setFeedCache, resetFeed, likeDislike, manipulateTotalPages, blockPost, manipulateCurrentPage, mainpulateFirstPageCreatedAt, incrementCommentCount, unlockPost } = feedCacheSlice.actions;
 
 export default feedCacheSlice.reducer;

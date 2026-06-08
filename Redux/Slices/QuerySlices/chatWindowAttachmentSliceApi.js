@@ -1220,6 +1220,18 @@ export const chatWindowAttachmentApi = createApi({
       }),
     }),
 
+    postPayment: builder.mutation({
+      query: ({ token, data }) => ({
+        url: '/api/wallet/post/payment',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }),
+    }),
+
     reportPost: builder.mutation({
       query: ({ token, data }) => ({
         url: '/api/post/report',
@@ -2603,4 +2615,5 @@ export const {
   useManageSubscriptionMutation,
   useSubmitFeedbackMutation,
   useLazyCheckVerificationImageStatusQuery,
+  usePostPaymentMutation,
 } = chatWindowAttachmentApi;

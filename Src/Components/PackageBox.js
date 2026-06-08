@@ -1,12 +1,10 @@
 import React from 'react';
-import {View, Text, Pressable, StyleSheet, Image, Platform} from 'react-native';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
-import WalletButton from './WalletButton';
-import {ImageBackground} from 'expo-image';
-import {walletBackground} from '../../DesiginData/Data';
+import {View, Text, Pressable, StyleSheet, Image, Platform, ActivityIndicator} from 'react-native';
+import {responsiveWidth} from 'react-native-responsive-dimensions';
+import {useSelector} from 'react-redux';
 import Svg, {Circle} from 'react-native-svg';
 
-// Color config for each pack index (Android new design)
+// Color config for each pack index
 const PACK_COLORS = [
   { bg: '#EFFBF2', circle: '#D6F5DE', badgeBorder: '#CEF3D7' }, // Faltu - Green
   { bg: '#FFFEEB', circle: '#FFFDDB', badgeBorder: '#FFE899' }, // Farzi - Yellow
@@ -30,7 +28,7 @@ const BADGE_IMAGES = [
 ];
 
 const CircleDecoration = ({ color }) => (
-  <View style={androidStyles.circleContainer} pointerEvents="none">
+  <View style={styles.circleContainer} pointerEvents="none">
     <Svg width={100} height={190} viewBox="0 0 100 190">
       <Circle cx={79} cy={22} r={38} stroke={color} strokeWidth={12} fill="none" />
       <Circle cx={91} cy={55} r={38} stroke={color} strokeWidth={12} fill="none" />
@@ -39,145 +37,90 @@ const CircleDecoration = ({ color }) => (
 );
 
 const CoinIcon = () => (
-  <View style={androidStyles.coinWrapper}>
-    <View style={androidStyles.coinShadow} />
-    <View style={androidStyles.coinFace}>
-      <Text style={androidStyles.coinSymbol}>₹</Text>
+  <View style={styles.coinWrapper}>
+    <View style={styles.coinShadow} />
+    <View style={styles.coinFace}>
+      <Text style={styles.coinSymbol}>₹</Text>
     </View>
   </View>
 );
 
-const AndroidPackageBox = ({ item, index, isLastItem, handler, offerText }) => {
-  const colorConfig = PACK_COLORS[index] || PACK_COLORS[0];
-  const cost = Number(item?.cost || item?.amount || 0).toLocaleString('en-IN');
+const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
+  const currentButton = useSelector(state => state.hideShow.visibility.walletLoader);
+  const packId = item?.packId || item?.pack_id;
+  const isCurrentLoading = packId != null && packId === currentButton;
+
+  const colorConfig = PACK_COLORS[index % PACK_COLORS.length] || PACK_COLORS[0];
+  const rawCost = Platform.OS === 'android' ? item?.amount : item?.cost;
+  const cost = Number(rawCost || item?.cost || item?.amount || 0).toLocaleString('en-IN');
   const hasBadge = !!offerText;
 
   return (
     <Pressable
       style={[
-        androidStyles.cardOuter,
+        styles.cardOuter,
         { backgroundColor: colorConfig.bg },
         isLastItem && { width: responsiveWidth(88), marginHorizontal: responsiveWidth(2) },
       ]}
-      onPress={() => handler(item?.packId || item?.pack_id)}
+      onPress={() => handler(packId)}
+      disabled={isCurrentLoading}
     >
       {/* Circle decoration */}
       <CircleDecoration color={colorConfig.circle} />
 
       {/* Badge Container */}
       <View style={[
-        androidStyles.badgeContainer,
+        styles.badgeContainer,
         { borderColor: colorConfig.badgeBorder }
       ]}>
         <Image
           source={BADGE_IMAGES[index % BADGE_IMAGES.length]}
-          style={androidStyles.badgeIcon}
+          style={styles.badgeIcon}
         />
       </View>
 
       {/* Content */}
       <View style={[
-        androidStyles.content,
+        styles.content,
         { paddingBottom: hasBadge ? 42 : 16 }
       ]}>
-        <Text style={androidStyles.packName}>{item.name}</Text>
-        <View style={androidStyles.priceRow}>
-          <Text style={androidStyles.priceText}>{cost}</Text>
+        <Text style={styles.packName}>{item.name}</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.priceText}>{cost}</Text>
           <CoinIcon />
         </View>
 
         {/* Buy Now button with solid box-shadow */}
-        <View style={androidStyles.buyButtonWrapper}>
-          <View style={androidStyles.buyButtonShadow} />
+        <View style={styles.buyButtonWrapper}>
+          <View style={styles.buyButtonShadow} />
           <Pressable
             style={({ pressed }) => [
-              androidStyles.buyButton,
+              styles.buyButton,
               pressed && { transform: [{ translateX: 2 }, { translateY: 2 }] },
             ]}
-            onPress={() => handler(item?.packId || item?.pack_id)}
+            onPress={() => handler(packId)}
+            disabled={isCurrentLoading}
           >
-            <Text style={androidStyles.buyButtonText}>Buy Now</Text>
+            {isCurrentLoading ? (
+              <ActivityIndicator size="small" color="#000000" style={{ paddingHorizontal: 10 }} />
+            ) : (
+              <Text style={styles.buyButtonText}>Buy Now</Text>
+            )}
           </Pressable>
         </View>
       </View>
 
       {/* Discount badge - absolute overlay at bottom */}
       {hasBadge ? (
-        <View style={androidStyles.badgeBar}>
-          <Text style={androidStyles.badgeText}>{offerText}</Text>
+        <View style={styles.badgeBar}>
+          <Text style={styles.badgeText}>{offerText}</Text>
         </View>
       ) : null}
     </Pressable>
   );
 };
 
-const PackageBox = ({item, index, isLastItem, loading, handler, offerText, isFahdu}) => {
-  console.log(item?.cost);
-  console.log(isLastItem, '++++++');
-
-  const Badge = () => (
-    offerText ? (
-      <View style={[styles.badge, isFahdu ? styles.badgeFahdu : styles.badgeFull]}>
-        <Text style={styles.badgeText}>{offerText}</Text>
-      </View>
-    ) : null
-  );
-
-  if (Platform.OS === 'android') {
-    return (
-      <AndroidPackageBox
-        item={item}
-        index={index}
-        isLastItem={isLastItem}
-        handler={handler}
-        offerText={offerText}
-      />
-    );
-  } else {
-    if (isLastItem) {
-      return (
-        <Pressable>
-          <ImageBackground
-            source={require('../../Assets/Images/LastWalletCard.png')}
-            style={[styles.card, {backgroundColor: '#fffeeb', borderWidth: responsiveWidth(0.4), width: responsiveWidth(88), paddingBottom: responsiveWidth(4)}]}
-            imageStyle={styles.backgroundImage}
-            contentFit="contain">
-            <Badge />
-            <View style={styles.content}>
-              <Text style={styles.title}>{item.name}</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.price}> {Number(Platform.OS === 'android' ? item?.amount : item.cost).toLocaleString('en-IN')}</Text>
-                <Image source={require('../../Assets/Images/Coins2.png')} style={styles.coinIcon} />
-              </View>
-
-              <WalletButton title={'Buy Now'} packId={item?.pack_id} onPress={handler} />
-            </View>
-          </ImageBackground>
-        </Pressable>
-      );
-    } else {
-      return (
-        <Pressable>
-          <ImageBackground source={walletBackground[index]?.uri} style={styles.card} imageStyle={styles.backgroundImage} contentFit="contain">
-            <Badge />
-            <View style={styles.content}>
-              <Text style={styles.title}>{item.name}</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.price}> {Number(Platform.OS === 'android' ? item?.amount : item.cost).toLocaleString('en-IN')}</Text>
-                <Image source={require('../../Assets/Images/Coins2.png')} style={styles.coinIcon} />
-              </View>
-
-              <WalletButton title={'Buy Now'} packId={item?.pack_id} onPress={handler} />
-            </View>
-          </ImageBackground>
-        </Pressable>
-      );
-    }
-  }
-};
-
-// Android new design styles
-const androidStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   cardOuter: {
     width: responsiveWidth(42),
     marginHorizontal: responsiveWidth(2),
@@ -185,7 +128,7 @@ const androidStyles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#000000',
-    height: 188,
+    height: Platform.OS === 'ios' ? 176 : 188,
     position: 'relative',
   },
   badgeBar: {
@@ -222,7 +165,7 @@ const androidStyles = StyleSheet.create({
     flexDirection: 'column',
     width: '100%',
     alignItems: 'flex-start',
-    paddingTop: 58,
+    paddingTop: Platform.OS === 'ios' ? 48 : 58,
     paddingLeft: 20,
     paddingRight: 12,
     zIndex: 2,
@@ -325,73 +268,6 @@ const androidStyles = StyleSheet.create({
     width: 90,
     height: 90,
     resizeMode: 'contain',
-  },
-});
-
-// iOS / legacy styles
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 15,
-    paddingTop: responsiveWidth(9),
-    paddingBottom: responsiveWidth(6),
-    paddingLeft: responsiveWidth(4),
-    maxWidth: '100%',
-    width: responsiveWidth(42),
-    marginHorizontal: responsiveWidth(2),
-    overflow: 'hidden',
-  },
-  backgroundImage: {
-    borderRadius: 15,
-    resizeMode: 'cover',
-  },
-  title: {
-    fontSize: responsiveFontSize(1.5),
-    fontFamily: 'Rubik-Medium',
-    color: '#000',
-    marginBottom: 5,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  price: {
-    fontSize: responsiveFontSize(3),
-    fontWeight: 'bold',
-    color: '#000',
-    fontFamily: 'Rubik-Bold',
-  },
-  coinIcon: {
-    width: 22,
-    height: 22,
-    marginLeft: 5,
-  },
-  content: {
-    flexDirection: 'column',
-    width: '100%',
-    alignItems: 'flex-start',
-  },
-  badge: {
-    position: 'absolute',
-    top: 0,
-    backgroundColor: '#1e1e1e',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-    zIndex: 100,
-  },
-  badgeFull: {
-    left: 0,
-    right: 0,
-  },
-  badgeFahdu: {
-    right: 0,
-    width: 128,
-    borderBottomLeftRadius: 16,
-  },
-  badgeText: {
-    color: '#fff',
-    fontFamily: 'Rubik-Medium',
-    fontSize: 12,
   },
 });
 

@@ -277,6 +277,20 @@ const CropViewScreen = ({route}) => {
         });
         setCropAreaWidth(screenWidth);
         setCropAreaHeight(calculatedHeight);
+      } else if (route?.params?.type === 'massMessage') {
+        // Lock to 4:5 for massMessage
+        console.log('🔵 Setting massMessage mode - 4:5 aspect ratio');
+        setWidth(4);
+        setHeight(5);
+        const screenWidth = responsiveWidth(90);
+        const calculatedWidth = (screenWidth * 4) / 5;
+        console.log('🔵 massMessage crop dimensions:', {
+          width: calculatedWidth,
+          height: screenWidth,
+          ratio: (calculatedWidth / screenWidth).toFixed(2),
+        });
+        setCropAreaHeight(screenWidth);
+        setCropAreaWidth(calculatedWidth);
       }
     } else {
       // For create post, default to 4:5
@@ -299,16 +313,18 @@ const CropViewScreen = ({route}) => {
       ? [{h: 1, w: 1}] // Only 1:1 for Profile
       : route?.params?.type === 'Cover'
       ? [{h: 16, w: 9}] // Only 16:9 for Cover
+      : route?.params?.type === 'massMessage'
+      ? [{h: 4, w: 5}] // Only 4:5 for massMessage
       : [
           {h: 4, w: 5},
           {h: 1, w: 1},
         ];
 
-  // Show aspect ratio selector only for create post and mass message
-  const shouldShowAspectSelector = route?.params?.type === undefined || route?.params?.type === 'massMessage';
+  // Show aspect ratio selector only for create post
+  const shouldShowAspectSelector = route?.params?.type === undefined;
 
   // Determine if aspect ratio should be locked
-  const shouldLockAspectRatio = route?.params?.type === 'Profile' || route?.params?.type === 'Cover';
+  const shouldLockAspectRatio = route?.params?.type === 'Profile' || route?.params?.type === 'Cover' || route?.params?.type === 'massMessage';
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -412,7 +428,7 @@ const CropViewScreen = ({route}) => {
           )}
 
           <View style={{position: 'relative', alignSelf: 'center', width: responsiveWidth(90), marginBottom: responsiveWidth(8)}}>
-            <AnimatedButton title={route?.params?.type === undefined ? 'Next' : 'Update'} loading={uploading} onPress={() => cropViewRef.current.saveImage()} buttonMargin={route?.params?.type === undefined || route?.params?.type === 'massMessage' ? 6 : 30} />
+            <AnimatedButton title={route?.params?.type === undefined ? 'Next' : 'Update'} loading={uploading} onPress={() => cropViewRef.current.saveImage()} buttonMargin={route?.params?.type === undefined ? 6 : 30} />
           </View>
         </>
       ) : (

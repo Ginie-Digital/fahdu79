@@ -792,9 +792,10 @@ export function resizeCoverImage(inputPath, outputPath) {
         return;
       }
 
-      // Cover photos: 800x400 as per design spec
-      const targetWidth = 800;
-      const targetHeight = 400;
+      // Cover photos need higher resolution (16:9 aspect ratio)
+      // Using 1280x720 for good quality without huge file size
+      const targetWidth = 1280;
+      const targetHeight = 720;
       const quality = Platform.OS === 'ios' ? 2 : 3; // Good balance for cover images
 
       // Scale to fit within bounds while maintaining aspect ratio, then pad to exact dimensions

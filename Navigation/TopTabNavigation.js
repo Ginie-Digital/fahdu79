@@ -153,20 +153,13 @@ const TopTabNavigation = ({ notificationData }) => {
       )}
 
       {userInformation?.role !== 'creator' && userInformation?.role !== 'admin' && (
-        <FlatList
-          data={[]} // No actual list data
-          renderItem={null} // Nothing to render
-          keyExtractor={() => 'dummy'}
-          ListHeaderComponent={
-            <>
-              <UpperProfile isFocused={isFocused} />
-              <ProfileUser />
-            </>
-          }
+        <ScrollView
           showsVerticalScrollIndicator={false}
           style={{backgroundColor: '#fff'}}
-          contentContainerStyle={{backgroundColor: '#fff'}}
-        />
+          contentContainerStyle={{backgroundColor: '#fff'}}>
+          <UpperProfile isFocused={isFocused} />
+          <ProfileUser />
+        </ScrollView>
       )}
 
 

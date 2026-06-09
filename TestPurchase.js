@@ -109,10 +109,18 @@ const TestPurchase = () => {
 
       // You can also handle any post-purchase logic here (like updating backend or showing success message)
     } catch (error) {
-      if (error.userCancelled) {
+      const isCancelled =
+        error?.userCancelled ||
+        error?.code === 1 ||
+        error?.code === '1' ||
+        error?.readableErrorCode === 'PurchaseCancelledError' ||
+        error?.message?.toLowerCase().includes('cancel') ||
+        error?.message?.toLowerCase().includes('user cancelled');
+
+      if (isCancelled) {
         console.warn('User cancelled the purchase.');
       } else {
-        LoginPageErrors(error);
+        LoginPageErrors(error?.message || String(error) || 'Purchase failed');
       }
     } finally {
       setLoading(false); // Always set loading to false (success or error)

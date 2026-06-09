@@ -56,13 +56,12 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
 
 
   return (
-    <Pressable
+    <View
       style={[
         styles.cardOuter,
         { backgroundColor: colorConfig.bg },
+        isLastItem && styles.cardOuterLast,
       ]}
-      onPress={() => handler(packId)}
-      disabled={isCurrentLoading}
     >
       {/* Circle decoration */}
       <CircleDecoration color={colorConfig.circle} />
@@ -105,7 +104,7 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
           </Pressable>
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 };
 
@@ -236,6 +235,9 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     resizeMode: 'contain',
+  },
+  cardOuterLast: {
+    width: responsiveWidth(86),
   },
 });
 

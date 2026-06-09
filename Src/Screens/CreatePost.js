@@ -554,12 +554,12 @@ const CreatePost = ({route = {}}) => {
     const isCurrentlySubOnly = userRole === 'admin' ? false : forSubscribers;
     if (isCurrentlySubOnly && isAllowFollowersToUnlock) {
         const numericCoins = Number(coinsAmount);
-        if (!coinsAmount || isNaN(numericCoins) || numericCoins < 1) {
-            LoginPageErrors('Please set at least 1 coin for followers to unlock.');
+        if (!coinsAmount || isNaN(numericCoins) || numericCoins < 10) {
+            LoginPageErrors('Please set at least 10 coins for followers to unlock.');
             return;
         }
-        if (numericCoins > 50000) {
-            LoginPageErrors('Please set coins under 50,000.');
+        if (numericCoins > 2000) {
+            LoginPageErrors('Please set coins up to 2,000.');
             return;
         }
     }
@@ -958,7 +958,7 @@ const CreatePost = ({route = {}}) => {
               <View style={styles.followersUnlockHeader}>
                 <View style={styles.followersUnlockTitleContainer}>
                   <Text style={styles.followersUnlockTitle}>Allow Followers to Unlock</Text>
-                  <Text style={styles.followersUnlockSubtitle}>Set Coins for Followers</Text>
+                  <Text style={styles.followersUnlockSubtitle}>Set Coins for Followers (10 - 2000)</Text>
                 </View>
                 <TouchableOpacity
                   activeOpacity={0.8}

@@ -84,6 +84,8 @@ const PostCards = ({item, index, token, postId}) => {
   const [subscribeClick, setSubscribeClick] = useState(false);
   const [unlockClick, setUnlockClick] = useState(false);
 
+  const isSubscriberOnlyPost = item?.for_subscribers === true || item?.for_subscribers === 'true' || item?.forSubscriber === true || item?.forSubscriber === 'true';
+
   const toggleIndex = useCallback(
     async s => {
       setShowHeart(s);
@@ -657,54 +659,58 @@ const PostCards = ({item, index, token, postId}) => {
           </View>
         </View>
 
-        <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(4)}}>
-          <View style={{width: responsiveWidth(70), flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start'}}>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', width: responsiveFontSize(7)}}>
-              <TouchableOpacity onPress={() => LoginPageErrors('You must subscribe to like')}>{doLiked ? <Fill /> : <Heart />}</TouchableOpacity>
+        {!isSubscriberOnlyPost && (
+          <>
+            <View style={{paddingHorizontal: responsiveWidth(2), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(4)}}>
+              <View style={{width: responsiveWidth(70), flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start'}}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', width: responsiveFontSize(7)}}>
+                  <TouchableOpacity onPress={() => LoginPageErrors('You must subscribe to like')}>{doLiked ? <Fill /> : <Heart />}</TouchableOpacity>
 
-              <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
-            </View>
+                  <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
+                </View>
 
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <TouchableOpacity onPress={() => LoginPageErrors('You must subscribe to comment')}>
-                <Comment />
-              </TouchableOpacity>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => LoginPageErrors('You must subscribe to comment')}>
+                    <Comment />
+                  </TouchableOpacity>
 
-              <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={{paddingHorizontal: responsiveWidth(4), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(1)}}>
-          <View style={{width: responsiveWidth(40), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <View
-                style={{
-                  height: responsiveWidth(8),
-                  width: responsiveWidth(8),
-                  borderRadius: responsiveWidth(4),
-                  marginLeft: WIDTH_SIZES['10'],
-                  borderWidth: 1,
-                  borderColor: '#282828',
-                  alignSelf: 'center',
-                  overflow: 'hidden', // ensures image doesn't overflow the circular container
-                }}>
-                <Image
-                  source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}}
-                  style={{
-                    height: '100%',
-                    width: '100%',
-                    resizeMode: 'cover',
-                  }}
-                />
+                  <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
+                </View>
               </View>
-
-              <Text onPress={() => LoginPageErrors('You must subscribe to comment')} style={[styles.addCommentsText, {marginLeft: responsiveWidth(2), fontFamily: 'MabryPro-Regular'}]}>
-                Add a Comments
-              </Text>
             </View>
-          </View>
-        </View>
+
+            <View style={{paddingHorizontal: responsiveWidth(4), borderColor: 'red', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: responsiveWidth(1)}}>
+              <View style={{width: responsiveWidth(40), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <View
+                    style={{
+                      height: responsiveWidth(8),
+                      width: responsiveWidth(8),
+                      borderRadius: responsiveWidth(4),
+                      marginLeft: WIDTH_SIZES['10'],
+                      borderWidth: 1,
+                      borderColor: '#282828',
+                      alignSelf: 'center',
+                      overflow: 'hidden', // ensures image doesn't overflow the circular container
+                    }}>
+                    <Image
+                      source={!item?.createdBy?.profile_image?.url ? require('../../../Assets/Images/DefaultProfile.jpg') : {uri: item?.createdBy?.profile_image?.url}}
+                      style={{
+                        height: '100%',
+                        width: '100%',
+                        resizeMode: 'cover',
+                      }}
+                    />
+                  </View>
+
+                  <Text onPress={() => LoginPageErrors('You must subscribe to comment')} style={[styles.addCommentsText, {marginLeft: responsiveWidth(2), fontFamily: 'MabryPro-Regular'}]}>
+                    Add a Comments
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     );
   }

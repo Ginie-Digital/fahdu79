@@ -88,6 +88,8 @@ const PostCards = ({item, index, token}) => {
 
   const [subscribeClick, setSubscribeClick] = useState(false);
 
+  const isSubscriberOnlyPost = item?.for_subscribers === true || item?.for_subscribers === 'true' || item?.forSubscriber === true || item?.forSubscriber === 'true';
+
   useEffect(() => {
     setDoLiked(item?.has_liked);
     setLikeCount(item?.count?.likes);
@@ -877,94 +879,98 @@ const PostCards = ({item, index, token}) => {
           </View>
         </View>
 
-        <View
-          style={{
-            paddingHorizontal: responsiveWidth(2),
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingVertical: responsiveWidth(4),
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: responsiveWidth(5.5),
-              marginLeft: 8,
-            }}>
+        {!isSubscriberOnlyPost && (
+          <>
+            <View
+              style={{
+                paddingHorizontal: responsiveWidth(2),
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: responsiveWidth(4),
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: responsiveWidth(5.5),
+                  marginLeft: 8,
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: responsiveWidth(1),
+                    alignItems: 'center',
+                  }}>
+                  <TouchableOpacity onPressIn={() => sendLike()}>
+                    {doLiked ? (
+                      <View style={styles.bottomIconContainer}>
+                        <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartFill.png')} contentFit="contain" style={{flex: 1}} />
+                      </View>
+                    ) : (
+                      <View style={styles.bottomIconContainer}>
+                        <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={{flex: 1}} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
+                </View>
+
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
+                  <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
+                    <View style={styles.bottomIconContainer}>
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={{flex: 1}} />
+                    </View>
+                  </TouchableOpacity>
+                  <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
+                </View>
+
+                <View style={{flexDirection: 'row', marginTop: responsiveWidth(0.83)}}>
+                  <TouchableOpacity onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
+                    <View style={styles.bottomIconContainer}>
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1}} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {item?.createdBy?.role !== 'admin' && (
+                <TouchableOpacity onPress={() => handleCoinClicks()}>
+                  <View style={{right: responsiveWidth(3.2)}}>
+                    <View style={styles.coinContainer}>
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/Coins.png')} contentFit="contain" style={{flex: 1}} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
             <View
               style={{
                 flexDirection: 'row',
-                gap: responsiveWidth(1),
                 alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: responsiveWidth(1),
               }}>
-              <TouchableOpacity onPressIn={() => sendLike()}>
-                {doLiked ? (
-                  <View style={styles.bottomIconContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartFill.png')} contentFit="contain" style={{flex: 1}} />
+              <View
+                style={{
+                  width: responsiveWidth(40),
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', marginLeft: 22}}>
+                  <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5}}>
+                    <Image source={{uri: item?.createdBy?.profile_image?.url}} contentFit="contain" style={{flex: 1}} />
                   </View>
-                ) : (
-                  <View style={styles.bottomIconContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={{flex: 1}} />
-                  </View>
-                )}
-              </TouchableOpacity>
-              <Text style={styles.likeCommentText}>{likeCount === 0 ? null : likeCount}</Text>
-            </View>
 
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
-              <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
-                <View style={styles.bottomIconContainer}>
-                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={{flex: 1}} />
-                </View>
-              </TouchableOpacity>
-              <Text style={styles.likeCommentText}>{commentCount === 0 ? null : commentCount}</Text>
-            </View>
-
-            <View style={{flexDirection: 'row', marginTop: responsiveWidth(0.83)}}>
-              <TouchableOpacity onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
-                <View style={styles.bottomIconContainer}>
-                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1}} />
-                </View>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {item?.createdBy?.role !== 'admin' && (
-            <TouchableOpacity onPress={() => handleCoinClicks()}>
-              <View style={{right: responsiveWidth(3.2)}}>
-                <View style={styles.coinContainer}>
-                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/Coins.png')} contentFit="contain" style={{flex: 1}} />
+                  <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular'}]}>
+                    Add a Comment...
+                  </Text>
                 </View>
               </View>
-            </TouchableOpacity>
-          )}
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingVertical: responsiveWidth(1),
-          }}>
-          <View
-            style={{
-              width: responsiveWidth(40),
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', marginLeft: 22}}>
-              <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5}}>
-                <Image source={{uri: item?.createdBy?.profile_image?.url}} contentFit="contain" style={{flex: 1}} />
-              </View>
-
-              <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular'}]}>
-                Add a Comment...
-              </Text>
             </View>
-          </View>
-        </View>
+          </>
+        )}
       </View>
     );
   }

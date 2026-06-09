@@ -14,13 +14,16 @@ import AnimatedNumber from '../AnimatedNumber';
 import { LoginPageErrors } from '../ErrorSnacks';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BASE_URL } from '../../Configs/ApiConfig';
 
 const ProfileUser = () => {
   const token = useSelector(state => state.auth.user.token);
+  const userRole = useSelector(state => state.auth.user.role);
   const [creatorsList, setCreatorsList] = useState([]);
   const [trendingCreators] = useLazyRecommendedCreatorsQuery({ refetchOnFocus: true });
   const [loading, setLoading] = useState(false);
   const [coins, setCoins] = useState(0);
+  const [walletBadges, setWalletBadges] = useState([]);
 
   const [totalPage, setTotalPages] = useState(0);
 
@@ -70,14 +73,31 @@ const ProfileUser = () => {
     getTrendingCreatorsList(currentPage);
   }, [currentPage]);
 
+  const fetchWalletBadges = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${BASE_URL}/api/wallet/latest/recharge`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        timeout: 10000,
+      });
+      if (data?.statusCode === 200 && data?.data) {
+        setWalletBadges(data.data);
+      }
+    } catch (e) {
+      console.log('Error fetching wallet badges in ProfileUser:', e?.message);
+    }
+  }, [token]);
+
   useFocusEffect(
     useCallback(() => {
       // This code will run every time the screen is focused
       getUserCoins();
+      if (userRole !== 'creator' && userRole !== 'admin') {
+        fetchWalletBadges();
+      }
       return () => {
         // (Optional) cleanup code runs when screen loses focus
       };
-    }, []),
+    }, [fetchWalletBadges, userRole]),
   );
 
   const handleFetchNext = () => {
@@ -169,6 +189,9 @@ const ProfileUser = () => {
           renderItem={() => <UserProfileTrendingShimmer />}
           keyExtractor={(item) => item.toString()}
         />
+      )}
+      {walletBadges && walletBadges.length > 0 && (
+        <View style={{ height: 80 }} />
       )}
     </View>
   );

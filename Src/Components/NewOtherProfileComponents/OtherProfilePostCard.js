@@ -61,6 +61,7 @@ const PostCards = ({item, index}) => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [postPayment, {isLoading: isUnlocking}] = usePostPaymentMutation();
   const [unlockClick, setUnlockClick] = useState(false);
+  const [subscribeClick, setSubscribeClick] = useState(false);
   const [unlockedFiles, setUnlockedFiles] = useState(item?.post_content_files);
 
   useEffect(() => {

@@ -249,6 +249,7 @@ const PostCards = ({item, index, token}) => {
     if (error) {
       console.log(error);
       LoginPageErrors(error.message);
+      dispatch(toggleLoadingComments({show: false}));
     }
 
     if (data) {

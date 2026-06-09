@@ -126,6 +126,7 @@ const SharedPost = ({route}) => {
 
     if (error) {
       LoginPageErrors(error.message);
+      dispatch(toggleLoadingComments({show: false}));
     }
 
     if (data) {

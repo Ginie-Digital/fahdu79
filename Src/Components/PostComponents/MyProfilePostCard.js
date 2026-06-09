@@ -221,6 +221,7 @@ const PostCards = ({item, index, token, postId}) => {
 
     if (error) {
       console.log(error);
+      dispatch(toggleLoadingComments({show: false}));
     }
 
     if (data) {

@@ -71,6 +71,8 @@ const CreateCommentBottomSheet = () => {
       setShowLoadMoreButton(true);
       dispatch(setTotalPages({totalPages: 0}));
       dispatch(toggleCommentBottomSheet({info: {show: -1, focus: false}}));
+      textRef.current = '';
+      setText('');
     }
   }, []);
 
@@ -82,6 +84,8 @@ const CreateCommentBottomSheet = () => {
       setCurrentPage(2);
       setShowLoadMoreButton(true);
       dispatch(setTotalPages({totalPages: 0}));
+      textRef.current = '';
+      setText('');
       bottomSheetRef.current?.close();
       return true;
     }
@@ -117,6 +121,7 @@ const CreateCommentBottomSheet = () => {
     if (error) {
       console.log(error);
       LoginPageErrors(error.message);
+      setCommentLoader(false);
     }
 
     if (data) {
@@ -189,6 +194,7 @@ const CreateCommentBottomSheet = () => {
       console.log('Comment error:', error);
       if (error?.data?.status_code === 400) {
         LoginPageErrors(error?.data?.message);
+        setDoCommentLoader(false);
         return;
       }
     }

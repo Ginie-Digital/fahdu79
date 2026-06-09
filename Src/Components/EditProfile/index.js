@@ -18,6 +18,8 @@ const EditProfiler = ({route, navigation}) => {
   console.log(route?.params?.categoryHeader);
 
   const token = useSelector(state => state.auth.user.token);
+  const role = useSelector(state => state.auth.user.role);
+  const isUser = role !== 'creator' && role !== 'admin';
 
   const [loading, setLoading] = useState(false);
 
@@ -43,7 +45,7 @@ const EditProfiler = ({route, navigation}) => {
   });
 
   const characterLimits = {
-    bio: 150,
+    bio: isUser ? 60 : 150,
     descriptionHeading: 50,
     description: 500,
   };
@@ -73,11 +75,13 @@ const EditProfiler = ({route, navigation}) => {
   };
 
   const validateBio = bioText => {
-    if (bioText && bioText.length > 150) {
-      return 'Bio must be less than 150 characters';
+    const limit = isUser ? 60 : 150;
+    const maxNewlines = isUser ? 1 : 9;
+    if (bioText && bioText.length > limit) {
+      return `Bio must be less than ${limit} characters`;
     }
-    if (bioText && bioText.split('\n').length > 10) {
-      return 'Bio must be less than 10 lines';
+    if (bioText && (bioText.match(/\n/g) || []).length > maxNewlines) {
+      return `Bio must have at most ${maxNewlines} return lines`;
     }
     return '';
   };
@@ -286,7 +290,8 @@ const EditProfiler = ({route, navigation}) => {
                 style={[styles.textInputs, {height: 129, paddingTop: nTwins(4, 4), paddingRight: responsiveWidth(4)}]}
                 onChangeText={t => {
                   let sanitized = t.replace(/\n{3,}/g, '\n\n');
-                  if (sanitized.split('\n').length > 10) {
+                  const maxNewlines = isUser ? 1 : 9;
+                  if ((sanitized.match(/\n/g) || []).length > maxNewlines) {
                     return;
                   }
                   setBio(sanitized);
@@ -300,7 +305,7 @@ const EditProfiler = ({route, navigation}) => {
                 onBlur={() => setFocusedInput(null)}
                 multiline
                 textAlignVertical="top"
-                maxLength={150}
+                maxLength={characterLimits.bio}
               />
               <Text style={styles.characterCount}>
                 {bio?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.bio}</Text>

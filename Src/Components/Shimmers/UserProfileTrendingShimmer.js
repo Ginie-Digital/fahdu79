@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet } from 'react-native';
-import { responsiveWidth } from 'react-native-responsive-dimensions';
 
 const UserProfileTrendingShimmer = () => {
   const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
@@ -23,56 +22,51 @@ const UserProfileTrendingShimmer = () => {
   }, [shimmerOpacity]);
 
   return (
-    <View style={styles.card}>
-      <View style={styles.headerContainer}>
-        <Animated.View style={[styles.profilePic, { opacity: shimmerOpacity }]} />
-        <View style={styles.profileInfo}>
-          <Animated.View style={[styles.userName, { opacity: shimmerOpacity }]} />
-          <Animated.View style={[styles.category, { opacity: shimmerOpacity }]} />
+    <Animated.View style={[styles.card, { opacity: shimmerOpacity }]}>
+      {/* Skeleton container for details at the bottom */}
+      <View style={styles.infoContainer}>
+        <View style={styles.nameRow}>
+          <View style={styles.namePlaceholder} />
+          <View style={styles.dotPlaceholder} />
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 0,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    width: 163,
+    height: 163,
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginRight: 16,
+    position: 'relative',
   },
-  headerContainer: {
+  infoContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+  },
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 7,
   },
-  profilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: responsiveWidth(2),
-    backgroundColor: '#e0e0e0',
-    marginRight: 12,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  userName: {
-    height: 20,
-    backgroundColor: '#e0e0e0',
+  namePlaceholder: {
+    height: 14,
+    width: 70,
+    backgroundColor: '#E0E0E0',
     borderRadius: 4,
-    marginBottom: 6,
-    width: '50%',
   },
-  category: {
-    height: 15,
-    backgroundColor: '#e0e0e0',
+  dotPlaceholder: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
-    width: '40%',
+    backgroundColor: '#E0E0E0',
   },
 });
 

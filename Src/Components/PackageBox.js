@@ -53,14 +53,13 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
   const colorConfig = PACK_COLORS[index % PACK_COLORS.length] || PACK_COLORS[0];
   const rawCost = Platform.OS === 'android' ? item?.amount : item?.cost;
   const cost = Number(rawCost || item?.cost || item?.amount || 0).toLocaleString('en-IN');
-  const hasBadge = !!offerText;
+
 
   return (
     <Pressable
       style={[
         styles.cardOuter,
         { backgroundColor: colorConfig.bg },
-        isLastItem && { width: responsiveWidth(88), marginHorizontal: responsiveWidth(2) },
       ]}
       onPress={() => handler(packId)}
       disabled={isCurrentLoading}
@@ -80,10 +79,7 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
       </View>
 
       {/* Content */}
-      <View style={[
-        styles.content,
-        { paddingBottom: hasBadge ? 42 : 16 }
-      ]}>
+      <View style={styles.content}>
         <Text style={styles.packName}>{item.name}</Text>
         <View style={styles.priceRow}>
           <Text style={styles.priceText}>{cost}</Text>
@@ -109,49 +105,20 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
           </Pressable>
         </View>
       </View>
-
-      {/* Discount badge - absolute overlay at bottom */}
-      {hasBadge ? (
-        <View style={styles.badgeBar}>
-          <Text style={styles.badgeText}>{offerText}</Text>
-        </View>
-      ) : null}
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   cardOuter: {
-    width: responsiveWidth(42),
+    width: 163,
     marginHorizontal: responsiveWidth(2),
     overflow: 'hidden',
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#000000',
-    height: Platform.OS === 'ios' ? 176 : 188,
+    height: 176,
     position: 'relative',
-  },
-  badgeBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#1E1E1E',
-    paddingVertical: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    borderBottomLeftRadius: 14.5,
-    borderBottomRightRadius: 14.5,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontFamily: 'Rubik-Medium',
-    fontSize: 12,
-    lineHeight: 12,
-    textAlign: 'center',
-    letterSpacing: 0.48,
-    textTransform: 'uppercase',
   },
   circleContainer: {
     position: 'absolute',
@@ -165,9 +132,10 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     width: '100%',
     alignItems: 'flex-start',
-    paddingTop: Platform.OS === 'ios' ? 48 : 58,
+    paddingTop: 62,
     paddingLeft: 20,
     paddingRight: 12,
+    paddingBottom: 16,
     zIndex: 2,
   },
   packName: {

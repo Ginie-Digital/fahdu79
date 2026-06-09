@@ -103,7 +103,11 @@ const ProfileUser = () => {
       />
       <View style={styles.recInfoContainer}>
         <View style={styles.recNameRow}>
-          <Text style={styles.recName} numberOfLines={1}>{item?.displayName}</Text>
+          <Text style={styles.recName} numberOfLines={1}>
+            {item?.displayName && item.displayName.length > 9 
+              ? `${item.displayName.slice(0, 9)}...` 
+              : item?.displayName}
+          </Text>
           <View style={styles.recOnlineDot} />
         </View>
       </View>
@@ -156,7 +160,16 @@ const ProfileUser = () => {
         />
       )}
 
-      {loading && <FlatList data={[1, 2, 3, 4]} horizontal renderItem={() => <UserProfileTrendingShimmer />} />}
+      {loading && (
+        <FlatList
+          data={[1, 2, 3, 4]}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.recListContainer}
+          renderItem={() => <UserProfileTrendingShimmer />}
+          keyExtractor={(item) => item.toString()}
+        />
+      )}
     </View>
   );
 };

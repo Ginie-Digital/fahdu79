@@ -202,10 +202,16 @@ const UpperProfile = ({isFocused}) => {
       const centered = loggedUserDetail?.role !== 'creator' && loggedUserDetail?.role !== 'admin';
 
       return (
-        <View style={[styles.bioContainer, centered && {alignItems: 'center', marginTop: 0, marginBottom: 0}]}>
-          <ReadMore animate numberOfLines={5} style={[styles.bioText, centered && {textAlign: 'center', fontSize: 16, lineHeight: 22}]} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
-            {bioText}
-          </ReadMore>
+        <View style={[styles.bioContainer, centered && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
+          {centered ? (
+            <Text numberOfLines={2} style={[styles.bioText, {textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%'}]}>
+              {bioText}
+            </Text>
+          ) : (
+            <ReadMore animate numberOfLines={5} style={[styles.bioText, centered && {textAlign: 'center', fontSize: 16, lineHeight: 22}]} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
+              {bioText}
+            </ReadMore>
+          )}
           {userProfileDetails?.username && <Text style={[styles.usernameLink, centered && {textAlign: 'center'}]}>@{userProfileDetails.username}</Text>}
         </View>
       );
@@ -315,12 +321,6 @@ const styles = StyleSheet.create({
     width: responsiveWidth(50),
     gap: responsiveWidth(1),
     fontFamily: 'Rubik',
-  },
-  seeMoreLess: {
-    fontSize: responsiveFontSize(1.8),
-    fontFamily: 'MabryPro-Medium',
-    color: '#ffa07a',
-    marginTop: responsiveWidth(2),
   },
   intdustryCategoryText: {
     borderColor: '#FE0BAC',
@@ -462,31 +462,35 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: 119,
     height: 119,
+    borderRadius: 59.5,
+    borderWidth: 1.72,
+    borderColor: '#1E1E1E',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
   },
   userProfilePicContainer: {
-    width: 119,
-    height: 119,
-    borderRadius: 60,
+    width: 110,
+    height: 110,
+    borderRadius: 53.5,
     overflow: 'hidden',
-    borderWidth: 1.72,
-    borderColor: '#1E1E1E',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   userProfilePic: {
     width: '100%',
     height: '100%',
   },
   onlineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 18.4,
+    height: 18.4,
+    borderRadius: 9.2,
     backgroundColor: '#52E13B',
     borderWidth: 3.2,
     borderColor: '#FFFFFF',
     position: 'absolute',
-    bottom: 15,
-    right: 6,
+    bottom: 18,
+    right: -2,
   },
   userRoleUsername: {
     fontSize: 20,
@@ -500,12 +504,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
     marginTop: 16,
     marginBottom: 0,
   },
   badgeIcon: {
-    width: 66,
-    height: 66,
+    width: 90,
+    height: 90,
+    marginHorizontal: 0.5,
+    marginVertical: 1.75,
   },
 });

@@ -349,13 +349,20 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     const defaultBio = 'Sharing unique content and engaging with my community. Join me on this journey! 🌟🎨';
     const rawBio = userProfileDetails?.aboutUser || defaultBio;
     const bioText = sanitizeBio(rawBio);
+    const isOtherUserRole = userProfileDetails?.role !== 'creator' && userProfileDetails?.role !== 'admin';
 
     return (
-      <View style={styles.bioContainer}>
-        <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
-          {bioText}
-        </ReadMore>
-        {userProfileDetails?.username && <Text style={styles.usernameLink}>@{'YellowDimond'}</Text>}
+      <View style={[styles.bioContainer, isOtherUserRole && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
+        {isOtherUserRole ? (
+          <Text numberOfLines={2} style={[styles.bioText, {textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%'}]}>
+            {bioText}
+          </Text>
+        ) : (
+          <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
+            {bioText}
+          </ReadMore>
+        )}
+        {userProfileDetails?.username && <Text style={[styles.usernameLink, isOtherUserRole && {textAlign: 'center'}]}>@{'YellowDimond'}</Text>}
       </View>
     );
   }, [userProfileDetails]);
@@ -590,12 +597,6 @@ const styles = StyleSheet.create({
     width: responsiveWidth(50),
     gap: responsiveWidth(1),
     fontFamily: 'Rubik',
-  },
-  seeMoreLess: {
-    fontSize: responsiveFontSize(1.8),
-    fontFamily: 'MabryPro-Medium',
-    color: '#ffa07a',
-    marginTop: responsiveWidth(2),
   },
   intdustryCategoryText: {
     borderColor: '#FE0BAC',

@@ -123,12 +123,15 @@ const EditProfile = ({route}) => {
     return '';
   };
 
+  const isUser = creatorOrUser !== 'creator' && creatorOrUser !== 'admin';
   const validateBio = bioText => {
-    if (bioText && bioText.length > 150) {
-      return 'Bio must be less than 150 characters';
+    const limit = isUser ? 60 : 150;
+    const maxNewlines = isUser ? 1 : 9;
+    if (bioText && bioText.length > limit) {
+      return `Bio must be less than ${limit} characters`;
     }
-    if (bioText && bioText.split('\n').length > 10) {
-      return 'Bio must be less than 10 lines';
+    if (bioText && (bioText.match(/\n/g) || []).length > maxNewlines) {
+      return `Bio must have at most ${maxNewlines} return lines`;
     }
     return '';
   };
@@ -216,15 +219,6 @@ const EditProfile = ({route}) => {
     }
 
     if (componentName === 'bio') {
-      // Validate bio
-      const bioError = validateBio(bio);
-      newErrors.bio = bioError;
-      setErrors(newErrors);
-
-      if (bioError) {
-        return; // Don't navigate if validation fails
-      }
-
       navigation.navigate('editprofiler', {
         type: 'bio',
         bio,
@@ -274,7 +268,6 @@ const EditProfile = ({route}) => {
               </Pressable>
             </View>
             <Text style={styles.textContent}>{bio || 'Add a short bio to introduce yourself!'}</Text>
-            {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
           </View>
 
           {/* Description Section */}

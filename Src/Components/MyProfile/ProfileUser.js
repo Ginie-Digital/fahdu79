@@ -190,8 +190,10 @@ const ProfileUser = () => {
           keyExtractor={(item) => item.toString()}
         />
       )}
-      {walletBadges && walletBadges.length > 0 && (
+      {walletBadges && walletBadges.length > 0 ? (
         <View style={{ height: 80 }} />
+      ) : (
+        <View style={{ height: 70 }} />
       )}
     </View>
   );

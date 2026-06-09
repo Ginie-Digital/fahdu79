@@ -39,7 +39,7 @@ import { deleteCredentials } from './Redux/Slices/NormalSlices/TempCredentials';
 import { extractUserIdFromUrl, extractUserNameAndroid, extractUsernameFromDeepLink, isVersionGreaterOrEqual, joinLivestream } from './DesiginData/Utility';
 import { setRefferalLink } from './Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
 
-import AlertBox from './Src/AlertBox';
+
 import ReLoginModal from './Src/Screens/LoginSignup/ReLoginModal';
 import { setCallRejected } from './Redux/Slices/NormalSlices/Call/CallSlice';
 import { updateWallet } from './Redux/Slices/NormalSlices/Wallet/WalletSlice';
@@ -928,7 +928,6 @@ const Main = () => {
   return (
     <View style={styles.SafeAreaViewStyle}>
       <StatusBar backgroundColor={'#fff'} barStyle={'dark-content'} />
-      <AlertBox description={'hello there'} type={true} />
       <StackNavigation />
       <FlashMessage position="top" />
       <ReLoginModal />

@@ -12,6 +12,7 @@ import persistStore from 'redux-persist/es/persistStore';
 import Main from './Main';
 import { navigationRef } from './Navigation/RootNavigation';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import AlertBox from './Src/AlertBox';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { withIAPContext } from 'react-native-iap';
@@ -270,6 +271,7 @@ const App = () => {
 
               </SafeAreaProvider>
             </BottomSheetModalProvider>
+            <AlertBox />
           </GestureHandlerRootView>
       </PersistGate>
     </Provider>

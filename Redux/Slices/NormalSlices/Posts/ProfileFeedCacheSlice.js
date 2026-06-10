@@ -59,6 +59,18 @@ const profileFeedCacheSlice = createSlice({
       }
     },
 
+    unlockProfilePost: (state, action) => {
+      const { postId, post_content_files } = action.payload;
+      const post = state.data.content.find((p) => p._id === postId);
+      if (post) {
+        post.post_content_files = post_content_files;
+        post.for_subscribers = false;
+        if (post.unlockSettings) {
+          post.unlockSettings.enabled = false;
+        }
+      }
+    },
+
     manipulateTotalPagesPost: (state, action) => {
       state.data.totalPages = action.payload.currentTotalPage;
     },
@@ -133,6 +145,7 @@ export const {
   unSubscribeProfileCache,
   setOtherProfileShareLink,
   otherProfileIncrementCommentCount,
+  unlockProfilePost,
 } = profileFeedCacheSlice.actions;
 
 export default profileFeedCacheSlice.reducer;

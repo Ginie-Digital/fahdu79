@@ -19,7 +19,7 @@ import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import {autoLogout} from '../../../AutoLogout';
-import {likeDislikePost} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
+import {likeDislikePost, unlockProfilePost} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import {unlockPost} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import Heart from '../../../Assets/svg/heart.svg';
 import Fill from '../../../Assets/svg/fillh.svg';
@@ -68,6 +68,7 @@ const PostCards = ({item, index}) => {
     setUnlockedFiles(item?.post_content_files);
   }, [item?.post_content_files]);
   // console.log(item?.has_liked);
+  console.log('OTHER_PROFILE_POST_DEBUG:', item?._id, 'unlockSettings:', item?.unlockSettings, 'is_charagble:', item?.is_charagble, 'for_subscribers:', item?.for_subscribers, 'charge_amount:', item?.charge_amount);
 
   // console.log("Username", item?.createdBy?.displayName, "LikeCount", item?.count?.likes, item?.has_liked)
 
@@ -272,6 +273,12 @@ const PostCards = ({item, index}) => {
             post_content_files: data?.data?.post_content_files,
           })
         );
+        dispatch(
+          unlockProfilePost({
+            postId: item?._id,
+            post_content_files: data?.data?.post_content_files,
+          })
+        );
       } else {
         LoginPageErrors(data?.message || 'Failed to unlock post');
       }
@@ -279,7 +286,7 @@ const PostCards = ({item, index}) => {
       console.log('Unlock post exception:', err);
       LoginPageErrors('An unexpected error occurred');
     }
-  }, [item?._id, token, postPayment, isUnlocking, dispatch]);
+  }, [item?._id, token, postPayment, isUnlocking, dispatch, unlockProfilePost]);
 
   if (unlockedFiles) {
     if (unlockedFiles?.[0]?.format === 'video') {
@@ -706,7 +713,7 @@ const PostCards = ({item, index}) => {
                     <Text style={styles.exclusiveBtnText}>Subscribe Now</Text>
                   </Pressable>
 
-                  {item?.unlockSettings?.enabled && (
+                  {(item?.unlockSettings?.enabled || String(item?.is_charagble) === 'true') && (
                     <Pressable
                       style={[styles.exclusiveUnlockBtn, unlockClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
                       onPressIn={() => setUnlockClick(true)}
@@ -715,7 +722,7 @@ const PostCards = ({item, index}) => {
                       disabled={isUnlocking}
                     >
                       <Text style={styles.exclusiveBtnText}>
-                        {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || 0}`}
+                        {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || item?.charge_amount || 0}`}
                       </Text>
                       {!isUnlocking && (
                         <View style={styles.exclusiveCoinCircle}>

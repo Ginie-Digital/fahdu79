@@ -30,6 +30,7 @@ import {memo} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import {autoLogout} from '../../../AutoLogout';
 import {unlockPost} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
+import {unlockProfilePost} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import Heart from '../../../Assets/svg/heart.svg';
 import Fill from '../../../Assets/svg/fillh.svg';
 import Comment from '../../../Assets/svg/comm.svg';
@@ -225,6 +226,12 @@ const SharedPost = ({route}) => {
             post_content_files: data?.data?.post_content_files,
           })
         );
+        dispatch(
+          unlockProfilePost({
+            postId: item?._id,
+            post_content_files: data?.data?.post_content_files,
+          })
+        );
       } else {
         LoginPageErrors(data?.message || 'Failed to unlock post');
       }
@@ -232,7 +239,7 @@ const SharedPost = ({route}) => {
       console.log('Unlock post exception:', err);
       LoginPageErrors('An unexpected error occurred');
     }
-  }, [item?._id, token, postPayment, isUnlocking, dispatch]);
+  }, [item?._id, token, postPayment, isUnlocking, dispatch, unlockProfilePost]);
 
   if (loading) {
     return (
@@ -323,7 +330,7 @@ const SharedPost = ({route}) => {
                       <Text style={styles.exclusiveBtnText}>Subscribe Now</Text>
                     </Pressable>
 
-                    {item?.unlockSettings?.enabled && (
+                    {(item?.unlockSettings?.enabled || String(item?.is_charagble) === 'true') && (
                       <Pressable
                         style={[styles.exclusiveUnlockBtn, unlockClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
                         onPressIn={() => setUnlockClick(true)}
@@ -332,7 +339,7 @@ const SharedPost = ({route}) => {
                         disabled={isUnlocking}
                       >
                         <Text style={styles.exclusiveBtnText}>
-                          {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || 0}`}
+                          {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || item?.charge_amount || 0}`}
                         </Text>
                         {!isUnlocking && (
                           <View style={styles.exclusiveCoinCircle}>

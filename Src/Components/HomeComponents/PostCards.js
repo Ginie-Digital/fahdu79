@@ -18,6 +18,7 @@ import {navigate} from '../../../Navigation/RootNavigation';
 import {memo} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import {likeDislike, unlockPost} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
+import {unlockProfilePost} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import {autoLogout} from '../../../AutoLogout';
 import share from 'react-native-share';
 import Play from '../../../Assets/svg/play.svg';
@@ -300,6 +301,12 @@ const PostCards = ({item, index, token}) => {
             post_content_files: data?.data?.post_content_files,
           })
         );
+        dispatch(
+          unlockProfilePost({
+            postId: item?._id,
+            post_content_files: data?.data?.post_content_files,
+          })
+        );
       } else {
         LoginPageErrors(data?.message || 'Failed to unlock post');
       }
@@ -307,7 +314,7 @@ const PostCards = ({item, index, token}) => {
       console.log('Unlock post exception:', err);
       LoginPageErrors('An unexpected error occurred');
     }
-  }, [item?._id, token, postPayment, isUnlocking, dispatch]);
+  }, [item?._id, token, postPayment, isUnlocking, dispatch, unlockProfilePost]);
 
   if (unlockedFiles) {
     if (unlockedFiles?.[0]?.format === 'video') {
@@ -856,7 +863,7 @@ const PostCards = ({item, index, token}) => {
                     <Text style={styles.exclusiveBtnText}>Subscribe Now</Text>
                   </Pressable>
 
-                  {item?.unlockSettings?.enabled && (
+                  {(item?.unlockSettings?.enabled || String(item?.is_charagble) === 'true') && (
                     <Pressable
                       style={[styles.exclusiveUnlockBtn, unlockClick && {backgroundColor: 'rgba(255,255,255,0.15)'}]}
                       onPressIn={() => setUnlockClick(true)}
@@ -865,7 +872,7 @@ const PostCards = ({item, index, token}) => {
                       disabled={isUnlocking}
                     >
                       <Text style={styles.exclusiveBtnText}>
-                        {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || 0}`}
+                        {isUnlocking ? 'Unlocking...' : `${item?.unlockSettings?.unlockAmount || item?.charge_amount || 0}`}
                       </Text>
                       {!isUnlocking && (
                         <View style={styles.exclusiveCoinCircle}>

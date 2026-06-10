@@ -556,7 +556,7 @@ export const LeftChatBubble = ({ displayThread, setFullVideoModalUri, token, cha
           </View>
 
           <Text style={styles.callRequestBodyText}>
-            A <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.duration} min</Text> {displayThread?.callRecord?.type?.toLowerCase() || 'audio'} call has been requested. <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.holdAmount} coins</Text> are on hold for this call and will be sent after the call is completed. If the call isn’t scheduled or connected within <Text style={styles.callRequestBodyBold}>48 hours</Text>, the coins will be automatically <Text style={styles.callRequestBodyBold}>refunded</Text>.
+            A <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.duration} min</Text> {displayThread?.callRecord?.type?.toLowerCase() || 'audio'} call has been requested. <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.holdAmount} coins</Text> are on hold for this call and will be sent after the call is completed. If the call isn’t scheduled or connected within <Text style={styles.callRequestBodyBold}>48 hours</Text>, the coins will be automatically <Text style={styles.callRequestBodyBold}>refunded</Text>.{"\n\n"}After <Text style={styles.callRequestBodyBold}>3 missed attempts</Text>, <Text style={styles.callRequestBodyBold}>80%</Text> will be refunded and <Text style={styles.callRequestBodyBold}>20%</Text> will be released to the creator as a compensation fee.
           </Text>
 
           {displayThread?.callRecord?.initiator !== currentUserId ? (
@@ -1092,7 +1092,7 @@ export const RightChatBubble = ({ displayThread, setFullVideoModalUri, setFullSi
             </View>
 
             <Text style={styles.callRequestBodyText}>
-              A <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.duration} min</Text> {displayThread?.callRecord?.type?.toLowerCase() || 'audio'} call has been requested. <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.holdAmount} coins</Text> are on hold for this call and will be sent after the call is completed. If the call isn’t scheduled or connected within <Text style={styles.callRequestBodyBold}>48 hours</Text>, the coins will be automatically <Text style={styles.callRequestBodyBold}>refunded</Text>.
+              A <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.duration} min</Text> {displayThread?.callRecord?.type?.toLowerCase() || 'audio'} call has been requested. <Text style={styles.callRequestBodyBold}>{displayThread?.attachment?.holdAmount} coins</Text> are on hold for this call and will be sent after the call is completed. If the call isn’t scheduled or connected within <Text style={styles.callRequestBodyBold}>48 hours</Text>, the coins will be automatically <Text style={styles.callRequestBodyBold}>refunded</Text>.{"\n\n"}After <Text style={styles.callRequestBodyBold}>3 missed attempts</Text>, <Text style={styles.callRequestBodyBold}>80%</Text> will be refunded and <Text style={styles.callRequestBodyBold}>20%</Text> will be released to the creator as a compensation fee.
             </Text>
 
             {displayThread?.callRecord?.initiator !== currentUserId ? (

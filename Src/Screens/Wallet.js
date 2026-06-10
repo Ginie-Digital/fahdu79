@@ -47,7 +47,7 @@ const WalletScreen = ({ route }) => {
   const navigation = useNavigation();
 
   async function getUserCoins() {
-    let { data } = await axios.get('https://api.fahdu.in/api/wallet/get-coins', {
+    let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       timeout: 10000,
     });

@@ -5,7 +5,7 @@ export const roomListApi = createApi({
   reducerPath: 'roomListApi',
 
   baseQuery: baseQueryWithReauth(fetchBaseQuery({
-    baseUrl: 'https://api.fahdu.in/api/messages/',
+    baseUrl: 'https://api.fahdu.com/api/messages/',
   })),
 
   tagTypes: ['recent', 'old', 'latestChat'],
@@ -24,7 +24,7 @@ export const roomListApi = createApi({
         if (params.length > 0) url += `?${params.join('&')}`;
         console.log('📤 [ChatRoom API] Request:', {
           endpoint: 'getRoomList',
-          url: `https://api.fahdu.in/api/messages/${url}`,
+          url: `https://api.fahdu.com/api/messages/${url}`,
           params: { cursor: cursor ? '...' + cursor.slice(-20) : null, audience, state, label, status },
           timestamp: new Date().toISOString(),
         });

@@ -39,7 +39,7 @@ let timer;
 const handlePostActionHandler = async (postId, image, displayName, description) => {
   console.log(postId, image, displayName, '{}{}{}{}');
   try {
-    const postLink = `https://app.fahdu.com/post/${postId}`;
+    const postLink = `https://link.fahdu.com/go/post/${postId}`;
 
     let x = await share.open({
       url: postLink,

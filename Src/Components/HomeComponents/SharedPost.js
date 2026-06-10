@@ -47,7 +47,7 @@ const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const handlePostActionHandler = async (postId, image, displayName, description) => {
   try {
-    const postLink = `https://app.fahdu.com/post/${postId}`;
+    const postLink = `https://link.fahdu.com/go/post/${postId}`;
     let x = await share.open({
       url: postLink,
     });

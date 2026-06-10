@@ -99,12 +99,6 @@ export const homeBottomSheetListRoleUser = [
     // provider: "AntDesign",
     iconName: 'Info',
   },
-  {
-    id: 99,
-    name: 'Feedback',
-    // provider: "AntDesign",
-    iconName: 'PositiveReview',
-  },
 ];
 
 export const rooms = [

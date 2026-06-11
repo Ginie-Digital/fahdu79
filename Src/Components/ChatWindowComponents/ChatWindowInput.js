@@ -37,35 +37,9 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
   const [isKeyboardShown, setIsKeyboardShown] = useState(false);
   const [isCallMode, setIsCallMode] = useState(false);
   const [isAttachmentMode, setIsAttachmentMode] = useState(false);
-  const bottomPadding = useRef(new Animated.Value(Math.max(insets.bottom, 16))).current;
-
-  // Helper to trigger animation on JS thread
-  const animatePadding = useCallback((toValue) => {
-    Animated.timing(bottomPadding, {
-      toValue,
-      duration: 250,
-      useNativeDriver: false,
-    }).start();
-  }, [bottomPadding]);
-
-  // Sync animation with keyboard state using RN's Keyboard API (iOS only)
-  // On Android, windowSoftInputMode="adjustResize" handles layout automatically
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    const keyboardShowListener = Keyboard.addListener('keyboardWillShow', () => {
-      animatePadding(8);
-    });
-
-    const keyboardHideListener = Keyboard.addListener('keyboardWillHide', () => {
-      animatePadding(Math.max(insets.bottom, 16));
-    });
-
-    return () => {
-      keyboardShowListener.remove();
-      keyboardHideListener.remove();
-    };
-  }, [insets.bottom, animatePadding]);
+  // Static bottom padding for safe area (gesture nav bar).
+  // Keyboard offset is handled entirely by the parent ChatWindow.js container.
+  const staticBottomPadding = Math.max(insets.bottom, 16);
 
   useEffect(() => {
     console.log(disableSendButton, 'DSBLSNDBTN');
@@ -295,7 +269,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
 
   return (
     <>
-      <Animated.View style={[styles.chatInputContainer, { paddingBottom: bottomPadding }]}>
+      <View style={[styles.chatInputContainer, { paddingBottom: staticBottomPadding }]}>
         {/* Attachment / Clip icon - acts as toggle */}
         {(userRole === 'creator' || secondUserRole === 'admin') && (
           <TouchableOpacity style={styles.iconButton} onPress={handleOpenClip}>
@@ -433,7 +407,7 @@ const ChatWindowInput = ({doRaisedRequest, show, onChangeText, onButtonSendButto
             </Pressable>
           )}
         </View>
-      </Animated.View>
+      </View>
     </>
   );
 };

@@ -1,27 +1,47 @@
-# AI Reference: Android Translucent Keyboard Avoidance
+# AI Reference: Android Keyboard Avoidance (adjustNothing + Manual Padding)
 
 > [!IMPORTANT]
 > **READ THIS BEFORE IMPLEMENTING OR MODIFYING KEYBOARD AVOIDANCE OR LAYOUTS.**
-> This repository uses a translucent window theme on Android alongside Expo's default edge-to-edge rendering. Traditional keyboard avoidance methods will fail or behave inconsistently.
+> This repository uses `adjustNothing` + manual keyboard height tracking on Android.
+> Do NOT switch back to `adjustResize` — it is broken by the translucent boot theme.
 
 ---
 
 ## The Core Technical Challenge
 
-1. **Native Translucency**: The Android theme (`android:windowIsTranslucent = true` inside `styles.xml`) prevents Android's native `adjustResize` window manager behavior from functioning correctly on most screens.
-2. **Edge-to-Edge Mode**: Expo SDK 53+ enables edge-to-edge rendering by default on Android.
-3. **The Resulting Bug**: Standard React Native `<KeyboardAvoidingView>` with `behavior="height"` or `behavior="padding"` on Android **fails to detect keyboard shifts** (calculating `0` height updates) or gets stuck leaving massive blank bottom margins when closed.
+1. **Native Translucency**: The Android `BootTheme` (`android:windowIsTranslucent=true` + `android:windowFullscreen=true` in `styles.xml`) is required by `react-native-bootsplash` to prevent splash flicker.
+2. **These flags break `adjustResize`**: On stock-Android-like OEMs (OnePlus, Nothing, Pixel, Samsung), the OS skips window resizing when the activity is fullscreen/translucent. Xiaomi/MIUI ignores this and resizes anyway — causing **inconsistent behavior** across devices.
+3. **Edge-to-Edge Mode**: Expo SDK 53+ enables edge-to-edge rendering by default on Android, adding further complexity.
+
+### Why `adjustResize` Failed
+
+| Device | `adjustResize` works? | Result |
+|--------|----------------------|--------|
+| Xiaomi/MIUI | ✅ Yes (MIUI overrides) | Input snug to keyboard |
+| OnePlus/OxygenOS | ❌ No | Gap between keyboard and input |
+| Nothing/NothingOS | ❌ No | Gap between keyboard and input |
+| Pixel (stock) | ❌ No | Gap between keyboard and input |
 
 ---
 
-## The Established Pattern
+## The Established Pattern: `adjustNothing` + Manual Height
 
-To ensure flawless Gboard avoidance on Android without native resizing bugs, **always use manual height listeners** instead of `<KeyboardAvoidingView>` on Android. 
+The manifest is set to `adjustNothing`, meaning Android does **nothing** when the keyboard opens. We handle everything in JavaScript:
 
-### Implementation Recipe
+### AndroidManifest.xml
+```xml
+android:windowSoftInputMode="adjustNothing"
+```
+
+### app.json
+```json
+"softwareKeyboardLayoutMode": "pan"
+```
+
+### Implementation Recipe (ChatWindow.js pattern)
 
 ```javascript
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Animated, Keyboard, Platform, KeyboardAvoidingView } from 'react-native';
 
 const MyScreen = ({ headerHeight }) => {
@@ -30,12 +50,11 @@ const MyScreen = ({ headerHeight }) => {
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
-    // Use DidShow/DidHide on Android since WillShow/WillHide do not exist
     const showListener = Keyboard.addListener('keyboardDidShow', (e) => {
       Animated.timing(keyboardHeight, {
-        toValue: e.endCoordinates.height + 12, // +12px spacing offset to keep input snug but not squished
+        toValue: e.endCoordinates.height,
         duration: 200,
-        useNativeDriver: false, // Must be false for padding/layout animations
+        useNativeDriver: false,
       }).start();
     });
 
@@ -53,9 +72,19 @@ const MyScreen = ({ headerHeight }) => {
     };
   }, []);
 
-  // Conditionally select the container type per platform
+  // Reset on navigation away to prevent stale padding
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (Platform.OS === 'android') {
+          keyboardHeight.setValue(0);
+        }
+      };
+    }, []),
+  );
+
   const Container = Platform.OS === 'android' ? Animated.View : KeyboardAvoidingView;
-  
+
   const containerProps = Platform.OS === 'android'
     ? { style: { flex: 1, paddingBottom: keyboardHeight } }
     : { style: { flex: 1 }, behavior: 'padding', keyboardVerticalOffset: headerHeight };
@@ -70,8 +99,18 @@ const MyScreen = ({ headerHeight }) => {
 
 ---
 
-## Guidelines for Future AI Updates
+## Key Rules
 
-- **Do NOT Install Keyboard Handling Libraries**: The project has uninstalled `react-native-keyboard-controller`. Do not re-install or push external packages unless explicitly requested.
-- **Do NOT use `behavior="padding"` directly inside standard `<KeyboardAvoidingView>` on Android**: It will not trigger layout updates properly under translucency.
-- **Always Verify Clean Layout Reset**: Ensure that when the keyboard closes, there are no remaining margins, black backgrounds, or dead spacing at the bottom of the screens.
+### Do NOT:
+- **Switch to `adjustResize`** — it's broken by the translucent boot theme on most OEMs
+- **Add `adjustPan`** — it causes the OS to scroll the whole window, often hiding the header
+- **Install keyboard handling libraries** (e.g., `react-native-keyboard-controller`) — unless explicitly requested
+- **Add manual padding inside child components** (e.g., `ChatWindowInput`) — the parent container handles all keyboard offset
+- **Use `KeyboardAvoidingView` on Android** — it doesn't work correctly under translucency
+
+### Do:
+- **Use `Animated.View` on Android** with `paddingBottom: keyboardHeight`
+- **Use `KeyboardAvoidingView` on iOS** with `behavior: 'padding'`
+- **Reset `keyboardHeight` to 0** when navigating away (via `useFocusEffect` cleanup)
+- **Use `useSafeAreaInsets()`** for static safe area padding in child components (gesture nav bar)
+- **Always verify on multiple OEMs** — test on at least Xiaomi + OnePlus/Nothing/Pixel

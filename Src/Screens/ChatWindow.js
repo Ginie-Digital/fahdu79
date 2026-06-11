@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
+import { useFocusEffect as useFocusEffectNav } from '@react-navigation/native';
 
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
 
@@ -66,6 +67,48 @@ let timer;
 const ChatWindow = ({ route, navigation }) => {
   const messageInputRef = useRef(null);
   const headerHeight = useHeaderHeight();
+
+  // ── Android manual keyboard height tracking ──
+  // With adjustNothing, Android does nothing when the keyboard opens.
+  // We manually track keyboard height and apply it as paddingBottom.
+  // This gives identical behavior across all OEMs (Xiaomi, OnePlus, Nothing, etc.)
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const showListener = Keyboard.addListener('keyboardDidShow', (e) => {
+      Animated.timing(keyboardHeight, {
+        toValue: e.endCoordinates.height,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    });
+
+    const hideListener = Keyboard.addListener('keyboardDidHide', () => {
+      Animated.timing(keyboardHeight, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    });
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
+  // Reset keyboard height when navigating away to prevent stale padding
+  useFocusEffectNav(
+    useCallback(() => {
+      return () => {
+        if (Platform.OS === 'android') {
+          keyboardHeight.setValue(0);
+        }
+      };
+    }, []),
+  );
 
   const flatlistThreadListRef = useRef();
 
@@ -520,33 +563,9 @@ const ChatWindow = ({ route, navigation }) => {
     }
   }, [currentPage, chatRoomId, token]);
 
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-
-    const showListener = Keyboard.addListener('keyboardDidShow', (e) => {
-      Animated.timing(keyboardHeight, {
-        toValue: e.endCoordinates.height + 12,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    });
-
-    const hideListener = Keyboard.addListener('keyboardDidHide', () => {
-      Animated.timing(keyboardHeight, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    });
-
-    return () => {
-      showListener.remove();
-      hideListener.remove();
-    };
-  }, []);
-
+  // On Android with adjustNothing, we manually track keyboard height via
+  // keyboardDidShow/keyboardDidHide and apply paddingBottom. This bypasses
+  // OEM-specific inconsistencies with adjustResize + windowIsTranslucent.
   const Container = Platform.OS === 'android' ? Animated.View : KeyboardAvoidingView;
   const containerProps = Platform.OS === 'android'
     ? { style: { flex: 1, paddingBottom: keyboardHeight } }

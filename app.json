@@ -20,7 +20,7 @@
     "android": {
       "package": "com.fahdu",
       "versionCode": 130,
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "pan"
     },
     "ios": {
       "bundleIdentifier": "com.giniedigital.fahdu"

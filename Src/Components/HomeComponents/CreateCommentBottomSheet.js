@@ -20,6 +20,7 @@ import {FONT_SIZES, selectionTwin, WIDTH_SIZES} from '../../../DesiginData/Utili
 import {incrementCommentCount} from '../../../Redux/Slices/NormalSlices/Home/FeedCacheSlice';
 import {myProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import {otherProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
+import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
 
 const ItemSeparator = () => <View style={{height: responsiveWidth(6)}} />;
 
@@ -30,6 +31,7 @@ const CreateCommentBottomSheet = () => {
   const inputRef = useRef(null);
 
   const insets = useSafeAreaInsets();
+  const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
 
 
 
@@ -374,7 +376,9 @@ const CreateCommentBottomSheet = () => {
           borderTopWidth: 1,
           borderTopColor: '#F0F0F0',
           paddingHorizontal: 20,
-          paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+          paddingBottom: isKeyboardVisible
+            ? (Platform.OS === 'ios' ? 40 : keyboardHeight + 35)
+            : (Platform.OS === 'ios' ? 40 : 20),
           alignItems: 'center'
         }]}>
           <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#262626', marginBottom: 2}]} onPress={() => gotomyprofile()}>

@@ -198,9 +198,9 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         styles.dialog, 
         {
           transform: [{translateY: slideAnim}],
-          paddingBottom: Platform.OS === 'ios'
-            ? (isKeyboardVisible ? keyboardHeight + 55 : Math.max(insets.bottom, 20) + 20)
-            : (Math.max(insets.bottom, 20) + 16)
+          paddingBottom: isKeyboardVisible
+            ? (Platform.OS === 'ios' ? keyboardHeight + 55 : keyboardHeight + 40)
+            : (Platform.OS === 'ios' ? Math.max(insets.bottom, 20) + 20 : Math.max(insets.bottom, 20) + 16)
         }
       ]}>
         <View style={styles.headerIndicator} />

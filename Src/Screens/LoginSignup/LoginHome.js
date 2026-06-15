@@ -96,7 +96,14 @@ const LoginHome = () => {
 
       <ScrollView contentContainerStyle={[styles.scrollContainer, { backgroundColor: dynamicStyles.pageBackground }]}>
         <View style={styles.centeredContent}>
-          <Image source={require('../../../Assets/Images/HomeShow.png')} style={styles.image} />
+          <Image
+            source={
+              isDark
+                ? require('../../../Assets/Images/HomeShowDark.jpg')
+                : require('../../../Assets/Images/HomeShow.png')
+            }
+            style={styles.image}
+          />
           <View style={styles.textWrapper}>
             <Text style={[styles.headingText, { color: dynamicStyles.headingColor }]}>Your Gateway to Earnings</Text>
             <Text numberOfLines={2} adjustsFontSizeToFit={true} style={[styles.descriptionText, { color: dynamicStyles.descriptionColor }]}>

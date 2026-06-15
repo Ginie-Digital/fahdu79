@@ -64,7 +64,7 @@
 	<key>EXUpdatesRequestHeaders</key>
 	<dict>
 		<key>expo-channel-name</key>
-		<string>production</string>
+		<string>staging</string>
 	</dict>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
@@ -194,7 +194,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UIUserInterfaceStyle</key>
-	<string>Light</string>
+	<string>Automatic</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>UIDesignRequiresCompatibility</key>

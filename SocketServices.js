@@ -272,6 +272,42 @@ class WSService {
     }
   }
 
+  // Fully disconnect and clean up socket, heartbeat, and AppState listeners
+  disconnect = () => {
+    console.log('🔌 [Socket] Full disconnect and cleanup initiated');
+
+    // Stop heartbeat
+    if (this._heartbeatInterval) {
+      clearInterval(this._heartbeatInterval);
+      this._heartbeatInterval = null;
+    }
+
+    // Remove AppState listener
+    if (this._appStateSubscription) {
+      this._appStateSubscription.remove();
+      this._appStateSubscription = null;
+    }
+
+    // Disconnect and destroy socket
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+
+    // Clear wrapped listeners map
+    if (this._wrappedListeners) {
+      this._wrappedListeners.clear();
+    }
+
+    // Clear stored credentials so auto-reconnect doesn't kick in
+    this._currentUserId = null;
+    this._token = null;
+
+    store.dispatch(setSocketConnect({ socketConnect: false }));
+    console.log('🔌 [Socket] Cleanup complete');
+  };
+
   isConnected() {
     return !!this.socket?.connected;
   }

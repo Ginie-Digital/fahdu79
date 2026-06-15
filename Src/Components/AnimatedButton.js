@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Pressable, StyleSheet, View} from 'react-native';
+import {Pressable, StyleSheet, View, useColorScheme} from 'react-native';
 import Animated, {useSharedValue, withSpring, useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import SmoothLoader from './SmootheLoader';
@@ -21,6 +21,9 @@ const AnimatedButton = ({
   textStyle,
   disableAnimation = false,
 }) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const translateY = useSharedValue(2);
   const translateX = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
@@ -60,16 +63,44 @@ const AnimatedButton = ({
     }
   };
 
+  // Theme-specific styles
+  const currentOverlayStyle = [
+    styles.overlayButton,
+    isDark && {
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderColor: '#FF7819',
+    },
+    overlayStyle,
+  ];
+
+  const currentButtonStyle = [
+    styles.button,
+    isDark && {
+      backgroundColor: '#FFA86B',
+      borderColor: '#FF7819',
+      borderWidth: 1.5,
+    },
+    style,
+    disabled && (disabledStyle || {backgroundColor: '#CBCBCB'}),
+    !showOverlay && showWhite && {backgroundColor: '#fff'},
+  ];
+
+  const currentTextStyle = [
+    {color: isDark ? '#1E1E1E' : '#1e1e1e'},
+    textStyle,
+  ];
+
   return (
     <Pressable testID={testID} style={{marginTop: responsiveWidth(buttonMargin)}} onPressIn={handlePressIn} onPressOut={handlePressOut} disabled={loading || disabled}>
-      {showOverlay && !disabled && <View style={[styles.overlayButton, overlayStyle]} />}
+      {showOverlay && !disabled && <View style={currentOverlayStyle} />}
 
       <Animated.View style={[styles.buttonContainer, animatedTransform]}>
-        <View style={[styles.button, style, disabled && (disabledStyle || {backgroundColor: '#CBCBCB'}), !showOverlay && showWhite && {backgroundColor: '#fff'}]}>
+        <View style={currentButtonStyle}>
           {/* Highlight overlay */}
           {highlightOnPress && <Animated.View style={[styles.highlightOverlay, {backgroundColor: highlightColor}, animatedOverlayStyle]} />}
 
-          <SmoothLoader loading={loading} title={title} textStyle={textStyle} />
+          <SmoothLoader loading={loading} title={title} textStyle={currentTextStyle} />
         </View>
       </Animated.View>
     </Pressable>
@@ -101,6 +132,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
+    borderColor: '#1e1e1e',
   },
   highlightOverlay: {
     ...StyleSheet.absoluteFillObject,

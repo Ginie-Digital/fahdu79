@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, Pressable, ScrollView, useColorScheme } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { googleSignIn, signOutGoogle, appleSignIn } from '../../../OAuth';
@@ -16,6 +16,8 @@ import { toggleAlertModal, toggleShowOnboarding, toggleVerficationScreen } from 
 
 const LoginHome = () => {
   const dispatcher = useDispatch();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const [authToken, setAuthToken] = useState('');
   const [type, setType] = useState(false);
@@ -67,22 +69,43 @@ const LoginHome = () => {
     }
   };
 
+  // Dark mode dynamic styles
+  const dynamicStyles = {
+    pageBackground: isDark ? '#121212' : '#fff',
+    headingColor: isDark ? '#FFFFFF' : '#282828',
+    descriptionColor: isDark ? '#4D4D4D' : '#282828',
+    socialButtonBg: isDark ? '#171717' : undefined,
+    socialButtonBorder: isDark ? '#1F1F1F' : '#1e1e1e',
+    socialButtonText: isDark ? '#FFFFFF' : '#1e1e1e',
+    socialButtonPressedBg: isDark ? '#2a2a2a' : '#1e1e1e',
+    socialButtonPressedText: isDark ? '#FFFFFF' : '#fff',
+    loginButtonBg: '#FFA86B',
+    loginButtonPressedBg: isDark ? '#e08f53' : '#fff',
+    loginButtonText: isDark ? '#000000' : '#1e1e1e',
+    loginButtonBorder: isDark ? '#FF7819' : '#1e1e1e',
+    loginButtonBorderWidth: isDark ? 2 : responsiveWidth(0.4),
+    signupButtonBg: isDark ? '#171717' : undefined,
+    signupButtonBorder: isDark ? '#1F1F1F' : '#1e1e1e',
+    signupButtonText: isDark ? '#FFFFFF' : '#1e1e1e',
+    signupButtonPressedBg: isDark ? '#2a2a2a' : '#FFA86B',
+  };
+
   return (
-    <View testID="login-home-screen" style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View testID="login-home-screen" style={{ flex: 1, backgroundColor: dynamicStyles.pageBackground }}>
       {loader && <ChevronLoader />}
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={[styles.scrollContainer, { backgroundColor: dynamicStyles.pageBackground }]}>
         <View style={styles.centeredContent}>
           <Image source={require('../../../Assets/Images/HomeShow.png')} style={styles.image} />
           <View style={styles.textWrapper}>
-            <Text style={styles.headingText}>Your Gateway to Earnings</Text>
-            <Text numberOfLines={2} adjustsFontSizeToFit={true} style={styles.descriptionText}>
+            <Text style={[styles.headingText, { color: dynamicStyles.headingColor }]}>Your Gateway to Earnings</Text>
+            <Text numberOfLines={2} adjustsFontSizeToFit={true} style={[styles.descriptionText, { color: dynamicStyles.descriptionColor }]}>
               Join Fahdu today & enjoy innovative content {'\n'}
               monetization tools and resources.
             </Text>
           </View>
 
-          <View style={[styles.buttonWrapper, Platform.OS === 'ios' ? styles.newLogin : null]}>
+          <View style={[styles.buttonWrapper, Platform.OS === 'ios' ? [styles.newLogin, { backgroundColor: dynamicStyles.pageBackground }] : null]}>
             <Pressable
               testID="google-login-button"
               accessibilityLabel="google-login-button"
@@ -95,10 +118,14 @@ const LoginHome = () => {
 
                 setLoader(false);
               }}>
-              <View style={[styles.googleButton, socialButton && { backgroundColor: '#1e1e1e' }]}>
+              <View style={[
+                styles.googleButton,
+                { backgroundColor: dynamicStyles.socialButtonBg, borderColor: dynamicStyles.socialButtonBorder },
+                socialButton && { backgroundColor: dynamicStyles.socialButtonPressedBg },
+              ]}>
                 <Image source={require('../../../Assets/Images/googleIcons.png')} style={styles.icon} />
 
-                <Text style={[styles.buttonText, socialButton && { color: '#fff' }]}>{Platform.OS === 'android' ? 'Continue with Google' : 'Google'}</Text>
+                <Text style={[styles.buttonText, { color: dynamicStyles.socialButtonText }, socialButton && { color: dynamicStyles.socialButtonPressedText }]}>{Platform.OS === 'android' ? 'Continue with Google' : 'Google'}</Text>
               </View>
             </Pressable>
             {Platform.OS === 'ios' && (
@@ -121,15 +148,26 @@ const LoginHome = () => {
 
                   setLoader(false);
                 }}>
-                <View style={[styles.appleButton, socialButtonTwo && { backgroundColor: '#1e1e1e' }]}>
-                  <Image source={require('../../../Assets/Images/appleIcons.png')} style={[styles.icon, { width: 17 }]} />
-                  <Text style={[styles.buttonText, socialButtonTwo && { color: '#fff' }]}>Apple</Text>
+                <View style={[
+                  styles.appleButton,
+                  { backgroundColor: dynamicStyles.socialButtonBg, borderColor: dynamicStyles.socialButtonBorder },
+                  socialButtonTwo && { backgroundColor: dynamicStyles.socialButtonPressedBg },
+                ]}>
+                  <Image
+                    source={
+                      isDark
+                        ? require('../../../Assets/Images/appleIcons_white.png')
+                        : require('../../../Assets/Images/appleIcons.png')
+                    }
+                    style={[styles.icon, { width: 17 }]}
+                  />
+                  <Text style={[styles.buttonText, { color: dynamicStyles.socialButtonText }, socialButtonTwo && { color: dynamicStyles.socialButtonPressedText }]}>Apple</Text>
                 </View>
               </Pressable>
             )}
           </View>
 
-          <Seprator />
+          <Seprator isDark={isDark} />
           <Pressable
             testID="login-button"
             accessibilityLabel="login-button"
@@ -138,13 +176,25 @@ const LoginHome = () => {
             onPress={() => {
               navigate('LoginEmail');
             }}>
-            <View style={[styles.emailButton, loginPress === true && { backgroundColor: '#fff' }]}>
-              <Text style={styles.emailButtonText}>Login</Text>
+            <View style={[
+              styles.emailButton,
+              { 
+                backgroundColor: dynamicStyles.loginButtonBg,
+                borderColor: dynamicStyles.loginButtonBorder,
+                borderWidth: dynamicStyles.loginButtonBorderWidth,
+              },
+              loginPress === true && { backgroundColor: dynamicStyles.loginButtonPressedBg },
+            ]}>
+              <Text style={[styles.emailButtonText, { color: dynamicStyles.loginButtonText }]}>Login</Text>
             </View>
           </Pressable>
           <Pressable testID="signup-button" accessibilityLabel="signup-button" onPressIn={() => setSignupPress(true)} onPressOut={() => setSignupPress(false)} onPress={() => navigate('SignupEmail')}>
-            <View style={[styles.signupButton, signupPress === true && { backgroundColor: '#FFA86B' }]}>
-              <Text style={styles.signupButtonText}>Sign Up</Text>
+            <View style={[
+              styles.signupButton,
+              { backgroundColor: dynamicStyles.signupButtonBg, borderColor: dynamicStyles.signupButtonBorder },
+              signupPress === true && { backgroundColor: dynamicStyles.signupButtonPressedBg },
+            ]}>
+              <Text style={[styles.signupButtonText, { color: dynamicStyles.signupButtonText }]}>Sign Up</Text>
             </View>
           </Pressable>
           <Authenticator authToken={authToken} type={type} afterLoginProcess={afterLoginProcess} />
@@ -159,16 +209,13 @@ export default LoginHome;
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    backgroundColor: '#fff',
     marginTop: 24,
     padding: Platform.OS === 'android' ? WIDTH_SIZES[24] : null,
-    // borderWidth: 1,
   },
   centeredContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'blue',
   },
   image: {
     width: Platform.OS === 'android' ? '100%' : 329,
@@ -177,12 +224,9 @@ const styles = StyleSheet.create({
   },
   textWrapper: {
     alignItems: 'center',
-    // backgroundColor: 'red',
     width: '100%',
-    // marginTop: responsiveWidth(10),
   },
   headingText: {
-    color: '#282828',
     fontSize: responsiveFontSize(2.75),
     fontFamily: 'Rubik-Bold',
     textAlign: 'center',
@@ -192,7 +236,6 @@ const styles = StyleSheet.create({
 
   descriptionText: {
     fontFamily: 'Rubik-Regular',
-    color: '#282828',
     fontSize: responsiveFontSize(1.9),
     marginBottom: responsiveWidth(6),
     marginTop: 20,
@@ -211,9 +254,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: responsiveWidth(0.4),
-    borderColor: '#1e1e1e',
-    borderRadius: responsiveWidth(3.73),
+    borderWidth: 1.5,
+    borderRadius: 14,
     height: responsiveHeight(6.65),
     width: nTwins(86, 43.2),
   },
@@ -221,9 +263,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: responsiveWidth(0.4),
-    borderColor: '#1e1e1e',
-    borderRadius: responsiveWidth(3.73),
+    borderWidth: 1.5,
+    borderRadius: 14,
     height: responsiveHeight(6.65),
     width: nTwins(86, 43.2),
   },
@@ -236,31 +277,25 @@ const styles = StyleSheet.create({
     width: nTwins(86, 92),
     marginVertical: responsiveWidth(4.27),
     borderWidth: responsiveWidth(0.4),
-    borderColor: '#1e1e1e',
   },
   signupButton: {
-    borderWidth: responsiveWidth(0.4),
-    borderColor: '#1e1e1e',
-    borderRadius: responsiveWidth(3.73),
+    borderWidth: 1.5,
+    borderRadius: 14,
     height: responsiveHeight(6.65),
     justifyContent: 'center',
     alignItems: 'center',
     width: nTwins(86, 92),
-    // marginTop: responsiveWidth(3),
   },
   buttonText: {
-    color: '#1e1e1e',
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(1.97),
     marginLeft: responsiveWidth(2.13),
   },
   emailButtonText: {
-    color: '#1e1e1e',
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(1.97),
   },
   signupButtonText: {
-    color: '#1e1e1e',
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(1.97),
     fontWeight: '600',
@@ -273,7 +308,6 @@ const styles = StyleSheet.create({
   newLogin: {
     flexDirection: 'row',
     width: responsiveWidth(92),
-    backgroundColor: '#fff',
     justifyContent: 'space-between',
     marginVertical: responsiveWidth(4.27),
   },

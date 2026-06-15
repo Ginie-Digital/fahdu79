@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform, useColorScheme } from 'react-native';
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { TextInput } from 'react-native-gesture-handler';
 import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
@@ -33,6 +33,7 @@ import ChevronLoader from '../../ChevronLoader';
 
 const LoginPassword = ({ route }) => {
   const [password, setPassword] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const passwordRef = useRef(null);
   const [authToken, setAuthToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,6 +50,16 @@ const LoginPassword = ({ route }) => {
   console.log({ getApnToken });
 
   const { isKeyboardVisible } = useKeyboardHook();
+
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Reset isFocused when keyboard hides
+  useEffect(() => {
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const sub = Keyboard.addListener(hideEvent, () => setIsFocused(false));
+    return () => sub.remove();
+  }, []);
 
   // Check login availability on page open
   useEffect(() => {
@@ -233,38 +244,49 @@ const LoginPassword = ({ route }) => {
   }
 
   return (
-    <SafeAreaView testID="login-password-screen" style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView testID="login-password-screen" style={{ flex: 1, backgroundColor: isDark ? '#121212' : '#fff' }}>
       {loading && <ChevronLoader />}
 
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: isDark ? '#121212' : 'white' }]}>
         <TouchableOpacity testID="login-password-back-button" accessibilityLabel="login-password-back-button" style={styles.backButton} onPress={() => navigate('LoginEmail')}>
-          <Back />
+          <Back color={isDark ? '#FFFFFF' : '#1E1E1E'} />
         </TouchableOpacity>
-        <Text style={styles.heading}>Login</Text>
-        <Text style={styles.subHead}>Welcome to Fahdu, Login to Continue...</Text>
-        <Text style={styles.fieldName}>Password</Text>
+        <Text style={[styles.heading, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>Login</Text>
+        <Text style={[styles.subHead, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>Welcome to Fahdu, Login to Continue...</Text>
+        <Text style={[styles.fieldName, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>Password</Text>
 
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
-          <InputOverlay isVisible={isKeyboardVisible} />
-          <View style={[styles.textInputContainer, {marginTop: 0}]}>
+          <InputOverlay isVisible={isFocused} style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
+          <View style={[
+            styles.textInputContainer,
+            {marginTop: 0},
+            isDark && {
+              backgroundColor: '#191919',
+              borderColor: '#292929',
+              borderWidth: 1.5,
+              borderRadius: 14,
+            }
+          ]}>
             <TextInput
               testID="login-password-input"
               accessibilityLabel="login-password-input"
-              selectionColor={selectionTwin()}
-              selectionHandleColor={'#ffa86b'}
-              cursorColor={'#1e1e1e'}
+              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
+              cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
               maxLength={20}
-              placeholderTextColor="#B2B2B2"
+              placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
               placeholder="Enter Password "
               spellCheck={false}
               autoCorrect={false}
-              style={styles.textInputs}
+              style={[styles.textInputs, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}
               secureTextEntry={!isPasswordVisible}
               onChangeText={setPassword}
               editable={!isLoginDisabled}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
             />
             <Pressable testID="login-password-toggle-visibility" accessibilityLabel="login-password-toggle-visibility" style={styles.iconContainer} onPress={() => setPasswordVisible(!isPasswordVisible)}>
-              {isPasswordVisible ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
+              {isPasswordVisible ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: '#4D4D4D' }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: '#4D4D4D' }]} />}
             </Pressable>
           </View>
         </View>
@@ -274,7 +296,7 @@ const LoginPassword = ({ route }) => {
             style={{
               fontFamily: 'Rubik-Medium',
               fontSize: responsiveFontSize(1.48),
-              color: isLoginDisabled ? '#B2B2B2' : '#1e1e1e',
+              color: isLoginDisabled ? '#B2B2B2' : (isDark ? '#FF7F50' : '#1e1e1e'),
             }}>
             Forgot Password?
           </Text>
@@ -290,7 +312,7 @@ const LoginPassword = ({ route }) => {
 
         <TouchableOpacity testID="login-password-signup-link" accessibilityLabel="login-password-signup-link" style={styles.alreadyAccountContainer} onPress={() => !isLoginDisabled && navigate('SignupEmail')} disabled={isLoginDisabled}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={[styles.alreadyAccountText, isLoginDisabled && styles.disabledText]}>Don't you have an account?</Text>
+            <Text style={[styles.alreadyAccountText, { color: isDark ? '#4D4D4D' : '#1e1e1e' }, isLoginDisabled && styles.disabledText]}>Don't you have an account?</Text>
             <Text style={[styles.forgotTextTitle, isLoginDisabled && styles.disabledText]}>SignUp</Text>
           </View>
         </TouchableOpacity>

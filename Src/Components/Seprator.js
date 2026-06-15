@@ -3,14 +3,14 @@ import React from 'react';
 import {responsiveWidth, responsiveFontSize} from 'react-native-responsive-dimensions';
 import { LinearGradient } from 'expo-linear-gradient';
 import {nTwins} from '../../DesiginData/Utility';
-const Seprator = () => {
+const Seprator = ({isDark}) => {
   return (
     <View style={styles.sepratorContainer}>
-      <LinearGradient colors={['#FFFDF650', '#282828', '#282828', '#FFFDF650']} style={styles.linearGradient}>
+      <LinearGradient colors={isDark ? ['#12121200', '#1F1F1F', '#1F1F1F', '#12121200'] : ['#FFFDF650', '#282828', '#282828', '#FFFDF650']} style={styles.linearGradient}>
         <View style={{height: 2}} />
       </LinearGradient>
 
-      <Text style={styles.connectWith}>Or</Text>
+      <Text style={[styles.connectWith, {color: isDark ? '#1F1F1F' : '#1e1e1e', backgroundColor: isDark ? '#121212' : 'white'}]}>Or</Text>
     </View>
   );
 };
@@ -33,8 +33,6 @@ const styles = StyleSheet.create({
   },
   connectWith: {
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
-    backgroundColor: 'white',
     alignSelf: 'center',
     textAlign: 'center',
     flex: 0,

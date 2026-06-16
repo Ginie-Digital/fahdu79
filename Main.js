@@ -4,7 +4,7 @@ import StackNavigation from './Navigation/StackNavigation';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import socketServcies from './SocketServices';
-import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission } from '@react-native-firebase/messaging';
+import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission, onNotificationOpenedApp, getInitialNotification as getFirebaseInitialNotification } from '@react-native-firebase/messaging';
 import {dismissProgressNotification, displayNotificationProgressIndicator, showMentionNotification, showOthersCategoryNotification, showSubscriptionNotification, showCallRelatedNotification, showCallReminderNotification, liveStreamNotification, onDisplayNotification, showPostInteractionNotification} from './Notificaton';
 import { enableNotificationModal, resetAllModal, setLatestTip, setUnReadChatIcon, toggleCallAccepted, toggleEmailVerificationModal, toggleNewMessageRecieved } from './Redux/Slices/NormalSlices/HideShowSlice';
 import { authLogout, currentUserInformation, token as memoizedToken } from './Redux/Slices/NormalSlices/AuthSlice';
@@ -58,6 +58,9 @@ import CreateCommentBottomSheet from './Src/Components/HomeComponents/CreateComm
 import PostActionBottomSheet from './Src/Components/HomeComponents/PostActionBottomSheet';
 import SwitcherSheet from './Src/Components/HomeComponents/SwitcherSheet';
 
+// Module-level guard: survives hot reload (unlike React refs)
+let __bootstrapInitialHandled = false;
+
 const Main = () => {
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
   const token = useSelector(state => state.auth.user.token);
@@ -88,6 +91,9 @@ const Main = () => {
   // Ref for auth token so FCM effect doesn't re-run on every token change
   const tokenRef = useRef(token);
   useEffect(() => { tokenRef.current = token; }, [token]);
+
+  // Ref for deep link handler so Firebase [] useEffect can access latest version
+  const handleDeepLinkRef = useRef(null);
 
   // Reset persisted call state on fresh app launch
   useEffect(() => {
@@ -530,6 +536,9 @@ const Main = () => {
     }
   }, [data.email, data.password, doUserLoggedIn, currentUserId]);
 
+  // Keep the ref updated whenever handleDeepLink changes
+  useEffect(() => { handleDeepLinkRef.current = handleDeepLink; }, [handleDeepLink]);
+
   // Consolidated deep link handling
   useEffect(() => {
     // Handle cold start (app was closed)
@@ -682,6 +691,13 @@ const Main = () => {
     console.log(initialNotification, 'XOOOO');
 
     if (initialNotification) {
+      // Guard: only handle the initial (killed-state) notification once
+      if (__bootstrapInitialHandled) {
+        console.log('📌 [Bootstrap] Already handled initial notification, skipping');
+        return;
+      }
+      __bootstrapInitialHandled = true;
+
       console.log('Notification caused application to open');
 
       if (initialNotification?.notification?.data?.type === 'message') {
@@ -713,7 +729,30 @@ const Main = () => {
           console.log('Error navigation to CallRequests on bootstrap', e?.message);
         }
       } else if (initialNotification?.notification?.data?.type === 'subscription') {
-        console.log('NOTHING_MATCHED');
+        console.log('📌 [Bootstrap] Subscription notification tapped from killed state');
+        const link = initialNotification?.notification?.data?.link;
+        if (link) {
+          console.log('📌 [Bootstrap] Navigating via deep link:', link);
+          handleDeepLink(link);
+        } else {
+          console.log('📌 [Bootstrap] No link found in subscription notification data');
+        }
+      } else if (initialNotification?.notification?.data?.type === 'call_request') {
+        console.log('📌 [Bootstrap] Call request notification tapped from killed state');
+        try {
+          navigate('CallRequests', { activeTab: 'pending' });
+        } catch (e) {
+          console.log('Error navigating to CallRequests on bootstrap (call_request)', e?.message);
+        }
+      } else if (initialNotification?.notification?.data?.type === 'others') {
+        console.log('📌 [Bootstrap] Others notification tapped from killed state');
+        const link = initialNotification?.notification?.data?.link;
+        if (link) {
+          console.log('📌 [Bootstrap] Navigating via deep link:', link);
+          handleDeepLink(link);
+        } else {
+          console.log('📌 [Bootstrap] No link found in others notification data');
+        }
       } else if (initialNotification?.notification?.data?.type === 'mention') {
         const link = initialNotification?.notification?.data?.link;
         const postId = link?.split('post/')?.[1]?.split('?')?.[0];
@@ -724,10 +763,83 @@ const Main = () => {
     }
   }
 
-  // Bootstrap on notification click
+  // Bootstrap on notification click (Notifee)
   useEffect(() => {
     bootstrap();
   }, [doUserClickedOnForeGroundNotification]);
+
+  // Handle native Firebase notification taps (when OS displayed notification via notification key)
+  // This covers the case where the app was killed and background handler never fired,
+  // so no Notifee notification was created — only the native OS notification exists.
+  // IMPORTANT: Must run on mount ([]) — not [token] — so getFirebaseInitialNotification
+  // fires before the system consumes the initial notification.
+  useEffect(() => {
+    // Helper to parse Firebase notification data and navigate
+    const handleFirebaseNotificationTap = (remoteMessage) => {
+      console.log('📌 [Main:Firebase] Native notification tapped:', remoteMessage);
+      if (!remoteMessage?.data?.payload) return;
+
+      try {
+        const parsed = JSON.parse(remoteMessage.data.payload);
+        const type = parsed?.type;
+        const content = parsed?.content;
+
+        if (type === 'message' && content?.roomId) {
+          navigate('Chats', {
+            chatRoomId: content.roomId,
+            name: content.username,
+            profileImageUrl: content.profile_image,
+          });
+        } else if (type === 'livestream') {
+          joinLiveStreamWithNotificationHandler({ notification: { data: { roomId: content?.roomId } } }, tokenRef.current);
+        } else if (type === 'call_reminder' && content?.roomId) {
+          navigate('Chats', {
+            chatRoomId: content.roomId,
+            name: content.username,
+            profileImageUrl: content.profile_image,
+          });
+        } else if (type === 'call_accepted' || type === 'call_request_accepted') {
+          navigate('CallRequests', { activeTab: 'scheduled' });
+        } else if (type === 'call_request') {
+          console.log('📌 [Main:Firebase] Call request notification tapped');
+          navigate('CallRequests', { activeTab: 'pending' });
+        } else if (type === 'mention') {
+          const link = content?.link || content?.misc?.link;
+          const postId = link?.split('post/')?.[1]?.split('?')?.[0];
+          if (postId) navigate('sharedPost', { postId });
+        } else if (type === 'subscription' || type === 'others') {
+          // Navigate directly instead of Linking.openURL (which fails during cold start)
+          const link = content?.misc?.link || content?.link;
+          if (link && handleDeepLinkRef.current) {
+            console.log('📌 [Main:Firebase] Navigating subscription/others via deep link:', link);
+            handleDeepLinkRef.current(link);
+          }
+        } else {
+          // Fallback: if any notification has a link, navigate via deep link handler
+          const link = content?.misc?.link || content?.link;
+          if (link && handleDeepLinkRef.current) {
+            console.log('📌 [Main:Firebase] Navigating fallback via deep link:', link);
+            handleDeepLinkRef.current(link);
+          }
+        }
+      } catch (e) {
+        console.log('⚠️ [Main:Firebase] Error handling notification tap:', e?.message);
+      }
+    };
+
+    // App was in background and user tapped native notification
+    const unsubscribe = onNotificationOpenedApp(getMessaging(), handleFirebaseNotificationTap);
+
+    // App was killed and user tapped native notification to open it
+    getFirebaseInitialNotification(getMessaging()).then(remoteMessage => {
+      if (remoteMessage) {
+        console.log('📌 [Main:Firebase] App opened from killed state via native notification');
+        handleFirebaseNotificationTap(remoteMessage);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Foreground notification handler
   useEffect(() => {
@@ -741,8 +853,22 @@ const Main = () => {
         const notificationType = detail?.notification?.data?.type;
         const notificationData = detail?.notification?.data;
 
+        // Handle message notification (normal messages + tips)
+        if (notificationType === 'message') {
+          console.log('Message notification pressed');
+          try {
+            navigate('Chats', {
+              chatRoomId: notificationData?.roomId,
+              name: notificationData?.userName,
+              profileImageUrl: notificationData?.profile_image,
+            });
+          } catch (e) {
+            console.log('Error navigating to Chats on foreground press', e?.message);
+          }
+        }
+
         // Handle livestream notification
-        if (notificationType === 'livestream') {
+        else if (notificationType === 'livestream') {
           await joinLiveStreamWithNotificationHandler(detail, token);
         }
 
@@ -758,8 +884,11 @@ const Main = () => {
         // Handle call request notification
         else if (notificationType === 'call_request') {
           console.log('Call request notification pressed');
-
-          const { roomId, sender_id, sender_role, callType } = notificationData;
+          try {
+            navigate('CallRequests', { activeTab: 'pending' });
+          } catch (e) {
+            console.log('Error navigating to CallRequests on foreground press', e?.message);
+          }
         }
 
         // Handle call accepted notification

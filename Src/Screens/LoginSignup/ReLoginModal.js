@@ -10,7 +10,7 @@ import {WIDTH_SIZES, FONT_SIZES} from '../../../DesiginData/Utility';
 const ReLoginModal = () => {
   const visible = useSelector(state => state.hideShow.visibility.relogin);
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false; // colorScheme === 'dark';
 
   if (!visible) return null;
 

@@ -34,7 +34,7 @@ import { removeRoomList, resetUnreadCount, updateCacheRoomList } from '../../Red
 import { authLogout } from '../../Redux/Slices/NormalSlices/AuthSlice';
 import { emptyUnreadRoomList, removeRoomIds } from '../../Redux/Slices/NormalSlices/UnReadThreadSlice';
 import { saveFeeDetails } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowFeeDetailsSlice';
-import { setCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
+import { setCurrentChattingRoom, resetCurrentChattingRoom } from '../../Redux/Slices/NormalSlices/MessageSlices/ChatWindowCurrentChattingRoom';
 
 import { ChatWindowError, ChatWindowFollowError, LoginPageErrors } from '../Components/ErrorSnacks';
 import { signOutGoogle } from '../../OAuth';
@@ -388,6 +388,12 @@ const ChatWindow = ({ route, navigation }) => {
     dispatch(setCurrentChattingRoom({ chatRoomId }));
 
     dispatch(setChatWindowSenderUserDetails({ name: name, profileImageUrl: profileImageUrl, role, id }));
+
+    return () => {
+      // Clear current chatting room when leaving — this allows message
+      // notifications for this room to show again in the foreground
+      dispatch(resetCurrentChattingRoom());
+    };
   }, [route, navigation]);
 
   const __id = useMemo(() => {
@@ -447,7 +453,7 @@ const ChatWindow = ({ route, navigation }) => {
 
             let latestMessage = responseLatestMessage?.messages?.at(-1);
 
-            dispatch(updateCacheRoomList({ chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: latestMessage?.sender_id })); //To Sort Chat RoomList
+            dispatch(updateCacheRoomList({ chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: latestMessage?.sender_id, userName: name, profileImage: profileImageUrl, role: role })); //To Sort Chat RoomList
           } else {
             console.log('No new message found !');
             setLoadingMessage(false);
@@ -487,7 +493,7 @@ const ChatWindow = ({ route, navigation }) => {
           if (responseLatestMessage?.data?.messages[0]._id !== currentId) {
             dispatch(updateThread({ chatRoomId, newMessage: responseLatestMessage?.data?.messages }));
             let latestMessage = responseLatestMessage?.data?.messages?.at(-1);
-            dispatch(updateCacheRoomList({ chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: responseLatestMessage?.data?.messages[0]?.sender_id }));
+            dispatch(updateCacheRoomList({ chatRoomId, createdAt: latestMessage?.createdAt, message: latestMessage?.message, hasAttachment: latestMessage?.attachment?.url === '' ? false : true, senderId: responseLatestMessage?.data?.messages[0]?.sender_id, userName: name, profileImage: profileImageUrl, role: role }));
           } else console.log('Encountered same.');
         }
         setSeenToServer({ token, roomId: chatRoomId });

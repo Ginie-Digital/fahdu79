@@ -22,7 +22,7 @@ const AnimatedButton = ({
   disableAnimation = false,
 }) => {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = false; // colorScheme === 'dark';
 
   const translateY = useSharedValue(2);
   const translateX = useSharedValue(0);

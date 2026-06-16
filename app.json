@@ -5,7 +5,7 @@
     "name": "Fahdu",
     "slug": "fahdu",
     "scheme": "exp+fahdu",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "plugins": [
       "expo-video",
       [

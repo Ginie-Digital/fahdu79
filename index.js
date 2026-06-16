@@ -115,15 +115,32 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
   if (remoteMessage?.data?.payload) {
     let remoteNotificationData = JSON.parse(remoteMessage.data.payload);
     console.log('EXX', remoteMessage, remoteNotificationData?.type, remoteNotificationData);
+
+    // If the message has a notification key, the OS already displayed it natively.
+    // Skip creating a duplicate Notifee notification. Navigation on tap is handled
+    // by Firebase onNotificationOpenedApp / getInitialNotification in Main.js.
+    const osAlreadyDisplayed = !!remoteMessage?.notification;
+    if (osAlreadyDisplayed) {
+      console.log('📌 [index:FCM] OS already displayed notification via notification key, skipping Notifee display');
+    }
+
     if (remoteNotificationData?.type === 'message') {
       tempRemoteNotificationData = remoteNotificationData;
-      await onDisplayNotification(remoteNotificationData?.content);
+      if (!osAlreadyDisplayed) {
+        await onDisplayNotification(remoteNotificationData?.content);
+      }
     } else if (remoteNotificationData?.type === 'livestream') {
-      await liveStreamNotification(remoteNotificationData?.content);
+      if (!osAlreadyDisplayed) {
+        await liveStreamNotification(remoteNotificationData?.content);
+      }
     } else if (remoteNotificationData?.type === 'others') {
-      await showOthersCategoryNotification(remoteNotificationData);
+      if (!osAlreadyDisplayed) {
+        await showOthersCategoryNotification(remoteNotificationData);
+      }
     } else if (remoteNotificationData?.type === 'subscription') {
-      await showSubscriptionNotification(remoteNotificationData);
+      if (!osAlreadyDisplayed) {
+        await showSubscriptionNotification(remoteNotificationData);
+      }
     } else if (remoteNotificationData?.type === 'call') {
       if (Platform.OS === 'android') {
         if (isProcessingAndroidCall) {
@@ -170,9 +187,13 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
     } else if (remoteNotificationData?.type === 'missed_call') {
       console.log(remoteNotificationData, ':::::');
     } else if (remoteNotificationData?.type === '10_reminder' || remoteNotificationData?.type === '5_reminder' || remoteNotificationData?.type === '1_reminder') {
-      await showCallReminderNotification(remoteNotificationData);
+      if (!osAlreadyDisplayed) {
+        await showCallReminderNotification(remoteNotificationData);
+      }
     } else {
-      await showPostInteractionNotification(remoteNotificationData);
+      if (!osAlreadyDisplayed) {
+        await showPostInteractionNotification(remoteNotificationData);
+      }
     }
   }
 });
@@ -202,8 +223,13 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
     }
   }
 
-  if (type === EventType.PRESS && detail?.notification?.data?.link) {
-    await Linking.openURL(detail.notification.data.link);
+  if (type === EventType.PRESS) {
+    const link = detail?.notification?.data?.link;
+    const notifType = detail?.notification?.data?.type;
+    console.log(`📌 [index:onBackgroundEvent] PRESS - type: ${notifType}, link: ${link}`);
+    if (link && link.length > 0) {
+      await Linking.openURL(link);
+    }
   }
 });
 

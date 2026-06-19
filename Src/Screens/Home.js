@@ -30,6 +30,7 @@ import { pushChats, pushGoals } from '../../Redux/Slices/NormalSlices/LiveStream
 // import Stories from '../Components/HomeComponents/Stories';
 // import {pushLiveStories} from '../../Redux/Slices/NormalSlices/Home/StoriesSlice';
 import UpdateAppComponent from '../Components/HomeComponents/UpdateAppComponent';
+import AppStoreUpdateBanner from '../Components/HomeComponents/AppStoreUpdateBanner';
 import { setSharedCampaignId, setUserFromCampaignLink } from '../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
 
 import { showMessage, hideMessage } from 'react-native-flash-message';
@@ -222,6 +223,7 @@ const Home = () => {
 
   const ListHeader = () => (
     <>
+      <AppStoreUpdateBanner />
       <PostProgress />
 
       {/* Show LiveBanner if only 1 user is live, otherwise show LiveUsersScroll */}

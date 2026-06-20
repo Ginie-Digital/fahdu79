@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking, TextInput, useColorScheme } from 'react-native';
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
@@ -18,6 +18,9 @@ import { openInbox } from 'react-native-email-link';
 
 const Authenticator = ({ authToken, type, afterLoginProcess }) => {
   console.log(authToken, 'AUTHTOKEN');
+
+  const colorScheme = useColorScheme();
+  const isDark = true; // colorScheme === 'dark';
 
   const inputRefs = React.useRef([]);
 
@@ -153,14 +156,14 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
         margin: 0,
         justifyContent: 'flex-end',
       }}>
-      <View style={[styles.modalInnerWrapper]}>
+      <View style={[styles.modalInnerWrapper, isDark && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }]}>
         <View style={styles.headerContainer}>
-          <Text style={styles.heading}>Security Check</Text>
+          <Text style={[styles.heading, isDark && { color: '#FFFFFF' }]}>Security Check</Text>
           <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
-            <DIcon provider="Ionicons" name="close" size={20} color="black" />
+            <DIcon provider="Ionicons" name="close" size={20} color={isDark ? '#FFFFFF' : 'black'} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.subtext}>Enter the security code we just sent on your email address.</Text>
+        <Text style={[styles.subtext, isDark && { color: '#4D4D4D' }]}>Enter the security code we just sent on your email address.</Text>
 
         <View style={styles.tipContainer}>
           <View style={styles.tipCounterContainer}>
@@ -180,18 +183,18 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
                     maxLength={1}
                     autoCapitalize="characters"
                     keyboardType="default"
-                    style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null]}
-                    selectionColor={selectionTwin()}
-                    selectionHandleColor={'#ffa86b'}
-                    cursorColor={'#1e1e1e'}
-                    placeholderTextColor="#B2B2B2"
+                    style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null, isDark && { backgroundColor: '#191919', borderColor: '#292929', color: '#FFFFFF' }]}
+                    selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+                    selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
+                    cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
+                    placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
                   />
                 ))}
               </View>
             </View>
           </View>
 
-          <AnimatedButton title="Verify" buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} />
+          <AnimatedButton title="Verify" buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} isDark={isDark} />
 
           <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => openInbox()}>
             <View style={styles.alreadyAccountRow}>

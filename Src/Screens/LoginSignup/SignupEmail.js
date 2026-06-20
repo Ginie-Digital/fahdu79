@@ -1,4 +1,4 @@
-import {Pressable, StyleSheet, Text, View, TouchableOpacity, Platform} from 'react-native';
+import {Pressable, StyleSheet, Text, View, TouchableOpacity, Platform, useColorScheme} from 'react-native';
 import React, {useState} from 'react';
 import {useDispatch} from 'react-redux';
 import {TextInput} from 'react-native-gesture-handler';
@@ -21,6 +21,8 @@ const SignupEmail = () => {
   const [focusedInput, setFocusedInput] = useState(null);
   const dispatch = useDispatch();
   const {isKeyboardVisible} = useKeyboardHook();
+  const colorScheme = useColorScheme();
+  const isDark = true; // colorScheme === 'dark';
 
   const handleReferralInput = text => {
     setReferralCode(text);
@@ -60,32 +62,32 @@ const SignupEmail = () => {
   };
 
   return (
-    <SafeAreaView testID="signup-email-screen" style={{flex: 1, backgroundColor: '#fff'}}>
-      <View style={styles.container}>
+    <SafeAreaView testID="signup-email-screen" style={{flex: 1, backgroundColor: isDark ? '#121212' : '#fff'}}>
+      <View style={[styles.container, {backgroundColor: isDark ? '#121212' : 'white'}]}>
         <TouchableOpacity testID="signup-email-back-button" accessibilityLabel="signup-email-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
-          <Back />
+          <Back color={isDark ? '#FFFFFF' : '#1E1E1E'} />
         </TouchableOpacity>
-        <Text style={styles.heading}>Sign Up</Text>
-        <Text style={styles.subHead}>Earn from your content on your terms. Sign up now!</Text>
+        <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Sign Up</Text>
+        <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Earn from your content on your terms. Sign up now!</Text>
 
-        <Text style={styles.fieldName}>Email</Text>
+        <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Email</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'email' && (
-            <InputOverlay isVisible={isKeyboardVisible} />
+            <InputOverlay isVisible={isKeyboardVisible} style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, {marginTop: 0}, isDark && { backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14 }]}>
             <TextInput
               testID="signup-email-input"
               accessibilityLabel="signup-email-input"
-              selectionColor={selectionTwin()}
-              selectionHandleColor={'#ffa86b'}
-              cursorColor={'#1e1e1e'}
-              placeholderTextColor="#B2B2B2"
+              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
+              cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
+              placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
               placeholder="Enter Email"
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'none'}
-              style={styles.textInputs}
+              style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}
               onChangeText={t => setEmail(t)}
               maxLength={50}
               onFocus={() => setFocusedInput('email')}
@@ -94,24 +96,24 @@ const SignupEmail = () => {
           </View>
         </View>
 
-        <Text style={styles.fieldName}>Who referred you? (Optional)</Text>
+        <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Who referred you? (Optional)</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'referral' && (
-            <InputOverlay isVisible={isKeyboardVisible} />
+            <InputOverlay isVisible={isKeyboardVisible} style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, {marginTop: 0}, isDark && { backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14 }]}>
             <TextInput
               testID="signup-referral-input"
               accessibilityLabel="signup-referral-input"
-              selectionColor={selectionTwin()}
-              selectionHandleColor={'#ffa86b'}
-              cursorColor={'#1e1e1e'}
-              placeholderTextColor="#B2B2B2"
+              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
+              cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
+              placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
               placeholder="@username or paste referral link"
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'none'}
-              style={styles.textInputs}
+              style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}
               onChangeText={handleReferralInput}
               value={referralCode}
               onFocus={() => setFocusedInput('referral')}
@@ -119,15 +121,15 @@ const SignupEmail = () => {
             />
           </View>
         </View>
-        <Text style={styles.referralHint}>
+        <Text style={[styles.referralHint, isDark && {color: '#4D4D4D'}]}>
           Search for the creator who referred you, or simply paste their referral link here.
         </Text>
 
-        <AnimatedButton testID="signup-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} />
+        <AnimatedButton testID="signup-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} isDark={isDark} />
 
         <TouchableOpacity testID="signup-email-login-link" accessibilityLabel="signup-email-login-link" style={styles.alreadyAccountContainer} onPress={() => navigate('LoginEmail')}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={styles.alreadyAccountText}>Do you have an account? </Text>
+            <Text style={[styles.alreadyAccountText, {color: isDark ? '#4D4D4D' : '#1e1e1e'}]}>Do you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Login</Text>
           </View>
         </TouchableOpacity>

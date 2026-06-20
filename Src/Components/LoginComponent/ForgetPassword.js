@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {StyleSheet, Text, View, TextInput, TouchableOpacity, Pressable, ActivityIndicator, Platform, Keyboard} from 'react-native';
+import {StyleSheet, Text, View, TextInput, TouchableOpacity, Pressable, ActivityIndicator, Platform, Keyboard, useColorScheme} from 'react-native';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import OTPTextView from 'react-native-otp-textinput';
 import {useDispatch} from 'react-redux';
@@ -21,6 +21,8 @@ const ForgetPassword = ({route}) => {
   const [otp, setOtp] = useState('');
   const [isEmailStep, setIsEmailStep] = useState(true);
   const [loading, setLoading] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = true; // colorScheme === 'dark';
 
   const dispatch = useDispatch();
   const [forgetPassword] = useForgetPasswordMutation();
@@ -95,35 +97,35 @@ const ForgetPassword = ({route}) => {
   const {isKeyboardVisible} = useKeyboardHook();
 
   return (
-    <SafeAreaView testID="forgot-password-screen" style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView testID="forgot-password-screen" style={{flex: 1, backgroundColor: isDark ? '#121212' : '#fff'}}>
       
       { loading && <ChevronLoader/> }
 
-      <View style={styles.container}>
+      <View style={[styles.container, {backgroundColor: isDark ? '#121212' : 'white'}]}>
         <TouchableOpacity testID="forgot-password-back-button" accessibilityLabel="forgot-password-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
-          <Back />
+          <Back color={isDark ? '#FFFFFF' : '#1E1E1E'} />
         </TouchableOpacity>
         {isEmailStep ? (
           <>
-            <Text style={styles.heading}>Forgot Password?</Text>
-            <Text style={styles.subHead}>Don’t worry! It occurs. Please enter the email address linked with your account.</Text>
-            <Text style={styles.fieldName}>Email</Text>
+            <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Forgot Password?</Text>
+            <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Don't worry! It occurs. Please enter the email address linked with your account.</Text>
+            <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Email</Text>
 
             <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
-              <InputOverlay isVisible={isKeyboardVisible} />
-              <View style={[styles.textInputContainer, {marginTop: 0}]}>
-                <TextInput testID="forgot-password-email-input" accessibilityLabel="forgot-password-email-input" selectionColor={selectionTwin()}
+              <InputOverlay isVisible={isKeyboardVisible} style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
+              <View style={[styles.textInputContainer, {marginTop: 0}, isDark && { backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14 }]}>
+                <TextInput testID="forgot-password-email-input" accessibilityLabel="forgot-password-email-input" selectionColor={isDark ? '#FFA86B' : selectionTwin()}
                 
-                selectionHandleColor={'#ffa86b'}
+                selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
                 
-                cursorColor={'#1e1e1e'} placeholderTextColor="#B2B2B2" placeholder="Enter Email " autoCapitalize={'none'} style={styles.textInputs} value={email} onChangeText={setEmail} keyboardType="email-address" />
+                cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'} placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'} placeholder="Enter Email " autoCapitalize={'none'} style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]} value={email} onChangeText={setEmail} keyboardType="email-address" />
               </View>
             </View>
           </>
         ) : (
           <>
-            <Text style={styles.heading}>OTP Verification</Text>
-            <Text style={styles.subHead}>Enter the verification code we just sent on your email address.</Text>
+            <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>OTP Verification</Text>
+            <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Enter the verification code we just sent on your email address.</Text>
             <OTPTextView
               testID="forgot-password-otp-input"
               accessibilityLabel="forgot-password-otp-input"
@@ -131,19 +133,19 @@ const ForgetPassword = ({route}) => {
               handleTextChange={setOtp}
               inputCount={4}
               keyboardType="number-pad"
-              offTintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : '#1e1e1e'))}
-              textInputStyle={styles.otpInput}
-              tintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : '#1e1e1e'))}
+              offTintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : (isDark ? '#292929' : '#1e1e1e')))}
+              textInputStyle={[styles.otpInput, isDark && { backgroundColor: '#191919', borderColor: '#292929', color: '#FFFFFF' }]}
+              tintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : (isDark ? '#292929' : '#1e1e1e')))}
             />
           </>
         )}
 
-        <AnimatedButton testID="forgot-password-submit-button" onPress={isEmailStep ? handleVerification : handleOtpVerification} title={isEmailStep ? 'Send Code' : 'Verify'} loading={loading} />
+        <AnimatedButton testID="forgot-password-submit-button" onPress={isEmailStep ? handleVerification : handleOtpVerification} title={isEmailStep ? 'Send Code' : 'Verify'} loading={loading} isDark={isDark} />
 
         {!isEmailStep && (
           <TouchableOpacity testID="forgot-password-resend-link" accessibilityLabel="forgot-password-resend-link" style={styles.alreadyAccountContainer} onPress={handleResendOtp}>
             <View style={styles.alreadyAccountRow}>
-              <Text style={styles.alreadyAccountText}> Didn't receive the code? </Text>
+              <Text style={[styles.alreadyAccountText, {color: isDark ? '#4D4D4D' : '#1e1e1e'}]}> Didn't receive the code? </Text>
               <Text style={styles.forgotTextTitle}>Resend</Text>
             </View>
           </TouchableOpacity>

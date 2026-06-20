@@ -18,7 +18,7 @@ const LoginEmail = () => {
   const [isFocused, setIsFocused] = useState(false);
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
   const colorScheme = useColorScheme();
-  const isDark = false; // colorScheme === 'dark';
+  const isDark = true; // colorScheme === 'dark';
 
   // Reset isFocused when keyboard hides (covers Android back button, tap outside, etc.)
   useEffect(() => {
@@ -80,7 +80,7 @@ const LoginEmail = () => {
           </View>
         </View>
 
-        <AnimatedButton testID="login-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} />
+        <AnimatedButton testID="login-email-next-button" title={'Next'} onPress={handleGoToNext} loading={false} isDark={isDark} />
 
         <TouchableOpacity testID="login-email-signup-link" accessibilityLabel="login-email-signup-link" style={styles.alreadyAccountContainer} onPress={() => navigate('SignupEmail')}>
           <View style={styles.alreadyAccountRow}>

@@ -20,9 +20,10 @@ const AnimatedButton = ({
   disabledStyle,
   textStyle,
   disableAnimation = false,
+  isDark: isDarkProp, // Accept isDark from parent
 }) => {
   const colorScheme = useColorScheme();
-  const isDark = false; // colorScheme === 'dark';
+  const isDark = isDarkProp !== undefined ? isDarkProp : false; // colorScheme === 'dark';
 
   const translateY = useSharedValue(2);
   const translateX = useSharedValue(0);

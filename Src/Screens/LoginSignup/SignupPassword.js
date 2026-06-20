@@ -1,4 +1,4 @@
-import {Pressable, StyleSheet, Text, View, TouchableOpacity, Platform, Alert} from 'react-native';
+import {Pressable, StyleSheet, Text, View, TouchableOpacity, Platform, Alert, useColorScheme} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {TextInput} from 'react-native-gesture-handler';
 import {responsiveWidth, responsiveFontSize, responsiveHeight} from 'react-native-responsive-dimensions';
@@ -20,6 +20,9 @@ import CustomCheckbox from '../../Components/CustomCheckbox';
 
 const SignupPassword = ({route}) => {
   console.log(route);
+
+  const colorScheme = useColorScheme();
+  const isDark = true; // colorScheme === 'dark';
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -131,40 +134,40 @@ const SignupPassword = ({route}) => {
   };
 
   return (
-    <SafeAreaView testID="signup-password-screen" style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView testID="signup-password-screen" style={{flex: 1, backgroundColor: isDark ? '#121212' : '#fff'}}>
       <ChevronLoader show={loading} />
 
-      <View style={styles.container}>
+      <View style={[styles.container, {backgroundColor: isDark ? '#121212' : 'white'}]}>
         <TouchableOpacity testID="signup-password-back-button" accessibilityLabel="signup-password-back-button" style={styles.backButton} onPress={() => navigate('SignupEmail')}>
-          <Back />
+          <Back color={isDark ? '#FFFFFF' : '#1E1E1E'} />
         </TouchableOpacity>
-        <Text style={styles.heading}>Sign Up</Text>
-        <Text style={styles.subHead}>Earn from your content on your terms.</Text>
+        <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Sign Up</Text>
+        <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Earn from your content on your terms.</Text>
 
-        <Text style={styles.fieldName}>Password</Text>
+        <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Password</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'password' && (
-            <InputOverlay isVisible />
+            <InputOverlay isVisible style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, {marginTop: 0}, isDark && { backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14 }]}>
             <TextInput
               testID="signup-password-input"
               accessibilityLabel="signup-password-input"
               ref={passwordInputRef}
-              style={styles.textInputs}
+              style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}
               secureTextEntry={!showPassword}
               onChangeText={handlePassword}
               onFocus={() => setFocusedInput('password')}
               onBlur={() => setFocusedInput(null)}
-              placeholderTextColor="#B2B2B2"
+              placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
               placeholder="Enter Password "
-              selectionColor={selectionTwin()}
-              cursorColor={'#1e1e1e'}
+              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+              cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
               maxLength={64}
-              selectionHandleColor={'#ffa86b'}
+              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
             />
             <Pressable testID="signup-password-toggle-visibility" accessibilityLabel="signup-password-toggle-visibility" style={styles.iconContainer} onPress={() => setShowPassword(prev => !prev)}>
-              {showPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
+              {showPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: '#4D4D4D' }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: '#4D4D4D' }]} />}
             </Pressable>
           </View>
         </View>
@@ -179,29 +182,29 @@ const SignupPassword = ({route}) => {
           </>
         )}
 
-        <Text style={styles.fieldName}>Confirm Password</Text>
+        <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Confirm Password</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'confirmPassword' && (
-            <InputOverlay isVisible />
+            <InputOverlay isVisible style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, {marginTop: 0}, isDark && { backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14 }]}>
             <TextInput
               testID="signup-confirm-password-input"
               accessibilityLabel="signup-confirm-password-input"
-              placeholderTextColor="#B2B2B2"
+              placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
               placeholder="Enter Confirm Password "
               ref={confirmPasswordInputRef}
-              style={styles.textInputs}
+              style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}
               secureTextEntry={!cShowPassword}
               onChangeText={t => setConfirmPassword(t)}
               onFocus={() => setFocusedInput('confirmPassword')}
               onBlur={() => setFocusedInput(null)}
-              selectionColor={selectionTwin()}
-              cursorColor={'#1e1e1e'}
-              selectionHandleColor={'#ffa86b'}
+              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+              cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
+              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
             />
             <Pressable testID="signup-confirm-password-toggle-visibility" accessibilityLabel="signup-confirm-password-toggle-visibility" style={styles.iconContainer} onPress={() => cSetShowPassword(prev => !prev)}>
-              {cShowPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
+              {cShowPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: '#4D4D4D' }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: '#4D4D4D' }]} />}
             </Pressable>
           </View>
         </View>
@@ -216,16 +219,16 @@ const SignupPassword = ({route}) => {
               onToggle={() => {}}
             />
           </View>
-          <Text style={styles.checkboxLabel}>
+          <Text style={[styles.checkboxLabel, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>
             Keep me updated with news, feature releases, and announcements via email
           </Text>
         </Pressable>
 
-        <AnimatedButton testID="signup-password-submit-button" title={'Sign Up'} onPress={handleSignup} loading={loading} />
+        <AnimatedButton testID="signup-password-submit-button" title={'Sign Up'} onPress={handleSignup} loading={loading} isDark={isDark} />
 
         <TouchableOpacity testID="signup-password-login-link" accessibilityLabel="signup-password-login-link" style={styles.alreadyAccountContainer} onPress={() => navigate('LoginEmail')}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={styles.alreadyAccountText}>Do you have an account? </Text>
+            <Text style={[styles.alreadyAccountText, {color: isDark ? '#4D4D4D' : '#1e1e1e'}]}>Do you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Login</Text>
           </View>
         </TouchableOpacity>

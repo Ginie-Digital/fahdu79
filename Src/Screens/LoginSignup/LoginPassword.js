@@ -54,7 +54,7 @@ const LoginPassword = ({ route }) => {
   const { isKeyboardVisible } = useKeyboardHook();
 
   const colorScheme = useColorScheme();
-  const isDark = false; // colorScheme === 'dark';
+  const isDark = true; // colorScheme === 'dark';
 
   // Reset isFocused when keyboard hides
   useEffect(() => {
@@ -305,7 +305,7 @@ const LoginPassword = ({ route }) => {
         </Pressable>
 
 
-        <AnimatedButton testID="login-password-submit-button" title={'Login'} onPress={logInHandler} loading={loading} disabled={isLoginDisabled} />
+        <AnimatedButton testID="login-password-submit-button" title={'Login'} onPress={logInHandler} loading={loading} disabled={isLoginDisabled} isDark={isDark} />
 
 
         {isLoginDisabled && loginCheckMessage && (

@@ -16,6 +16,7 @@ import EmailVerificationModal from './EmailVerificationModal';
 import {toggleEmailVerificationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {setCredentials} from '../../../Redux/Slices/NormalSlices/TempCredentials';
 import ChevronLoader from '../../ChevronLoader';
+import CustomCheckbox from '../../Components/CustomCheckbox';
 
 const SignupPassword = ({route}) => {
   console.log(route);
@@ -26,6 +27,7 @@ const SignupPassword = ({route}) => {
   const [cShowPassword, cSetShowPassword] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
   const [isPasswordStrong, setIsPasswordStrong] = useState(false);
+  const [emailConsent, setEmailConsent] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [signUp] = useSignUpMutation();
 
@@ -97,6 +99,7 @@ const SignupPassword = ({route}) => {
               agreedTOC: true,
               onlyBrandsAccess: false,
               referredDisplayName: referralName,
+              emailConsent,
             },
           });
 
@@ -202,6 +205,21 @@ const SignupPassword = ({route}) => {
             </Pressable>
           </View>
         </View>
+
+        <Pressable 
+          style={styles.checkboxContainer} 
+          onPress={() => setEmailConsent(!emailConsent)}
+        >
+          <View pointerEvents="none">
+            <CustomCheckbox
+              checked={emailConsent}
+              onToggle={() => {}}
+            />
+          </View>
+          <Text style={styles.checkboxLabel}>
+            Keep me updated with news, feature releases, and announcements via email
+          </Text>
+        </Pressable>
 
         <AnimatedButton testID="signup-password-submit-button" title={'Sign Up'} onPress={handleSignup} loading={loading} />
 
@@ -327,5 +345,19 @@ const styles = StyleSheet.create({
     color: '#FF7F50',
     fontSize: 14,
     fontFamily: 'Rubik-Medium',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: responsiveWidth(4),
+    marginBottom: responsiveWidth(2),
+  },
+  checkboxLabel: {
+    fontFamily: 'Rubik-Regular',
+    fontSize: responsiveFontSize(1.5),
+    marginLeft: responsiveWidth(2.5),
+    lineHeight: responsiveFontSize(2),
+    flex: 1,
+    color: '#1e1e1e',
   },
 });

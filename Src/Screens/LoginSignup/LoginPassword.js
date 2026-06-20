@@ -30,7 +30,6 @@ import EmailVerificationModal from './EmailVerificationModal';
 import { setCredentials } from '../../../Redux/Slices/NormalSlices/TempCredentials';
 import Authenticator from '../../Components/LoginComponent/Authenticator';
 import ChevronLoader from '../../ChevronLoader';
-import CustomCheckbox from '../../Components/CustomCheckbox';
 
 
 const LoginPassword = ({ route }) => {
@@ -44,7 +43,6 @@ const LoginPassword = ({ route }) => {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [isLoginDisabled, setIsLoginDisabled] = useState(false);
   const [loginCheckMessage, setLoginCheckMessage] = useState('');
-  const [emailConsent, setEmailConsent] = useState(true);
 
 
   const showEmailVerificationModal = useSelector(state => state.hideShow.visibility.emailVerification);
@@ -306,21 +304,6 @@ const LoginPassword = ({ route }) => {
           </Text>
         </Pressable>
 
-        <Pressable 
-          style={styles.checkboxContainer} 
-          onPress={() => setEmailConsent(!emailConsent)}
-        >
-          <View pointerEvents="none">
-            <CustomCheckbox
-              checked={emailConsent}
-              onToggle={() => {}}
-            />
-          </View>
-          <Text style={[styles.checkboxLabel, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>
-            Keep me updated with news, feature releases, and announcements via email
-          </Text>
-
-        </Pressable>
 
         <AnimatedButton testID="login-password-submit-button" title={'Login'} onPress={logInHandler} loading={loading} disabled={isLoginDisabled} />
 
@@ -484,19 +467,6 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(1.6),
     color: '#856404',
     textAlign: 'center',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: responsiveWidth(4),
-    marginBottom: responsiveWidth(2),
-  },
-  checkboxLabel: {
-    fontFamily: 'Rubik-Regular',
-    fontSize: responsiveFontSize(1.5),
-    marginLeft: responsiveWidth(2.5),
-    lineHeight: responsiveFontSize(2),
-    flex: 1,
   },
 });
 

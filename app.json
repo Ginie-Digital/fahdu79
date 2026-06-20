@@ -20,7 +20,7 @@
     ],
     "android": {
       "package": "com.fahdu",
-      "versionCode": 130,
+      "versionCode": 131,
       "softwareKeyboardLayoutMode": "pan"
     },
     "ios": {

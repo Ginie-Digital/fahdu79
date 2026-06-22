@@ -155,8 +155,8 @@ const TopTabNavigation = ({ notificationData }) => {
       {userInformation?.role !== 'creator' && userInformation?.role !== 'admin' && (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          style={{backgroundColor: '#fff'}}
-          contentContainerStyle={{backgroundColor: '#fff'}}>
+          style={{backgroundColor: '#0D0D0D'}}
+          contentContainerStyle={{backgroundColor: '#0D0D0D'}}>
           <UpperProfile isFocused={isFocused} />
           <ProfileUser />
         </ScrollView>

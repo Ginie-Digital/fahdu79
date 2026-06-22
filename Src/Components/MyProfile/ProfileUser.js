@@ -148,7 +148,7 @@ const ProfileUser = () => {
         </View>
 
         <Pressable
-          style={[styles.addCoinsButton, buttonClickRecharge && { backgroundColor: '#1e1e1e' }]}
+          style={[styles.addCoinsButton, buttonClickRecharge && { backgroundColor: '#FFA86B' }]}
           onPressIn={() => setButtonClickRecharge(true)}
           onPressOut={() => setButtonClickRecharge(false)}
           onPress={() => {
@@ -159,8 +159,8 @@ const ProfileUser = () => {
             navigate('wallet');
           }}>
           <View style={styles.addCoinsRow}>
-            <Ionicons name="add" size={16} color={buttonClickRecharge ? '#fff' : '#1E1E1E'} />
-            <Text style={[styles.addCoinsText, buttonClickRecharge && { color: '#fff' }]}>Add Coins</Text>
+            <Image source={require('../../../Assets/Images/PlusMyProfileUserIconWallet.png')} style={{width: 16, height: 16}} contentFit="contain" tintColor={buttonClickRecharge ? '#1E1E1E' : '#FFFFFF'} />
+            <Text style={[styles.addCoinsText, buttonClickRecharge && { color: '#1E1E1E' }]}>Add Coins</Text>
           </View>
         </Pressable>
       </View>
@@ -202,7 +202,7 @@ const ProfileUser = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     paddingHorizontal: 24,
     paddingTop: 24,
   },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     gap: 16,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#1E1E1E',
+    borderColor: '#FF7819',
   },
   walletInner: {
     flexDirection: 'row',
@@ -238,11 +238,11 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   addCoinsButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1C1C1C',
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#212121',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   addCoinsText: {
     fontFamily: 'Rubik-Bold',
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     fontSize: 13,
     lineHeight: 13,
     textAlign: 'center',
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontFamily: 'Rubik-SemiBold',
     marginBottom: 16,
-    color: '#000000',
+    color: '#FFFFFF',
   },
   recListContainer: {
     gap: 16,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#2A2A2A',
   },
   recImage: {
     width: '100%',

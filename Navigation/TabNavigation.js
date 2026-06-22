@@ -200,10 +200,10 @@ const TabNavigation = () => {
               component={ProfileNew}
               options={{
                 headerTitle: 'My Profile',
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(1.8, 2.0) },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(1.8, 2.0), color: '#FFFFFF' },
                 headerLeft: () => null,
                 headerRight: () => null,
-                headerStyle: { backgroundColor: '#fff', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0, height: 50 },
+                headerStyle: { backgroundColor: '#0D0D0D', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0, height: 50 },
                 headerTitleAlign: 'center',
                 headerShadowVisible: false,
               }}

@@ -244,7 +244,7 @@ const UpperProfile = ({isFocused}) => {
   const isUserRole = loggedUserDetail?.role !== 'creator' && loggedUserDetail?.role !== 'admin';
 
   return (
-    <View ref={ref} style={{backgroundColor: '#fff'}}>
+    <View ref={ref} style={{backgroundColor: '#0D0D0D'}}>
       {isUserRole ? (
         // User role: Centered layout without cover photo
         <View style={styles.userRoleContainer}>
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: 14,
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     lineHeight: 18,
     // marginBottom: responsiveWidth(1),
     // backgroundColor : 'red',
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: responsiveWidth(10),
     paddingBottom: responsiveWidth(2),
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
   },
   userProfilePicWrapper: {
     position: 'relative',
@@ -464,8 +464,8 @@ const styles = StyleSheet.create({
     height: 119,
     borderRadius: 59.5,
     borderWidth: 1.72,
-    borderColor: '#1E1E1E',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#2A2A2A',
+    backgroundColor: '#0D0D0D',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 53.5,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
   },
   userProfilePic: {
     width: '100%',
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     borderRadius: 9.2,
     backgroundColor: '#52E13B',
     borderWidth: 3.2,
-    borderColor: '#FFFFFF',
+    borderColor: '#0D0D0D',
     position: 'absolute',
     bottom: 18,
     right: -2,
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   userRoleUsername: {
     fontSize: 20,
     fontFamily: 'Rubik-SemiBold',
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     lineHeight: 20,
     marginBottom: 16,
   },

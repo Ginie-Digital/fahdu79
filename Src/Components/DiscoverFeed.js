@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
+    color: '#666666',
   },
   footerLoader: {
     paddingVertical: 20,
@@ -205,22 +205,22 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: '#FFF',
-    borderRadius: 16,
+    backgroundColor: '#1C1C1C',
+    borderRadius: 14,
     paddingBottom: 20,
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#fff3eb',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     borderWidth: 2,
-    borderColor: '#fff3eb',
+    borderColor: '#212121',
   },
   cardSelected: {
-    borderColor: '#ffa86b',
+    borderColor: '#FF7819',
     borderWidth: 2,
-    backgroundColor: '#ffeee1',
+    backgroundColor: 'rgba(255, 168, 107, 0.15)',
   },
   imageContainer: {
     position: 'relative',
@@ -229,24 +229,25 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   profile: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   onlineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     position: 'absolute',
-    top: 67,
-    right: 22,
-    borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    top: 76,
+    right: 18,
+    borderWidth: 1.5,
+    borderColor: '#000000',
   },
   name: {
     marginTop: 14,
-    fontSize: 13,
-    color: '#1e1e1e',
+    fontSize: 14,
+    lineHeight: 16,
+    color: '#FFFFFF',
     textAlign: 'center',
     paddingHorizontal: 4,
     fontFamily: 'Rubik-Medium',
@@ -254,3 +255,4 @@ const styles = StyleSheet.create({
 });
 
 export default DiscoverFeed;
+

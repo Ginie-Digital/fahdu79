@@ -54,7 +54,7 @@ const AreYou = () => {
   return (
     visible && (
       <View style={styles.overlay}>
-        <BlurView intensity={15} style={styles.blurBackground} />
+        <BlurView intensity={15} tint="dark" style={styles.blurBackground} />
         <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{padding: 0, paddingTop: 0}}>
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
@@ -64,11 +64,11 @@ const AreYou = () => {
 
               <View style={styles.buttonContainer}>
                 <Pressable onPress={() => handleButtonPress('verificationStepOne')} style={({pressed}) => [styles.button, styles.yesButton, pressed && {backgroundColor: '#FFC399'}]}>
-                  <Text style={styles.buttonText}>Yes</Text>
+                  <Text style={styles.yesButtonText}>Yes</Text>
                 </Pressable>
 
-                <Pressable onPress={() => handleButtonPress('discover')} style={({pressed}) => [styles.button, styles.noButton, pressed && {backgroundColor: '#FFF3EB'}]}>
-                  <Text style={styles.buttonText}>No</Text>
+                <Pressable onPress={() => handleButtonPress('discover')} style={({pressed}) => [styles.button, styles.noButton, pressed && {backgroundColor: '#2A2A2A'}]}>
+                  <Text style={styles.noButtonText}>No</Text>
                 </Pressable>
               </View>
             </View>
@@ -81,15 +81,15 @@ const AreYou = () => {
 
 const styles = StyleSheet.create({
   dialog: {
-    borderRadius: responsiveWidth(5.33),
-    borderWidth: 2,
+    borderRadius: 20,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
     alignSelf: 'center',
     padding: 32,
-    backgroundColor: '#fff',
-    width: responsiveWidth(88), // Adjusted for consistency
-    height: responsiveWidth(44), // Adjusted for consistency
-    borderColor: '#1e1e1e',
+    backgroundColor: '#121212',
+    width: responsiveWidth(88),
+    height: responsiveWidth(44),
+    borderColor: '#1E1E1E',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -113,11 +113,12 @@ const styles = StyleSheet.create({
   },
   textYesNo: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: FONT_SIZES[22], // Adjust font size if needed
+    fontSize: 22,
+    lineHeight: 26,
     textAlign: 'center',
-    color: '#1e1e1e',
-    width: '100%', // Ensure the text container takes full width
-    flexShrink: 1, // Prevent text from wrapping
+    color: '#FFFFFF',
+    width: '100%',
+    flexShrink: 1,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -126,25 +127,35 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 16 : 12,
   },
   button: {
-    width: responsiveWidth(34.5), // Adjusted for consistency
+    width: responsiveWidth(34.5),
     height: 48,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: Platform.OS === 'android' ? 6 : 8,
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
   },
   yesButton: {
-    backgroundColor: '#ffa86b',
+    backgroundColor: '#FFA86B',
+    borderColor: '#FF7819',
   },
   noButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1C1C1C',
+    borderColor: '#212121',
   },
-  buttonText: {
+  yesButtonText: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: 14,
-    color: '#1e1e1e',
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+    color: '#1E1E1E',
+  },
+  noButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+    color: '#FFFFFF',
   },
 });
 

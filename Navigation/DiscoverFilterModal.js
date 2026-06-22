@@ -63,28 +63,25 @@ export default function DiscoverFilterModal() {
 
 const styles = StyleSheet.create({
   modal: {
-    // top-right popup like your screenshot
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     margin: 0,
-    paddingTop: 70, // tweak to align under your header/button
+    paddingTop: 70,
     paddingRight: 16,
   },
 
   container: {
     width: 160,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderRadius: 14,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    // subtle border similar to screenshot
     borderWidth: 1,
-    borderColor: '#e6e6e6',
+    borderColor: '#2A2A2A',
 
-    // shadow
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 10,
   },
@@ -96,17 +93,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
 
-  optionActive: {
-    // keep background white — active visual is dot + bolder text; remove if you want colored background
-    // backgroundColor: '#fff7f0',
-  },
+  optionActive: {},
 
   radioOuter: {
     width: 16,
     height: 16,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: '#3a3a3a',
+    borderColor: '#555555',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -119,16 +113,16 @@ const styles = StyleSheet.create({
   },
 
   radioInnerOnline: {
-    backgroundColor: '#2ecc71', // green
+    backgroundColor: '#2ecc71',
   },
 
   radioInnerAll: {
-    backgroundColor: '#8F8F8F', // dark grey
+    backgroundColor: '#8F8F8F',
   },
 
   optionText: {
     fontSize: 15,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontFamily: 'Rubik-Medium',
   },
 
@@ -138,7 +132,8 @@ const styles = StyleSheet.create({
 
   divider: {
     height: 1,
-    backgroundColor: '#ededed',
+    backgroundColor: '#2A2A2A',
     marginHorizontal: 6,
   },
 });
+

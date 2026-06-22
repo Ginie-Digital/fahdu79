@@ -117,13 +117,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: '#fff9f5',
+    backgroundColor: '#0D0D0D',
     paddingTop: 20,
   },
   title: {
     fontSize: 20,
     marginBottom: 16,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontFamily: 'Rubik-SemiBold',
   },
   categoryList: {
@@ -136,23 +136,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Platform.OS === 'ios' ? 24 : 18,
     borderRadius: 20,
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
-    backgroundColor: 'white',
+    borderColor: '#2A2A2A',
+    backgroundColor: '#1C1C1C',
     marginRight: 10,
     height: 40,
     justifyContent: 'center',
   },
   categoryActive: {
     backgroundColor: '#FFA86B',
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
   },
   categoryText: {
     fontSize: 16,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontFamily: 'Rubik-Medium',
   },
   categoryTextActive: {
-    color: '#1e1e1e',
+    color: '#1E1E1E',
   },
   contentWrapper: {
     flex: 1,
@@ -164,31 +164,31 @@ const styles = StyleSheet.create({
   tabBox: {
     flexDirection: 'row',
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     padding: 4,
     borderRadius: 30,
     position: 'absolute',
     bottom: 30,
     elevation: 8,
-    shadowColor: '#1e1e1e',
+    shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     zIndex: 10,
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 20, // Reduced padding to fit 3 items
+    paddingHorizontal: 20,
     borderRadius: 30,
   },
   tabActive: {
     backgroundColor: '#FFA86B',
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
   },
   tabIcon: {
     width: 18,
@@ -197,10 +197,11 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 13,
-    color: '#999', // Default color for inactive
+    color: '#666666',
     fontFamily: 'Rubik-SemiBold',
   },
   tabLabelActive: {
-    color: '#1e1e1e',
+    color: '#1E1E1E',
   },
 });
+

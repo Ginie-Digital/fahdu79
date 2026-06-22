@@ -6,7 +6,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {LoginPageErrors, chatRoomSuccess} from '../Components/ErrorSnacks';
 import {navigate} from '../../Navigation/RootNavigation';
 
-import Back from '../Components/Back/Back';
+import Back from '../../Assets/svg/back.svg';
 
 import Ionicons from 'react-native-vector-icons/Ionicons'; // Import Ionicons
 import InputOverlay from '../Components/InputOverlay';
@@ -106,10 +106,10 @@ const CreatePassword = ({route}) => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+    <SafeAreaView style={{flex: 1, backgroundColor: '#0D0D0D'}}>
       <View style={styles.container}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigate('LoginEmail')}>
-          <Back />
+          <Back color={'#FFFFFF'} />
         </TouchableOpacity>
 
         <Text style={styles.heading}>Create New Password</Text>
@@ -119,25 +119,25 @@ const CreatePassword = ({route}) => {
 
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'password' && (
-            <InputOverlay isVisible />
+            <InputOverlay isVisible style={{backgroundColor: '#292929', borderRadius: 14}} />
           )}
-          <View style={[styles.textInputContainer, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {backgroundColor: '#FEEBEB'} : null, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {backgroundColor: 'rgba(255, 82, 82, 0.12)'} : null, {marginTop: 0}]}>
             <TextInput
               ref={passwordInputRef} // Ref for this input
-              style={[styles.textInputs, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {color: '#FF5252', backgroundColor: '#FEEBEB'} : null]}
+              style={[styles.textInputs, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {color: '#FF6B6B', backgroundColor: 'rgba(255, 82, 82, 0.12)'} : null]}
               secureTextEntry={!showPassword}
               onChangeText={handlePassword}
               onFocus={() => setFocusedInput('password')}
               onBlur={() => setFocusedInput(null)}
-              selectionColor={selectionTwin()}
-              cursorColor={'#1e1e1e'}
+              selectionColor={'#FFA86B'}
+              cursorColor={'#FFA86B'}
               maxLength={64}
               placeholder='Enter new password'
-              selectionHandleColor={'#ffa86b'}
-              placeholderTextColor="#B2B2B2"
+              selectionHandleColor={'#FFA86B'}
+              placeholderTextColor="#555555"
             />
             <Pressable style={styles.iconContainer} onPress={() => setShowPassword(prev => !prev)}>
-              {showPassword ? <Image  source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
+              {showPassword ? <Image  source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" />}
             </Pressable>
           </View>
         </View>
@@ -156,7 +156,7 @@ const CreatePassword = ({route}) => {
 
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'confirmPassword' && (
-            <InputOverlay isVisible />
+            <InputOverlay isVisible style={{backgroundColor: '#292929', borderRadius: 14}} />
           )}
           <View style={[styles.textInputContainer, {marginTop: 0}]}>
             <TextInput
@@ -166,20 +166,20 @@ const CreatePassword = ({route}) => {
               onChangeText={t => setConfirmPassword(t)}
               onFocus={() => setFocusedInput('confirmPassword')}
               onBlur={() => setFocusedInput(null)}
-              selectionColor={selectionTwin()}
-              cursorColor={'#1e1e1e'}
+              selectionColor={'#FFA86B'}
+              cursorColor={'#FFA86B'}
               maxLength={64}
               placeholder='Confirm new password'
-              selectionHandleColor={'#ffa86b'}
-              placeholderTextColor="#B2B2B2"
+              selectionHandleColor={'#FFA86B'}
+              placeholderTextColor="#555555"
             />
             <Pressable style={styles.iconContainer} onPress={() => cSetShowPassword(prev => !prev)}>
-              {cShowPassword ? <Image source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} />}
+              {cShowPassword ? <Image source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" />}
             </Pressable>
           </View>
         </View>
 
-        <AnimatedButton title={'Reset Password'} onPress={setNewPasswordHandler} loading={loading} />
+        <AnimatedButton title={'Reset Password'} onPress={setNewPasswordHandler} loading={loading} isDark={true} />
       </View>
     </SafeAreaView>
   );
@@ -190,7 +190,7 @@ export default CreatePassword;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#0D0D0D',
     margin: responsiveWidth(6.4),
   },
   backButton: {
@@ -198,48 +198,42 @@ const styles = StyleSheet.create({
     width: responsiveWidth(10),
   },
   heading: {
-    // marginTop: responsiveWidth(5),
     fontFamily: 'Rubik-Bold',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontSize: 24,
   },
   subHead: {
     width: responsiveWidth(90),
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    color: '#9E9E9E',
     fontSize: 14,
     marginTop: Platform.OS === "android" ? 0 : 10,
   },
   subHeadHighlight: {
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
-    fontSize: 14,
-  },
-  subHeadHighlight: {
-    fontFamily: 'Rubik-Medium',
-    color: 'black',
+    color: '#FFFFFF',
     fontSize: 14,
   },
 
   fieldName: {
     marginTop: responsiveWidth(5.5),
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     fontSize: responsiveFontSize(1.97),
   },
   fieldNameSec: {
     marginTop: responsiveWidth(5.5),
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     fontSize: responsiveFontSize(1.97),
   },
 
   textInputContainer: {
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
@@ -248,7 +242,7 @@ const styles = StyleSheet.create({
   textInputs: {
     fontSize: responsiveFontSize(1.8),
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     flex: 1,
     height: responsiveHeight(6.65),
     borderRadius: responsiveWidth(3.73),
@@ -289,13 +283,13 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.48),
-    color: 'red',
+    color: '#FF6B6B',
     flexShrink: 1,
   },
   successText: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.8),
-    color: 'green',
+    color: '#4CAF50',
     flexShrink: 1,
   },
   eyeStyle: {

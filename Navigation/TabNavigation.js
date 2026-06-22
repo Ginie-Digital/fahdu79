@@ -180,7 +180,7 @@ const TabNavigation = () => {
                 headerLeft: () => <DiscoverHeader />,
                 headerRight: () => <FilterButton />,
                 headerStyle: {
-                  backgroundColor: '#fff9f5',
+                  backgroundColor: '#0D0D0D',
                 },
                 tabBarHideOnKeyboard: true,
                 tabBarStyle: [

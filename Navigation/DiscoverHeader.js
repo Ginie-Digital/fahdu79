@@ -10,8 +10,8 @@ const DiscoverHeader = () => {
   return (
     <View style={styles.headerWrapper}>
       <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
-        <TextInput onPress={() => navigate('creatorSearch')} keyboardAppearance="default" style={styles.input} placeholder="Discover here..." placeholderTextColor="#999" />
+        <Ionicons name="search-outline" size={20} color="#666666" style={styles.searchIcon} />
+        <TextInput onPress={() => navigate('creatorSearch')} keyboardAppearance="dark" style={styles.input} placeholder="Discover here..." placeholderTextColor="#666666" />
       </View>
     </View>
   );
@@ -19,16 +19,16 @@ const DiscoverHeader = () => {
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    width: screenWidth - 100, // Leave space for the filter button (adjust as needed)
+    width: screenWidth - 100,
     marginLeft: Platform.OS === 'ios' ? 16 : 16,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderRadius: WIDTH_SIZES['14'],
     borderWidth: 1.5,
-    borderColor: '#000',
+    borderColor: '#2A2A2A',
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#000',
+    color: '#FFFFFF',
     padding: 0,
     fontFamily: 'Rubik-Regular',
   },

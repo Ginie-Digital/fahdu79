@@ -13,7 +13,7 @@ const FilterButton = () => {
 
   return (
     <TouchableOpacity style={styles.filterButton} onPress={handleShowModal}>
-      <Ionicons name="options-outline" size={24} color="#000" />
+      <Ionicons name="options-outline" size={24} color="#FFFFFF" />
     </TouchableOpacity>
   );
 };
@@ -24,8 +24,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: '#000',
-    backgroundColor: '#fff',
+    borderColor: '#2A2A2A',
+    backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,

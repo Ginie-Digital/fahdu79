@@ -90,6 +90,7 @@ const AnimatedButton = ({
   const currentTextStyle = [
     {color: isDark ? '#1E1E1E' : '#1e1e1e'},
     textStyle,
+    (!showOverlay && showWhite) && {color: '#1E1E1E'},
   ];
 
   return (

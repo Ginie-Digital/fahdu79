@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     height: responsiveWidth(50),
     width: '100%',
     overflow: 'hidden',
-    backgroundColor: 'white',
+    backgroundColor: '#0D0D0D',
   },
 
   // 🔥 Dashed Border Ring (only this rotates)
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     height: responsiveWidth(24),
     width: responsiveWidth(24),
     borderRadius: responsiveWidth(20),
-    backgroundColor: 'white',
+    backgroundColor: '#0D0D0D',
     overflow: 'hidden',
     position: 'absolute',
     left: responsiveWidth(5.6) + responsiveWidth(1), // center inside border

@@ -234,11 +234,11 @@ const OtherProfileNew = ({route}) => {
 
   return (
     <>
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, backgroundColor: '#0D0D0D'}}>
         {route?.params?.role === 'creator' ? (
           <Tabs.Container
             renderHeader={() => <UpperOtherProfile toCallApiInfo={route?.params} />}
-            renderTabBar={props => <MaterialTabBar {...props} indicatorStyle={{backgroundColor: '#1E1E1E', height: responsiveWidth(0.4)}} />}
+            renderTabBar={props => <MaterialTabBar {...props} style={{backgroundColor: '#0D0D0D'}} indicatorStyle={{backgroundColor: '#FFA86B', height: responsiveWidth(0.4)}} />}
             onTabChange={({tabName}) => setCurrentTab(tabName)}>
             <Tabs.Tab name="profile" label={({name}) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
               <OtherProfileFeedPost contactDescription={contactDescription} />
@@ -253,7 +253,7 @@ const OtherProfileNew = ({route}) => {
             </Tabs.Tab>
           </Tabs.Container>
         ) : (
-          <View style={{flex: 1, backgroundColor: '#fff'}}>
+          <View style={{flex: 1, backgroundColor: '#0D0D0D'}}>
             <UpperOtherProfile toCallApiInfo={route?.params} />
             {/* <ProfileUser /> */}
           </View>
@@ -263,7 +263,7 @@ const OtherProfileNew = ({route}) => {
         {isLoading && (
           <View style={styles.loaderOverlay}>
             <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#1e1e1e" />
+              <ActivityIndicator size="large" color="#FFA86B" />
               <Text style={styles.loadingText}>Loading profile...</Text>
             </View>
           </View>
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#fff', // Semi-transparent black background
+    backgroundColor: '#0D0D0D',
     justifyContent: 'center',
 
     zIndex: 9999, // High z-index to ensure it overlays everything
@@ -317,11 +317,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderRadius: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     flex: 1,
   },
   loadingText: {
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     marginTop: 16,
     fontSize: 16,
     fontFamily: 'Rubik-SemiBold',

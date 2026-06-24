@@ -987,12 +987,12 @@ const StackNavigation = () => {
               component={OtherProfileNew}
               options={{
                 headerTitle: 'Profile',
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3) },
-                // headerLeft: () => <HeaderLeftOtherProfile />,
-                headerStyle: { backgroundColor: '#fff' },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3), color: '#FFFFFF' },
+                headerLeft: () => <Back tintColor="#FFFFFF" />,
+                headerStyle: { backgroundColor: '#0D0D0D' },
                 headerShadowVisible: false,
                 animation: 'simple_push',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: '#FFFFFF',
                 headerBackTitleVisible: false,
               }}
             />

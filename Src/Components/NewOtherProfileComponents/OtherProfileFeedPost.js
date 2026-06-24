@@ -10,7 +10,6 @@ import {useMessageNavigation} from '../../Hook/useMessageNavigation';
 import {ActivityIndicator} from 'react-native';
 import {LoginPageErrors} from '../ErrorSnacks';
 import {triggerImpactLight} from '../../Utils/Haptics';
-import {LinearGradient} from 'expo-linear-gradient';
 
 const OtherProfileFeedPost = ({contactDescription}) => {
   console.log({contactDescription});
@@ -97,11 +96,7 @@ const OtherProfileFeedPost = ({contactDescription}) => {
     const priceUnit = index === 0 ? 'msg' : 'min';
 
     return (
-      <LinearGradient
-        colors={['#FFFFFF', '#FFE1CC']}
-        start={{x: 0, y: 0.5}}
-        end={{x: 1.95, y: 0.5}}
-        style={styles.card}>
+      <View style={styles.card}>
         {/* Header */}
         <View style={styles.headerRow}>
           <Text style={styles.cardTitle}>
@@ -131,10 +126,10 @@ const OtherProfileFeedPost = ({contactDescription}) => {
             {/* Follower Price */}
             <View style={styles.priceLineRow}>
               <View style={styles.priceTextWrap}>
-                <Text style={styles.priceValueBlack}>
+                <Text style={styles.priceValueWhite}>
                   ₹{item?.followerFee || 499}
                 </Text>
-                <Text style={styles.priceUnitSmall}>/{priceUnit}</Text>
+                <Text style={styles.priceUnitWhite}>/{priceUnit}</Text>
               </View>
               <View style={styles.followerBadge}>
                 <Text style={styles.followerBadgeText}>FOLLOWERS</Text>
@@ -147,7 +142,7 @@ const OtherProfileFeedPost = ({contactDescription}) => {
                 <Text style={styles.priceValueOrange}>
                   ₹{item?.subscriptionFee || 299}
                 </Text>
-                <Text style={styles.priceUnitSmallOrange}>/{priceUnit}</Text>
+                <Text style={styles.priceUnitOrange}>/{priceUnit}</Text>
               </View>
               <View style={styles.subscriberBadge}>
                 <Text style={styles.subscriberBadgeText}>SUBSCRIBERS</Text>
@@ -170,7 +165,7 @@ const OtherProfileFeedPost = ({contactDescription}) => {
             )}
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
     );
   };
 
@@ -180,7 +175,7 @@ const OtherProfileFeedPost = ({contactDescription}) => {
       keyExtractor={item => item.type}
       renderItem={card}
       contentContainerStyle={styles.listContainer}
-      style={{backgroundColor: '#fff'}}
+      style={{backgroundColor: '#0D0D0D'}}
       ItemSeparatorComponent={() => <View style={{marginVertical: 10}} />}
       ListHeaderComponent={() => {
         return (
@@ -198,13 +193,13 @@ const OtherProfileFeedPost = ({contactDescription}) => {
               style={{
                 width: '100%',
                 height: 6,
-                backgroundColor: '#ededed',
+                backgroundColor: '#171717',
                 marginBottom: 24,
                 marginTop: 0,
               }}
             />
             <Text style={[styles.title, {marginLeft: 24, marginBottom: 16}]}>
-              My Gigs
+              Contact Info
             </Text>
           </>
         );
@@ -217,19 +212,20 @@ export default OtherProfileFeedPost;
 
 const styles = StyleSheet.create({
   containerCategory: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     padding: 24,
   },
   title: {
     fontSize: 18,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     marginBottom: 8,
     fontFamily: 'Rubik-SemiBold',
+    lineHeight: 18,
   },
   descriptionText: {
     fontSize: 14,
-    color: '#1e1e1e',
-    lineHeight: 19,
+    color: '#FFFFFF',
+    lineHeight: 21,
     marginBottom: 8,
     fontFamily: 'Rubik-Regular',
   },
@@ -244,8 +240,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 24,
     marginHorizontal: 24,
+    backgroundColor: '#1C1C1C',
     borderWidth: 2,
-    borderColor: '#1E1E1E',
+    borderColor: '#212121',
     borderRadius: 16,
   },
 
@@ -253,20 +250,20 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: 6,
+    gap: 10,
     marginBottom: 22,
     width: '100%',
   },
   cardTitle: {
     fontSize: 16,
     fontFamily: 'Rubik-Bold',
-    color: '#101828',
+    color: '#FFFFFF',
     lineHeight: 16,
   },
   cardSubtitle: {
     fontSize: 12,
     fontFamily: 'Rubik-Regular',
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     lineHeight: 12,
   },
 
@@ -304,7 +301,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: 'Rubik-Regular',
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     lineHeight: 19,
   },
 
@@ -314,8 +311,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopWidth: 2,
+    borderTopColor: '#212121',
     width: '100%',
   },
 
@@ -332,69 +329,67 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
   },
-  priceValueBlack: {
-    fontSize: 13,
+  priceValueWhite: {
+    fontSize: 16,
     fontFamily: 'Rubik-Bold',
-    color: '#101828',
-    letterSpacing: -0.3,
-    lineHeight: 14,
+    color: '#FFFFFF',
+    letterSpacing: -0.4,
+    lineHeight: 16,
   },
-  priceUnitSmall: {
-    fontSize: 11,
-    fontFamily: 'Rubik-Medium',
-    color: '#101828',
-    lineHeight: 14,
+  priceUnitWhite: {
+    fontSize: 16,
+    fontFamily: 'Rubik-Bold',
+    color: '#FFFFFF',
+    letterSpacing: -0.4,
+    lineHeight: 16,
   },
   priceValueOrange: {
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: 'Rubik-Bold',
-    color: '#FF7D23',
-    letterSpacing: -0.3,
-    lineHeight: 14,
+    color: '#FFA86B',
+    letterSpacing: -0.4,
+    lineHeight: 16,
   },
-  priceUnitSmallOrange: {
-    fontSize: 11,
-    fontFamily: 'Rubik-Medium',
-    color: '#FF7D23',
-    lineHeight: 14,
+  priceUnitOrange: {
+    fontSize: 16,
+    fontFamily: 'Rubik-Bold',
+    color: '#FFA86B',
+    letterSpacing: -0.4,
+    lineHeight: 16,
   },
 
   // ── Badges ────────────────────────────────────────────
   followerBadge: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#1E1E1E',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   followerBadgeText: {
-    fontSize: 7,
+    fontSize: 9,
     fontFamily: 'Rubik-Bold',
-    color: '#6A7282',
-    letterSpacing: 0.2,
+    color: '#FFFFFF',
+    letterSpacing: 0.225,
     textTransform: 'uppercase',
-    lineHeight: 12,
+    lineHeight: 14,
   },
   subscriberBadge: {
     backgroundColor: 'rgba(255, 168, 107, 0.15)',
-    borderWidth: 1,
-    borderColor: '#1E1E1E',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   subscriberBadgeText: {
-    fontSize: 7,
+    fontSize: 9,
     fontFamily: 'Rubik-Bold',
     color: '#FFA86B',
-    letterSpacing: 0.2,
+    letterSpacing: 0.225,
     textTransform: 'uppercase',
-    lineHeight: 12,
+    lineHeight: 14,
   },
 
   // ── CTA Button ────────────────────────────────────────
@@ -402,14 +397,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     backgroundColor: '#FFA86B',
     borderWidth: 2,
-    borderColor: '#000000',
-    borderRadius: 12,
-    minWidth: 78,
-    height: 36,
+    borderColor: '#FF7819',
+    borderRadius: 14,
+    minWidth: 90,
+    height: 44,
     alignSelf: 'center',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
@@ -418,10 +413,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   ctaButtonText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Rubik-SemiBold',
     color: '#1E1E1E',
     textAlign: 'center',
-    lineHeight: 12,
+    lineHeight: 14,
   },
 });

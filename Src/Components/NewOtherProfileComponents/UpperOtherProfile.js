@@ -262,7 +262,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     console.log(userProfileDetails, '((((((099899999999');
 
     return (
-      <View style={[styles.userDetailContainer, userProfileDetails?.role === 'creator' ? { marginTop: responsiveWidth(10) } : { marginTop: responsiveWidth(8) }]}>
+      <View style={[styles.userDetailContainer, { backgroundColor: '#0D0D0D' }, userProfileDetails?.role === 'creator' ? { marginTop: responsiveWidth(10) } : { marginTop: responsiveWidth(8) }]}>
         <Text style={styles.name}>{userProfileDetails?.fullName}</Text>
 
         {/* User Name */}
@@ -287,25 +287,25 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               </View>
 
               {/* Followers */}
-              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#FFEDE0' : '#fff' }]}>
+              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D' }]}>
                 <View style={{ height: 16, width: 14 }}>
-                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{ flex: 1 }} />
+                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{ flex: 1, tintColor: '#FFFFFF' }} />
                 </View>
                 <Text style={styles.statText}>{userProfileDetails?.followers?.count?.followers}</Text>
               </Pressable>
 
               {/* Likes */}
-              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#FFEDE0' : '#fff' }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
+              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D' }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
                 <View style={{ height: 16, width: 17 }}>
-                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{ flex: 1 }} />
+                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{ flex: 1, tintColor: '#FFFFFF' }} />
                 </View>
                 <Text style={styles.statText}>{Math.round(tempRating)}</Text>
               </Pressable>
 
               {/* Share Button */}
-              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#FFEDE0' : '#fff' }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
+              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D' }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
                 <View style={{ height: 17, width: 22 }}>
-                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{ flex: 1 }} />
+                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{ flex: 1, tintColor: '#FFFFFF' }} />
                 </View>
               </Pressable>
             </View>
@@ -352,7 +352,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     const isOtherUserRole = userProfileDetails?.role !== 'creator' && userProfileDetails?.role !== 'admin';
 
     return (
-      <View style={[styles.bioContainer, isOtherUserRole && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
+      <View style={[styles.bioContainer, { backgroundColor: '#0D0D0D' }, isOtherUserRole && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
         {isOtherUserRole ? (
           <Text numberOfLines={2} style={[styles.bioText, {textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%'}]}>
             {bioText}
@@ -451,7 +451,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     if (!isFollowing) {
       return (
         <View style={[styles.btnContainer, { width: '100%', justifyContent: 'center' }]}>
-          <AnimatedButton title="Follow" style={[styles.subscribeButton]} buttonMargin={4} showOverlay={false} onPress={handleFollow} />
+          <AnimatedButton title="Follow" style={[styles.subscribeButton]} buttonMargin={4} showOverlay={false} onPress={handleFollow} isDark={true} />
         </View>
       );
     }
@@ -495,7 +495,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
 
         {/* Message Button (Centered) */}
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <AnimatedButton title="Message" style={[styles.messageButton]} buttonMargin={4} showOverlay={false} onPress={goChat} />
+          <AnimatedButton title="Message" style={[styles.messageButton]} buttonMargin={4} showOverlay={false} onPress={goChat} isDark={true} textStyle={{color: '#FFFFFF'}} />
         </View>
 
         {/* Three Dots Button (Right-Aligned) */}
@@ -518,7 +518,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
   }, [userProfileDetails, isFollowing, subscribed, loggedInUserRole]);
 
   return (
-    <View style={{ backgroundColor: '#fff' }}>
+    <View style={{ backgroundColor: '#0D0D0D' }}>
       <OtherProfilePicture displayName={userProfileDetails?.displayName} userId={userProfileDetails?._id} />
       <UserDetailMyProfile />
       <View style={{ flexDirection: 'column' }}>
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
   userNameTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#282828',
+    color: '#FFFFFF',
     marginRight: responsiveWidth(1),
     fontFamily: 'Rubik-SemiBold',
   },
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#1e1e1e',
+    borderColor: '#212121',
     borderWidth: 1.5,
     borderRadius: responsiveWidth(5),
     paddingVertical: Platform.OS === 'ios' ? 8 : 6,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     marginLeft: responsiveWidth(1),
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontSize: 13,
     fontFamily: 'Rubik-SemiBold',
     verticalAlign: 'middle',
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: 14,
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     lineHeight: 18,
   },
   seeMoreLess: {
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: 'Rubik-Regular',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     marginVertical: 6,
     textAlign: 'left',
   },
@@ -727,15 +727,15 @@ const styles = StyleSheet.create({
 
   subscribeButton: {
     backgroundColor: 'rgba(255, 168, 107, 1)',
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
     width: responsiveWidth(35),
     height: responsiveWidth(9.8),
     borderWidth: 2,
   },
 
   messageButton: {
-    backgroundColor: 'white',
-    borderColor: '#1e1e1e',
+    backgroundColor: '#1A1A1A',
+    borderColor: '#212121',
     borderWidth: 2,
     width: responsiveWidth(35),
     height: responsiveWidth(9.8),
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
 
   blockButton: {
     backgroundColor: '#FFA86B',
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
     borderWidth: 2,
     width: responsiveWidth(87.4),
     height: responsiveWidth(9.8),

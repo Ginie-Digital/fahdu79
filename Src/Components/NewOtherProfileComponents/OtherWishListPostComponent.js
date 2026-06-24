@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator} from 'react-native';
+import {StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator, TouchableOpacity} from 'react-native';
 import React, {useCallback, useRef, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useLazyGetWishListQuery, useLazyIsValidFollowQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
@@ -61,13 +61,7 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
 
   const renderWishListCard = useCallback(({item}) => {
     return (
-      <Pressable
-        onPress={() => handleDonation(item)}
-        android_ripple={{color: '#f3f3f3'}}
-        style={({pressed}) => [
-          styles.cardWrapper,
-          {backgroundColor: pressed ? '#fff9f5' : '#ffffff'},
-        ]}>
+      <View style={styles.cardWrapper}>
         <View style={styles.imageContainer}>
           <Image allowDownscaling placeholder={require('../../../Assets/Images/WishlistDefault.jpg')} source={{uri: item?.images[0]?.url}} contentFit="cover" placeholderContentFit="cover" style={styles.image} />
         </View>
@@ -79,18 +73,8 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
         <View style={styles.cardBottomView}>
           <View style={styles.cardBottomViewUpper}>
             <Text style={styles.smallTexts}>Fund Raised</Text>
-            <Text style={[styles.smallTexts, {flexDirection: 'row'}]}>
+            <Text style={styles.smallTexts}>
               {Number(item?.totalCollected).toLocaleString('en-IN')}/{Number(item?.listedCoinsRequired).toLocaleString('en-IN')}
-              <Image
-                source={require('../../../Assets/Images/Coin.png')}
-                style={{
-                  height: responsiveWidth(3.5),
-                  width: responsiveWidth(3.5),
-                  resizeMode: 'contain',
-                  alignSelf: 'center',
-                  marginRight: responsiveWidth(1),
-                }}
-              />
             </Text>
           </View>
 
@@ -100,23 +84,38 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
               paddingHorizontal: responsiveWidth(2),
               marginTop: responsiveWidth(4),
             }}>
-            <ProgressBar borderWidth={0} height={responsiveWidth(3)} unfilledColor={'#f2f2f2'} width={responsiveWidth(91)} progress={item?.totalCollected / item?.listedCoinsRequired} color={'#e0383e'} />
+            <ProgressBar 
+              borderWidth={0} 
+              height={responsiveWidth(3)} 
+              unfilledColor={'#2A2A2A'} 
+              width={responsiveWidth(84)} 
+              progress={item?.totalCollected / item?.listedCoinsRequired} 
+              color={'#FF7819'} 
+              borderRadius={6}
+            />
           </View>
+
+          <TouchableOpacity
+            style={styles.supportButton}
+            onPress={() => handleDonation(item)}
+            activeOpacity={0.8}>
+            <Text style={styles.supportButtonText}>Support Now</Text>
+          </TouchableOpacity>
         </View>
-      </Pressable>
+      </View>
     );
   }, [handleDonation]);
 
   if (loading) {
     return (
-      <View style={{flex: 1, backgroundColor: '#fff', marginTop: responsiveWidth(10)}}>
+      <View style={{flex: 1, backgroundColor: '#0D0D0D', marginTop: responsiveWidth(10)}}>
         <WishlistShimmer />
       </View>
     );
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: '#fff'}}>
+    <View style={{flex: 1, backgroundColor: '#0D0D0D'}}>
       <Tabs.FlatList data={wishList} renderItem={renderWishListCard} numColumns={1} keyExtractor={item => item?._id} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: responsiveWidth(6), paddingBottom: responsiveWidth(20)}} />
     </View>
   );
@@ -127,10 +126,11 @@ export default OtherWishListPostComponent;
 const styles = StyleSheet.create({
   cardWrapper: {
     borderWidth: 2,
+    borderColor: '#212121',
     overflow: 'hidden',
     marginTop: responsiveWidth(6),
     borderRadius: responsiveWidth(2),
-    backgroundColor: '#fff',
+    backgroundColor: '#1C1C1C',
   },
   imageContainer: {
     width: '100%', // Ensure the container takes the full width
@@ -147,23 +147,24 @@ const styles = StyleSheet.create({
   },
   wishtitle: {
     fontFamily: 'Rubik-Bold',
-    color: '#282828',
+    color: '#FFFFFF',
     textAlign: 'left',
     fontSize: responsiveFontSize(2.2),
     marginTop: responsiveWidth(4),
     marginLeft: responsiveWidth(2),
+    marginRight: responsiveWidth(2),
   },
   description: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.8),
     marginLeft: responsiveWidth(2),
+    marginRight: responsiveWidth(2),
     marginTop: responsiveWidth(2),
-    color: '#282828',
+    color: '#9E9E9E',
   },
   cardBottomView: {
     // borderWidth : 1,
     marginTop: responsiveWidth(4),
-    height: responsiveWidth(16),
   },
   cardBottomViewUpper: {
     // borderWidth : 1,
@@ -174,7 +175,26 @@ const styles = StyleSheet.create({
   },
   smallTexts: {
     fontSize: responsiveFontSize(1.6),
-    color: '#282828',
+    color: '#E0E0E0',
     fontFamily: 'Rubik-Bold',
+  },
+  supportButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: responsiveWidth(2),
+    marginTop: responsiveWidth(4),
+    marginBottom: responsiveWidth(4),
+    backgroundColor: '#FFA86B',
+    borderWidth: 2,
+    borderColor: '#FF7819',
+    borderRadius: 14,
+    height: responsiveWidth(12),
+  },
+  supportButtonText: {
+    fontSize: responsiveFontSize(1.8),
+    fontFamily: 'Rubik-Bold',
+    color: '#1E1E1E',
+    textAlign: 'center',
   },
 });

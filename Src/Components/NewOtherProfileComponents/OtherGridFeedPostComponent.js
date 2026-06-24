@@ -165,10 +165,10 @@ const OtherGridFeedPostComponent = ({ toCallApiInfo }) => {
       numColumns={3}
       onEndReached={loadMore}
       onEndReachedThreshold={0.5}
-      ListFooterComponent={() => isFetchingMore ? <View style={{ padding: 20 }}><ActivityIndicator size="small" color="#000" /></View> : null}
+      ListFooterComponent={() => isFetchingMore ? <View style={{ padding: 20 }}><ActivityIndicator size="small" color="#FFA86B" /></View> : null}
       contentContainerStyle={{
         paddingBottom: 200,
-        backgroundColor: '#fff',
+        backgroundColor: '#0D0D0D',
       }}
     />
   );
@@ -178,7 +178,7 @@ export default OtherGridFeedPostComponent;
 
 const styles = StyleSheet.create({
   gridView: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
   },
   gridEachImageContainer: {
     width: '100%',

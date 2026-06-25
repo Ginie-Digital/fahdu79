@@ -208,14 +208,14 @@ const EditProfiler = ({route, navigation}) => {
           <Text style={styles.fieldName}>Full Name</Text>
           <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'fullName' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: '#292929', borderRadius: 14}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, errors.fullName && styles.inputError]}>
               <TextInput
-                selectionHandleColor={'#ffa86b'}
+                selectionHandleColor={'#FFA86B'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                cursorColor={'#FFA86B'}
+                placeholderTextColor="#555555"
                 placeholder="Enter Your Full Name"
                 spellCheck={false}
                 autoCorrect={false}
@@ -240,14 +240,14 @@ const EditProfiler = ({route, navigation}) => {
           <Text style={styles.fieldName}>Username</Text>
           <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'userName' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: '#292929', borderRadius: 14}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, errors.userName && styles.inputError]}>
               <TextInput
-                selectionHandleColor={'#ffa86b'}
+                selectionHandleColor={'#FFA86B'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                cursorColor={'#FFA86B'}
+                placeholderTextColor="#555555"
                 placeholder="Enter Your Username"
                 spellCheck={false}
                 autoCorrect={false}
@@ -275,14 +275,14 @@ const EditProfiler = ({route, navigation}) => {
         <>
           <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'bio' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: '#292929', borderRadius: 14}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, errors.bio && styles.inputError]}>
               <TextInput
-                selectionHandleColor={'#ffa86b'}
+                selectionHandleColor={'#FFA86B'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                cursorColor={'#FFA86B'}
+                placeholderTextColor="#555555"
                 placeholder="Enter Bio"
                 spellCheck={false}
                 autoCorrect={false}
@@ -308,7 +308,7 @@ const EditProfiler = ({route, navigation}) => {
                 maxLength={characterLimits.bio}
               />
               <Text style={styles.characterCount}>
-                {bio?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.bio}</Text>
+                {bio?.length || 0}/<Text style={{color: '#FFA86B'}}>{characterLimits.bio}</Text>
               </Text>
             </View>
           </View>
@@ -321,14 +321,14 @@ const EditProfiler = ({route, navigation}) => {
           <Text style={styles.fieldName}>What's your role?</Text>
           <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'descriptionHeading' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: '#292929', borderRadius: 14}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, errors.descriptionHeading && styles.inputError]}>
               <TextInput
-                selectionHandleColor={'#ffa86b'}
+                selectionHandleColor={'#FFA86B'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                cursorColor={'#FFA86B'}
+                placeholderTextColor="#555555"
                 placeholder="Heading (e.g., Dance Creator)"
                 spellCheck={false}
                 autoCorrect={false}
@@ -353,14 +353,14 @@ const EditProfiler = ({route, navigation}) => {
           <Text style={styles.fieldName}>Describe your role</Text>
           <View style={{position: 'relative', marginTop: responsiveWidth(2), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'description' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: '#292929', borderRadius: 14}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, errors.description && styles.inputError]}>
               <TextInput
-                selectionHandleColor={'#ffa86b'}
+                selectionHandleColor={'#FFA86B'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                cursorColor={'#FFA86B'}
+                placeholderTextColor="#555555"
                 placeholder="Description to show your skills and interests!"
                 spellCheck={false}
                 autoCorrect={false}
@@ -382,7 +382,7 @@ const EditProfiler = ({route, navigation}) => {
               />
 
               <Text style={styles.characterCount}>
-                {description?.length || 0}/<Text style={{color: '#1e1e1e'}}>{characterLimits.description}</Text>
+                {description?.length || 0}/<Text style={{color: '#FFA86B'}}>{characterLimits.description}</Text>
               </Text>
             </View>
           </View>
@@ -390,7 +390,7 @@ const EditProfiler = ({route, navigation}) => {
         </>
       )}
 
-      <AnimatedButton title={'Save'} loading={loading} onPress={() => onSave()} />
+      <AnimatedButton isDark={true} title={'Save'} loading={loading} onPress={() => onSave()} />
     </View>
   );
 };
@@ -400,57 +400,57 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     paddingTop: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
   },
 
   heading: {
     fontFamily: 'Rubik-Bold',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontSize: 24,
   },
   subHead: {
     width: responsiveWidth(90),
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    color: '#9E9E9E',
     fontSize: 14,
     marginTop: 10,
   },
   subHeadHighlight: {
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     fontSize: 14,
   },
   fieldName: {
     marginTop: responsiveWidth(5.5),
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     fontSize: responsiveFontSize(1.97),
   },
   textInputContainer: {
     borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderRadius: responsiveWidth(3.73),
     paddingLeft: responsiveWidth(5.33),
     width: '100%',
     marginTop: responsiveWidth(2),
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
   },
   textInputs: {
     fontSize: responsiveFontSize(1.8),
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     flex: 1,
     height: responsiveHeight(6.65),
     borderRadius: responsiveWidth(3.73),
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
   },
   characterCount: {
     textAlign: 'right',
     fontSize: 14,
     fontFamily: 'Rubik-Regular',
-    color: '#888',
+    color: '#555555',
     alignSelf: 'flex-end',
     marginRight: responsiveWidth(4),
     marginBottom: responsiveWidth(4),
@@ -459,12 +459,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#E74C3C',
+    color: '#FF6B6B',
     marginTop: 4,
     marginLeft: responsiveWidth(2),
   },
   inputError: {
-    borderColor: '#E74C3C',
+    borderColor: '#FF6B6B',
     borderWidth: 1.5,
   },
 });

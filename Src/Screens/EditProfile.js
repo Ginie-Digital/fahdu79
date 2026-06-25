@@ -252,9 +252,9 @@ const EditProfile = ({route}) => {
   };
 
   return (
-    <GestureHandlerRootView style={{flex: 1, backgroundColor: '#fff'}}>
+    <GestureHandlerRootView style={{flex: 1, backgroundColor: '#0D0D0D'}}>
       <KeyboardAwareScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1, paddingBottom: 60}} keyboardDismissMode="interactive">
-        <MyProfilePicture setRefresh={setRefresh} isEditable={true} />
+        <MyProfilePicture setRefresh={setRefresh} isEditable={true} isDark={true} />
 
         <PersonalDetailsCard fullName={fullName} username={userName} emailAddress={emailAddress} errors={errors} />
 
@@ -287,7 +287,7 @@ const EditProfile = ({route}) => {
           )}
 
           <View style={{padding: 24, paddingTop: 0}}>
-            <AnimatedButton title={'View Profile'} buttonMargin={0} onPress={() => navigate('chatRoomTab', {screen: 'profile'})} />
+            <AnimatedButton isDark={true} title={'View Profile'} buttonMargin={0} onPress={() => navigate('chatRoomTab', {screen: 'profile'})} />
           </View>
         </View>
       </KeyboardAwareScrollView>
@@ -299,12 +299,12 @@ export default EditProfile;
 
 const styles = StyleSheet.create({
   detailContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
   },
   section: {
     padding: 24,
     borderTopWidth: 6,
-    borderColor: '#EDEDED',
+    borderColor: '#1A1A1A',
   },
   headerRow: {
     flexDirection: 'row',
@@ -314,41 +314,41 @@ const styles = StyleSheet.create({
   heading: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 18,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   subheading: {
     fontFamily: 'Rubik-Medium',
     fontSize: 16,
-    color: '#1e1e1e',
+    color: '#E0E0E0',
     marginTop: 8,
   },
   editButton: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.8),
-    color: '#007AFF',
+    color: '#FFA86B',
   },
   textContent: {
     fontFamily: 'Rubik-Regular',
     fontSize: 16,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     lineHeight: 20,
     marginTop: 8,
   },
   input: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.6),
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#2A2A2A',
     borderRadius: responsiveWidth(1),
     padding: responsiveWidth(2),
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1A1A1A',
   },
   counter: {
     textAlign: 'right',
     marginTop: responsiveWidth(1),
     fontFamily: 'Rubik-Regular',
-    color: '#888',
+    color: '#555555',
     fontSize: responsiveFontSize(1.4),
   },
   cardContainer: {
@@ -364,20 +364,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontFamily: 'Rubik-SemiBold',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   edit: {
     fontSize: 12,
-    color: '#1e1e1e',
+    color: '#FFA86B',
     fontFamily: 'Rubik-Regular',
     textDecorationLine: 'underline',
   },
   card: {
-    backgroundColor: '#FFF3EB',
+    backgroundColor: '#1A1A1A',
     padding: 20,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
     width: nTwins(89, 98.5),
     alignSelf: 'center',
     flexDirection: 'column',
@@ -391,19 +391,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#9E9E9E',
     fontFamily: 'Rubik-Regular',
   },
   value: {
     fontSize: 14,
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   // ✅ NEW: Error text style
   errorText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 11,
-    color: '#E74C3C',
+    color: '#FF6B6B',
     marginTop: 4,
   },
 });

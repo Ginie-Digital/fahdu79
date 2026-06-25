@@ -99,7 +99,7 @@ const AddSvg = ({ name, ...props }) => {
     case 'Following':
       return (
         <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
-          <Image source={require('./Assets/Images/Following.png')} style={{ width: responsiveWidth(5.5), height: responsiveWidth(5.5) }} resizeMode="contain" />
+          <Image source={require('./Assets/Images/Following.png')} style={{ width: responsiveWidth(5.5), height: responsiveWidth(5.5), tintColor: props.color }} resizeMode="contain" />
         </View>
       );
 
@@ -182,7 +182,7 @@ const AddSvg = ({ name, ...props }) => {
     case 'PositiveReview':
       return (
         <View style={[{height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center'}]}>
-          <Image source={require('./Assets/Images/review.png')} style={{width: responsiveWidth(5.5), height: responsiveWidth(5.5)}} resizeMode="contain" />
+          <Image source={require('./Assets/Images/review.png')} style={{width: responsiveWidth(5.5), height: responsiveWidth(5.5), tintColor: props.color}} resizeMode="contain" />
         </View>
       );
 

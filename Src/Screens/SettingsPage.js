@@ -247,26 +247,26 @@ const SettingsPage = () => {
   const RenderEachSettings = ({ item, index }) => {
     if (item.id === 7 || item.id === 40) {
       return (
-        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1) }}>
-          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#FFF3EB' : '#fff', justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
+        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1), borderTopColor: '#2A2A2A' }}>
+          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#292929' : '#0D0D0D', justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
               <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
-                <AccMang />
+                <AccMang color="#FFFFFF" />
               </View>
               <Text style={styles.title}>{item?.title}</Text>
             </View>
 
             <View>
-              <Drops />
+              <Drops color="#FFFFFF" />
             </View>
           </Pressable>
 
           {openRevenue && (
             <FlatList
-              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#EAEAEA' }} />}
+              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#2A2A2A' }} />}
               data={subRevenue}
               renderItem={({ item, index }) => (
-                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#FFF3EB' : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
+                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#292929' : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
                   <View
                     style={{
                       left: responsiveWidth(5),
@@ -274,12 +274,12 @@ const SettingsPage = () => {
                       alignItems: 'center',
                       gap: responsiveWidth(6),
                     }}>
-                    <AddSvg name={item?.iconName} />
+                    <AddSvg name={item?.iconName} color="#FFFFFF" />
                     <Text style={styles.title}>{item?.title}</Text>
                   </View>
                 </Pressable>
               )}
-              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#EAEAEA' }} />}
+              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#2A2A2A' }} />}
             />
           )}
         </View>
@@ -287,9 +287,9 @@ const SettingsPage = () => {
     }
 
     return (
-      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#FFF3EB' : '#fff' }]} onPress={() => handleSelectOption(item?.id)}>
+      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#292929' : '#0D0D0D' }]} onPress={() => handleSelectOption(item?.id)}>
         <View style={{ left: responsiveWidth(5), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
-          <AddSvg name={item?.iconName} />
+          <AddSvg name={item?.iconName} color="#FFFFFF" />
           <Text style={styles.title}>{item?.title}</Text>
         </View>
       </Pressable>
@@ -304,7 +304,7 @@ const SettingsPage = () => {
           keyExtractor={(item, index) => item + index}
           renderItem={({ item }) => (
             <View style={styles.eachSettingsWrapper}>
-              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: 'black' }} />} />
+              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: '#2A2A2A' }} />} />
             </View>
           )}
           renderSectionHeader={({ section: { title } }) => <Text style={styles.header}>{title}</Text>}
@@ -322,8 +322,8 @@ export default SettingsPage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderTopColor: '#282828',
+    backgroundColor: '#0D0D0D',
+    borderTopColor: '#2A2A2A',
 
     paddingHorizontal: responsiveWidth(2),
   },
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   header: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(2),
-    color: 'black',
+    color: '#FFFFFF',
     paddingLeft: responsiveWidth(2),
 
     //  marginBottom:responsiveWidth(.3),
@@ -356,14 +356,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(2),
-    color: '#282828',
+    color: '#FFFFFF',
     marginLeft: responsiveWidth(1),
   },
   eachSettingsWrapper: {
     backgroundColor: 'transparent',
-    marginTop: responsiveWidth(0.5),
     borderTopWidth: responsiveWidth(0.5),
     borderWidth: responsiveWidth(0.5),
+    borderColor: '#2A2A2A',
     borderRadius: responsiveWidth(5),
     width: responsiveWidth(90),
     left: responsiveWidth(2),

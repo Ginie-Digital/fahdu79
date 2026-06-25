@@ -104,7 +104,7 @@ const ConfirmSubscribeModal = ({code, userId, userName, coins}) => {
 
     visible && (
       <View style={styles.overlay}>
-        <BlurView intensity={15} style={styles.blurBackground} />
+        <BlurView intensity={15} tint="dark" style={styles.blurBackground} />
         <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{padding: 0, paddingTop: 0}}>
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
@@ -118,9 +118,9 @@ const ConfirmSubscribeModal = ({code, userId, userName, coins}) => {
                   style={({pressed}) => [
                     styles.button,
                     styles.noButton,
-                    {backgroundColor: pressed ? '#1e1e1e' : 'transparent'}, // background change
+                    {backgroundColor: pressed ? '#FFFFFF' : '#2A2A2A'},
                   ]}>
-                  {({pressed}) => <Text style={[styles.buttonText, {color: pressed ? '#fff' : '#000'}]}>Cancel</Text>}
+                  {({pressed}) => <Text style={[styles.buttonText, {color: pressed ? '#0D0D0D' : '#FFFFFF'}]}>Cancel</Text>}
                 </Pressable>
 
                 <Pressable
@@ -128,9 +128,9 @@ const ConfirmSubscribeModal = ({code, userId, userName, coins}) => {
                   style={({pressed}) => [
                     styles.button,
                     styles.yesButton,
-                    {backgroundColor: pressed ? '#1e1e1e' : styles.yesButton.backgroundColor || '#fff'}, // fallback if not defined
+                    {backgroundColor: pressed ? '#E06A10' : '#FFA86B'},
                   ]}>
-                  {({pressed}) => <Text style={[styles.buttonText, {color: pressed ? '#fff' : '#000'}]}>Pay</Text>}
+                  {({pressed}) => <Text style={[styles.buttonText, {color: '#1E1E1E'}]}>Pay</Text>}
                 </Pressable>
               </View>
             </View>
@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     alignSelf: 'center',
     padding: 32,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     width: responsiveWidth(88), // Adjusted for consistency
     height: responsiveWidth(44), // Adjusted for consistency
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-SemiBold',
     fontSize: FONT_SIZES['16'], // Adjust font size if needed
     textAlign: 'center',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     width: '100%', // Ensure the text container takes full width
     flexShrink: 1, // Prevent text from wrapping
   },
@@ -197,17 +197,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: Platform.OS === 'android' ? 6 : 8,
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#2A2A2A',
   },
   yesButton: {
-    backgroundColor: '#ffa86b',
+    backgroundColor: '#FFA86B',
   },
   noButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2A2A2A',
   },
   buttonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
 });

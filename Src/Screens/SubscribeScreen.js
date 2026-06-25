@@ -11,7 +11,7 @@ import { formatIndianNumber, padios, WIDTH_SIZES } from '../../DesiginData/Utili
 import AnimatedButton from '../Components/AnimatedButton';
 import { navigate } from '../../Navigation/RootNavigation';
 
-const colorArray = ['#F0F7FF', '#F0FEF1', '#FEFDF1', '#FFF0F0'];
+const colorArray = ['#1A2332', '#1A2B1A', '#2B2A1A', '#2B1A1A'];
 
 const SubscribeScreen = ({ route }) => {
   const [getCreatorsPlan] = useLazyGetCreatorsPlanQuery();
@@ -94,12 +94,14 @@ const SubscribeScreen = ({ route }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: '#0D0D0D' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.chatRoomContainer}>
         <View style={{ position: 'relative', width: responsiveWidth(28), alignSelf: 'center' }}>
-          <View style={styles.overlayImage} />
           <View style={[styles.profilePicBox, { overflow: 'hidden' }]}>
-            <Image source={route?.params?.profileImageUrl ? { uri: route?.params?.profileImageUrl } : require('../../Assets/Images/DefaultProfile.jpg')} style={{ width: '100%', height: '100%' }} />
+            <Image
+              source={route?.params?.profileImageUrl ? { uri: route?.params?.profileImageUrl } : require('../../Assets/Images/DefaultProfile.jpg')}
+              style={{ width: '100%', height: '100%', borderRadius: responsiveWidth(14) - 3 }}
+            />
           </View>
           <View style={styles.verifyContainer}>
             <Image cachePolicy="memory-disk" source={require('../../Assets/Images/verify.png')} contentFit="contain" style={{ width: '100%', height: '100%' }} />
@@ -111,55 +113,70 @@ const SubscribeScreen = ({ route }) => {
         </View>
 
         <View style={styles.listContainer}>
-          <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 20, color: '#1e1e1e' }}>Subscription Fee</Text>
-          <Text style={{ fontFamily: 'Rubik-Regular', fontSize: 12, color: '#1e1e1e' }}>Full Access to the Exclusive Content</Text>
+          <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 20, color: '#FFFFFF' }}>Subscription Fee</Text>
+          <Text style={{ fontFamily: 'Rubik-Regular', fontSize: 12, color: '#FFFFFF' }}>Full Access to the Exclusive Content</Text>
 
           <FlatList
             data={subscriptionPlans}
             scrollEnabled={false}
-            renderItem={({ item, index }) =>
-              item.active && (
-                <TouchableOpacity
-                  style={[styles.eachDescriptionContainer, index === 0 ? { marginTop: responsiveWidth(4) } : {}, { backgroundColor: colorArray[index] }, selected === index ? { backgroundColor: '#FFA07A' } : null]}
-                  key={item?._id}
-                  disabled={!item?.active}
-                  onPress={() =>
-                    handleSelect({
-                      userId: route?.params?.id,
-                      code: item?.code,
-                      index,
-                      amount: item?.amount,
-                      discount: item?.discount,
-                    })
-                  }>
-                  <View style={{ flexBasis: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={[styles.descriptionTitle]}>{item?.name}</Text>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
-                      <Text style={styles.amountStyle}>{`${item?.amount}`}</Text>
-                      <Image
-                        source={require('../../Assets/Images/Coins2.png')}
-                        style={{
-                          height: responsiveWidth(5),
-                          width: responsiveWidth(5),
-                          resizeMode: 'contain',
-                          alignSelf: 'center',
-                          marginRight: responsiveWidth(1),
-                        }}
-                      />
+            renderItem={({ item, index }) => {
+              const isSelected = selected === index;
+              return (
+                item.active && (
+                  <TouchableOpacity
+                    style={[
+                      styles.eachDescriptionContainer,
+                      index === 0 ? { marginTop: responsiveWidth(4) } : {},
+                      {
+                        backgroundColor: isSelected ? '#FFA86B' : '#212121',
+                        borderColor: isSelected ? '#FF7819' : '#292929',
+                        borderTopLeftRadius: index < 2 ? 0 : 14,
+                      }
+                    ]}
+                    key={item?._id}
+                    disabled={!item?.active}
+                    onPress={() =>
+                      handleSelect({
+                        userId: route?.params?.id,
+                        code: item?.code,
+                        index,
+                        amount: item?.amount,
+                        discount: item?.discount,
+                      })
+                    }>
+                    <View style={{ flexBasis: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text style={[styles.descriptionTitle, { color: isSelected ? '#1E1E1E' : '#FFFFFF' }]}>
+                        {item?.name}
+                      </Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+                        <Text style={[styles.amountStyle, { color: isSelected ? '#000000' : '#FFFFFF' }]}>
+                          {`${item?.amount}`}
+                        </Text>
+                        <Image
+                          source={require('../../Assets/Images/Coins2.png')}
+                          style={{
+                            height: responsiveWidth(5),
+                            width: responsiveWidth(5),
+                            resizeMode: 'contain',
+                            alignSelf: 'center',
+                            marginRight: responsiveWidth(1),
+                          }}
+                        />
+                      </View>
                     </View>
-                  </View>
 
-                  <View style={[styles.offerView]}>
-                    <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 8, color: '#1e1e1e' }}>{item.discount + '% Off'}</Text>
-                  </View>
-                </TouchableOpacity>
-              )
-            }
+                    <View style={[styles.offerView, { borderColor: isSelected ? '#FF7819' : '#292929' }]}>
+                      <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 8, color: '#FFFFFF' }}>{item.discount + '% Off'}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              );
+            }}
           />
         </View>
 
         {Platform.OS !== 'android' && (
-          <AnimatedButton title={!doHavePlan ? 'No Plans Found' : 'Pay Now'} loading={loading} disabled={!doHavePlan} onPress={handlePayment} />
+          <AnimatedButton isDark={true} title={!doHavePlan ? 'No Plans Found' : 'Pay Now'} loading={loading} disabled={!doHavePlan} onPress={handlePayment} />
         )}
 
         <Pressable style={{ position: 'relative', marginTop: 40 }} onPress={() => navigate('chooseWallet')}>
@@ -176,6 +193,7 @@ const SubscribeScreen = ({ route }) => {
                       resizeMode: 'contain',
                       alignSelf: 'center',
                       marginRight: responsiveWidth(1),
+                      tintColor: '#FFFFFF',
                     }}
                   />
                 </View>
@@ -210,21 +228,23 @@ export default SubscribeScreen;
 
 const styles = StyleSheet.create({
   chatRoomContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     paddingTop: responsiveWidth(4),
     paddingHorizontal: 24,
     paddingBottom: 40, // add extra bottom padding for scrollable area
   },
   profilePicBox: {
-    borderWidth: 2,
     height: responsiveWidth(28),
     width: responsiveWidth(28),
     alignSelf: 'center',
-    borderRadius: 14,
+    borderRadius: responsiveWidth(14),
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: '#1e1e1e',
     zIndex: 2,
+    backgroundColor: '#121212',
+    borderWidth: 1.72,
+    borderColor: '#1E1E1E',
+    padding: 3,
   },
   userNameContainer: {
     width: responsiveWidth(80),
@@ -236,18 +256,17 @@ const styles = StyleSheet.create({
   text: {
     fontSize: responsiveFontSize(2.3),
     fontFamily: 'Lexend-Bold',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   eachDescriptionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginVertical: responsiveWidth(1),
-    borderWidth: WIDTH_SIZES['1.5'],
+    borderWidth: 1.5,
     width: '100%',
     alignSelf: 'center',
     borderRadius: 14,
-    borderTopLeftRadius: 0,
     height: 54,
     paddingTop: 19,
     paddingBottom: 19,
@@ -256,26 +275,29 @@ const styles = StyleSheet.create({
   },
   descriptionTitle: {
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontSize: 14,
   },
   amountStyle: {
-    fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
+    fontFamily: 'Rubik-SemiBold',
+    color: '#FFFFFF',
     fontSize: 14,
     marginRight: responsiveWidth(1),
   },
   listContainer: {
     padding: 21,
-    borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    backgroundColor: '#1C1C1C',
+    borderWidth: 2,
+    borderColor: '#212121',
     borderStyle: 'dashed',
     borderRadius: 20,
     marginTop: 24,
   },
   offerView: {
-    backgroundColor: '#fff',
-    ...StyleSheet.absoluteFill,
+    backgroundColor: '#1C1C1C',
+    position: 'absolute',
+    left: 0,
+    top: 0,
     height: 16,
     width: 54,
     borderRadius: 18,
@@ -284,17 +306,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    borderWidth: 1.5,
     borderLeftWidth: 0,
     borderTopWidth: 0,
   },
   walletParent: {
     width: '100%',
     height: 54,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
     zIndex: 1,
     borderRadius: 14,
     flexDirection: 'row',
@@ -305,10 +326,10 @@ const styles = StyleSheet.create({
   walletOverlay: {
     width: '100%',
     height: 54,
-    backgroundColor: '#C5FFA1',
+    backgroundColor: '#FF7819',
     position: 'absolute',
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
     left: 5,
     top: 5,
     borderRadius: 14,
@@ -318,22 +339,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  overlayImage: {
-    position: 'absolute',
-    height: responsiveWidth(28),
-    width: responsiveWidth(28),
-    backgroundColor: '#fff',
-    borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
-    top: 4,
-    left: 4,
-    borderRadius: 18,
-  },
   verifyContainer: {
     width: 20,
     height: 20,
     zIndex: 4,
-    bottom: 12,
-    left: '90%',
+    left: '75%',
+    top: '-20%',
   },
 });

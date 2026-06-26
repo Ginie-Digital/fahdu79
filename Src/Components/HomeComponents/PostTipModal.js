@@ -151,15 +151,15 @@ const PostTipModal = () => {
           dispatch(customTipAmount({amount: 10}));
             dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
           }}>
-            <DIcon provider={'Entypo'} name={'cross'} color={'#000'} size={responsiveFontSize(3.5)} />
+            <DIcon provider={'Entypo'} name={'cross'} color={'#FFFFFF'} size={responsiveFontSize(3.5)} />
           </TouchableOpacity>
         </View>
         <View style={styles.tipContainer}>
           <View style={styles.tipCounterContainer}>
             <View style={styles.sendTipInputContainer}>
               {tipAmount >= 0 && tipAmount < 10 && (
-                <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: '#EAEAEA', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
-                  <Text style={{fontSize: 10, color: '#666', fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
+                <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: '#2A2A2A', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
+                <Text style={{fontSize: 10, color: '#FFA86B', fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
                 </Animated.View>
               )}
               <View style={styles.leftAction}>
@@ -181,8 +181,8 @@ const PostTipModal = () => {
                     dispatch(decreaseTipAmount());
                     triggerImpactHeavy();
                   }}>
-                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#ff6961'}]}>
-                    <DIcon provider={'Entypo'} name={'minus'} size={18} />
+                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#2A2A2A'}]}>
+                    <DIcon provider={'Entypo'} name={'minus'} size={18} color={'#FFFFFF'} />
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity 
@@ -191,8 +191,8 @@ const PostTipModal = () => {
                     dispatch(increaseTipAmount());
                     triggerImpactHeavy();
                   }}>
-                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#bafca2'}]}>
-                    <DIcon provider={'Entypo'} name={'plus'} size={18} />
+                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#FFA86B', borderColor: '#FF7819'}]}>
+                    <DIcon provider={'Entypo'} name={'plus'} size={18} color={'#000000'} />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -216,15 +216,17 @@ const PostTipModal = () => {
                   padding: responsiveWidth(1),
                   width: responsiveWidth(25),
                   backgroundColor: pressed ? '#FFA86B' : 'transparent',
-                })}>
+                  borderColor: '#2A2A2A',
+                })}
+              >
                 <Paisa />
-                <Text style={{color: 'black'}}>{amount}</Text>
+                <Text style={{color: '#FFFFFF'}}>{amount}</Text>
               </Pressable>
             ))}
           </View>
 
           <View style={{width: responsiveWidth(78), alignSelf: 'center', marginTop: responsiveWidth(6)}}>
-            <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} />
+            <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} isDark={true} />
           </View>
         </View>
       </View>
@@ -235,7 +237,7 @@ const PostTipModal = () => {
 const styles = StyleSheet.create({
   modalInnerWrapper: {
     width: responsiveWidth(100),
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     alignSelf: 'center',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
   },
   sendTipText: {
     fontFamily: 'Rubik-Bold',
-    color: 'black',
+    color: '#FFFFFF',
     fontSize: responsiveFontSize(2.3),
   },
   loginButton: {
@@ -305,7 +307,7 @@ const styles = StyleSheet.create({
     marginTop: responsiveWidth(4),
   },
   plusMinusButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     zIndex: 2,
     elevation: 2,
   },
@@ -316,7 +318,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: responsiveWidth(2),
-    borderColor: '#282828',
+    borderColor: '#2A2A2A',
   },
   leftAction: {
     width: 'auto',
@@ -337,10 +339,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: responsiveWidth(80),
-    borderColor: '#282828',
+    borderColor: '#2A2A2A',
     height: responsiveWidth(14),
     borderRadius: responsiveWidth(3),
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: '#1A1A1A', 
     overflow: 'hidden', 
     zIndex: 1,
     elevation: 1,
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
   amountInput: {
     flex: 1,
     textAlign: 'left',
-    color: '#282828',
+    color: '#FFFFFF',
     fontFamily: 'MabryPro-Regular',
     fontSize: responsiveFontSize(2.2),
     paddingLeft: responsiveWidth(3),

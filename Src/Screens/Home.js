@@ -55,7 +55,7 @@ const PlaceHolder = ({ text }) => {
       <Text
         style={{
           fontFamily: 'MabryPro-Regular',
-          color: '#282828',
+          color: '#9E9E9E',
           fontSize: responsiveFontSize(2),
         }}>
         {text}
@@ -68,7 +68,7 @@ const PlaceHolder = ({ text }) => {
 
 const SocialPostRender = memo(({ item, index, token }) => <PostCards item={item} index={index} token={token} />);
 
-const FeedItemSeparator = () => <View style={{ backgroundColor: '#E9E9E9', height: 4 }} />;
+const FeedItemSeparator = () => <View style={{ backgroundColor: '#1A1A1A', height: 4 }} />;
 
 const Home = () => {
   const token = useSelector(state => state.auth.user.token);
@@ -445,14 +445,14 @@ const Home = () => {
         <Text
           style={{
             fontFamily: 'MabryPro-Bold',
-            color: '#282828',
+            color: '#9E9E9E',
             textAlign: 'center',
           }}>
           You're all caught up!
         </Text>
       );
     } else {
-      return <ActivityIndicator size={'large'} color={'#e7e8ea'} />;
+      return <ActivityIndicator size={'large'} color={'#555555'} />;
     }
   };
 
@@ -509,7 +509,7 @@ export default Home;
 const styles = StyleSheet.create({
   homeContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderTopColor: '#282828',
+    backgroundColor: '#0D0D0D',
+    borderTopColor: '#2A2A2A',
   },
 });

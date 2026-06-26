@@ -217,12 +217,12 @@ const CreateCommentBottomSheet = () => {
 
   const NoComments = useMemo(() => (
     <View style={{alignItems: 'center', marginTop: responsiveWidth(25), paddingHorizontal: 40}}>
-      <View style={{backgroundColor: '#F8F8F8', padding: 24, borderRadius: 100, marginBottom: 24, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2}}>
+      <View style={{backgroundColor: '#1A1A1A', padding: 24, borderRadius: 100, marginBottom: 24, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2}}>
         <DIcon provider={'Feather'} name={'zap'} size={40} color="#FFA86B" />
       </View>
-      <Text style={{fontFamily: 'Rubik-Bold', fontSize: 22, color: '#262626', textAlign: 'center'}}>The spotlight is yours</Text>
-      <Text style={{fontFamily: 'Rubik-Regular', fontSize: 14, color: '#8E8E8E', marginTop: 10, textAlign: 'center', lineHeight: 22}}>Don't just watch from the sidelines. Be the first to share your thoughts and stand out to your favorite creator.</Text>
-      <TouchableOpacity onPress={() => inputRef.current?.focus()} style={{marginTop: 24, backgroundColor: '#262626', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25}}>
+      <Text style={{fontFamily: 'Rubik-Bold', fontSize: 22, color: '#FFFFFF', textAlign: 'center'}}>The spotlight is yours</Text>
+      <Text style={{fontFamily: 'Rubik-Regular', fontSize: 14, color: '#9E9E9E', marginTop: 10, textAlign: 'center', lineHeight: 22}}>Don't just watch from the sidelines. Be the first to share your thoughts and stand out to your favorite creator.</Text>
+      <TouchableOpacity onPress={() => inputRef.current?.focus()} style={{marginTop: 24, backgroundColor: '#FFA86B', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25}}>
         <Text style={{fontFamily: 'Rubik-Medium', fontSize: 14, color: '#fff'}}>Start the conversation</Text>
       </TouchableOpacity>
     </View>
@@ -259,12 +259,12 @@ const CreateCommentBottomSheet = () => {
                   <Text
                     style={{
                       fontFamily: 'Rubik-Bold',
-                      color: '#1A1A1A',
+                      color: '#FFFFFF',
                       fontSize: 14,
                     }}>
                     {item?.displayName}
                   </Text>
-                  <Text style={{color: '#B0B0B0', fontSize: 14, marginBottom: 2}}>•</Text>
+                  <Text style={{color: '#555555', fontSize: 14, marginBottom: 2}}>•</Text>
                   <Text style={styles.timiming}>
                     {(() => {
                       if (!item?.createdAt) return '';
@@ -285,7 +285,7 @@ const CreateCommentBottomSheet = () => {
 
               <Text
                 style={{
-                  color: '#262626',
+                  color: '#E0E0E0',
                   fontFamily: 'Rubik-Regular',
                   fontSize: 14,
                   lineHeight: 20,
@@ -319,19 +319,19 @@ const CreateCommentBottomSheet = () => {
         onChange={handleSheetChanges}
         enablePanDownToClose={true}
         enableDynamicSizing={false}
-        backgroundStyle={{backgroundColor: '#fff'}}
+        backgroundStyle={{backgroundColor: '#0D0D0D'}}
         android_keyboardInputMode="adjustResize"
         keyboardBehavior="interactive"
         topInset={insets.top}
         containerStyle={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}
         style={{borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden'}}
-        handleIndicatorStyle={{backgroundColor: '#D9D9D9', width: 40}}>
+        handleIndicatorStyle={{backgroundColor: '#555555', width: 40}}>
         <View style={styles.contentContainer}>
-          <View style={{paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F5F5F5'}}>
+          <View style={{paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1A1A1A'}}>
             <Text
               style={{
                 fontFamily: 'Rubik-Bold',
-                color: '#262626',
+                color: '#FFFFFF',
                 fontSize: 18,
               }}>
               Comments
@@ -349,7 +349,7 @@ const CreateCommentBottomSheet = () => {
                   flex: 1,
                   paddingTop: responsiveWidth(2),
                   borderTopWidth: 1.5,
-                  borderColor: '#e9e9e9',
+                  borderColor: '#2A2A2A',
                   paddingLeft: responsiveWidth(2),
                 }}
                 data={comments}
@@ -365,7 +365,7 @@ const CreateCommentBottomSheet = () => {
 
               {commentLoader && (
                 <View style={{position: 'absolute', bottom: 80, alignSelf: 'center'}}>
-                  <ActivityIndicator size="small" color="#1e1e1e" />
+                  <ActivityIndicator size="small" color="#FFA86B" />
                 </View>
               )}
             </>
@@ -374,14 +374,14 @@ const CreateCommentBottomSheet = () => {
 
         <View style={[styles.bottomCommentBoxContainer, {
           borderTopWidth: 1,
-          borderTopColor: '#F0F0F0',
+          borderTopColor: '#1A1A1A',
           paddingHorizontal: 20,
           paddingBottom: isKeyboardVisible
             ? (Platform.OS === 'ios' ? 40 : keyboardHeight + 35)
             : (Platform.OS === 'ios' ? 40 : 20),
           alignItems: 'center'
         }]}>
-          <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#262626', marginBottom: 2}]} onPress={() => gotomyprofile()}>
+          <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#2A2A2A', marginBottom: 2}]} onPress={() => gotomyprofile()}>
             <Image source={{uri: loggedInUser?.currentUserProfilePicture}} resizeMethod="resize" style={[styles.profileImage, {borderRadius: 18}]} />
           </TouchableOpacity>
 
@@ -396,14 +396,14 @@ const CreateCommentBottomSheet = () => {
               placeholder="Add a Comment..."
               selectionHandleColor={'#ffa86b'}
               selectionColor={selectionTwin()}
-              cursorColor={'#1e1e1e'}
+              cursorColor={'#FFA86B'}
             />
 
             <TouchableOpacity onPress={handleDoComment} disabled={!text.trim() || doCommentLoader} style={{paddingLeft: 10, height: 44, justifyContent: 'center', alignItems: 'center'}}>
               {doCommentLoader ? (
-                <ActivityIndicator size="small" color={'#1E1E1E'} />
+                <ActivityIndicator size="small" color={'#FFA86B'} />
               ) : (
-                <DIcon provider={'Feather'} name={'send'} size={24} color={text.trim().length > 0 ? '#1E1E1E' : '#D1D1D1'} />
+                <DIcon provider={'Feather'} name={'send'} size={24} color={text.trim().length > 0 ? '#FFA86B' : '#555555'} />
               )}
             </TouchableOpacity>
           </View>
@@ -416,7 +416,7 @@ export default CreateCommentBottomSheet;
 
 const styles = StyleSheet.create({
   contentContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     height: '100%',
     flex: 2,
   },
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(2),
   },
   profileImageContainer: {
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
     height: 36,
     width: 36,
     borderRadius: 18,
@@ -452,13 +452,13 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontFamily: 'Rubik-SemiBold',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontSize: responsiveFontSize(1.5),
   },
   status: {
     fontSize: responsiveFontSize(1.6),
     letterSpacing: 0.5,
-    color: '#1e1e1e',
+    color: '#9E9E9E',
     fontFamily: 'Rubik-Regular',
   },
   cardHeaderWrapper: {
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
     paddingVertical: responsiveWidth(3),
     paddingHorizontal: responsiveWidth(4),
     borderRadius: responsiveWidth(2),
@@ -474,11 +474,11 @@ const styles = StyleSheet.create({
   likeCommentText: {
     fontFamily: 'Rubik-Medium',
     marginLeft: responsiveWidth(1),
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   eachSortByModalListText: {
     fontSize: responsiveFontSize(2),
-    color: '#1e1e1e',
+    color: '#FFFFFF',
 
     fontFamily: 'Rubik-Bold',
   },
@@ -516,21 +516,21 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 42,
     fontFamily: 'Rubik-Regular',
-    backgroundColor: '#F6F6F6',
+    backgroundColor: '#1A1A1A',
     fontSize: 14,
-    color: '#262626',
+    color: '#FFFFFF',
     borderRadius: 22,
     paddingHorizontal: 16,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#2A2A2A',
   },
   textInput: {
     height: '100%',
     width: responsiveWidth(70),
     fontFamily: 'Rubik-Regular',
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
 });

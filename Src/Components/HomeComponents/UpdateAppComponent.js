@@ -65,7 +65,7 @@ export default memo(UpdateAppComponent);
 const styles = StyleSheet.create({
   container: {
     height: responsiveWidth(15),
-    backgroundColor: "white",
+    backgroundColor: "#1A1A1A",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

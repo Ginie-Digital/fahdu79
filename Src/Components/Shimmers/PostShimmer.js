@@ -54,14 +54,15 @@ const PostShimmer = () => {
 const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
+    backgroundColor: '#0D0D0D',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    elevation: 0, // Shadow for Android
-    shadowColor: '#000', // Shadow for iOS
+    elevation: 0,
+    shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
@@ -74,33 +75,33 @@ const styles = StyleSheet.create({
   profilePic: {
     width: 40,
     height: 40,
-    borderRadius: 20, // Circle shape
-    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    backgroundColor: '#2A2A2A',
     marginRight: 12,
   },
   header: {
     height: 40,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#2A2A2A',
     borderRadius: 4,
-    flex: 1, // Take remaining space
+    flex: 1,
   },
   title: {
     height: 30,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#2A2A2A',
     borderRadius: 4,
     marginBottom: 12,
-    width: '100%', // Title is smaller than the full width
+    width: '100%',
   },
   post: {
     height: 250,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#2A2A2A',
     borderRadius: 8,
     marginBottom: 12,
     width: '100%',
   },
   footer: {
     height: 25,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#2A2A2A',
     borderRadius: 4,
     width: '90%',
   },

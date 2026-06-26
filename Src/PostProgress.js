@@ -61,7 +61,7 @@ export default function PostProgress() {
               <Image source={{uri: previewUrl}} style={styles.image} />
               <View style={{flex: 1}}>
                 <ShimmerText>{`Uploading to ${displayName}`}</ShimmerText>
-                <Progress.Bar progress={Number(progress) / 100} width={null} height={4} borderRadius={6} color="#FFA86B" borderColor="#eee" unfilledColor="#eee" style={{marginTop: 6}} />
+                <Progress.Bar progress={Number(progress) / 100} width={null} height={4} borderRadius={6} color="#FFA86B" borderColor="#2A2A2A" unfilledColor="#2A2A2A" style={{marginTop: 6}} />
               </View>
             </View>
           )}
@@ -90,7 +90,7 @@ export default function PostProgress() {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 22,
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
   },
   row: {
     flexDirection: 'row',
@@ -102,12 +102,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 8,
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
   },
   text: {
     fontSize: 16,
     fontFamily: 'Rubik-SemiBold',
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     // fontWeight: '500',
   },
   button: {
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
   },
   btnText: {
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     fontFamily: 'Rubik-SemiBold',
     fontSize: 12,
   },

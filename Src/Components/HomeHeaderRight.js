@@ -29,14 +29,14 @@ const HomeHeaderRight = () => {
     <View style={styles.wrapper}>
       <TouchableOpacity onPress={() => navigate('notifications')}>
         <View style={styles.iconContainer}>
-          <Image source={require('../../Assets/Images/notification.png')} contentFit="contain" style={{flex: 1}} />
+          <Image source={require('../../Assets/Images/notification.png')} contentFit="contain" style={{flex: 1, tintColor: '#FFFFFF'}} />
         </View>
       </TouchableOpacity>
 
       {postCardType === 'normal' ? (
         <TouchableOpacity onPress={() => handleHomeBottomSheetOpener('3Bars')}>
           <View style={styles.iconContainer}>
-            <Image source={require('../../Assets/Images/hamBurger.png')} contentFit="contain" style={{flex: 1}} />
+            <Image source={require('../../Assets/Images/hamBurger.png')} contentFit="contain" style={{flex: 1, tintColor: '#FFFFFF'}} />
           </View>
         </TouchableOpacity>
       ) : (

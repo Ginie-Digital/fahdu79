@@ -35,6 +35,8 @@ const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
                     buttonMargin={0}
                     style={styles.animatedButtonStyle}
                     disableAnimation={true}
+                    isDark={true}
+                    textStyle={{ fontFamily: 'Rubik-Bold', fontSize: 12, color: '#000000' }}
                 />
             </View>
 
@@ -47,16 +49,17 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         marginBottom: 16,
         marginTop: 8,
-        padding: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 9,
         borderRadius: 16,
         borderWidth: 1.5,
         borderStyle: 'dashed',
-        borderColor: '#1e1e1e',
-        backgroundColor: '#FFFFFF',
+        borderColor: '#FFA86B',
+        backgroundColor: '#1C1C1C',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 12
+        height: 60,
     },
     leftSection: {
         flexDirection: 'row',
@@ -69,29 +72,32 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#1e1e1e',
+        borderColor: '#212121',
     },
     username: {
         fontSize: 16,
-        color: "#1e1e1e",
-        fontFamily: 'Rubik-Bold'
+        color: "#FFFFFF",
+        fontFamily: 'Rubik-Bold',
+        lineHeight: 16,
     },
     subtitle: {
         fontSize: 12,
-        color: '#1e1e1e',
+        color: '#FFFFFF',
         fontFamily: 'Rubik-Medium',
-        lineHeight: 14
+        lineHeight: 12,
+        marginTop: 6,
     },
     joinButtonContainer: {
-        width: responsiveWidth(25),
-        height: 45,
+        width: 79,
+        height: 40,
         justifyContent: 'center',
     },
     animatedButtonStyle: {
         height: 40,
-        borderColor: '#1e1e1e',
-        marginTop: 11,
-        borderWidth: 1.5
+        backgroundColor: '#FFA86B',
+        borderColor: '#FF7819',
+        borderWidth: 1.5,
+        borderRadius: 12,
     },
 
 });

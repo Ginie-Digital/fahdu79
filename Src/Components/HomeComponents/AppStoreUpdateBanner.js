@@ -156,7 +156,7 @@ const AppStoreUpdateBanner = () => {
           style={styles.dismissButton}
           onPress={handleDismiss}
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Feather name="x" size={16} color="#71717A" />
+          <Feather name="x" size={16} color="#555555" />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#1A1A1A',
     marginHorizontal: responsiveWidth(3),
     marginTop: responsiveWidth(2),
     marginBottom: responsiveWidth(1),
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#2A2A2A',
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 1},
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#18181B',
+    backgroundColor: '#FFA86B',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.6),
-    color: '#18181B',
+    color: '#FFFFFF',
     letterSpacing: -0.1,
   },
   subtitle: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.35),
-    color: '#71717A',
+    color: '#9E9E9E',
     marginTop: 1,
   },
   actions: {
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   updateButton: {
-    backgroundColor: '#18181B',
+    backgroundColor: '#FFA86B',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,

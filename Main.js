@@ -1056,7 +1056,7 @@ const Main = () => {
 
   return (
     <View style={styles.SafeAreaViewStyle}>
-      <StatusBar backgroundColor={'#fff'} barStyle={'dark-content'} />
+      <StatusBar backgroundColor={'#0D0D0D'} barStyle={'light-content'} />
       <StackNavigation />
       <FlashMessage position="top" />
       <ReLoginModal />

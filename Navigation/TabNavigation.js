@@ -103,14 +103,13 @@ const TabNavigation = () => {
             gestureEnabled: false,
             headerShadowVisible: false,
             headerBackTitleVisible: false,
-            headerStyle: { backgroundColor: '#fff' }, //#f9e4d1  e0c1de
             headerBackVisible: false,
             headerLeft: () => <ChatRoomHeaderLeft />,
             headerRight: () => <HomeHeaderRight />,
             headerBackButtonMenuEnabled: false,
             tabBarHideOnKeyboard: true,
             headerStyle: {
-              backgroundColor: '#fff',
+              backgroundColor: '#0D0D0D',
             },
           }}
         />

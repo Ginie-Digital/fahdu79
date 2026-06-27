@@ -12,6 +12,10 @@ import Loader from '../Components/Loader';
 import AnimatedButton from '../Components/AnimatedButton';
 import {navigate} from '../../Navigation/RootNavigation';
 import {nTwins} from '../../DesiginData/Utility';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {Image} from 'expo-image';
+import {LoginPageErrors, chatRoomSuccess} from '../Components/ErrorSnacks';
+import {updateEditProfile} from '../../Redux/Slices/NormalSlices/AuthSlice';
 
 const regex = /^[\w](?!.*?\.{2})[\w.]{1,28}[\w]$/;
 
@@ -66,8 +70,10 @@ const EditProfile = ({route}) => {
   const [updateProfile] = useUpdateProfileMutation({});
   const [userProfile] = useLazyUserProfileQuery({refetchOnFocus: true});
   const token = useSelector(state => state.auth.user.token);
+  const userInfo = useSelector(state => state.auth.user);
   const navigation = useNavigation();
   const creatorOrUser = useSelector(state => state.auth.user.role);
+  const dispatch = useDispatch();
 
   const [bio, setBio] = useState('');
   const [fullName, setFullName] = useState('');
@@ -158,7 +164,7 @@ const EditProfile = ({route}) => {
     const newErrors = {
       fullName: validateFullName(fullName),
       userName: validateUsername(userName),
-      email: validateEmail(emailAddress),
+      email: isUser ? '' : validateEmail(emailAddress),
       bio: validateBio(bio),
       categoryHeader: validateCategoryHeader(categoryHeader),
       categoryDescription: validateCategoryDescription(categoryDescription),
@@ -178,18 +184,80 @@ const EditProfile = ({route}) => {
 
         console.log(data, 'User Edit profile Data');
 
-        setBio(data?.aboutUser);
-        setFullName(data?.fullName);
-        setUserName(data?.displayName);
-        setEmailAddress(data?.email);
-        setCategoryDescription(data?.categoryDescription);
-        setCategoryHeader(data?.categoryHeader);
+        setBio(data?.aboutUser || '');
+        setFullName(data?.fullName || '');
+        setUserName(data?.displayName || '');
+        setEmailAddress(data?.email || '');
+        setCategoryDescription(data?.categoryDescription || '');
+        setCategoryHeader(data?.categoryHeader || '');
         setScreenLoading(false);
       }
 
       getSettingProfile();
-    }, []),
+    }, [token, userProfile]),
   );
+
+  const handleDiscard = () => {
+    navigation.goBack();
+  };
+
+  const handleSave = () => {
+    if (!validateAllFields()) {
+      LoginPageErrors('Please fix the errors before saving');
+      return;
+    }
+
+    setLoading(true);
+    const data = {
+      fullName,
+      displayName: userName,
+      aboutUser: bio,
+    };
+
+    updateProfile({token, data}).then(e => {
+      if (e?.error?.status === 'FETCH_ERROR') {
+        LoginPageErrors('Please check your network');
+        setLoading(false);
+      } else {
+        if (!e?.error) {
+          if (e?.data?.statusCode === 200) {
+            chatRoomSuccess('Successfully updated your profile!');
+            dispatch(
+              updateEditProfile({
+                currentUserDisplayName: e?.data?.data?.displayName,
+                currentUserFullName: e?.data?.data?.fullName,
+                aboutUser: e?.data?.data?.aboutUser,
+                categoryHeader: e?.data?.data?.categoryHeader,
+                categoryDescription: e?.data?.data?.categoryDescription,
+              }),
+            );
+            setLoading(false);
+            navigation.goBack();
+          }
+        } else {
+          LoginPageErrors(e?.error?.data?.message || 'Update failed');
+          setLoading(false);
+        }
+      }
+    });
+  };
+
+  const handlePictureChange = useCallback(async type => {
+    const mediaInfo = await launchImageLibrary({mediaType: 'photo', selectionLimit: 1});
+
+    if (!mediaInfo.didCancel) {
+      const image = mediaInfo?.assets[0];
+
+      if (image?.fileSize > 6 * 1024 * 1024) {
+        LoginPageErrors('Selected image exceeds 6MB limit. Please choose a smaller image.');
+        return;
+      }
+
+      navigation.navigate('cropViewScreen', {uri: image?.uri, type: type});
+    } else {
+      console.log('User Canceled the selection');
+    }
+  }, [navigation]);
 
   if (screenLoading) {
     return <Loader />;
@@ -253,6 +321,111 @@ const EditProfile = ({route}) => {
       });
     }
   };
+
+  if (isUser) {
+    return (
+      <GestureHandlerRootView style={{flex: 1, backgroundColor: colors.background}}>
+        <KeyboardAwareScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1, paddingBottom: 40}} keyboardDismissMode="interactive">
+          
+          {/* Centered Profile Picture with Pencil Edit Button */}
+          <View style={{alignSelf: 'center', marginTop: 32, marginBottom: 24}}>
+            <View style={[styles.userProfilePicContainer, {backgroundColor: isDark ? '#121212' : '#FFFFFF', borderColor: '#1E1E1E'}]}>
+              <Image
+                placeholder={require('../../Assets/Images/DefaultProfile.jpg')}
+                source={userInfo?.currentUserProfilePicture ? {uri: userInfo?.currentUserProfilePicture} : require('../../Assets/Images/DefaultProfile.jpg')}
+                style={styles.userProfilePic}
+                resizeMethod="resize"
+                contentFit="contain"
+              />
+            </View>
+            <Pressable
+              onPress={() => handlePictureChange('Profile')}
+              style={[styles.userEditIconContainer, {backgroundColor: isDark ? '#121212' : '#FFFFFF', borderColor: '#1E1E1E'}]}
+            >
+              <Image source={require('../../Assets/Images/ChangeProfile.png')} style={[styles.userEditIcon, isDark && {tintColor: '#FFFFFF'}]} />
+            </Pressable>
+          </View>
+
+          {/* Form Fields */}
+          <View style={styles.userFormContainer}>
+            <Text style={[styles.userLabel, {color: colors.text}]}>Full Name*</Text>
+            <View style={[styles.userInputContainer, {backgroundColor: isDark ? '#1A1A1A' : '#FFF9F6', borderColor: isDark ? '#2A2A2A' : '#000000'}, errors.fullName && styles.userInputError]}>
+              <TextInput
+                style={[styles.userTextInput, {color: colors.text}]}
+                value={fullName}
+                onChangeText={t => {
+                  setFullName(t);
+                  if (errors.fullName) setErrors(prev => ({...prev, fullName: ''}));
+                }}
+                placeholder="Enter Full Name"
+                placeholderTextColor={colors.placeholder}
+              />
+            </View>
+            {errors.fullName ? <Text style={styles.userErrorText}>{errors.fullName}</Text> : null}
+
+            <Text style={[styles.userLabel, {color: colors.text, marginTop: 20}]}>Username*</Text>
+            <View style={[styles.userInputContainer, {backgroundColor: isDark ? '#1A1A1A' : '#FFF9F6', borderColor: isDark ? '#2A2A2A' : '#000000'}, errors.userName && styles.userInputError]}>
+              <TextInput
+                style={[styles.userTextInput, {color: colors.text}]}
+                value={userName}
+                onChangeText={t => {
+                  setUserName(t);
+                  if (errors.userName) setErrors(prev => ({...prev, userName: ''}));
+                }}
+                placeholder="Enter Username"
+                placeholderTextColor={colors.placeholder}
+                autoCapitalize="none"
+              />
+            </View>
+            {errors.userName ? <Text style={styles.userErrorText}>{errors.userName}</Text> : null}
+
+            <Text style={[styles.userLabel, {color: colors.text, marginTop: 20}]}>Bio*</Text>
+            <View style={[styles.userInputContainer, {height: 120, alignItems: 'flex-start', paddingTop: 12, backgroundColor: isDark ? '#1A1A1A' : '#FFF9F6', borderColor: isDark ? '#2A2A2A' : '#000000'}, errors.bio && styles.userInputError]}>
+              <TextInput
+                style={[styles.userTextInput, {color: colors.text, height: '100%', width: '100%', textAlignVertical: 'top'}]}
+                value={bio}
+                onChangeText={t => {
+                  let sanitized = t.replace(/\n{3,}/g, '\n\n');
+                  if ((sanitized.match(/\n/g) || []).length > 1) {
+                    return; // limit return lines to 1
+                  }
+                  setBio(sanitized);
+                  if (errors.bio) setErrors(prev => ({...prev, bio: ''}));
+                }}
+                placeholder="Enter Bio"
+                placeholderTextColor={colors.placeholder}
+                multiline
+                maxLength={60}
+              />
+            </View>
+            {errors.bio ? <Text style={styles.userErrorText}>{errors.bio}</Text> : null}
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.userButtonContainer}>
+            <TouchableOpacity
+              style={[styles.userDiscardButton, {backgroundColor: isDark ? '#171717' : '#FFFFFF', borderColor: isDark ? '#1F1F1F' : '#1E1E1E'}]}
+              onPress={handleDiscard}
+            >
+              <Text style={[styles.userDiscardButtonText, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]}>Discard Changes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.userSaveButton, {backgroundColor: '#FFA86B', borderColor: isDark ? '#FF7819' : '#1E1E1E'}, loading && {opacity: 0.7}]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#1E1E1E" />
+              ) : (
+                <Text style={[styles.userSaveButtonText, {color: '#1E1E1E'}]}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{flex: 1, backgroundColor: colors.background}}>
@@ -408,5 +581,104 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#FF6B6B',
     marginTop: 4,
+  },
+  
+  // User role specific styles
+  userProfilePicContainer: {
+    width: 119,
+    height: 119,
+    borderRadius: 59.5,
+    borderWidth: 1.71852,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userProfilePic: {
+    width: 112.56,
+    height: 112.56,
+    borderRadius: 56.28,
+  },
+  userEditIconContainer: {
+    position: 'absolute',
+    left: 82,
+    top: 92,
+    borderWidth: 2.025,
+    borderRadius: 13.5,
+    width: 27,
+    height: 27,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  userEditIcon: {
+    height: 12,
+    width: 12,
+    resizeMode: 'contain',
+  },
+  userFormContainer: {
+    paddingHorizontal: 24,
+    marginTop: 10,
+  },
+  userLabel: {
+    fontSize: 14,
+    fontFamily: 'Rubik-SemiBold',
+    marginBottom: 8,
+  },
+  userInputContainer: {
+    borderWidth: 2,
+    borderRadius: 12,
+    height: 48,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+  },
+  userInputError: {
+    borderColor: '#FF5252',
+  },
+  userTextInput: {
+    fontSize: 14,
+    fontFamily: 'Rubik-Medium',
+    padding: 0,
+  },
+  userErrorText: {
+    fontSize: 12,
+    fontFamily: 'Rubik-Regular',
+    color: '#FF5252',
+    marginTop: 4,
+  },
+  userButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    marginTop: 30,
+    marginBottom: 40,
+  },
+  userDiscardButton: {
+    flex: 1,
+    height: 48,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  userDiscardButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 14,
+  },
+  userSaveButton: {
+    flex: 1,
+    height: 48,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  userSaveButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 14,
   },
 });

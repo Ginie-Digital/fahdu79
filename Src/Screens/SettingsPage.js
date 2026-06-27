@@ -16,7 +16,10 @@ import Revenue from '../../Assets/svg/revenue.svg';
 import Drops from '../../Assets/svg/dd.svg';
 import Purchases from 'react-native-purchases';
 import AccMang from '../../Assets/svg/accountManagement.svg';
+import { useAppTheme } from '../Hook/useAppTheme';
+
 const SettingsPage = () => {
+  const { colors } = useAppTheme();
   const [getUserProfileDetailsApi, { error: getUserProfileError }] = useLazyCreatorProfileQuery({ refetchOnFocus: true });
 
   const [userProfileDetails, setUserProfileDetails] = useState({});
@@ -247,26 +250,26 @@ const SettingsPage = () => {
   const RenderEachSettings = ({ item, index }) => {
     if (item.id === 7 || item.id === 40) {
       return (
-        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1), borderTopColor: '#2A2A2A' }}>
-          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#292929' : '#0D0D0D', justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
+        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1), borderTopColor: colors.border }}>
+          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.pressed : colors.background, justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
               <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
-                <AccMang color="#FFFFFF" />
+                <AccMang color={colors.text} />
               </View>
-              <Text style={styles.title}>{item?.title}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>{item?.title}</Text>
             </View>
 
             <View>
-              <Drops color="#FFFFFF" />
+              <Drops color={colors.text} />
             </View>
           </Pressable>
 
           {openRevenue && (
             <FlatList
-              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#2A2A2A' }} />}
+              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: colors.border }} />}
               data={subRevenue}
               renderItem={({ item, index }) => (
-                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#292929' : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
+                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.pressed : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
                   <View
                     style={{
                       left: responsiveWidth(5),
@@ -274,12 +277,12 @@ const SettingsPage = () => {
                       alignItems: 'center',
                       gap: responsiveWidth(6),
                     }}>
-                    <AddSvg name={item?.iconName} color="#FFFFFF" />
-                    <Text style={styles.title}>{item?.title}</Text>
+                    <AddSvg name={item?.iconName} color={colors.text} />
+                    <Text style={[styles.title, { color: colors.text }]}>{item?.title}</Text>
                   </View>
                 </Pressable>
               )}
-              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: '#2A2A2A' }} />}
+              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: colors.border }} />}
             />
           )}
         </View>
@@ -287,27 +290,27 @@ const SettingsPage = () => {
     }
 
     return (
-      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? '#292929' : '#0D0D0D' }]} onPress={() => handleSelectOption(item?.id)}>
+      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.pressed : colors.background }]} onPress={() => handleSelectOption(item?.id)}>
         <View style={{ left: responsiveWidth(5), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
-          <AddSvg name={item?.iconName} color="#FFFFFF" />
-          <Text style={styles.title}>{item?.title}</Text>
+          <AddSvg name={item?.iconName} color={colors.text} />
+          <Text style={[styles.title, { color: colors.text }]}>{item?.title}</Text>
         </View>
       </Pressable>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.settingsContainer}>
         <SectionList
           sections={role === 'creator' ? settingsList : userSettingList}
           keyExtractor={(item, index) => item + index}
           renderItem={({ item }) => (
-            <View style={styles.eachSettingsWrapper}>
-              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: '#2A2A2A' }} />} />
+            <View style={[styles.eachSettingsWrapper, { borderColor: colors.border }]}>
+              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: colors.border }} />} />
             </View>
           )}
-          renderSectionHeader={({ section: { title } }) => <Text style={styles.header}>{title}</Text>}
+          renderSectionHeader={({ section: { title } }) => <Text style={[styles.header, { color: colors.text }]}>{title}</Text>}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
           contentContainerStyle={{ paddingTop: WIDTH_SIZES['10'], paddingBottom: responsiveWidth(20) }}

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, Pressable, ScrollView, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, Pressable, ScrollView } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { googleSignIn, signOutGoogle, appleSignIn } from '../../../OAuth';
@@ -13,11 +13,11 @@ import { nTwins, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import ChevronLoader from '../../ChevronLoader';
 import AlertBox from '../../AlertBox';
 import { toggleAlertModal, toggleShowOnboarding, toggleVerficationScreen } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const LoginHome = () => {
   const dispatcher = useDispatch();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   const [authToken, setAuthToken] = useState('');
   const [type, setType] = useState(false);
@@ -69,25 +69,25 @@ const LoginHome = () => {
     }
   };
 
-  // Dark mode dynamic styles
+  // Dark/Light mode dynamic styles
   const dynamicStyles = {
-    pageBackground: isDark ? '#121212' : '#fff',
-    headingColor: isDark ? '#FFFFFF' : '#282828',
-    descriptionColor: isDark ? '#4D4D4D' : '#282828',
-    socialButtonBg: isDark ? '#171717' : undefined,
-    socialButtonBorder: isDark ? '#1F1F1F' : '#1e1e1e',
-    socialButtonText: isDark ? '#FFFFFF' : '#1e1e1e',
-    socialButtonPressedBg: isDark ? '#2a2a2a' : '#1e1e1e',
-    socialButtonPressedText: isDark ? '#FFFFFF' : '#fff',
-    loginButtonBg: '#FFA86B',
+    pageBackground: colors.background,
+    headingColor: colors.text,
+    descriptionColor: colors.textSecondary,
+    socialButtonBg: colors.inputBg,
+    socialButtonBorder: colors.border,
+    socialButtonText: colors.text,
+    socialButtonPressedBg: colors.pressed,
+    socialButtonPressedText: colors.text,
+    loginButtonBg: colors.accent,
     loginButtonPressedBg: isDark ? '#e08f53' : '#fff',
     loginButtonText: isDark ? '#000000' : '#1e1e1e',
-    loginButtonBorder: isDark ? '#FF7819' : '#1e1e1e',
+    loginButtonBorder: colors.accentBorder,
     loginButtonBorderWidth: isDark ? 2 : responsiveWidth(0.4),
-    signupButtonBg: isDark ? '#171717' : undefined,
-    signupButtonBorder: isDark ? '#1F1F1F' : '#1e1e1e',
-    signupButtonText: isDark ? '#FFFFFF' : '#1e1e1e',
-    signupButtonPressedBg: isDark ? '#2a2a2a' : '#FFA86B',
+    signupButtonBg: colors.background,
+    signupButtonBorder: colors.border,
+    signupButtonText: colors.text,
+    signupButtonPressedBg: colors.pressed,
   };
 
   return (

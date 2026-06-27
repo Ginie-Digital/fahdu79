@@ -1,16 +1,16 @@
 import React from 'react';
-import {View, Text, StyleSheet, Modal, Pressable, useColorScheme} from 'react-native';
+import {View, Text, StyleSheet, Modal, Pressable} from 'react-native';
 import {BlurView} from 'expo-blur';
 import {useSelector} from 'react-redux';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {logoutExplicit} from '../../../AutoLogout';
 import {Image} from 'expo-image';
 import {WIDTH_SIZES, FONT_SIZES} from '../../../DesiginData/Utility';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const ReLoginModal = () => {
   const visible = useSelector(state => state.hideShow.visibility.relogin);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   if (!visible) return null;
 
@@ -19,10 +19,10 @@ const ReLoginModal = () => {
       <View style={styles.overlay}>
         <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.blurBackground} />
         <View style={[styles.card, {
-          backgroundColor: isDark ? '#121212' : '#FFFFFF',
+          backgroundColor: colors.background,
           borderWidth: isDark ? 0 : 2,
           borderStyle: isDark ? undefined : 'dashed',
-          borderColor: isDark ? undefined : '#1E1E1E',
+          borderColor: colors.border,
         }]}>
           <View style={styles.content}>
             {/* Icon Container */}
@@ -40,10 +40,10 @@ const ReLoginModal = () => {
 
             {/* Text Section */}
             <View style={styles.textSection}>
-              <Text style={[styles.title, {color: isDark ? '#FFFFFF' : '#121212'}]}>
+              <Text style={[styles.title, {color: colors.text}]}>
                 Session Ended
               </Text>
-              <Text style={[styles.description, {color: isDark ? '#999999' : '#666666'}]}>
+              <Text style={[styles.description, {color: colors.textSecondary}]}>
                 Your account has been logged in on another device. For security reasons, you have
                 been logged out from this session.
               </Text>
@@ -55,11 +55,11 @@ const ReLoginModal = () => {
               style={({pressed}) => [
                 styles.button,
                 {
-                  backgroundColor: isDark ? '#FFFFFF' : '#121212',
+                  backgroundColor: colors.text,
                   opacity: pressed ? 0.85 : 1,
                 },
               ]}>
-              <Text style={[styles.buttonText, {color: isDark ? '#121212' : '#FFFFFF'}]}>
+              <Text style={[styles.buttonText, {color: colors.background}]}>
                 Log In Again
               </Text>
             </Pressable>

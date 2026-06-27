@@ -7,6 +7,7 @@ import { useLazyNewCreatorsQuery, useLazyTrendingCreatorsQuery } from '../../Red
 import { WIDTH_SIZES } from '../../DesiginData/Utility';
 import { navigate } from '../../Navigation/RootNavigation';
 import { useIsFocused } from '@react-navigation/native';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const { width } = Dimensions.get('window');
 
@@ -17,6 +18,7 @@ const DiscoverFeed = ({ niche, tab }) => {
   const [hasMore, setHasMore] = useState(true);
 
   const isFocused = useIsFocused();
+  const { colors, isDark } = useAppTheme();
 
   // Get token from Redux
   const token = useSelector(state => state.auth.user.token);
@@ -126,13 +128,64 @@ const DiscoverFeed = ({ niche, tab }) => {
 
     return (
       <View style={styles.cardWrapper}>
-        <TouchableOpacity style={[styles.card, isSelected && styles.cardSelected]} onPress={() => handleGoToOthersProfile(item.displayName, item?._id)}>
+        <TouchableOpacity
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.card : '#FFF',
+              borderColor: isDark ? colors.border : '#fff3eb',
+              borderRadius: isDark ? 14 : 16,
+              shadowColor: isDark ? '#000' : '#fff3eb',
+              shadowOpacity: isDark ? 0.2 : 0.1,
+            },
+            isSelected && {
+              borderColor: isDark ? '#FF7819' : '#ffa86b',
+              backgroundColor: isDark ? 'rgba(255, 168, 107, 0.15)' : '#ffeee1',
+            },
+          ]}
+          onPress={() => handleGoToOthersProfile(item.displayName, item?._id)}
+        >
           <View style={styles.imageContainer}>
-            <Image source={{ uri: item.profile_image?.url }} style={styles.profile} contentFit="cover" />
+            <Image
+              source={{ uri: item.profile_image?.url }}
+              style={[
+                styles.profile,
+                {
+                  width: isDark ? 80 : 70,
+                  height: isDark ? 80 : 70,
+                  borderRadius: isDark ? 40 : 35,
+                },
+              ]}
+              contentFit="cover"
+            />
             {/* Online Indicator on image */}
-            <View style={[styles.onlineDot, { backgroundColor: item.is_online ? '#03DA32' : '#FF2727' }]} />
+            <View
+              style={[
+                styles.onlineDot,
+                {
+                  top: isDark ? 76 : 67,
+                  right: isDark ? 18 : 22,
+                  width: isDark ? 8 : 12,
+                  height: isDark ? 8 : 12,
+                  borderRadius: isDark ? 4 : 6,
+                  borderWidth: isDark ? 1.5 : WIDTH_SIZES['1.5'],
+                  borderColor: isDark ? colors.background : '#1e1e1e',
+                  backgroundColor: item.is_online ? '#03DA32' : '#FF2727',
+                },
+              ]}
+            />
           </View>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text
+            style={[
+              styles.name,
+              {
+                color: isDark ? colors.text : '#1e1e1e',
+                fontSize: isDark ? 14 : 13,
+                ...(isDark ? { lineHeight: 16 } : {}),
+              },
+            ]}
+            numberOfLines={1}
+          >
             {item.displayName}
           </Text>
         </TouchableOpacity>
@@ -156,7 +209,7 @@ const DiscoverFeed = ({ niche, tab }) => {
   if (allCreators.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No creators found</Text>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No creators found</Text>
       </View>
     );
   }

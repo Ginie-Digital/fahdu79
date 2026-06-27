@@ -8,6 +8,7 @@ import {setPostsCardType, toggleCreatePostBottomSheet, toggleHomeBottomSheet} fr
 import {navigate} from '../../Navigation/RootNavigation';
 import AddSvg from '../../AddSvg';
 import Ham from '../../Assets/svg/ham.svg';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const HomeHeaderRight = () => {
   const dispatch = useDispatch();
@@ -15,6 +16,7 @@ const HomeHeaderRight = () => {
   const loggedUserInfo = useSelector(state => state.auth.user);
 
   const postCardType = useSelector(state => state.hideShow.visibility.postCardType);
+  const { colors } = useAppTheme();
 
   const handleHomeBottomSheetOpener = type => {
     console.log('[BS_DEBUG][HeaderRight] handleHomeBottomSheetOpener called, type =', type);
@@ -29,14 +31,14 @@ const HomeHeaderRight = () => {
     <View style={styles.wrapper}>
       <TouchableOpacity onPress={() => navigate('notifications')}>
         <View style={styles.iconContainer}>
-          <Image source={require('../../Assets/Images/notification.png')} contentFit="contain" style={{flex: 1, tintColor: '#FFFFFF'}} />
+          <Image source={require('../../Assets/Images/notification.png')} contentFit="contain" style={{flex: 1, tintColor: colors.iconTint}} />
         </View>
       </TouchableOpacity>
 
       {postCardType === 'normal' ? (
         <TouchableOpacity onPress={() => handleHomeBottomSheetOpener('3Bars')}>
           <View style={styles.iconContainer}>
-            <Image source={require('../../Assets/Images/hamBurger.png')} contentFit="contain" style={{flex: 1, tintColor: '#FFFFFF'}} />
+            <Image source={require('../../Assets/Images/hamBurger.png')} contentFit="contain" style={{flex: 1, tintColor: colors.iconTint}} />
           </View>
         </TouchableOpacity>
       ) : (

@@ -1,7 +1,8 @@
 // WalletScreen.js
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator, useColorScheme, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator, Dimensions } from 'react-native';
+import { useAppTheme } from '../Hook/useAppTheme';
 import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
 import WalletSVG from '../../Assets/svg/WalletIcon.svg';
 import AnimatedNumber from '../Components/AnimatedNumber';
@@ -24,8 +25,7 @@ const WalletScreen = ({ route }) => {
 
   const method = route?.params?.method;
 
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   const [walletHeight, setWalletHeight] = useState(0);
 
@@ -157,9 +157,9 @@ const WalletScreen = ({ route }) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center, { backgroundColor: isDark ? '#0D0D0D' : '#fff' }]}>
-        <ActivityIndicator size="large" color={isDark ? '#FFA86B' : '#3d84b8'} />
-        <Text style={[styles.loadingText, { color: isDark ? '#9E9E9E' : undefined }]}>Processing payment...</Text>
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Processing payment...</Text>
       </View>
     );
   }
@@ -175,8 +175,8 @@ const WalletScreen = ({ route }) => {
   const offerData = (item) => getOfferData(item);
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#0D0D0D' : '#fff' }]}>
-      <View style={[styles.overlay, { height: walletHeight, backgroundColor: isDark ? '#1A1A1A' : 'white', borderColor: isDark ? '#FF7819' : '#000' }]} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.overlay, { height: walletHeight, backgroundColor: colors.card, borderColor: colors.border }]} />
       <View style={[styles.walletCard, isDark && { backgroundColor: '#FFA86B', borderColor: '#FF7819' }]} onLayout={event => setWalletHeight(event.nativeEvent.layout.height)}>
         <View style={styles.walletHeader}>
           <Text style={styles.walletText}>Total Balance</Text>
@@ -191,7 +191,7 @@ const WalletScreen = ({ route }) => {
         </View>
       </View>
       <View style={styles.textContainer}>
-        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000' }]}>Select a Package</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Select a Package</Text>
       </View>
       {/* Packages Grid */}
       <FlatList
@@ -233,7 +233,7 @@ const WalletScreen = ({ route }) => {
             <Text style={{ 
               fontSize: 16, 
               fontFamily: 'Rubik-Medium', 
-              color: isDark ? '#FFFFFF' : '#000000', 
+              color: colors.text, 
               lineHeight: 22,
               flex: 1,
             }}>

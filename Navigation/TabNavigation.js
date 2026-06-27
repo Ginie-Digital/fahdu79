@@ -29,6 +29,8 @@ import FilterButton from './FilterButton';
 import RandomAudienceHeader from '../Src/Screens/Chatroom/RandomAudienceHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ✅ Add this import
 
+import { useAppTheme } from '../Src/Hook/useAppTheme';
+
 const Tab = createBottomTabNavigator();
 
 const handleIcons = (route, focused) => {
@@ -63,6 +65,7 @@ const handleIcons = (route, focused) => {
   return <BottomNavigationIcons iconName={iconName} focused={focused} />;
 };
 
+
 function EmptyComponent() {
   return 'notifications';
 }
@@ -78,6 +81,7 @@ const TabNavigation = () => {
 
   // ✅ Get safe area insets
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
   return (
     <>
@@ -85,6 +89,7 @@ const TabNavigation = () => {
         screenOptions={({ route }) => ({
           tabBarStyle: [
             styles.tabBarStyle,
+            { backgroundColor: colors.tabBarBg },
             Platform.OS === 'ios' && {
               paddingBottom: Math.max(insets.bottom - 10, 5),
               height: 50 + Math.max(insets.bottom - 10, 5),
@@ -93,6 +98,12 @@ const TabNavigation = () => {
           ],
           tabBarShowLabel: false,
           tabBarIcon: ({ color, focused }) => handleIcons(route, focused, color),
+          tabBarButton: (props) => (
+            <Pressable
+              {...props}
+              android_ripple={null}
+            />
+          ),
         })}
         initialRouteName="home">
         <Tab.Screen
@@ -109,7 +120,7 @@ const TabNavigation = () => {
             headerBackButtonMenuEnabled: false,
             tabBarHideOnKeyboard: true,
             headerStyle: {
-              backgroundColor: '#0D0D0D',
+              backgroundColor: colors.headerBg,
             },
           }}
         />
@@ -122,7 +133,7 @@ const TabNavigation = () => {
               gestureEnabled: false,
               headerShadowVisible: false,
               headerBackTitleVisible: false,
-              headerStyle: { backgroundColor: '#fff' }, //#f9e4d1  e0c1de
+              headerStyle: { backgroundColor: colors.headerBg }, //#f9e4d1  e0c1de
               headerTitle: '',
               headerLeft: () => <HeaderCenteredTitle title="Dashboard" />,
               headerBackButtonMenuEnabled: false,
@@ -147,7 +158,7 @@ const TabNavigation = () => {
                   <View
                     style={{
                       paddingTop: insets.top, // ✅ This handles iOS notches and Android status bar
-                      backgroundColor: '#fff',
+                      backgroundColor: colors.headerBg,
                     }}>
                     {visibility === 'showSelected' ? <RandomAudienceHeader /> : <ChatRoomHeader />}
                   </View>
@@ -179,11 +190,12 @@ const TabNavigation = () => {
                 headerLeft: () => <DiscoverHeader />,
                 headerRight: () => <FilterButton />,
                 headerStyle: {
-                  backgroundColor: '#0D0D0D',
+                  backgroundColor: colors.headerBg,
                 },
                 tabBarHideOnKeyboard: true,
                 tabBarStyle: [
                   styles.tabBarStyle,
+                  { backgroundColor: colors.tabBarBg },
                   Platform.OS === 'ios' && {
                     paddingBottom: Math.max(insets.bottom - 10, 5),
                     height: 50 + Math.max(insets.bottom - 10, 5),
@@ -199,10 +211,10 @@ const TabNavigation = () => {
               component={ProfileNew}
               options={{
                 headerTitle: 'My Profile',
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(1.8, 2.0), color: '#FFFFFF' },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(1.8, 2.0), color: colors.headerText },
                 headerLeft: () => null,
                 headerRight: () => null,
-                headerStyle: { backgroundColor: '#0D0D0D', elevation: 0, shadowOpacity: 0, borderBottomWidth: 0, height: 50 },
+                headerStyle: { backgroundColor: colors.headerBg, elevation: 0, shadowOpacity: 0, borderBottomWidth: 0, height: 50 },
                 headerTitleAlign: 'center',
                 headerShadowVisible: false,
               }}

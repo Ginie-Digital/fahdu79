@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {StyleSheet, Text, View, TextInput, TouchableOpacity, Pressable, ActivityIndicator, Platform, Keyboard, useColorScheme} from 'react-native';
+import {StyleSheet, Text, View, TextInput, TouchableOpacity, Pressable, ActivityIndicator, Platform, Keyboard} from 'react-native';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import OTPTextView from 'react-native-otp-textinput';
 import {useDispatch} from 'react-redux';
@@ -14,6 +14,7 @@ import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
 import AnimatedButton from '../AnimatedButton';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ChevronLoader from '../../ChevronLoader';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const ForgetPassword = ({route}) => {
   const {email: preEmail} = route?.params || {};
@@ -21,8 +22,7 @@ const ForgetPassword = ({route}) => {
   const [otp, setOtp] = useState('');
   const [isEmailStep, setIsEmailStep] = useState(true);
   const [loading, setLoading] = useState(false);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   const dispatch = useDispatch();
   const [forgetPassword] = useForgetPasswordMutation();
@@ -97,35 +97,35 @@ const ForgetPassword = ({route}) => {
   const {isKeyboardVisible} = useKeyboardHook();
 
   return (
-    <SafeAreaView testID="forgot-password-screen" style={{flex: 1, backgroundColor: isDark ? '#121212' : '#fff'}}>
+    <SafeAreaView testID="forgot-password-screen" style={{flex: 1, backgroundColor: colors.background}}>
       
       { loading && <ChevronLoader/> }
 
-      <View style={[styles.container, {backgroundColor: isDark ? '#121212' : 'white'}]}>
+      <View style={[styles.container, {backgroundColor: colors.background}]}>
         <TouchableOpacity testID="forgot-password-back-button" accessibilityLabel="forgot-password-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
-          <Back color={isDark ? '#FFFFFF' : '#1E1E1E'} />
+          <Back color={colors.text} />
         </TouchableOpacity>
         {isEmailStep ? (
           <>
-            <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Forgot Password?</Text>
-            <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Don't worry! It occurs. Please enter the email address linked with your account.</Text>
-            <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Email</Text>
+            <Text style={[styles.heading, {color: colors.text}]}>Forgot Password?</Text>
+            <Text style={[styles.subHead, {color: colors.textSecondary}]}>Don't worry! It occurs. Please enter the email address linked with your account.</Text>
+            <Text style={[styles.fieldName, {color: colors.textLabel}]}>Email</Text>
 
             <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
-              <InputOverlay isVisible={isKeyboardVisible} style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
-              <View style={[styles.textInputContainer, {marginTop: 0}, isDark && { backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14 }]}>
-                <TextInput testID="forgot-password-email-input" accessibilityLabel="forgot-password-email-input" selectionColor={isDark ? '#FFA86B' : selectionTwin()}
+              <InputOverlay isVisible={isKeyboardVisible} style={{ backgroundColor: colors.overlayBg, borderRadius: 14 }} />
+              <View style={[styles.textInputContainer, {marginTop: 0, backgroundColor: colors.inputBg, borderColor: colors.border}]}>
+                <TextInput testID="forgot-password-email-input" accessibilityLabel="forgot-password-email-input" selectionColor={colors.accent}
                 
-                selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
+                selectionHandleColor={colors.accent}
                 
-                cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'} placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'} placeholder="Enter Email " autoCapitalize={'none'} style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]} value={email} onChangeText={setEmail} keyboardType="email-address" />
+                cursorColor={colors.text} placeholderTextColor={colors.placeholder} placeholder="Enter Email " autoCapitalize={'none'} style={[styles.textInputs, {color: colors.text}]} value={email} onChangeText={setEmail} keyboardType="email-address" />
               </View>
             </View>
           </>
         ) : (
           <>
-            <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>OTP Verification</Text>
-            <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Enter the verification code we just sent on your email address.</Text>
+            <Text style={[styles.heading, {color: colors.text}]}>OTP Verification</Text>
+            <Text style={[styles.subHead, {color: colors.textSecondary}]}>Enter the verification code we just sent on your email address.</Text>
             <OTPTextView
               testID="forgot-password-otp-input"
               accessibilityLabel="forgot-password-otp-input"
@@ -133,9 +133,9 @@ const ForgetPassword = ({route}) => {
               handleTextChange={setOtp}
               inputCount={4}
               keyboardType="number-pad"
-              offTintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : (isDark ? '#292929' : '#1e1e1e')))}
-              textInputStyle={[styles.otpInput, isDark && { backgroundColor: '#191919', borderColor: '#292929', color: '#FFFFFF' }]}
-              tintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : (isDark ? '#292929' : '#1e1e1e')))}
+              offTintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : colors.border))}
+              textInputStyle={[styles.otpInput, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
+              tintColor={Array(4).fill(0).map((_, i) => (otp[i] ? '#FF7F50' : colors.border))}
             />
           </>
         )}
@@ -145,7 +145,7 @@ const ForgetPassword = ({route}) => {
         {!isEmailStep && (
           <TouchableOpacity testID="forgot-password-resend-link" accessibilityLabel="forgot-password-resend-link" style={styles.alreadyAccountContainer} onPress={handleResendOtp}>
             <View style={styles.alreadyAccountRow}>
-              <Text style={[styles.alreadyAccountText, {color: isDark ? '#4D4D4D' : '#1e1e1e'}]}> Didn't receive the code? </Text>
+              <Text style={[styles.alreadyAccountText, {color: colors.textSecondary}]}> Didn't receive the code? </Text>
               <Text style={styles.forgotTextTitle}>Resend</Text>
             </View>
           </TouchableOpacity>
@@ -182,11 +182,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  subHeadHighlight: {
-    fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
-    fontSize: 14,
-  },
   subHeadHighlight: {
     fontFamily: 'Rubik-Medium',
     color: '#1e1e1e',

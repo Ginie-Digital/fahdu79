@@ -29,6 +29,8 @@ import TermsOfLive from './Stream/TermsOfLive';
 import { pushChats, pushGoals } from '../../Redux/Slices/NormalSlices/LiveStream/LiveChats';
 // import Stories from '../Components/HomeComponents/Stories';
 // import {pushLiveStories} from '../../Redux/Slices/NormalSlices/Home/StoriesSlice';
+import { useAppTheme } from '../Hook/useAppTheme';
+
 import UpdateAppComponent from '../Components/HomeComponents/UpdateAppComponent';
 import AppStoreUpdateBanner from '../Components/HomeComponents/AppStoreUpdateBanner';
 import { setSharedCampaignId, setUserFromCampaignLink } from '../../Redux/Slices/NormalSlices/Deeplink/DeeplinkSlice';
@@ -50,12 +52,13 @@ import LiveUsersScroll from '../LiveStream/LiveUsersScroll';
 import useJoinLiveStream from '../Hook/useJoinLiveStream';
 
 const PlaceHolder = ({ text }) => {
+  const { colors } = useAppTheme();
   return (
     <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
       <Text
         style={{
           fontFamily: 'MabryPro-Regular',
-          color: '#9E9E9E',
+          color: colors.textSecondary,
           fontSize: responsiveFontSize(2),
         }}>
         {text}
@@ -64,13 +67,11 @@ const PlaceHolder = ({ text }) => {
   );
 };
 
-
-
 const SocialPostRender = memo(({ item, index, token }) => <PostCards item={item} index={index} token={token} />);
 
-const FeedItemSeparator = () => <View style={{ backgroundColor: '#1A1A1A', height: 4 }} />;
-
 const Home = () => {
+  const { colors } = useAppTheme();
+  const FeedItemSeparator = useCallback(() => <View style={{ backgroundColor: colors.separator, height: 4 }} />, [colors]);
   const token = useSelector(state => state.auth.user.token);
 
   const homeFlashRef = useRef(null);
@@ -471,7 +472,7 @@ const Home = () => {
   // console.log(cachedFeed[0])
 
   return (
-    <GestureHandlerRootView style={styles.homeContainer}>
+    <GestureHandlerRootView style={[styles.homeContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
       <FlashList
         ref={homeFlashRef}
         data={filteredFeed}

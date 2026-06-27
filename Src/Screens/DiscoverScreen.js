@@ -8,12 +8,14 @@ import {WIDTH_SIZES} from '../../DesiginData/Utility';
 import DiscoverFilterModal from '../../Navigation/DiscoverFilterModal';
 import PagerView from 'react-native-pager-view';
 import DiscoverFeed from '../Components/DiscoverFeed';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 import { toggleTabBar } from '../../Redux/Slices/NormalSlices/HideShowSlice';
 
 const {width} = Dimensions.get('window');
 
 export default function DiscoverScreen() {
+  const { colors, isDark } = useAppTheme();
   const [selectedCategory, setSelectedCategory] = useState(NICHES[0]);
   const categoryListRef = useRef(null);
   const pagerViewRef = useRef(null);
@@ -46,7 +48,7 @@ export default function DiscoverScreen() {
   }, [navigation, dispatch]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? colors.background : '#fff9f5' }]}>
       {/* CATEGORY FILTER */}
       <FlatList
           ref={categoryListRef}
@@ -57,12 +59,16 @@ export default function DiscoverScreen() {
           keyExtractor={item => item.id}
           renderItem={({item, index}) => (
             <TouchableOpacity
-              style={[styles.category, selectedCategory.id === item.id && styles.categoryActive]}
+              style={[
+                styles.category,
+                { backgroundColor: isDark ? colors.card : 'white', borderColor: isDark ? colors.border : '#1e1e1e' },
+                selectedCategory.id === item.id && { borderColor: isDark ? '#FF7819' : '#1e1e1e', backgroundColor: '#FFA86B' },
+              ]}
               onPress={() => {
                 setSelectedCategory(item);
                 pagerViewRef.current?.setPage(index);
               }}>
-              <Text style={[styles.categoryText, selectedCategory.id === item.id && styles.categoryTextActive]}>{item.label}</Text>
+              <Text style={[styles.categoryText, { color: isDark ? colors.text : '#1e1e1e' }, selectedCategory.id === item.id && styles.categoryTextActive]}>{item.label}</Text>
             </TouchableOpacity>
           )}
           onScrollToIndexFailed={info => {
@@ -72,7 +78,7 @@ export default function DiscoverScreen() {
             });
           }}
         />
-      <Text style={styles.title}>{tab}</Text>
+      <Text style={[styles.title, { color: isDark ? colors.text : '#1e1e1e' }]}>{tab}</Text>
 
       {/* CONTENT AREA */}
       <View style={styles.contentWrapper}>
@@ -95,15 +101,21 @@ export default function DiscoverScreen() {
         </PagerView>
 
         {/* NEW / POPULAR / SPOTLIGHT FLOATING FILTER */}
-        <View style={styles.tabBox}>
-          <TouchableOpacity style={[styles.tab, tab === 'New' && styles.tabActive]} onPress={() => setTab('New')}>
+        <View style={[styles.tabBox, { backgroundColor: isDark ? colors.card : '#FFFFFF', borderColor: isDark ? colors.border : '#1e1e1e' }]}>
+          <TouchableOpacity
+            style={[styles.tab, tab === 'New' && { borderColor: isDark ? '#FF7819' : '#1e1e1e', backgroundColor: '#FFA86B', borderWidth: WIDTH_SIZES['1.5'] }]}
+            onPress={() => setTab('New')}
+          >
             <Image source={require('../../Assets/Images/new_creator_icon.png')} style={styles.tabIcon} contentFit="contain" />
-            <Text style={[styles.tabLabel, tab === 'New' && styles.tabLabelActive]}>New</Text>
+            <Text style={[styles.tabLabel, { color: isDark ? colors.textSecondary : '#999' }, tab === 'New' && styles.tabLabelActive]}>New</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.tab, tab === 'Popular' && styles.tabActive]} onPress={() => setTab('Popular')}>
+          <TouchableOpacity
+            style={[styles.tab, tab === 'Popular' && { borderColor: isDark ? '#FF7819' : '#1e1e1e', backgroundColor: '#FFA86B', borderWidth: WIDTH_SIZES['1.5'] }]}
+            onPress={() => setTab('Popular')}
+          >
             <Image source={require('../../Assets/Images/popular_creator_icon.png')} style={styles.tabIcon} contentFit="contain" />
-            <Text style={[styles.tabLabel, tab === 'Popular' && styles.tabLabelActive]}>Popular</Text>
+            <Text style={[styles.tabLabel, { color: isDark ? colors.textSecondary : '#999' }, tab === 'Popular' && styles.tabLabelActive]}>Popular</Text>
           </TouchableOpacity>
 
         </View>

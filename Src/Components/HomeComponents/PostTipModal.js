@@ -19,6 +19,7 @@ import {useNavigationState} from '@react-navigation/native';
 import Paisa from '../../../Assets/svg/paisa.svg';
 import AnimatedButton from '../AnimatedButton';
 import { triggerImpactHeavy, triggerImpactLight, triggerImpactMedium } from '../../Utils/Haptics';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const PostTipModal = () => {
   const keyboard = useKeyboard();
@@ -36,6 +37,8 @@ const PostTipModal = () => {
   const token = useSelector(state => state.auth.user.token);
   
   const shakeAnimation = useRef(new Animated.Value(0)).current;
+
+  const { colors, isDark } = useAppTheme();
 
   const startShake = () => {
     triggerImpactMedium();
@@ -143,23 +146,23 @@ const PostTipModal = () => {
       <View
         style={[
           styles.modalInnerWrapper,
-          {paddingBottom: Platform.OS === 'ios' ? 40 : 20},
+          {backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 40 : 20},
         ]}>
         <View style={styles.headerRow}>
-          <Text style={styles.sendTipText}>Send Tip</Text>
+          <Text style={[styles.sendTipText, {color: colors.text}]}>Send Tip</Text>
           <TouchableOpacity onPress={() => {
           dispatch(customTipAmount({amount: 10}));
             dispatch(toggleSendPostTipModal({info: {postId: '', show: false}}));
           }}>
-            <DIcon provider={'Entypo'} name={'cross'} color={'#FFFFFF'} size={responsiveFontSize(3.5)} />
+            <DIcon provider={'Entypo'} name={'cross'} color={colors.text} size={responsiveFontSize(3.5)} />
           </TouchableOpacity>
         </View>
         <View style={styles.tipContainer}>
           <View style={styles.tipCounterContainer}>
-            <View style={styles.sendTipInputContainer}>
+            <View style={[styles.sendTipInputContainer, {borderColor: colors.border, backgroundColor: colors.inputBg}]}>
               {tipAmount >= 0 && tipAmount < 10 && (
-                <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: '#2A2A2A', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
-                <Text style={{fontSize: 10, color: '#FFA86B', fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
+                <Animated.View style={{position: 'absolute', right: responsiveWidth(24), backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{translateX: shakeAnimation}]}}>
+                <Text style={{fontSize: 10, color: colors.accent, fontFamily: 'Rubik-Regular', fontStyle: 'italic'}}>Min is 10</Text>
                 </Animated.View>
               )}
               <View style={styles.leftAction}>
@@ -169,7 +172,7 @@ const PostTipModal = () => {
                 placeholder="0"
                 maxLength={5}
                 value={String(tipAmount)}
-                style={styles.amountInput}
+                style={[styles.amountInput, {color: colors.text}]}
                 onChangeText={x => dispatch(customTipAmount({amount: x.replace(/[^0-9]/g, '')}))}
                 keyboardType="numeric"
                 showsVerticalScrollIndicator={false}
@@ -181,8 +184,8 @@ const PostTipModal = () => {
                     dispatch(decreaseTipAmount());
                     triggerImpactHeavy();
                   }}>
-                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#2A2A2A'}]}>
-                    <DIcon provider={'Entypo'} name={'minus'} size={18} color={'#FFFFFF'} />
+                  <View style={[styles.plusMinusButtonInside, {backgroundColor: colors.card, borderColor: colors.border}]}>
+                    <DIcon provider={'Entypo'} name={'minus'} size={18} color={colors.text} />
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity 
@@ -191,7 +194,7 @@ const PostTipModal = () => {
                     dispatch(increaseTipAmount());
                     triggerImpactHeavy();
                   }}>
-                  <View style={[styles.plusMinusButtonInside, {backgroundColor: '#FFA86B', borderColor: '#FF7819'}]}>
+                  <View style={[styles.plusMinusButtonInside, {backgroundColor: colors.accent, borderColor: colors.border}]}>
                     <DIcon provider={'Entypo'} name={'plus'} size={18} color={'#000000'} />
                   </View>
                 </TouchableOpacity>
@@ -215,18 +218,18 @@ const PostTipModal = () => {
                   borderRadius: responsiveWidth(4),
                   padding: responsiveWidth(1),
                   width: responsiveWidth(25),
-                  backgroundColor: pressed ? '#FFA86B' : 'transparent',
-                  borderColor: '#2A2A2A',
+                  backgroundColor: pressed ? colors.accent : 'transparent',
+                  borderColor: colors.border,
                 })}
               >
                 <Paisa />
-                <Text style={{color: '#FFFFFF'}}>{amount}</Text>
+                <Text style={{color: colors.text}}>{amount}</Text>
               </Pressable>
             ))}
           </View>
 
           <View style={{width: responsiveWidth(78), alignSelf: 'center', marginTop: responsiveWidth(6)}}>
-            <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} isDark={true} />
+            <AnimatedButton onPress={() => handleSendTipAmount()} loading={loading} title={'Send'} isDark={isDark} />
           </View>
         </View>
       </View>

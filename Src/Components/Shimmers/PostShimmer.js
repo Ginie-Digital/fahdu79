@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet, FlatList } from 'react-native';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const PostShimmer = () => {
+  const { colors } = useAppTheme();
   const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -23,21 +25,21 @@ const PostShimmer = () => {
 
   // Render Shimmer Item
   const renderShimmerItem = () => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
       {/* Header Section */}
       <View style={styles.headerContainer}>
-        <Animated.View style={[styles.profilePic, { opacity: shimmerOpacity }]} />
-        <Animated.View style={[styles.header, { opacity: shimmerOpacity }]} />
+        <Animated.View style={[styles.profilePic, { opacity: shimmerOpacity, backgroundColor: colors.border }]} />
+        <Animated.View style={[styles.header, { opacity: shimmerOpacity, backgroundColor: colors.border }]} />
       </View>
 
       {/* Title Section */}
-      <Animated.View style={[styles.title, { opacity: shimmerOpacity }]} />
+      <Animated.View style={[styles.title, { opacity: shimmerOpacity, backgroundColor: colors.border }]} />
 
       {/* Post Content */}
-      <Animated.View style={[styles.post, { opacity: shimmerOpacity }]} />
+      <Animated.View style={[styles.post, { opacity: shimmerOpacity, backgroundColor: colors.border }]} />
 
       {/* Footer */}
-      <Animated.View style={[styles.footer, { opacity: shimmerOpacity }]} />
+      <Animated.View style={[styles.footer, { opacity: shimmerOpacity, backgroundColor: colors.border }]} />
     </View>
   );
 
@@ -46,7 +48,7 @@ const PostShimmer = () => {
       data={[1, 2, 3]} // Placeholder data for 3 posts
       renderItem={renderShimmerItem}
       keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={styles.listContainer}
+      contentContainerStyle={[styles.listContainer, { backgroundColor: colors.background }]}
     />
   );
 };

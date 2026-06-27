@@ -29,6 +29,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import ProfileUser from '../Src/Components/MyProfile/ProfileUser';
 import { useContactInfo } from '../Src/Hook/FeeSetupUpdate';
 
+import { useAppTheme } from '../Src/Hook/useAppTheme';
+
 const showContentList = [
   {
     id: 1,
@@ -50,6 +52,7 @@ const showContentList = [
 ];
 
 const TopTabNavigation = ({ notificationData }) => {
+  const { colors } = useAppTheme();
   const [isFocused, setIsFocused] = useState(false); // Track focus state
   const userInformation = useSelector(state => state.auth.user);
 
@@ -137,7 +140,7 @@ const TopTabNavigation = ({ notificationData }) => {
   return (
     <>
       {(userInformation?.role === 'creator' || userInformation?.role === 'admin') && (
-        <Tabs.Container ref={tabsRef} renderTabBar={props => <MaterialTabBar {...props} indicatorStyle={{ backgroundColor: '#1E1E1E', height: responsiveWidth(0.4) }} />} renderHeader={() => <UpperProfile isFocused={isFocused} />} onTabChange={({ tabName }) => setCurrentTab(tabName)}>
+        <Tabs.Container ref={tabsRef} renderTabBar={props => <MaterialTabBar {...props} style={{ backgroundColor: colors.background }} indicatorStyle={{ backgroundColor: colors.text, height: responsiveWidth(0.4) }} />} renderHeader={() => <UpperProfile isFocused={isFocused} />} onTabChange={({ tabName }) => setCurrentTab(tabName)}>
           <Tabs.Tab name="profile" label={({ name }) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
             <FeedPostComponent />
           </Tabs.Tab>
@@ -155,8 +158,8 @@ const TopTabNavigation = ({ notificationData }) => {
       {userInformation?.role !== 'creator' && userInformation?.role !== 'admin' && (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          style={{backgroundColor: '#0D0D0D'}}
-          contentContainerStyle={{backgroundColor: '#0D0D0D'}}>
+          style={{backgroundColor: colors.background}}
+          contentContainerStyle={{backgroundColor: colors.background}}>
           <UpperProfile isFocused={isFocused} />
           <ProfileUser />
         </ScrollView>

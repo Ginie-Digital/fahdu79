@@ -1,19 +1,18 @@
-import React from 'react';
-import {View, Text, StyleSheet, Pressable, useColorScheme} from 'react-native';
+import {View, Text, StyleSheet, Pressable} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Image} from 'expo-image';
+import { useAppTheme } from './Hook/useAppTheme';
 
 export default function WalletRechargeScreen({navigation}) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   const handleRecharge = method => {
     console.log('Selected:', method);
     navigation.navigate('wallet', {method});
   };
   return (
-    <View style={[styles.container, isDark && { backgroundColor: '#0D0D0D' }]}>
-      <Text style={[styles.subtitle, isDark && { color: '#9E9E9E' }]}>Choose a payment method to securely add money to your wallet.</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Choose a payment method to securely add money to your wallet.</Text>
 
       <View style={styles.optionContainer}>
         {/* <Pressable style={styles.card} onPress={() => handleRecharge('PhonePe')}>
@@ -24,12 +23,12 @@ export default function WalletRechargeScreen({navigation}) {
           <Ionicons name="chevron-forward" size={20} color="#1e1e1e" />
         </Pressable> */}
 
-        <Pressable style={[styles.card, isDark && { backgroundColor: '#1A1A1A', borderColor: '#FF7819' }]} onPress={() => handleRecharge('Cashfree')}>
-          <View style={[styles.cardContent, isDark && { backgroundColor: '#1A1A1A' }]}>
+        <Pressable style={[styles.card, isDark && { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => handleRecharge('Cashfree')}>
+          <View style={[styles.cardContent, isDark && { backgroundColor: colors.card }]}>
             <Image source={require('../Assets/Images/Wallet/Cashfree.png')} style={styles.icon} />
-            <Text style={[styles.label, isDark && { color: '#FFFFFF' }]}>Cashfree</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Cashfree</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={isDark ? '#FFFFFF' : '#1e1e1e'} />
+          <Ionicons name="chevron-forward" size={20} color={colors.text} />
         </Pressable>
       </View>
     </View>

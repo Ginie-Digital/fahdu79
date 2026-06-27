@@ -10,10 +10,12 @@ import { toggleConfirmSubscribe } from '../../Redux/Slices/NormalSlices/HideShow
 import { formatIndianNumber, padios, WIDTH_SIZES } from '../../DesiginData/Utility';
 import AnimatedButton from '../Components/AnimatedButton';
 import { navigate } from '../../Navigation/RootNavigation';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const colorArray = ['#1A2332', '#1A2B1A', '#2B2A1A', '#2B1A1A'];
 
 const SubscribeScreen = ({ route }) => {
+  const { colors, isDark } = useAppTheme();
   const [getCreatorsPlan] = useLazyGetCreatorsPlanQuery();
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [selected, setSelected] = useState(6);
@@ -94,10 +96,10 @@ const SubscribeScreen = ({ route }) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0D0D0D' }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.chatRoomContainer}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.chatRoomContainer, { backgroundColor: colors.background }]}>
         <View style={{ position: 'relative', width: responsiveWidth(28), alignSelf: 'center' }}>
-          <View style={[styles.profilePicBox, { overflow: 'hidden' }]}>
+          <View style={[styles.profilePicBox, { overflow: 'hidden', backgroundColor: colors.card, borderColor: colors.border }]}>
             <Image
               source={route?.params?.profileImageUrl ? { uri: route?.params?.profileImageUrl } : require('../../Assets/Images/DefaultProfile.jpg')}
               style={{ width: '100%', height: '100%', borderRadius: responsiveWidth(14) - 3 }}
@@ -109,12 +111,12 @@ const SubscribeScreen = ({ route }) => {
         </View>
 
         <View style={styles.userNameContainer}>
-          <Text style={styles.text}>{route?.params?.name}</Text>
+          <Text style={[styles.text, { color: colors.text }]}>{route?.params?.name}</Text>
         </View>
 
-        <View style={styles.listContainer}>
-          <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 20, color: '#FFFFFF' }}>Subscription Fee</Text>
-          <Text style={{ fontFamily: 'Rubik-Regular', fontSize: 12, color: '#FFFFFF' }}>Full Access to the Exclusive Content</Text>
+        <View style={[styles.listContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 20, color: colors.text }}>Subscription Fee</Text>
+          <Text style={{ fontFamily: 'Rubik-Regular', fontSize: 12, color: colors.textSecondary }}>Full Access to the Exclusive Content</Text>
 
           <FlatList
             data={subscriptionPlans}
@@ -128,8 +130,8 @@ const SubscribeScreen = ({ route }) => {
                       styles.eachDescriptionContainer,
                       index === 0 ? { marginTop: responsiveWidth(4) } : {},
                       {
-                        backgroundColor: isSelected ? '#FFA86B' : '#212121',
-                        borderColor: isSelected ? '#FF7819' : '#292929',
+                        backgroundColor: isSelected ? '#FFA86B' : colors.card,
+                        borderColor: isSelected ? '#FF7819' : colors.border,
                         borderTopLeftRadius: index < 2 ? 0 : 14,
                       }
                     ]}
@@ -145,11 +147,11 @@ const SubscribeScreen = ({ route }) => {
                       })
                     }>
                     <View style={{ flexBasis: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={[styles.descriptionTitle, { color: isSelected ? '#1E1E1E' : '#FFFFFF' }]}>
+                      <Text style={[styles.descriptionTitle, { color: isSelected ? '#1E1E1E' : colors.text }]}>
                         {item?.name}
                       </Text>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
-                        <Text style={[styles.amountStyle, { color: isSelected ? '#000000' : '#FFFFFF' }]}>
+                        <Text style={[styles.amountStyle, { color: isSelected ? '#000000' : colors.text }]}>
                           {`${item?.amount}`}
                         </Text>
                         <Image
@@ -165,8 +167,8 @@ const SubscribeScreen = ({ route }) => {
                       </View>
                     </View>
 
-                    <View style={[styles.offerView, { borderColor: isSelected ? '#FF7819' : '#292929' }]}>
-                      <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 8, color: '#FFFFFF' }}>{item.discount + '% Off'}</Text>
+                    <View style={[styles.offerView, { backgroundColor: colors.card, borderColor: isSelected ? '#FF7819' : colors.border }]}>
+                      <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: 8, color: colors.text }}>{item.discount + '% Off'}</Text>
                     </View>
                   </TouchableOpacity>
                 )
@@ -176,15 +178,15 @@ const SubscribeScreen = ({ route }) => {
         </View>
 
         {Platform.OS !== 'android' && (
-          <AnimatedButton isDark={true} title={!doHavePlan ? 'No Plans Found' : 'Pay Now'} loading={loading} disabled={!doHavePlan} onPress={handlePayment} />
+          <AnimatedButton isDark={isDark} title={!doHavePlan ? 'No Plans Found' : 'Pay Now'} loading={loading} disabled={!doHavePlan} onPress={handlePayment} />
         )}
 
         <Pressable style={{ position: 'relative', marginTop: 40 }} onPress={() => navigate('chooseWallet')}>
           {({ pressed }) => (
             <>
-              <View style={styles.walletParent}>
+              <View style={[styles.walletParent, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.center, { flexDirection: 'row-reverse' }]}>
-                  <Text style={[styles.amountStyle, { marginTop: 4, fontFamily: 'Rubik-SemiBold' }]}>Wallet Balance</Text>
+                  <Text style={[styles.amountStyle, { marginTop: 4, fontFamily: 'Rubik-SemiBold', color: colors.text }]}>Wallet Balance</Text>
                   <Image
                     source={require('../../Assets/Images/Wallets.png')}
                     style={{
@@ -193,12 +195,12 @@ const SubscribeScreen = ({ route }) => {
                       resizeMode: 'contain',
                       alignSelf: 'center',
                       marginRight: responsiveWidth(1),
-                      tintColor: '#FFFFFF',
+                      tintColor: colors.text,
                     }}
                   />
                 </View>
                 <View style={styles.center}>
-                  <Text style={styles.amountStyle}>{formatIndianNumber(coins)}</Text>
+                  <Text style={[styles.amountStyle, { color: colors.text }]}>{formatIndianNumber(coins)}</Text>
                   <Image
                     source={require('../../Assets/Images/Coins2.png')}
                     style={{

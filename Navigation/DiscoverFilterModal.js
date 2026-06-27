@@ -4,6 +4,7 @@ import Modal from 'react-native-modal';
 import {useDispatch, useSelector} from 'react-redux';
 import {WIDTH_SIZES} from '../DesiginData/Utility';
 import {setDiscoverFilter} from '../Redux/Slices/NormalSlices/HideShowSlice';
+import { useAppTheme } from '../Src/Hook/useAppTheme';
 
 const FILTERS = [
   {label: 'All', value: 'all'},
@@ -12,6 +13,7 @@ const FILTERS = [
 
 export default function DiscoverFilterModal() {
   const dispatch = useDispatch();
+  const { colors, isDark } = useAppTheme();
 
   const {type, visible} = useSelector(state => state.hideShow.visibility.discoverFilter);
 
@@ -41,19 +43,19 @@ export default function DiscoverFilterModal() {
 
   return (
     <Modal isVisible={visible} onBackdropPress={handleCloseWithoutSave} backdropOpacity={0.2} style={styles.modal} useNativeDriver>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: isDark ? colors.card : '#fff', borderColor: isDark ? colors.border : '#e6e6e6', shadowOpacity: isDark ? 0.3 : 0.08 }]}>
         {FILTERS.map((item, idx) => (
           <View key={item.value}>
             <TouchableOpacity activeOpacity={0.8} style={[styles.option, selected === item.value && styles.optionActive]} onPress={() => handleSelect(item.value)}>
               {/* Radio circle */}
-              <View style={styles.radioOuter}>{selected === item.value && <View style={[styles.radioInner, item.value === 'online' ? styles.radioInnerOnline : styles.radioInnerAll]} />}</View>
+              <View style={[styles.radioOuter, { borderColor: isDark ? '#555555' : '#3a3a3a' }]}>{selected === item.value && <View style={[styles.radioInner, item.value === 'online' ? styles.radioInnerOnline : styles.radioInnerAll]} />}</View>
 
               {/* Label */}
-              <Text style={[styles.optionText, selected === item.value && styles.optionTextActive]}>{item.label}</Text>
+              <Text style={[styles.optionText, { color: isDark ? colors.text : '#1e1e1e' }, selected === item.value && styles.optionTextActive]}>{item.label}</Text>
             </TouchableOpacity>
 
             {/* Divider except after last item */}
-            {idx < FILTERS.length - 1 && <View style={styles.divider} />}
+            {idx < FILTERS.length - 1 && <View style={[styles.divider, { backgroundColor: isDark ? colors.border : '#ededed' }]} />}
           </View>
         ))}
       </View>

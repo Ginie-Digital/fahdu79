@@ -21,6 +21,7 @@ import {incrementCommentCount} from '../../../Redux/Slices/NormalSlices/Home/Fee
 import {myProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
 import {otherProfileIncrementCommentCount} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import useKeyboardHook from '../../CustomHooks/useKeyboardHook';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const ItemSeparator = () => <View style={{height: responsiveWidth(6)}} />;
 
@@ -32,6 +33,7 @@ const CreateCommentBottomSheet = () => {
 
   const insets = useSafeAreaInsets();
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
+  const { colors, isDark } = useAppTheme();
 
 
 
@@ -217,16 +219,16 @@ const CreateCommentBottomSheet = () => {
 
   const NoComments = useMemo(() => (
     <View style={{alignItems: 'center', marginTop: responsiveWidth(25), paddingHorizontal: 40}}>
-      <View style={{backgroundColor: '#1A1A1A', padding: 24, borderRadius: 100, marginBottom: 24, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2}}>
-        <DIcon provider={'Feather'} name={'zap'} size={40} color="#FFA86B" />
+      <View style={{backgroundColor: colors.card, padding: 24, borderRadius: 100, marginBottom: 24, shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2}}>
+        <DIcon provider={'Feather'} name={'zap'} size={40} color={colors.accent} />
       </View>
-      <Text style={{fontFamily: 'Rubik-Bold', fontSize: 22, color: '#FFFFFF', textAlign: 'center'}}>The spotlight is yours</Text>
-      <Text style={{fontFamily: 'Rubik-Regular', fontSize: 14, color: '#9E9E9E', marginTop: 10, textAlign: 'center', lineHeight: 22}}>Don't just watch from the sidelines. Be the first to share your thoughts and stand out to your favorite creator.</Text>
-      <TouchableOpacity onPress={() => inputRef.current?.focus()} style={{marginTop: 24, backgroundColor: '#FFA86B', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25}}>
-        <Text style={{fontFamily: 'Rubik-Medium', fontSize: 14, color: '#fff'}}>Start the conversation</Text>
+      <Text style={{fontFamily: 'Rubik-Bold', fontSize: 22, color: colors.text, textAlign: 'center'}}>The spotlight is yours</Text>
+      <Text style={{fontFamily: 'Rubik-Regular', fontSize: 14, color: colors.textSecondary, marginTop: 10, textAlign: 'center', lineHeight: 22}}>Don't just watch from the sidelines. Be the first to share your thoughts and stand out to your favorite creator.</Text>
+      <TouchableOpacity onPress={() => inputRef.current?.focus()} style={{marginTop: 24, backgroundColor: colors.accent, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25}}>
+        <Text style={{fontFamily: 'Rubik-Medium', fontSize: 14, color: isDark ? '#000000' : '#ffffff'}}>Start the conversation</Text>
       </TouchableOpacity>
     </View>
-  ), []);
+  ), [colors, isDark]);
 
   const EachComments = useCallback(
     ({item}) => {
@@ -250,7 +252,7 @@ const CreateCommentBottomSheet = () => {
       return (
         <View style={{paddingHorizontal: 20, paddingVertical: 2}}>
           <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
-            <TouchableOpacity style={[styles.profileImageContainer]} onPress={goToProfile}>
+            <TouchableOpacity style={[styles.profileImageContainer, {borderColor: colors.border}]} onPress={goToProfile}>
               <Image placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={item?.profile_image?.url ? {uri: item?.profile_image?.url} : require('../../../Assets/Images/DefaultProfile.jpg')} resizeMethod="resize" style={[styles.profileImage]} />
             </TouchableOpacity>
 
@@ -259,13 +261,13 @@ const CreateCommentBottomSheet = () => {
                   <Text
                     style={{
                       fontFamily: 'Rubik-Bold',
-                      color: '#FFFFFF',
+                      color: colors.text,
                       fontSize: 14,
                     }}>
                     {item?.displayName}
                   </Text>
-                  <Text style={{color: '#555555', fontSize: 14, marginBottom: 2}}>•</Text>
-                  <Text style={styles.timiming}>
+                  <Text style={{color: colors.placeholder, fontSize: 14, marginBottom: 2}}>•</Text>
+                  <Text style={[styles.timiming, {color: colors.textSecondary}]}>
                     {(() => {
                       if (!item?.createdAt) return '';
                       const now = moment();
@@ -285,7 +287,7 @@ const CreateCommentBottomSheet = () => {
 
               <Text
                 style={{
-                  color: '#E0E0E0',
+                  color: colors.text,
                   fontFamily: 'Rubik-Regular',
                   fontSize: 14,
                   lineHeight: 20,
@@ -299,7 +301,7 @@ const CreateCommentBottomSheet = () => {
         </View>
       );
     },
-    [currentUserInfo],
+    [currentUserInfo, colors],
   );
 
   //Get Total Followers and subscribers
@@ -319,19 +321,19 @@ const CreateCommentBottomSheet = () => {
         onChange={handleSheetChanges}
         enablePanDownToClose={true}
         enableDynamicSizing={false}
-        backgroundStyle={{backgroundColor: '#0D0D0D'}}
+        backgroundStyle={{backgroundColor: colors.background}}
         android_keyboardInputMode="adjustResize"
         keyboardBehavior="interactive"
         topInset={insets.top}
         containerStyle={{borderTopLeftRadius: 24, borderTopRightRadius: 24}}
         style={{borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden'}}
-        handleIndicatorStyle={{backgroundColor: '#555555', width: 40}}>
-        <View style={styles.contentContainer}>
-          <View style={{paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1A1A1A'}}>
+        handleIndicatorStyle={{backgroundColor: colors.border, width: 40}}>
+        <View style={[styles.contentContainer, {backgroundColor: colors.background}]}>
+          <View style={{paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.separator}}>
             <Text
               style={{
                 fontFamily: 'Rubik-Bold',
-                color: '#FFFFFF',
+                color: colors.text,
                 fontSize: 18,
               }}>
               Comments
@@ -349,7 +351,7 @@ const CreateCommentBottomSheet = () => {
                   flex: 1,
                   paddingTop: responsiveWidth(2),
                   borderTopWidth: 1.5,
-                  borderColor: '#2A2A2A',
+                  borderColor: colors.border,
                   paddingLeft: responsiveWidth(2),
                 }}
                 data={comments}
@@ -365,7 +367,7 @@ const CreateCommentBottomSheet = () => {
 
               {commentLoader && (
                 <View style={{position: 'absolute', bottom: 80, alignSelf: 'center'}}>
-                  <ActivityIndicator size="small" color="#FFA86B" />
+                  <ActivityIndicator size="small" color={colors.accent} />
                 </View>
               )}
             </>
@@ -374,14 +376,14 @@ const CreateCommentBottomSheet = () => {
 
         <View style={[styles.bottomCommentBoxContainer, {
           borderTopWidth: 1,
-          borderTopColor: '#1A1A1A',
+          borderTopColor: colors.separator,
           paddingHorizontal: 20,
           paddingBottom: isKeyboardVisible
             ? (Platform.OS === 'ios' ? 40 : keyboardHeight + 35)
             : (Platform.OS === 'ios' ? 40 : 20),
           alignItems: 'center'
         }]}>
-          <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#2A2A2A', marginBottom: 2}]} onPress={() => gotomyprofile()}>
+          <TouchableOpacity style={[styles.profileImageContainer, {height: 36, width: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.border, marginBottom: 2}]} onPress={() => gotomyprofile()}>
             <Image source={{uri: loggedInUser?.currentUserProfilePicture}} resizeMethod="resize" style={[styles.profileImage, {borderRadius: 18}]} />
           </TouchableOpacity>
 
@@ -390,20 +392,20 @@ const CreateCommentBottomSheet = () => {
               autoCapitalize="sentences"
               ref={inputRef}
               value={text}
-              placeholderTextColor={'#8E8E8E'}
+              placeholderTextColor={colors.placeholder}
               onChangeText={handleTextChange}
-              style={styles.textInputCapsule}
+              style={[styles.textInputCapsule, {backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text}]}
               placeholder="Add a Comment..."
-              selectionHandleColor={'#ffa86b'}
-              selectionColor={selectionTwin()}
-              cursorColor={'#FFA86B'}
+              selectionHandleColor={colors.accent}
+              selectionColor={colors.accent}
+              cursorColor={colors.accent}
             />
 
             <TouchableOpacity onPress={handleDoComment} disabled={!text.trim() || doCommentLoader} style={{paddingLeft: 10, height: 44, justifyContent: 'center', alignItems: 'center'}}>
               {doCommentLoader ? (
-                <ActivityIndicator size="small" color={'#FFA86B'} />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <DIcon provider={'Feather'} name={'send'} size={24} color={text.trim().length > 0 ? '#FFA86B' : '#555555'} />
+                <DIcon provider={'Feather'} name={'send'} size={24} color={text.trim().length > 0 ? colors.accent : colors.placeholder} />
               )}
             </TouchableOpacity>
           </View>

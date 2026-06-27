@@ -11,6 +11,7 @@ import {
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import DeviceInfo from 'react-native-device-info';
 import Feather from 'react-native-vector-icons/Feather';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const IOS_BUNDLE_ID = 'com.giniedigital.fahdu';
 const ITUNES_LOOKUP_URL = `https://itunes.apple.com/lookup?bundleId=${IOS_BUNDLE_ID}`;
@@ -39,6 +40,7 @@ const AppStoreUpdateBanner = () => {
   const [storeVersion, setStoreVersion] = useState('');
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const { colors, isDark } = useAppTheme();
 
   useEffect(() => {
     // Only run on iOS
@@ -128,6 +130,8 @@ const AppStoreUpdateBanner = () => {
         {
           transform: [{translateY: slideAnim}],
           opacity: opacityAnim,
+          backgroundColor: colors.card,
+          borderColor: colors.border,
         },
       ]}>
       <View style={styles.iconContainer}>
@@ -137,8 +141,8 @@ const AppStoreUpdateBanner = () => {
       </View>
 
       <View style={styles.textContainer}>
-        <Text style={styles.title}>New version available</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, {color: colors.text}]}>New version available</Text>
+        <Text style={[styles.subtitle, {color: colors.textSecondary}]}>
           Fahdu v{storeVersion} is on the App Store
         </Text>
       </View>
@@ -148,7 +152,7 @@ const AppStoreUpdateBanner = () => {
           activeOpacity={0.8}
           style={styles.updateButton}
           onPress={handleUpdate}>
-          <Text style={styles.updateText}>Update</Text>
+          <Text style={[styles.updateText, {color: isDark ? '#000000' : '#ffffff'}]}>Update</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -156,7 +160,7 @@ const AppStoreUpdateBanner = () => {
           style={styles.dismissButton}
           onPress={handleDismiss}
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Feather name="x" size={16} color="#555555" />
+          <Feather name="x" size={16} color={colors.placeholder} />
         </TouchableOpacity>
       </View>
     </Animated.View>

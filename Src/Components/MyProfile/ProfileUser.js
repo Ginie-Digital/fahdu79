@@ -15,6 +15,7 @@ import { LoginPageErrors } from '../ErrorSnacks';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BASE_URL } from '../../Configs/ApiConfig';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const ProfileUser = () => {
   const token = useSelector(state => state.auth.user.token);
@@ -34,6 +35,8 @@ const ProfileUser = () => {
   const [clickRecommendation, setClickRecommendation] = useState({ click: false, id: 0 });
 
   const [firstLoading, setFirstLoading] = useState(true);
+
+  const { colors, isDark } = useAppTheme();
 
   const handleGoToOthersProfile = useCallback(async (userName, userId) => {
     navigate('othersProfile', { userName, userId, role: 'creator' });
@@ -110,7 +113,7 @@ const ProfileUser = () => {
 
   const renderItem = ({ index, item }) => (
     <Pressable
-      style={[styles.recCard, clickRecommendation.id === index && clickRecommendation.click && { opacity: 0.8 }]}
+      style={[styles.recCard, { borderColor: colors.border }, clickRecommendation.id === index && clickRecommendation.click && { opacity: 0.8 }]}
       onPressIn={() => setClickRecommendation({ click: true, id: index })}
       onPressOut={() => setClickRecommendation({ click: false, id: index })}
       onPress={() => handleGoToOthersProfile(item?.displayName, item?._id)}>
@@ -135,7 +138,7 @@ const ProfileUser = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.walletCard}>
         <View style={styles.walletInner}>
           <View style={styles.walletLeft}>
@@ -165,7 +168,7 @@ const ProfileUser = () => {
         </Pressable>
       </View>
 
-      <Text style={styles.recommendationTitle}>Recommendations</Text>
+      <Text style={[styles.recommendationTitle, { color: colors.text }]}>Recommendations</Text>
       {!loading && (
         <FlatList
           data={creatorsList}

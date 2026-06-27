@@ -15,6 +15,8 @@ import {navigate} from '../../../Navigation/RootNavigation';
 import {formatNiche} from '../../../DesiginData/Utility';
 import axios from 'axios';
 import {BASE_URL} from '../../Configs/ApiConfig';
+import { useAppTheme } from '../../Hook/useAppTheme';
+import { chatRoomSuccess } from '../ErrorSnacks';
 
 // Badge image mapping
 const BADGE_IMAGES = {
@@ -30,6 +32,7 @@ const BADGE_IMAGES = {
 
 const UpperProfile = ({isFocused}) => {
   const ref = React.useRef();
+  const { colors, isDark } = useAppTheme();
 
   console.log('isfocus', isFocused);
 
@@ -121,12 +124,12 @@ const UpperProfile = ({isFocused}) => {
   const UserDetailMyProfile = useCallback(() => {
     return (
       <View style={[styles.userDetailContainer, (userProfileDetails?.role === 'creator' || userProfileDetails?.role === 'admin') ? {marginTop: responsiveWidth(10)} : {marginTop: responsiveWidth(8)}]}>
-        <Text style={styles.name}>{loggedUserDetail?.currentUserFullName}</Text>
+        <Text style={[styles.name, {color: colors.text}]}>{loggedUserDetail?.currentUserFullName}</Text>
 
         {/* User Name */}
         <View style={styles.userName}>
           <View style={styles.userNameRow}>
-            <Text style={styles.userNameTitle}>{loggedUserDetail?.currentUserDisplayName}</Text>
+            <Text style={[styles.userNameTitle, {color: colors.text}]}>{loggedUserDetail?.currentUserDisplayName}</Text>
             {(userProfileDetails?.role === 'creator' || userProfileDetails?.role === 'admin') && (
               <View style={{height: 19, width: 19}}>
                 <Image source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{flex: 1}} />
@@ -146,7 +149,7 @@ const UpperProfile = ({isFocused}) => {
 
               {/* Followers */}
               <TouchableOpacity
-                style={styles.statItem}
+                style={[styles.statItem, {borderColor: colors.border}]}
                 onPress={() =>
                   navigate('fsPage', {
                     title: 'Followers',
@@ -156,23 +159,23 @@ const UpperProfile = ({isFocused}) => {
                   })
                 }>
                 <View style={{height: 16, width: 14}}>
-                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{flex: 1}} />
+                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
                 </View>
-                <Text style={styles.statText}>{userProfileDetails?.followers?.count?.followers}</Text>
+                <Text style={[styles.statText, {color: colors.text}]}>{userProfileDetails?.followers?.count?.followers}</Text>
               </TouchableOpacity>
 
               {/* Stars */}
-              <View style={styles.statItem}>
+              <View style={[styles.statItem, {borderColor: colors.border}]}>
                 <View style={{height: 16, width: 17}}>
-                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{flex: 1}} />
+                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
                 </View>
-                <Text style={styles.statText}>{userProfileDetails?.likes}</Text>
+                <Text style={[styles.statText, {color: colors.text}]}>{userProfileDetails?.likes}</Text>
               </View>
 
               {/* Share Button */}
-              <Pressable style={styles.statItem} onPress={() => handlePostActionHandler(userProfileDetails?.deeplink?.link)}>
+              <Pressable style={[styles.statItem, {borderColor: colors.border}]} onPress={() => handlePostActionHandler(userProfileDetails?.deeplink?.link)}>
                 <View style={{height: 17, width: 22}}>
-                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{flex: 1}} />
+                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
                 </View>
               </Pressable>
             </View>
@@ -180,7 +183,7 @@ const UpperProfile = ({isFocused}) => {
         )}
       </View>
     );
-  }, [userProfileDetails, loggedUserDetail]);
+  }, [userProfileDetails, loggedUserDetail, colors]);
 
   // Collapse 3+ consecutive newlines into 2, trim, and cap at 10 lines
   const sanitizeBio = (text) => {
@@ -204,11 +207,11 @@ const UpperProfile = ({isFocused}) => {
       return (
         <View style={[styles.bioContainer, centered && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
           {centered ? (
-            <Text numberOfLines={2} style={[styles.bioText, {textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%'}]}>
+            <Text numberOfLines={2} style={[styles.bioText, {textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%', color: colors.textSecondary}]}>
               {bioText}
             </Text>
           ) : (
-            <ReadMore animate numberOfLines={5} style={[styles.bioText, centered && {textAlign: 'center', fontSize: 16, lineHeight: 22}]} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
+            <ReadMore animate numberOfLines={5} style={[styles.bioText, {color: colors.textSecondary}, centered && {textAlign: 'center', fontSize: 16, lineHeight: 22}]} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
               {bioText}
             </ReadMore>
           )}
@@ -216,7 +219,7 @@ const UpperProfile = ({isFocused}) => {
         </View>
       );
     },
-    [userProfileDetails, loggedUserDetail?.aboutUser, loggedUserDetail?.role],
+    [userProfileDetails, loggedUserDetail?.aboutUser, loggedUserDetail?.role, colors],
   );
 
   // Wallet Badges Component for user role
@@ -244,13 +247,13 @@ const UpperProfile = ({isFocused}) => {
   const isUserRole = loggedUserDetail?.role !== 'creator' && loggedUserDetail?.role !== 'admin';
 
   return (
-    <View ref={ref} style={{backgroundColor: '#0D0D0D'}}>
+    <View ref={ref} style={{backgroundColor: colors.background}}>
       {isUserRole ? (
         // User role: Centered layout without cover photo
-        <View style={styles.userRoleContainer}>
+        <View style={[styles.userRoleContainer, {backgroundColor: colors.background}]}>
           {/* Centered Profile Picture */}
-          <View style={styles.userProfilePicWrapper}>
-            <View style={styles.userProfilePicContainer}>
+          <View style={[styles.userProfilePicWrapper, {borderColor: colors.border, backgroundColor: colors.background}]}>
+            <View style={[styles.userProfilePicContainer, {backgroundColor: colors.card}]}>
               <Image
                 placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
                 source={loggedUserDetail?.currentUserProfilePicture ? {uri: loggedUserDetail?.currentUserProfilePicture} : require('../../../Assets/Images/DefaultProfile.jpg')}
@@ -259,11 +262,11 @@ const UpperProfile = ({isFocused}) => {
               />
             </View>
             {/* Online Indicator */}
-            <View style={styles.onlineDot} />
+            <View style={[styles.onlineDot, {borderColor: colors.background}]} />
           </View>
 
           {/* Username */}
-          <Text style={styles.userRoleUsername}>{loggedUserDetail?.currentUserDisplayName}</Text>
+          <Text style={[styles.userRoleUsername, {color: colors.text}]}>{loggedUserDetail?.currentUserDisplayName}</Text>
 
           {/* Bio */}
           <BioMyProfile userProfileDetails={userProfileDetails} />

@@ -1,3 +1,4 @@
+import { useAppTheme } from '../Src/Hook/useAppTheme';
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 const Stack = createNativeStackNavigator();
@@ -109,6 +110,7 @@ import FeedbackScreen from '../Src/Screens/FeedbackScreen';
 import NetworkLoggerScreen from '../Src/Screens/NetworkLoggerScreen';
 
 const StackNavigation = () => {
+  const { colors } = useAppTheme();
   //Redux Work
   const is_user_loggedIn = useSelector(state => state.auth.user.token);
 
@@ -125,13 +127,13 @@ const StackNavigation = () => {
           orientation: 'portrait',
           headerTitleAlign: 'center',
           headerLeft: ({ tintColor }) => <Back tintColor={tintColor} />,
-          headerStyle: { backgroundColor: '#0D0D0D' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.headerBg },
+          headerTintColor: colors.headerTint,
           headerShadowVisible: false,
           headerTitleStyle: {
             fontFamily: 'Rubik-SemiBold',
             fontSize: Math.round(responsiveFontSize(2.7)),
-            color: '#FFFFFF',
+            color: colors.headerText,
           },
           headerBackTitleVisible: false,
         }}>
@@ -198,7 +200,7 @@ const StackNavigation = () => {
               component={Invites}
               options={{
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 headerShown: false,
               }}
             />
@@ -222,8 +224,8 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#0D0D0D' },
-                headerTintColor: '#FFFFFF',
+                headerStyle: { backgroundColor: colors.headerBg },
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -238,8 +240,8 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: 'white' },
-                headerTintColor: '#1e1e1e',
+                headerStyle: { backgroundColor: colors.headerBg },
+                headerTintColor: colors.headerTint,
                 animation: 'slide_from_right',
                 headerBackTitleVisible: false,
               }}
@@ -255,8 +257,8 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: 'white' },
-                headerTintColor: '#1e1e1e',
+                headerStyle: { backgroundColor: colors.headerBg },
+                headerTintColor: colors.headerTint,
                 animation: 'slide_from_right',
                 headerBackTitleVisible: false,
               }}
@@ -273,9 +275,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -298,9 +300,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#0D0D0D' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -314,7 +316,7 @@ const StackNavigation = () => {
                 headerTitleStyle: { fontFamily: 'Rubik-Medium' },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.headerBg,
                 },
               }}
             />
@@ -329,9 +331,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -346,9 +348,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -363,9 +365,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -380,9 +382,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -397,9 +399,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -420,7 +422,7 @@ const StackNavigation = () => {
               options={{
                 headerTitle: '',
                 header: () => <HeaderLeft />,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
                 // Add these to ensure smooth transition
                 animation: 'slide_from_right', // Consistent animation
@@ -481,14 +483,14 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.2)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff9f5' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
 
-            <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShadowVisible: false, headerStyle: { backgroundColor: '#fff' } }} />
+            <Stack.Screen name="Notification" component={NotificationScreen} options={{ headerShadowVisible: false, headerStyle: { backgroundColor: colors.headerBg } }} />
 
             <Stack.Screen name="About" component={About} options={{ headerShadowVisible: false, headerShown: false }} />
 
@@ -504,9 +506,9 @@ const StackNavigation = () => {
                 },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.headerBg,
                 },
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -522,9 +524,9 @@ const StackNavigation = () => {
                 },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.headerBg,
                 },
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -540,12 +542,12 @@ const StackNavigation = () => {
                 },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#0D0D0D',
+                  backgroundColor: colors.headerBg,
                 },
                 animationTypeForReplace: 'push',
                 animation: 'slide_from_bottom',
                 headerBackTitleVisible: false,
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
               }}
             />
 
@@ -560,9 +562,9 @@ const StackNavigation = () => {
                 },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.headerBg,
                 },
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -601,10 +603,10 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
                 // headerRight: () => <TransactionHeaderRight />,
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -620,9 +622,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_bottom',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -634,10 +636,10 @@ const StackNavigation = () => {
                 headerShown: false,
                 gestureEnabled: false,
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
                 headerRight: () => <TransactionHeaderRight />,
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -658,12 +660,12 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
-                  color: '#FFFFFF',
+                  color: colors.headerText,
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#0D0D0D' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
                 headerBackTitle: '',
                 headerLeft: props => <HeaderBackButton {...props} labelVisible={false} backTitle="" onPress={() => navigate('home')} />,
               }}
@@ -679,9 +681,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -696,9 +698,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#0D0D0D' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -713,9 +715,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -730,9 +732,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -747,9 +749,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_bottom',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -764,9 +766,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -781,9 +783,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -798,9 +800,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -815,9 +817,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -830,10 +832,10 @@ const StackNavigation = () => {
 
                 headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3) },
 
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -848,9 +850,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -871,10 +873,10 @@ const StackNavigation = () => {
 
                 headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3) },
 
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -889,9 +891,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -915,9 +917,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -933,9 +935,9 @@ const StackNavigation = () => {
                 },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.headerBg,
                 },
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1001,12 +1003,12 @@ const StackNavigation = () => {
               component={OtherProfileNew}
               options={{
                 headerTitle: 'Profile',
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3), color: '#FFFFFF' },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3), color: colors.headerText },
                 headerLeft: () => <Back tintColor="#FFFFFF" />,
-                headerStyle: { backgroundColor: '#0D0D0D' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
                 animation: 'simple_push',
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1022,9 +1024,9 @@ const StackNavigation = () => {
                 },
                 headerShadowVisible: false,
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.headerBg,
                 },
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1039,9 +1041,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1056,9 +1058,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1073,9 +1075,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1099,9 +1101,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1116,9 +1118,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
                 headerRight: () => <FeeSetupInfoRight />,
               }}
@@ -1142,9 +1144,9 @@ const StackNavigation = () => {
                   fontSize: Math.round(responsiveFontSize(2.7)),
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />
@@ -1157,12 +1159,12 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
-                  color: '#FFFFFF',
+                  color: colors.headerText,
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#0D0D0D' },
+                headerStyle: { backgroundColor: colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               }}
             />

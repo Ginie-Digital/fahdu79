@@ -1,5 +1,6 @@
 import {StyleSheet, Text, View, TouchableOpacity, TextInput, Pressable, ActivityIndicator, Platform} from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
+import { useAppTheme } from '../Hook/useAppTheme';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
@@ -15,10 +16,11 @@ import {nTwins} from '../../DesiginData/Utility';
 const regex = /^[\w](?!.*?\.{2})[\w.]{1,28}[\w]$/;
 
 const PersonalDetailsCard = ({fullName, username, emailAddress, errors = {}}) => {
+  const { colors } = useAppTheme();
   return (
     <View style={styles.cardContainer}>
       <View style={styles.cardHeader}>
-        <Text style={styles.title}>Personal Details</Text>
+        <Text style={[styles.title, {color: colors.text}]}>Personal Details</Text>
         <TouchableOpacity
           onPress={() =>
             navigate('editprofiler', {
@@ -32,25 +34,25 @@ const PersonalDetailsCard = ({fullName, username, emailAddress, errors = {}}) =>
           <Text style={styles.edit}>Edit</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.card}>
+      <View style={[styles.card, {backgroundColor: colors.card}]}>
         <View style={styles.row}>
-          <Text style={styles.label}>Full Name</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>Full Name</Text>
           <View style={{flex: 1, alignItems: 'flex-end', marginLeft: 10}}>
-            <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{fullName}</Text>
+            <Text style={[styles.value, {color: colors.text}]} numberOfLines={1} ellipsizeMode="tail">{fullName}</Text>
             {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
           </View>
         </View>
         <View style={styles.row}>
-          <Text style={styles.label}>Username</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>Username</Text>
           <View style={{flex: 1, alignItems: 'flex-end', marginLeft: 10}}>
-            <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{username}</Text>
+            <Text style={[styles.value, {color: colors.text}]} numberOfLines={1} ellipsizeMode="tail">{username}</Text>
             {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
           </View>
         </View>
         <View style={styles.row}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>Email</Text>
           <View style={{flex: 1, alignItems: 'flex-end', marginLeft: 10}}>
-            <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{emailAddress}</Text>
+            <Text style={[styles.value, {color: colors.text}]} numberOfLines={1} ellipsizeMode="tail">{emailAddress}</Text>
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
           </View>
         </View>
@@ -60,6 +62,7 @@ const PersonalDetailsCard = ({fullName, username, emailAddress, errors = {}}) =>
 };
 
 const EditProfile = ({route}) => {
+  const { colors, isDark } = useAppTheme();
   const [updateProfile] = useUpdateProfileMutation({});
   const [userProfile] = useLazyUserProfileQuery({refetchOnFocus: true});
   const token = useSelector(state => state.auth.user.token);
@@ -252,42 +255,42 @@ const EditProfile = ({route}) => {
   };
 
   return (
-    <GestureHandlerRootView style={{flex: 1, backgroundColor: '#0D0D0D'}}>
+    <GestureHandlerRootView style={{flex: 1, backgroundColor: colors.background}}>
       <KeyboardAwareScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1, paddingBottom: 60}} keyboardDismissMode="interactive">
-        <MyProfilePicture setRefresh={setRefresh} isEditable={true} isDark={true} />
+        <MyProfilePicture setRefresh={setRefresh} isEditable={true} isDark={isDark} />
 
         <PersonalDetailsCard fullName={fullName} username={userName} emailAddress={emailAddress} errors={errors} />
 
-        <View style={styles.detailContainer}>
+        <View style={[styles.detailContainer, {backgroundColor: colors.background}]}>
           {/* Bio Section */}
-          <View style={styles.section}>
+          <View style={[styles.section, {borderColor: colors.border}]}>
             <View style={styles.headerRow}>
-              <Text style={styles.heading}>Bio</Text>
+              <Text style={[styles.heading, {color: colors.text}]}>Bio</Text>
               <Pressable onPress={() => onEdit('bio')}>
                 <Text style={styles.edit}>Edit</Text>
               </Pressable>
             </View>
-            <Text style={styles.textContent}>{bio || 'Add a short bio to introduce yourself!'}</Text>
+            <Text style={[styles.textContent, {color: colors.textSecondary}]}>{bio || 'Add a short bio to introduce yourself!'}</Text>
           </View>
 
           {/* Description Section */}
           {creatorOrUser === 'creator' && (
-            <View style={styles.section}>
+            <View style={[styles.section, {borderColor: colors.border}]}>
               <View style={styles.headerRow}>
-                <Text style={styles.heading}>Description</Text>
+                <Text style={[styles.heading, {color: colors.text}]}>Description</Text>
                 <Pressable onPress={() => onEdit('description')}>
                   <Text style={styles.edit}>Edit</Text>
                 </Pressable>
               </View>
-              <Text style={styles.subheading}>{categoryHeader || 'Heading (e.g., Dance Creator)'}</Text>
+              <Text style={[styles.subheading, {color: colors.textLabel}]}>{categoryHeader || 'Heading (e.g., Dance Creator)'}</Text>
               {errors.categoryHeader && <Text style={styles.errorText}>{errors.categoryHeader}</Text>}
-              <Text style={styles.textContent}>{categoryDescription || 'Add a detailed description to showcase your skills and interests!'}</Text>
+              <Text style={[styles.textContent, {color: colors.textSecondary}]}>{categoryDescription || 'Add a detailed description to showcase your skills and interests!'}</Text>
               {errors.categoryDescription && <Text style={styles.errorText}>{errors.categoryDescription}</Text>}
             </View>
           )}
 
           <View style={{padding: 24, paddingTop: 0}}>
-            <AnimatedButton isDark={true} title={'View Profile'} buttonMargin={0} onPress={() => navigate('chatRoomTab', {screen: 'profile'})} />
+            <AnimatedButton isDark={isDark} title={'View Profile'} buttonMargin={0} onPress={() => navigate('chatRoomTab', {screen: 'profile'})} />
           </View>
         </View>
       </KeyboardAwareScrollView>

@@ -1,4 +1,4 @@
-import {Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform, useColorScheme} from 'react-native';
+import {Pressable, StyleSheet, Text, View, Keyboard, TouchableOpacity, Platform} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {TextInput} from 'react-native-gesture-handler';
 import {navigate} from '../../../Navigation/RootNavigation';
@@ -12,13 +12,13 @@ import AnimatedButton from '../../Components/AnimatedButton';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {validateEmail} from '../../../DesiginData/Utility';
 import ChevronLoader from '../../ChevronLoader';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const LoginEmail = () => {
   const [email, setEmail] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   // Reset isFocused when keyboard hides (covers Android back button, tap outside, etc.)
   useEffect(() => {
@@ -38,39 +38,33 @@ const LoginEmail = () => {
   };
 
   return (
-    <SafeAreaView testID="login-email-screen" style={{flex: 1, backgroundColor: isDark ? '#121212' : '#fff'}}>
-      <View style={[styles.container, {backgroundColor: isDark ? '#121212' : '#fff'}]}>
+    <SafeAreaView testID="login-email-screen" style={{flex: 1, backgroundColor: colors.background}}>
+      <View style={[styles.container, {backgroundColor: colors.background}]}>
         <TouchableOpacity testID="login-email-back-button" accessibilityLabel="login-email-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
-          <Back color={isDark ? '#FFFFFF' : '#1E1E1E'} />
+          <Back color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Login</Text>
-        <Text style={[styles.subHead, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Welcome to Fahdu, Login to Continue...</Text>
-        <Text style={[styles.fieldName, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Email</Text>
+        <Text style={[styles.heading, {color: colors.text}]}>Login</Text>
+        <Text style={[styles.subHead, {color: colors.textSecondary}]}>Welcome to Fahdu, Login to Continue...</Text>
+        <Text style={[styles.fieldName, {color: colors.textLabel}]}>Email</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
-          <InputOverlay isVisible={isFocused} style={isDark && { backgroundColor: '#292929', borderRadius: 14 }} />
+          <InputOverlay isVisible={isFocused} style={{ backgroundColor: colors.overlayBg, borderRadius: 14 }} />
 
           <View style={[
             styles.textInputContainer, 
-            {marginTop: 0},
-            isDark && {
-              backgroundColor: '#191919',
-              borderColor: '#292929',
-              borderWidth: 1.5,
-              borderRadius: 14,
-            }
+            {marginTop: 0, backgroundColor: colors.inputBg, borderColor: colors.border},
           ]}>
             <TextInput
               testID="login-email-input"
               accessibilityLabel="login-email-input"
-              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
-              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
-              cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
-              placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
+              selectionHandleColor={colors.accent}
+              selectionColor={colors.accent}
+              cursorColor={colors.text}
+              placeholderTextColor={colors.placeholder}
               placeholder="Enter Email "
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'none'}
-              style={[styles.textInputs, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}
+              style={[styles.textInputs, {color: colors.text}]}
               value={email}
               onChangeText={t => setEmail(t.toLowerCase())}
               maxLength={50}
@@ -84,7 +78,7 @@ const LoginEmail = () => {
 
         <TouchableOpacity testID="login-email-signup-link" accessibilityLabel="login-email-signup-link" style={styles.alreadyAccountContainer} onPress={() => navigate('SignupEmail')}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={[styles.alreadyAccountText, {color: isDark ? '#4D4D4D' : '#1e1e1e'}]}>Don't you have an account? </Text>
+            <Text style={[styles.alreadyAccountText, {color: colors.textSecondary}]}>Don't you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Sign Up</Text>
           </View>
         </TouchableOpacity>

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking, TextInput, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View, Animated, TouchableOpacity, FlatList, Image, Switch, ToastAndroid, Pressable, ActivityIndicator, Platform, BackHandler, Linking, TextInput } from 'react-native';
 import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import Modal from 'react-native-modal';
@@ -15,12 +15,12 @@ import { FONT_SIZES, padios, selectionTwin, WIDTH_SIZES } from '../../../Desigin
 import AnimatedButton from '../AnimatedButton';
 import { useGetTFAEmailCodeMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { openInbox } from 'react-native-email-link';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const Authenticator = ({ authToken, type, afterLoginProcess }) => {
   console.log(authToken, 'AUTHTOKEN');
 
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colors, isDark } = useAppTheme();
 
   const inputRefs = React.useRef([]);
 
@@ -156,14 +156,14 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
         margin: 0,
         justifyContent: 'flex-end',
       }}>
-      <View style={[styles.modalInnerWrapper, isDark && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }]}>
+      <View style={[styles.modalInnerWrapper, { backgroundColor: colors.background, borderColor: colors.border }]}>
         <View style={styles.headerContainer}>
-          <Text style={[styles.heading, isDark && { color: '#FFFFFF' }]}>Security Check</Text>
+          <Text style={[styles.heading, { color: colors.text }]}>Security Check</Text>
           <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
-            <DIcon provider="Ionicons" name="close" size={20} color={isDark ? '#FFFFFF' : 'black'} />
+            <DIcon provider="Ionicons" name="close" size={20} color={colors.text} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.subtext, isDark && { color: '#4D4D4D' }]}>Enter the security code we just sent on your email address.</Text>
+        <Text style={[styles.subtext, { color: colors.textSecondary }]}>Enter the security code we just sent on your email address.</Text>
 
         <View style={styles.tipContainer}>
           <View style={styles.tipCounterContainer}>
@@ -183,11 +183,11 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
                     maxLength={1}
                     autoCapitalize="characters"
                     keyboardType="default"
-                    style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null, isDark && { backgroundColor: '#191919', borderColor: '#292929', color: '#FFFFFF' }]}
-                    selectionColor={isDark ? '#FFA86B' : selectionTwin()}
-                    selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
-                    cursorColor={isDark ? '#FFFFFF' : '#1e1e1e'}
-                    placeholderTextColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#B2B2B2'}
+                    style={[styles.codeBox, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }, verificationCode[index] ? styles.codeBoxFilled : null]}
+                    selectionColor={colors.accent}
+                    selectionHandleColor={colors.accent}
+                    cursorColor={colors.text}
+                    placeholderTextColor={colors.placeholder}
                   />
                 ))}
               </View>
@@ -250,7 +250,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderTopColor: '#282828',
     borderLeftColor: '#282828',
-    elevation: 1,
     fontSize: responsiveFontSize(2.4),
     padding: padios(responsiveWidth(2.6)),
     overflow: 'hidden',

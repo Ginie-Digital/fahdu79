@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {Pressable, StyleSheet, View, useColorScheme} from 'react-native';
+import {Pressable, StyleSheet, View} from 'react-native';
+import { useAppTheme } from '../Hook/useAppTheme';
 import Animated, {useSharedValue, withSpring, useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import SmoothLoader from './SmootheLoader';
@@ -22,8 +23,8 @@ const AnimatedButton = ({
   disableAnimation = false,
   isDark: isDarkProp, // Accept isDark from parent
 }) => {
-  const colorScheme = useColorScheme();
-  const isDark = isDarkProp !== undefined ? isDarkProp : false; // colorScheme === 'dark';
+  const { colors, isDark: systemIsDark } = useAppTheme();
+  const isDark = isDarkProp !== undefined ? isDarkProp : systemIsDark; // fallback to active theme from hook
 
   const translateY = useSharedValue(2);
   const translateX = useSharedValue(0);

@@ -2,6 +2,7 @@ import {StyleSheet, Text, View, ScrollView, FlatList, Dimensions, Image, Activit
 import React, {useCallback, useEffect, useState} from 'react';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
+import { useAppTheme } from '../Hook/useAppTheme';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {useDispatch, useSelector} from 'react-redux';
 import UpperOtherProfile from '../Components/NewOtherProfileComponents/UpperOtherProfile';
@@ -49,7 +50,7 @@ const showContentList = [
 const Tab = createMaterialTopTabNavigator();
 
 const OtherProfileNew = ({route}) => {
-
+  const { colors, isDark } = useAppTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [afterTime, setAfterTime] = useState(false);
   const [activeTab, setActiveTab] = React.useState('Homess');
@@ -234,11 +235,11 @@ const OtherProfileNew = ({route}) => {
 
   return (
     <>
-      <View style={{flex: 1, backgroundColor: '#0D0D0D'}}>
+      <View style={{flex: 1, backgroundColor: colors.background}}>
         {route?.params?.role === 'creator' ? (
           <Tabs.Container
             renderHeader={() => <UpperOtherProfile toCallApiInfo={route?.params} />}
-            renderTabBar={props => <MaterialTabBar {...props} style={{backgroundColor: '#0D0D0D'}} indicatorStyle={{backgroundColor: '#FFA86B', height: responsiveWidth(0.4)}} />}
+            renderTabBar={props => <MaterialTabBar {...props} style={{backgroundColor: colors.background}} indicatorStyle={{backgroundColor: colors.accent, height: responsiveWidth(0.4)}} />}
             onTabChange={({tabName}) => setCurrentTab(tabName)}>
             <Tabs.Tab name="profile" label={({name}) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
               <OtherProfileFeedPost contactDescription={contactDescription} />
@@ -253,7 +254,7 @@ const OtherProfileNew = ({route}) => {
             </Tabs.Tab>
           </Tabs.Container>
         ) : (
-          <View style={{flex: 1, backgroundColor: '#0D0D0D'}}>
+          <View style={{flex: 1, backgroundColor: colors.background}}>
             <UpperOtherProfile toCallApiInfo={route?.params} />
             {/* <ProfileUser /> */}
           </View>
@@ -261,10 +262,10 @@ const OtherProfileNew = ({route}) => {
 
         {/* Overlay Loading Screen */}
         {isLoading && (
-          <View style={styles.loaderOverlay}>
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#FFA86B" />
-              <Text style={styles.loadingText}>Loading profile...</Text>
+          <View style={[styles.loaderOverlay, {backgroundColor: colors.background}]}>
+            <View style={[styles.loaderContainer, {backgroundColor: colors.background}]}>
+              <ActivityIndicator size="large" color={colors.accent} />
+              <Text style={[styles.loadingText, {color: colors.text}]}>Loading profile...</Text>
             </View>
           </View>
         )}

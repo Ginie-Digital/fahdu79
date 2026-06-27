@@ -3,6 +3,7 @@ import React, {useCallback, useRef, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useLazyGetWishListQuery, useLazyIsValidFollowQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useSelector, useDispatch} from 'react-redux';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import ProgressBar from 'react-native-progress/Bar';
@@ -14,6 +15,7 @@ import {Image} from 'expo-image';
 import WishlistShimmer from '../Shimmers/WishlistShimmer';
 
 const OtherWishListPostComponent = ({toCallApiInfo}) => {
+  const { colors, isDark } = useAppTheme();
   const [getWishList] = useLazyGetWishListQuery({refetchOnFocus: true});
 
   const token = useSelector(state => state.auth.user.token);
@@ -61,19 +63,19 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
 
   const renderWishListCard = useCallback(({item}) => {
     return (
-      <View style={styles.cardWrapper}>
+      <View style={[styles.cardWrapper, { backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF', borderColor: isDark ? '#212121' : '#1e1e1e' }]}>
         <View style={styles.imageContainer}>
           <Image allowDownscaling placeholder={require('../../../Assets/Images/WishlistDefault.jpg')} source={{uri: item?.images[0]?.url}} contentFit="cover" placeholderContentFit="cover" style={styles.image} />
         </View>
 
-        <Text style={styles.wishtitle}>{item?.title}</Text>
+        <Text style={[styles.wishtitle, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>{item?.title}</Text>
 
-        <Text style={styles.description}>{item?.description}</Text>
+        <Text style={[styles.description, { color: isDark ? '#9E9E9E' : '#666666' }]}>{item?.description}</Text>
 
         <View style={styles.cardBottomView}>
           <View style={styles.cardBottomViewUpper}>
-            <Text style={styles.smallTexts}>Fund Raised</Text>
-            <Text style={styles.smallTexts}>
+            <Text style={[styles.smallTexts, { color: isDark ? '#E0E0E0' : '#1e1e1e' }]}>Fund Raised</Text>
+            <Text style={[styles.smallTexts, { color: isDark ? '#E0E0E0' : '#1e1e1e' }]}>
               {Number(item?.totalCollected).toLocaleString('en-IN')}/{Number(item?.listedCoinsRequired).toLocaleString('en-IN')}
             </Text>
           </View>
@@ -87,7 +89,7 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
             <ProgressBar 
               borderWidth={0} 
               height={responsiveWidth(3)} 
-              unfilledColor={'#2A2A2A'} 
+              unfilledColor={isDark ? '#2A2A2A' : '#E0E0E0'} 
               width={responsiveWidth(84)} 
               progress={item?.totalCollected / item?.listedCoinsRequired} 
               color={'#FF7819'} 
@@ -104,18 +106,18 @@ const OtherWishListPostComponent = ({toCallApiInfo}) => {
         </View>
       </View>
     );
-  }, [handleDonation]);
+  }, [handleDonation, isDark]);
 
   if (loading) {
     return (
-      <View style={{flex: 1, backgroundColor: '#0D0D0D', marginTop: responsiveWidth(10)}}>
+      <View style={{flex: 1, backgroundColor: colors.background, marginTop: responsiveWidth(10)}}>
         <WishlistShimmer />
       </View>
     );
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: '#0D0D0D'}}>
+    <View style={{flex: 1, backgroundColor: colors.background}}>
       <Tabs.FlatList data={wishList} renderItem={renderWishListCard} numColumns={1} keyExtractor={item => item?._id} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: responsiveWidth(6), paddingBottom: responsiveWidth(20)}} />
     </View>
   );
@@ -125,12 +127,10 @@ export default OtherWishListPostComponent;
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    borderWidth: 2,
-    borderColor: '#212121',
     overflow: 'hidden',
     marginTop: responsiveWidth(6),
     borderRadius: responsiveWidth(2),
-    backgroundColor: '#1C1C1C',
+    borderWidth: 2,
   },
   imageContainer: {
     width: '100%', // Ensure the container takes the full width
@@ -147,7 +147,6 @@ const styles = StyleSheet.create({
   },
   wishtitle: {
     fontFamily: 'Rubik-Bold',
-    color: '#FFFFFF',
     textAlign: 'left',
     fontSize: responsiveFontSize(2.2),
     marginTop: responsiveWidth(4),
@@ -160,7 +159,6 @@ const styles = StyleSheet.create({
     marginLeft: responsiveWidth(2),
     marginRight: responsiveWidth(2),
     marginTop: responsiveWidth(2),
-    color: '#9E9E9E',
   },
   cardBottomView: {
     // borderWidth : 1,
@@ -175,7 +173,6 @@ const styles = StyleSheet.create({
   },
   smallTexts: {
     fontSize: responsiveFontSize(1.6),
-    color: '#E0E0E0',
     fontFamily: 'Rubik-Bold',
   },
   supportButton: {

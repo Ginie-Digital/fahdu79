@@ -9,11 +9,13 @@ import DIcon from '../../../DesiginData/DIcons';
 import EmptyComponent from '../PostComponents/EmptyComponent';
 import { Tabs } from 'react-native-collapsible-tab-view';
 import { Image } from 'expo-image';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 import { appendFeedCachePosts, manipulateCurrentPagePost } from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import { useCurrentTabScrollY } from 'react-native-collapsible-tab-view';
 
 const OtherGridFeedPostComponent = ({ toCallApiInfo }) => {
+  const { colors, isDark } = useAppTheme();
   const userPosts = useSelector(state => state.profileFeedCache.data.content);
   const { currentPage, totalPages } = useSelector(state => state.profileFeedCache.data);
   const navigation = useNavigation();
@@ -168,7 +170,7 @@ const OtherGridFeedPostComponent = ({ toCallApiInfo }) => {
       ListFooterComponent={() => isFetchingMore ? <View style={{ padding: 20 }}><ActivityIndicator size="small" color="#FFA86B" /></View> : null}
       contentContainerStyle={{
         paddingBottom: 200,
-        backgroundColor: '#0D0D0D',
+        backgroundColor: colors.background,
       }}
     />
   );
@@ -178,7 +180,7 @@ export default OtherGridFeedPostComponent;
 
 const styles = StyleSheet.create({
   gridView: {
-    backgroundColor: '#0D0D0D',
+    backgroundColor: 'transparent',
   },
   gridEachImageContainer: {
     width: '100%',

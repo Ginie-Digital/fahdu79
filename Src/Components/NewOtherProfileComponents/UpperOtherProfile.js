@@ -22,6 +22,7 @@ import AnimatedButton from '../AnimatedButton';
 import { formatNiche, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useMessageNavigation } from '../../Hook/useMessageNavigation';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 //Ye share funciton stack navigation dwara use kiya ja raha hais
 
@@ -46,6 +47,7 @@ export const shareLink = async link => {
 };
 
 const UpperOtherProfile = ({ toCallApiInfo }) => {
+  const { colors, isDark } = useAppTheme();
   const { userName } = toCallApiInfo;
   console.log('userinfos', userName);
 
@@ -262,13 +264,13 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     console.log(userProfileDetails, '((((((099899999999');
 
     return (
-      <View style={[styles.userDetailContainer, { backgroundColor: '#0D0D0D' }, userProfileDetails?.role === 'creator' ? { marginTop: responsiveWidth(10) } : { marginTop: responsiveWidth(8) }]}>
-        <Text style={styles.name}>{userProfileDetails?.fullName}</Text>
+      <View style={[styles.userDetailContainer, { backgroundColor: isDark ? '#0D0D0D' : '#FFFFFF' }, userProfileDetails?.role === 'creator' ? { marginTop: responsiveWidth(10) } : { marginTop: responsiveWidth(8) }]}>
+        <Text style={[styles.name, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>{userProfileDetails?.fullName}</Text>
 
         {/* User Name */}
         <View style={styles.userName}>
           <View style={styles.userNameRow}>
-            <Text style={styles.userNameTitle}>{userProfileDetails?.displayName}</Text>
+            <Text style={[styles.userNameTitle, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>{userProfileDetails?.displayName}</Text>
 
             {userProfileDetails?.role === 'creator' && (
               <View style={{ height: 19, width: 19 }}>
@@ -287,25 +289,25 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               </View>
 
               {/* Followers */}
-              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D' }]}>
+              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#E0E0E0', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]}>
                 <View style={{ height: 16, width: 14 }}>
-                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{ flex: 1, tintColor: '#FFFFFF' }} />
+                  <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : undefined }} />
                 </View>
-                <Text style={styles.statText}>{userProfileDetails?.followers?.count?.followers}</Text>
+                <Text style={[styles.statText, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>{userProfileDetails?.followers?.count?.followers}</Text>
               </Pressable>
 
               {/* Likes */}
-              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D' }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
+              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#E0E0E0', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
                 <View style={{ height: 16, width: 17 }}>
-                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{ flex: 1, tintColor: '#FFFFFF' }} />
+                  <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : undefined }} />
                 </View>
-                <Text style={styles.statText}>{Math.round(tempRating)}</Text>
+                <Text style={[styles.statText, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>{Math.round(tempRating)}</Text>
               </Pressable>
 
               {/* Share Button */}
-              <Pressable style={({ pressed }) => [styles.statItem, { backgroundColor: pressed ? '#1A1A1A' : '#0D0D0D' }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
+              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#E0E0E0', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
                 <View style={{ height: 17, width: 22 }}>
-                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{ flex: 1, tintColor: '#FFFFFF' }} />
+                  <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : undefined }} />
                 </View>
               </Pressable>
             </View>
@@ -313,7 +315,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
         )}
       </View>
     );
-  }, [userProfileDetails, isFollowing, tempRating]);
+  }, [userProfileDetails, isFollowing, tempRating, isDark]);
 
   // const RatingSocialMyProfile = useCallback(() => {
   //   async function getCreatorsRating(userProfileDetails) {
@@ -352,20 +354,20 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     const isOtherUserRole = userProfileDetails?.role !== 'creator' && userProfileDetails?.role !== 'admin';
 
     return (
-      <View style={[styles.bioContainer, { backgroundColor: '#0D0D0D' }, isOtherUserRole && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
+      <View style={[styles.bioContainer, { backgroundColor: isDark ? '#0D0D0D' : '#FFFFFF' }, isOtherUserRole && {alignItems: 'center', marginTop: 0, marginBottom: 0, width: '100%', paddingHorizontal: 12}]}>
         {isOtherUserRole ? (
-          <Text numberOfLines={2} style={[styles.bioText, {textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%'}]}>
+          <Text numberOfLines={2} style={[styles.bioText, {color: isDark ? '#E0E0E0' : '#1e1e1e', textAlign: 'center', fontSize: 16, lineHeight: 22, width: '100%'}]}>
             {bioText}
           </Text>
         ) : (
-          <ReadMore animate numberOfLines={5} style={styles.bioText} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
+          <ReadMore animate numberOfLines={5} style={[styles.bioText, {color: isDark ? '#E0E0E0' : '#1e1e1e'}]} seeMoreStyle={styles.seeMoreLess} seeLessStyle={styles.seeMoreLess}>
             {bioText}
           </ReadMore>
         )}
         {userProfileDetails?.username && <Text style={[styles.usernameLink, isOtherUserRole && {textAlign: 'center'}]}>@{'YellowDimond'}</Text>}
       </View>
     );
-  }, [userProfileDetails]);
+  }, [userProfileDetails, isDark]);
 
   const OnlineShare = useCallback(() => {
     return (
@@ -451,7 +453,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
     if (!isFollowing) {
       return (
         <View style={[styles.btnContainer, { width: '100%', justifyContent: 'center' }]}>
-          <AnimatedButton title="Follow" style={[styles.subscribeButton]} buttonMargin={4} showOverlay={false} onPress={handleFollow} isDark={true} />
+          <AnimatedButton title="Follow" style={[styles.subscribeButton, { borderColor: isDark ? '#FF7819' : '#1e1e1e' }]} buttonMargin={4} showOverlay={false} onPress={handleFollow} isDark={isDark} />
         </View>
       );
     }
@@ -462,7 +464,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
         {!subscribed && (
           <AnimatedButton
             title="Subscribe"
-            style={[styles.subscribeButton]}
+            style={[styles.subscribeButton, { borderColor: isDark ? '#FF7819' : '#1e1e1e' }]}
             buttonMargin={4}
             showOverlay={false}
             loading={isFetchingSubscription}
@@ -495,7 +497,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
 
         {/* Message Button (Centered) */}
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <AnimatedButton title="Message" style={[styles.messageButton]} buttonMargin={4} showOverlay={false} onPress={goChat} isDark={true} textStyle={{color: '#FFFFFF'}} />
+          <AnimatedButton title="Message" style={[styles.messageButton, { backgroundColor: isDark ? '#1A1A1A' : 'white', borderColor: isDark ? '#212121' : '#1e1e1e' }]} buttonMargin={4} showOverlay={false} onPress={goChat} isDark={isDark} textStyle={isDark ? {color: '#FFFFFF'} : {color: '#1e1e1e'}} />
         </View>
 
         {/* Three Dots Button (Right-Aligned) */}
@@ -510,15 +512,15 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               width: 14,
               opacity: pressed ? 0.5 : 1,
             })}>
-            <Image source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{ flex: 1 }} />
+            <Image source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : '#1e1e1e' }} />
           </Pressable>
         </View>
       </View>
     );
-  }, [userProfileDetails, isFollowing, subscribed, loggedInUserRole]);
+  }, [userProfileDetails, isFollowing, subscribed, loggedInUserRole, isDark]);
 
   return (
-    <View style={{ backgroundColor: '#0D0D0D' }}>
+    <View style={{ backgroundColor: isDark ? '#0D0D0D' : '#FFFFFF' }}>
       <OtherProfilePicture displayName={userProfileDetails?.displayName} userId={userProfileDetails?._id} />
       <UserDetailMyProfile />
       <View style={{ flexDirection: 'column' }}>

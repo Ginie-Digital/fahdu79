@@ -1004,7 +1004,7 @@ const StackNavigation = () => {
               options={{
                 headerTitle: 'Profile',
                 headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3), color: colors.headerText },
-                headerLeft: () => <Back tintColor="#FFFFFF" />,
+                headerLeft: () => <Back tintColor={colors.headerTint} />,
                 headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
                 animation: 'simple_push',

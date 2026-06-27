@@ -10,6 +10,7 @@ import Password from './Assets/svg/change.svg';
 import Refferal from './Assets/svg/reffer.svg';
 import Revenue from './Assets/svg/revenue.svg';
 import Wallet from './Assets/svg/wallet.svg';
+import WalletDark from './Assets/svg/WalletSettingsDark.svg';
 import Blocked from './Assets/svg/blocked.svg';
 import Audio from './Assets/svg/audio.svg';
 import Twofactor from './Assets/svg/twofactor.svg';
@@ -44,8 +45,10 @@ import OtherProfileShareLink from './Assets/svg/OtherProfileShareLink.svg';
 import FeedbackIcon from './Assets/svg/Feedback.svg';
 
 import { responsiveWidth } from 'react-native-responsive-dimensions';
+import { useAppTheme } from './Src/Hook/useAppTheme';
 
 const AddSvg = ({ name, ...props }) => {
+  const { isDark } = useAppTheme();
   let Provider;
 
   switch (name) {
@@ -113,7 +116,7 @@ const AddSvg = ({ name, ...props }) => {
       Provider = Revenue;
       break;
     case 'Wallet':
-      Provider = Wallet;
+      Provider = isDark ? WalletDark : Wallet;
       break;
     case 'Blocked':
       Provider = Blocked;

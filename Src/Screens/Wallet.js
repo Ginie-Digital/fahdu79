@@ -1,7 +1,7 @@
 // WalletScreen.js
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator, useColorScheme, Dimensions } from 'react-native';
 import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
 import WalletSVG from '../../Assets/svg/WalletIcon.svg';
 import AnimatedNumber from '../Components/AnimatedNumber';
@@ -23,6 +23,9 @@ const WalletScreen = ({ route }) => {
   const token = useSelector(state => state.auth.user.token);
 
   const method = route?.params?.method;
+
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const [walletHeight, setWalletHeight] = useState(0);
 
@@ -154,9 +157,9 @@ const WalletScreen = ({ route }) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#3d84b8" />
-        <Text style={styles.loadingText}>Processing payment...</Text>
+      <View style={[styles.container, styles.center, { backgroundColor: isDark ? '#0D0D0D' : '#fff' }]}>
+        <ActivityIndicator size="large" color={isDark ? '#FFA86B' : '#3d84b8'} />
+        <Text style={[styles.loadingText, { color: isDark ? '#9E9E9E' : undefined }]}>Processing payment...</Text>
       </View>
     );
   }
@@ -172,9 +175,9 @@ const WalletScreen = ({ route }) => {
   const offerData = (item) => getOfferData(item);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.overlay, { height: walletHeight }]} />
-      <View style={styles.walletCard} onLayout={event => setWalletHeight(event.nativeEvent.layout.height)}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#0D0D0D' : '#fff' }]}>
+      <View style={[styles.overlay, { height: walletHeight, backgroundColor: isDark ? '#1A1A1A' : 'white', borderColor: isDark ? '#FF7819' : '#000' }]} />
+      <View style={[styles.walletCard, isDark && { backgroundColor: '#FFA86B', borderColor: '#FF7819' }]} onLayout={event => setWalletHeight(event.nativeEvent.layout.height)}>
         <View style={styles.walletHeader}>
           <Text style={styles.walletText}>Total Balance</Text>
         </View>
@@ -188,8 +191,7 @@ const WalletScreen = ({ route }) => {
         </View>
       </View>
       <View style={styles.textContainer}>
-        <Text style={styles.title}>Choose Package</Text>
-        <Text style={styles.subtitle}>Select the package that suits your needs</Text>
+        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000' }]}>Select a Package</Text>
       </View>
       {/* Packages Grid */}
       <FlatList
@@ -213,20 +215,30 @@ const WalletScreen = ({ route }) => {
           <View
             style={{
               flexDirection: 'row',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              borderWidth: WIDTH_SIZES['1.5'],
-              borderColor: '#1e1e1e',
-              borderRadius: 12,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
+              borderWidth: 2,
+              borderColor: '#FFA86B',
+              borderRadius: 20,
+              padding: 20,
+              gap: 12,
               marginBottom: 40,
               width: '100%',
+              backgroundColor: isDark ? 'rgba(255, 168, 107, 0.16)' : 'rgba(255, 168, 107, 0.16)',
             }}>
-            <Text style={{ fontSize: FONT_SIZES['12'], color: '#1e1e1e', fontFamily: 'Rubik-Regular' }}>Have questions about refund?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('webView', { title: 'Refund Policy', type: 'refund' })}>
-              <Text style={{ fontSize: FONT_SIZES['14'], fontFamily: 'Rubik-Bold', color: '#1e1e1e' }}>Read Policy</Text>
-            </TouchableOpacity>
+            <Image
+                source={require('../../Assets/Images/informationDark.png')}
+                style={{ width: 48, height: 48 }}
+                resizeMode="contain"
+              />
+            <Text style={{ 
+              fontSize: 16, 
+              fontFamily: 'Rubik-Medium', 
+              color: isDark ? '#FFFFFF' : '#000000', 
+              lineHeight: 22,
+              flex: 1,
+            }}>
+              Each package unlocks a unique badge visible on your profile.
+            </Text>
           </View>
         )}
       />

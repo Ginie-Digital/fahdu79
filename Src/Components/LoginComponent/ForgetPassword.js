@@ -22,7 +22,7 @@ const ForgetPassword = ({route}) => {
   const [isEmailStep, setIsEmailStep] = useState(true);
   const [loading, setLoading] = useState(false);
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   const dispatch = useDispatch();
   const [forgetPassword] = useForgetPasswordMutation();

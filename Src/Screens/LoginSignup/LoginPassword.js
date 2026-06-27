@@ -54,7 +54,7 @@ const LoginPassword = ({ route }) => {
   const { isKeyboardVisible } = useKeyboardHook();
 
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   // Reset isFocused when keyboard hides
   useEffect(() => {

@@ -22,7 +22,7 @@ const SignupEmail = () => {
   const dispatch = useDispatch();
   const {isKeyboardVisible} = useKeyboardHook();
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   const handleReferralInput = text => {
     setReferralCode(text);

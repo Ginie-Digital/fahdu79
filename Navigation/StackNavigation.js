@@ -655,10 +655,15 @@ const StackNavigation = () => {
               component={Platform.OS === 'ios' ? TestPurchase : WalletRechargeScreen}
               options={{
                 title: 'Payment Gateway',
+                headerTitleStyle: {
+                  fontFamily: 'Rubik-SemiBold',
+                  fontSize: Math.round(responsiveFontSize(2.7)),
+                  color: '#FFFFFF',
+                },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: '#0D0D0D' },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: '#FFFFFF',
                 headerBackTitle: '',
                 headerLeft: props => <HeaderBackButton {...props} labelVisible={false} backTitle="" onPress={() => navigate('home')} />,
               }}
@@ -1152,11 +1157,12 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
+                  color: '#FFFFFF',
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#fff' },
+                headerStyle: { backgroundColor: '#0D0D0D' },
                 animation: 'slide_from_right',
-                headerTintColor: '#1e1e1e',
+                headerTintColor: '#FFFFFF',
                 headerBackTitleVisible: false,
               }}
             />

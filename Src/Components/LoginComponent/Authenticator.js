@@ -20,7 +20,7 @@ const Authenticator = ({ authToken, type, afterLoginProcess }) => {
   console.log(authToken, 'AUTHTOKEN');
 
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   const inputRefs = React.useRef([]);
 

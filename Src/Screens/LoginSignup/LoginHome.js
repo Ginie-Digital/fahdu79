@@ -17,7 +17,7 @@ import { toggleAlertModal, toggleShowOnboarding, toggleVerficationScreen } from 
 const LoginHome = () => {
   const dispatcher = useDispatch();
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   const [authToken, setAuthToken] = useState('');
   const [type, setType] = useState(false);

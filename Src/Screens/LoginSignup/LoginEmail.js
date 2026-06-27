@@ -18,7 +18,7 @@ const LoginEmail = () => {
   const [isFocused, setIsFocused] = useState(false);
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   // Reset isFocused when keyboard hides (covers Android back button, tap outside, etc.)
   useEffect(() => {

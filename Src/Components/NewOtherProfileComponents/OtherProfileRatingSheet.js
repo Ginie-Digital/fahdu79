@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useCallback} from 'react';
-import {View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, BackHandler, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Dimensions, TouchableOpacity, BackHandler, Platform, useColorScheme} from 'react-native';
 import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
 import {toggleRatingModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
@@ -24,7 +24,8 @@ const OtherProfileRatingSheet = () => {
   const token = useSelector(state => state.auth.user.token);
   const visible = useSelector(state => state.hideShow.visibility.ratingModal);
 
-  const isDark = true; // Dark mode flag
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const [rate, setRate] = useState(0);
   const [loading, setLoading] = useState(false);

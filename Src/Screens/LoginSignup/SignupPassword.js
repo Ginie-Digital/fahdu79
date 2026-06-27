@@ -22,7 +22,7 @@ const SignupPassword = ({route}) => {
   console.log(route);
 
   const colorScheme = useColorScheme();
-  const isDark = true; // colorScheme === 'dark';
+  const isDark = colorScheme === 'dark';
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,6 +31,7 @@ const SignupPassword = ({route}) => {
   const [focusedInput, setFocusedInput] = useState(null);
   const [isPasswordStrong, setIsPasswordStrong] = useState(false);
   const [emailConsent, setEmailConsent] = useState(true);
+  const [agreedTOC, setAgreedTOC] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [signUp] = useSignUpMutation();
 
@@ -87,6 +88,10 @@ const SignupPassword = ({route}) => {
   };
 
   const handleSignup = async () => {
+    if (!agreedTOC) {
+      LoginPageErrors('Please agree to the Terms & Conditions and Privacy Policy');
+      return;
+    }
     if (isPasswordStrong) {
       if (password.trim() && confirmPassword.trim()) {
         if (password === confirmPassword) {
@@ -221,6 +226,24 @@ const SignupPassword = ({route}) => {
           </View>
           <Text style={[styles.checkboxLabel, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>
             Keep me updated with news, feature releases, and announcements via email
+          </Text>
+        </Pressable>
+
+        <Pressable 
+          style={styles.checkboxContainer} 
+          onPress={() => setAgreedTOC(!agreedTOC)}
+        >
+          <View pointerEvents="none">
+            <CustomCheckbox
+              checked={agreedTOC}
+              onToggle={() => {}}
+            />
+          </View>
+          <Text style={[styles.checkboxLabel, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>
+            I agree to the{' '}
+            <Text style={{color: '#FF7F50', fontFamily: 'Rubik-Medium'}}>Terms & Conditions</Text>
+            {' '}and{' '}
+            <Text style={{color: '#FF7F50', fontFamily: 'Rubik-Medium'}}>Privacy Policy</Text>
           </Text>
         </Pressable>
 

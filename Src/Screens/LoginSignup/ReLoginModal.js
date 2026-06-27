@@ -126,7 +126,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: FONT_SIZES[14] || responsiveFontSize(1.75),
-    lineHeight: 14,
   },
 });
 

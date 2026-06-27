@@ -1,21 +1,12 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
-import { responsiveWidth, responsiveFontSize } from 'react-native-responsive-dimensions';
-import AnimatedButton from '../Components/AnimatedButton';
+import { View, Text, Image, StyleSheet, Pressable, Platform } from 'react-native';
 
 const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
-
-    console.log('🎬 LiveBanner Props:', { username, avatarUrl });
-
-
-    console.log('🎬 LiveBanner Props:', { userDetails });
-
     return (
         <Pressable
             onPress={onJoin}
             style={({ pressed }) => [styles.container, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
         >
-
             <View style={styles.leftSection}>
                 <Image
                     source={{ uri: avatarUrl || 'https://via.placeholder.com/48' }}
@@ -27,19 +18,12 @@ const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
                 </View>
             </View>
 
-            <View style={styles.joinButtonContainer}>
-                <AnimatedButton
-                    title={'Join Now'}
-                    onPress={onJoin}
-                    showOverlay={false}
-                    buttonMargin={0}
-                    style={styles.animatedButtonStyle}
-                    disableAnimation={true}
-                    isDark={true}
-                    textStyle={{ fontFamily: 'Rubik-Bold', fontSize: 12, color: '#000000' }}
-                />
-            </View>
-
+            <Pressable
+                onPress={onJoin}
+                style={({ pressed }) => [styles.joinButton, pressed && { opacity: 0.8 }]}
+            >
+                <Text style={styles.joinText}>Join Now</Text>
+            </Pressable>
         </Pressable>
     );
 };
@@ -76,7 +60,7 @@ const styles = StyleSheet.create({
     },
     username: {
         fontSize: 16,
-        color: "#FFFFFF",
+        color: '#FFFFFF',
         fontFamily: 'Rubik-Bold',
         lineHeight: 16,
     },
@@ -87,19 +71,24 @@ const styles = StyleSheet.create({
         lineHeight: 12,
         marginTop: 6,
     },
-    joinButtonContainer: {
-        width: 79,
-        height: 40,
-        justifyContent: 'center',
-    },
-    animatedButtonStyle: {
-        height: 40,
+    joinButton: {
+        width: 80,
+        height: 34,
         backgroundColor: '#FFA86B',
         borderColor: '#FF7819',
         borderWidth: 1.5,
         borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-
+    joinText: {
+        fontFamily: 'Rubik-Bold',
+        fontSize: 12,
+        color: '#000000',
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+        paddingBottom: Platform.OS === 'android' ? 2 : 1.5,
+    },
 });
 
 export default LiveBanner;

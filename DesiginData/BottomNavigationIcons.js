@@ -13,8 +13,8 @@ const iconsObject = {
   createpostbottomtab: require('./../Assets/svg/Tabsvgs/add.png'),
   createpostbottomtabFocus: require('./../Assets/svg/Tabsvgs/add.png'),
 
-  home: require('./../Assets/svg/Tabsvgs/home.png'),
-  homeFocus: require('./../Assets/svg/Tabsvgs/homefocus.png'),
+  home: require('../Assets/Images/WhiteModeBottom/HomeUnfocus.png'),
+  homeFocus: require('../Assets/Images/WhiteModeBottom/HomeFocus.png'),
 
   dashboard: require('../Assets/Images/dashboard.png'),
   dashboardFocus: require('../Assets/Images/dashboardFocus.png'),
@@ -22,8 +22,8 @@ const iconsObject = {
   profile: require('../Assets/Images/Coin.png'),
   profileFocus: require('../Assets/Images/Coin.png'),
 
-  discover: require('./../Assets/svg/Tabsvgs/discover.png'),
-  discoverFocus: require('./../Assets/svg/Tabsvgs/discoverfocus.png'),
+  discover: require('../Assets/Images/WhiteModeBottom/discoverUnfocus.png'),
+  discoverFocus: require('../Assets/Images/WhiteModeBottom/discoverFocus.png'),
 
   notifications: require('./../Assets/Images/notifications.png'),
   notificationsFocus: require('./../Assets/Images/notificationsfocus.png'),
@@ -108,7 +108,7 @@ const BottomNavigationIcons = props => {
       ) : iconName === 'same' ? (
         <Image source={icons.createpostbottomtabFocus} style={styles.createPostIcon} tintColor={props.focused ? undefined : colors.iconTint} />
       ) : (
-        <Image source={iconName} style={styles.defaultIcon} tintColor={props.focused ? undefined : colors.iconTint} />
+        <Image source={iconName} style={styles.defaultIcon} tintColor={(props.focused || props.iconName === 'discover' || props.iconName === 'discoverFocus') ? undefined : colors.iconTint} />
       )}
     </View>
   );

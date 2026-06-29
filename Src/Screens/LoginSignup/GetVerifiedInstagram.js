@@ -292,7 +292,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <View style={styles.row}>
-                  <Text style={styles.buttonText}>Send to Instagram </Text>
+                  <Text style={styles.buttonText}>Paste to Instagram </Text>
                   <DIcon provider={'Entypo'} name={'instagram'} size={18} color="#fff" />
                 </View>
               )}

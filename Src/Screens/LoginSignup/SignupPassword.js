@@ -27,8 +27,7 @@ const SignupPassword = ({route}) => {
   const [cShowPassword, cSetShowPassword] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
   const [isPasswordStrong, setIsPasswordStrong] = useState(false);
-  const [emailConsent, setEmailConsent] = useState(true);
-  const [agreedTOC, setAgreedTOC] = useState(false);
+  const [emailConsent, setEmailConsent] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [signUp] = useSignUpMutation();
 
@@ -85,8 +84,8 @@ const SignupPassword = ({route}) => {
   };
 
   const handleSignup = async () => {
-    if (!agreedTOC) {
-      LoginPageErrors('Please agree to the Terms & Conditions and Privacy Policy');
+    if (!emailConsent) {
+      LoginPageErrors('Please agree to receive updates to continue');
       return;
     }
     if (isPasswordStrong) {
@@ -223,24 +222,6 @@ const SignupPassword = ({route}) => {
           </View>
           <Text style={styles.checkboxLabel}>
             Keep me updated with news, feature releases, and announcements via email
-          </Text>
-        </Pressable>
-
-        <Pressable 
-          style={styles.checkboxContainer} 
-          onPress={() => setAgreedTOC(!agreedTOC)}
-        >
-          <View pointerEvents="none">
-            <CustomCheckbox
-              checked={agreedTOC}
-              onToggle={() => {}}
-            />
-          </View>
-          <Text style={styles.checkboxLabel}>
-            I agree to the{' '}
-            <Text style={{color: '#FF7F50', fontFamily: 'Rubik-Medium'}}>Terms & Conditions</Text>
-            {' '}and{' '}
-            <Text style={{color: '#FF7F50', fontFamily: 'Rubik-Medium'}}>Privacy Policy</Text>
           </Text>
         </Pressable>
 

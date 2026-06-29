@@ -270,7 +270,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         {showConfirmation === 'stepthree' && (
           <View style={styles.content}>
             <Text style={styles.titleText}>Verification Message</Text>
-            <Text style={styles.subTitleText}>Copy this message and send it to us via DM on handle @fahduofficial</Text>
+            <Text style={styles.subTitleText}>Tap the button below to copy this message and open Instagram DM for @fahduofficial</Text>
             
             <View style={styles.copyBox}>
               <View style={{flex: 1}}>
@@ -280,9 +280,6 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
                   <Text style={{fontFamily: 'Rubik-Bold'}}> {stepOneVerifyObj?.dmMessage?.split('-')[1]}</Text>
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => copyToClipboard(stepOneVerifyObj?.dmMessage?.split('-')[1])} style={styles.copyIconBtn}>
-                <Feather name="copy" size={20} color="#FF7043" />
-              </TouchableOpacity>
             </View>
 
             <TouchableOpacity 

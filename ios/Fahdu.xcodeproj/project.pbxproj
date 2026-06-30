@@ -489,7 +489,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Fahdu/Fahdu.entitlements;
-				CURRENT_PROJECT_VERSION = 81;
+				CURRENT_PROJECT_VERSION = 82;
 				DEVELOPMENT_TEAM = 59X6F8Y2M4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = Fahdu/Info.plist;
@@ -500,7 +500,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 22.80.00;
+				MARKETING_VERSION = 22.97.01;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -523,7 +523,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Fahdu/Fahdu.entitlements;
-				CURRENT_PROJECT_VERSION = 81;
+				CURRENT_PROJECT_VERSION = 82;
 				DEVELOPMENT_TEAM = 59X6F8Y2M4;
 				INFOPLIST_FILE = Fahdu/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Fahdu;
@@ -533,7 +533,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 22.80.00;
+				MARKETING_VERSION = 22.97.01;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

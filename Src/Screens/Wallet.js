@@ -1,25 +1,57 @@
 // WalletScreen.js
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Linking, Platform, Alert, ActivityIndicator } from 'react-native';
-import { responsiveWidth, responsiveFontSize, responsiveHeight } from 'react-native-responsive-dimensions';
+import React, {useCallback, useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  Linking,
+  Platform,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import {
+  responsiveWidth,
+  responsiveFontSize,
+  responsiveHeight,
+} from 'react-native-responsive-dimensions';
 import WalletSVG from '../../Assets/svg/WalletIcon.svg';
 import AnimatedNumber from '../Components/AnimatedNumber';
 import PackageBox from '../Components/PackageBox';
 import axios from 'axios';
-import { useDispatch, useSelector } from 'react-redux';
-import { useGetPaymentTokenMutation, useLazyGetWalletPackQuery } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import { FONT_SIZES, nTwins, WIDTH_SIZES } from '../../DesiginData/Utility';
-import { usePaymentCheckOutMutation } from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
-import { CFEnvironment, CFSession, CFPaymentModes, CFThemeBuilder, CFPaymentComponentBuilder, CFDropCheckoutPayment } from 'cashfree-pg-api-contract';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  useGetPaymentTokenMutation,
+  useLazyGetWalletPackQuery,
+} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {FONT_SIZES, nTwins, WIDTH_SIZES} from '../../DesiginData/Utility';
+import {usePaymentCheckOutMutation} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {
+  CFEnvironment,
+  CFSession,
+  CFPaymentModes,
+  CFThemeBuilder,
+  CFPaymentComponentBuilder,
+  CFDropCheckoutPayment,
+} from 'cashfree-pg-api-contract';
 
-const { CFPaymentGatewayService } = Platform.OS === 'android' ? require('react-native-cashfree-pg-sdk') : { CFPaymentGatewayService: null };
-import { toggleWalletLoader } from '../../Redux/Slices/NormalSlices/HideShowSlice';
-import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { chatRoomSuccess } from '../Components/ErrorSnacks';
-import { navigate } from '../../Navigation/RootNavigation';
+const {CFPaymentGatewayService} =
+  Platform.OS === 'android'
+    ? require('react-native-cashfree-pg-sdk')
+    : {CFPaymentGatewayService: null};
+import {toggleWalletLoader} from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
+import {chatRoomSuccess} from '../Components/ErrorSnacks';
+import {navigate} from '../../Navigation/RootNavigation';
 
-const WalletScreen = ({ route }) => {
+const WalletScreen = ({route}) => {
   const token = useSelector(state => state.auth.user.token);
 
   const method = route?.params?.method;
@@ -47,8 +79,11 @@ const WalletScreen = ({ route }) => {
   const navigation = useNavigation();
 
   async function getUserCoins() {
-    let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    let {data} = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       timeout: 10000,
     });
 
@@ -62,15 +97,20 @@ const WalletScreen = ({ route }) => {
       CFPaymentGatewayService.setCallback({
         onVerify: orderID => {
           setResponseText('orderId is :' + orderID);
-          dispatch(toggleWalletLoader({ packId: null }));
+          dispatch(toggleWalletLoader({packId: null}));
 
           timeoutId = setTimeout(() => {
             getUserCoins();
           }, 1000);
         },
         onError: (error, orderID) => {
-          setResponseText('exception is : ' + JSON.stringify(error) + '\norderId is :' + orderID);
-          dispatch(toggleWalletLoader({ packId: null }));
+          setResponseText(
+            'exception is : ' +
+              JSON.stringify(error) +
+              '\norderId is :' +
+              orderID,
+          );
+          dispatch(toggleWalletLoader({packId: null}));
 
           timeoutId = setTimeout(() => {
             getUserCoins();
@@ -92,13 +132,13 @@ const WalletScreen = ({ route }) => {
   const checkoutPayment = async packId => {
     console.log('Selected method:', packId);
 
-    dispatch(toggleWalletLoader({ packId }));
+    dispatch(toggleWalletLoader({packId}));
 
     // setLoading(true);
     try {
       const response = await getPaymentToken({
         token,
-        data: { packId },
+        data: {packId},
       });
 
       console.log(response);
@@ -107,20 +147,41 @@ const WalletScreen = ({ route }) => {
         throw new Error('Invalid payment session response');
       }
 
-      const session = new CFSession(response?.data?.data?.sessionId, response?.data?.data?.orderId, CFEnvironment.PRODUCTION);
+      const session = new CFSession(
+        response?.data?.data?.sessionId,
+        response?.data?.data?.orderId,
+        CFEnvironment.PRODUCTION,
+      );
 
-      const paymentModes = new CFPaymentComponentBuilder().add(CFPaymentModes.CARD).add(CFPaymentModes.UPI).add(CFPaymentModes.NB).add(CFPaymentModes.WALLET).add(CFPaymentModes.PAY_LATER).build();
+      const paymentModes = new CFPaymentComponentBuilder()
+        .add(CFPaymentModes.CARD)
+        .add(CFPaymentModes.UPI)
+        .add(CFPaymentModes.NB)
+        .add(CFPaymentModes.WALLET)
+        .add(CFPaymentModes.PAY_LATER)
+        .build();
 
-      const theme = new CFThemeBuilder().setNavigationBarBackgroundColor('#1e1e1e').setNavigationBarTextColor('#FFFFFF').setButtonBackgroundColor('#FFA86B24').setButtonTextColor('#FFFFFF').setPrimaryTextColor('#212121').setSecondaryTextColor('#757575').build();
+      const theme = new CFThemeBuilder()
+        .setNavigationBarBackgroundColor('#1e1e1e')
+        .setNavigationBarTextColor('#FFFFFF')
+        .setButtonBackgroundColor('#FFA86B24')
+        .setButtonTextColor('#FFFFFF')
+        .setPrimaryTextColor('#212121')
+        .setSecondaryTextColor('#757575')
+        .build();
 
-      const dropPayment = new CFDropCheckoutPayment(session, paymentModes, theme);
+      const dropPayment = new CFDropCheckoutPayment(
+        session,
+        paymentModes,
+        theme,
+      );
 
       if (CFPaymentGatewayService) {
         CFPaymentGatewayService.doPayment(dropPayment);
       }
     } catch (error) {
       setLoading(false);
-      dispatch(toggleWalletLoader({ packId: null }));
+      dispatch(toggleWalletLoader({packId: null}));
       console.error('Payment Error:', error);
     }
   };
@@ -128,14 +189,16 @@ const WalletScreen = ({ route }) => {
   const fetchPack = async () => {
     const os = Platform.OS;
     console.log('📱 Platform.OS detected:', os);
-    
-    const { data, error } = await getWalletPack({ token, os }, false); // False to skip cache
+
+    const {data, error} = await getWalletPack({token, os}, false); // False to skip cache
 
     const packs = data?.data?.packs || [];
     console.log('📦 [Wallet:FetchPack] OS:', os);
     console.log('📦 [Wallet:FetchPack] Pack Count:', packs.length);
     packs.forEach((pack, i) => {
-      console.log(`📦 Pack[${i}]: name=${pack.name}, cost=${pack.cost}, amount=${pack.amount}, packId=${pack.packId}, discount=${pack.discount}`);
+      console.log(
+        `📦 Pack[${i}]: name=${pack.name}, cost=${pack.cost}, amount=${pack.amount}, packId=${pack.packId}, discount=${pack.discount}`,
+      );
     });
 
     if (error) {
@@ -149,7 +212,7 @@ const WalletScreen = ({ route }) => {
     useCallback(() => {
       fetchPack();
       getUserCoins();
-    }, [])
+    }, []),
   );
 
   if (loading) {
@@ -169,12 +232,14 @@ const WalletScreen = ({ route }) => {
     return {text: `+${discount}% EXTRA`};
   };
 
-  const offerData = (item) => getOfferData(item);
+  const offerData = item => getOfferData(item);
 
   return (
     <View style={styles.container}>
-      <View style={[styles.overlay, { height: walletHeight }]} />
-      <View style={styles.walletCard} onLayout={event => setWalletHeight(event.nativeEvent.layout.height)}>
+      <View style={[styles.overlay, {height: walletHeight}]} />
+      <View
+        style={styles.walletCard}
+        onLayout={event => setWalletHeight(event.nativeEvent.layout.height)}>
         <View style={styles.walletHeader}>
           <Text style={styles.walletText}>Total Balance</Text>
         </View>
@@ -189,23 +254,29 @@ const WalletScreen = ({ route }) => {
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.title}>Choose Package</Text>
-        <Text style={styles.subtitle}>Select the package that suits your needs</Text>
+        <Text style={styles.subtitle}>
+          Select the package that suits your needs
+        </Text>
       </View>
       {/* Packages Grid */}
       <FlatList
         data={limitedPackages}
-        renderItem={({ item, index }) => {
+        renderItem={({item, index}) => {
           const data = offerData(item);
           return (
-            <PackageBox 
-              item={item} 
-              index={index} 
-              isLastItem={index === limitedPackages.length - 1 && limitedPackages.length % 2 !== 0} 
-              handler={checkoutPayment} 
+            <PackageBox
+              item={item}
+              index={index}
+              isLastItem={
+                index === limitedPackages.length - 1 &&
+                limitedPackages.length % 2 !== 0
+              }
+              handler={checkoutPayment}
               offerText={data?.text}
             />
           );
-        }}        numColumns={2}
+        }}
+        numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.packagesList}
         showsVerticalScrollIndicator={false}
@@ -223,9 +294,29 @@ const WalletScreen = ({ route }) => {
               marginBottom: 40,
               width: '100%',
             }}>
-            <Text style={{ fontSize: FONT_SIZES['12'], color: '#1e1e1e', fontFamily: 'Rubik-Regular' }}>Have questions about refund?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('webView', { title: 'Refund Policy', type: 'refund' })}>
-              <Text style={{ fontSize: FONT_SIZES['14'], fontFamily: 'Rubik-Bold', color: '#1e1e1e' }}>Read Policy</Text>
+            <Text
+              style={{
+                fontSize: FONT_SIZES['12'],
+                color: '#1e1e1e',
+                fontFamily: 'Rubik-Regular',
+              }}>
+              Have questions about refund?
+            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('webView', {
+                  title: 'Refund Policy',
+                  type: 'refund',
+                })
+              }>
+              <Text
+                style={{
+                  fontSize: FONT_SIZES['14'],
+                  fontFamily: 'Rubik-Bold',
+                  color: '#1e1e1e',
+                }}>
+                Read Policy
+              </Text>
             </TouchableOpacity>
           </View>
         )}

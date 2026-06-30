@@ -51,8 +51,8 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
   const isCurrentLoading = packId != null && packId === currentButton;
 
   const colorConfig = PACK_COLORS[index % PACK_COLORS.length] || PACK_COLORS[0];
-  const rawCost = Platform.OS === 'android' ? item?.amount : item?.cost;
-  const cost = Number(rawCost || item?.cost || item?.amount || 0).toLocaleString('en-IN');
+  const rawCost = item?.cost;
+  const cost = Number(rawCost || item?.amount || 0).toLocaleString('en-IN');
 
 
   return (

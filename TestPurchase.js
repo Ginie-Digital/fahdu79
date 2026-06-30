@@ -1,9 +1,20 @@
-import {StyleSheet, Text, View, Platform, Button, Alert, Image} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+  Button,
+  Alert,
+  Image,
+} from 'react-native';
 import React, {useEffect, useState} from 'react';
 
 import * as IAP from 'react-native-iap';
 import {FlatList} from 'react-native-gesture-handler';
-import {responsiveFontSize, responsiveWidth} from 'react-native-responsive-dimensions';
+import {
+  responsiveFontSize,
+  responsiveWidth,
+} from 'react-native-responsive-dimensions';
 
 import DIcon from './DesiginData/DIcons';
 import {nTwins} from './DesiginData/Utility';
@@ -47,7 +58,10 @@ const TestPurchase = () => {
 
   async function getUserCoins() {
     let {data} = await axios.get('https://api.fahdu.com/api/wallet/get-coins', {
-      headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       timeout: 10000,
     });
 
@@ -65,7 +79,10 @@ const TestPurchase = () => {
         const availablePackages = result.current?.availablePackages ?? [];
 
         if (availablePackages.length < 5) {
-          console.warn('Expected at least 5 packages but found', availablePackages.length);
+          console.warn(
+            'Expected at least 5 packages but found',
+            availablePackages.length,
+          );
         }
 
         // Sort packages by price ascending so they map correctly to our predefined packages
@@ -73,10 +90,13 @@ const TestPurchase = () => {
           (a, b) => (a.product?.price ?? 0) - (b.product?.price ?? 0),
         );
 
-        console.log('Sorted RevenueCat packages:', sortedPackages.map(p => ({
-          id: p.identifier,
-          price: p.product?.price,
-        })));
+        console.log(
+          'Sorted RevenueCat packages:',
+          sortedPackages.map(p => ({
+            id: p.identifier,
+            price: p.product?.price,
+          })),
+        );
 
         // Map package ids into your predefined packages array
         const updatedPackages = packages.map((pack, index) => {
@@ -151,7 +171,9 @@ const TestPurchase = () => {
 
       <View style={styles.textContainer}>
         <Text style={styles.title}>Choose Package</Text>
-        <Text style={styles.subtitle}>Select the package that suits your needs</Text>
+        <Text style={styles.subtitle}>
+          Select the package that suits your needs
+        </Text>
       </View>
 
       {/* <Button title='pay' onPress={() => handlePurchase()}/> */}
@@ -159,7 +181,17 @@ const TestPurchase = () => {
       {packages?.length > 0 && (
         <FlatList
           data={packages}
-          renderItem={({item, index}) => <PackageBox handler={handlePurchase} loading={loading} item={item} index={index} isLastItem={index === packages.length - 1 && packages.length % 2 !== 0} />}
+          renderItem={({item, index}) => (
+            <PackageBox
+              handler={handlePurchase}
+              loading={loading}
+              item={item}
+              index={index}
+              isLastItem={
+                index === packages.length - 1 && packages.length % 2 !== 0
+              }
+            />
+          )}
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.packagesList}
@@ -225,7 +257,10 @@ const styles = StyleSheet.create({
     // ],
     ...Platform.select({
       ios: {
-        transform: [{translateX: responsiveWidth(7)}, {translateY: responsiveWidth(1)}],
+        transform: [
+          {translateX: responsiveWidth(7)},
+          {translateY: responsiveWidth(1)},
+        ],
       },
       android: {
         transform: [

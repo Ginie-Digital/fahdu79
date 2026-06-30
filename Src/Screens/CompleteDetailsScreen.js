@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
+import { useAppTheme } from '../Hook/useAppTheme';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { TextInput } from 'react-native-gesture-handler';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -17,10 +18,10 @@ import { CFEnvironment, CFSubscriptionSession } from 'cashfree-pg-api-contract';
 import LottieView from 'lottie-react-native';
 import { toggleRefreshOtherProfile } from '../../Redux/Slices/NormalSlices/HideShowSlice';
 
-const LoadingOverlay = ({ isVisible }) => {
+const LoadingOverlay = ({ isVisible, isDark }) => {
   if (!isVisible) return null;
   return (
-    <View style={styles.overlay}>
+    <View style={[styles.overlay, isDark && { backgroundColor: '#0D0D0D' }]}>
       <View style={styles.animationContainer}>
         <LottieView
           source={require('../../Assets/Animation/Loading.json')}
@@ -28,16 +29,16 @@ const LoadingOverlay = ({ isVisible }) => {
           loop
           style={styles.lottieLoader}
         />
-        <Text style={styles.overlayText}>Proceeding to pay...</Text>
+        <Text style={[styles.overlayText, isDark && { color: '#FFFFFF' }]}>Proceeding to pay...</Text>
       </View>
     </View>
   );
 };
 
-const SuccessOverlay = ({ isVisible, onVisitProfile }) => {
+const SuccessOverlay = ({ isVisible, onVisitProfile, isDark }) => {
   if (!isVisible) return null;
   return (
-    <View style={styles.overlay}>
+    <View style={[styles.overlay, isDark && { backgroundColor: '#0D0D0D' }]}>
       <View style={styles.animationContainer}>
         <LottieView
           source={require('../../Assets/Animation/Success.json')}
@@ -45,12 +46,12 @@ const SuccessOverlay = ({ isVisible, onVisitProfile }) => {
           loop={false}
           style={styles.lottieSuccess}
         />
-        <Text style={styles.overlayText}>Payment success</Text>
+        <Text style={[styles.overlayText, isDark && { color: '#FFFFFF' }]}>Payment success</Text>
         <TouchableOpacity 
-          style={styles.visitProfileBtn}
+          style={[styles.visitProfileBtn, isDark && { backgroundColor: '#FFA86B', borderColor: '#FF7819' }]}
           onPress={onVisitProfile}
         >
-          <Text style={styles.visitProfileBtnText}>Visit Profile</Text>
+          <Text style={[styles.visitProfileBtnText, isDark && { color: '#1E1E1E' }]}>Visit Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -62,6 +63,7 @@ const CompleteDetailsScreen = ({ route }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const token = useSelector(state => state.auth.user.token);
+  const { isDark } = useAppTheme();
   const [createSubscription, { isLoading: isApiLoading }] = useCreateSubscriptionMutation();
   
   const [fullName, setFullName] = useState('');
@@ -222,10 +224,10 @@ const CompleteDetailsScreen = ({ route }) => {
   const nextPaymentDate = useMemo(() => moment().add(plan?.duration || 1, 'months').format('D MMMM, YYYY'), [plan]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#0D0D0D' : '#fff' }} edges={['top', 'bottom']}>
       <KeyboardAwareScrollView
-        style={{ flex: 1, backgroundColor: '#fff' }}
-        contentContainerStyle={styles.container}
+        style={{ flex: 1, backgroundColor: isDark ? '#0D0D0D' : '#fff' }}
+        contentContainerStyle={[styles.container, isDark && { backgroundColor: '#0D0D0D' }]}
         enableOnAndroid={true}
         enableAutomaticScroll={true}
         extraScrollHeight={50}
@@ -236,45 +238,45 @@ const CompleteDetailsScreen = ({ route }) => {
         <View style={styles.headerSection}>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Complete Your Details</Text>
-              <Text style={styles.subtitle}>Fill in your info to proceed</Text>
+              <Text style={[styles.title, isDark && { color: '#FFFFFF' }]}>Complete Your Details</Text>
+              <Text style={[styles.subtitle, isDark && { color: '#9E9E9E' }]}>Fill in your info to proceed</Text>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-              <DIcon provider="Ionicons" name="close" size={20} color="#1E1E1E" />
+            <TouchableOpacity style={[styles.closeButton, isDark && { borderColor: '#2A2A2A' }]} onPress={() => navigation.goBack()}>
+              <DIcon provider="Ionicons" name="close" size={20} color={isDark ? '#FFFFFF' : '#1E1E1E'} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Selected Plan Summary */}
-        <View style={styles.planSummaryCard}>
+        <View style={[styles.planSummaryCard, isDark && { backgroundColor: 'rgba(255, 168, 107, 0.08)', borderColor: 'rgba(255, 168, 107, 0.2)' }]}>
           <View style={styles.planHeader}>
             <View>
-              <Text style={styles.planLabel}>Selected Plan</Text>
-              <Text style={styles.planName}>{plan?.name || 'Annually'}</Text>
+              <Text style={[styles.planLabel, isDark && { color: 'rgba(255, 255, 255, 0.5)' }]}>Selected Plan</Text>
+              <Text style={[styles.planName, isDark && { color: '#FFFFFF' }]}>{plan?.name || 'Annually'}</Text>
             </View>
-            <Text style={styles.planPrice}>₹{formatIndianNumber(plan?.amount || 10000)}</Text>
+            <Text style={[styles.planPrice, isDark && { color: '#FFFFFF' }]}>₹{formatIndianNumber(plan?.amount || 10000)}</Text>
           </View>
           
-          <View style={styles.divider} />
+          <View style={[styles.divider, isDark && { backgroundColor: 'rgba(255, 168, 107, 0.15)' }]} />
 
           <View style={styles.scheduleSection}>
             <Text style={styles.sectionTitle}>Auto-Pay Schedule</Text>
             
             <View style={styles.row}>
-              <Text style={styles.label}>Start Date</Text>
-              <Text style={styles.value}>{startDate}</Text>
+              <Text style={[styles.label, isDark && { color: '#9E9E9E' }]}>Start Date</Text>
+              <Text style={[styles.value, isDark && { color: '#FFFFFF' }]}>{startDate}</Text>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.label}>End Date</Text>
-              <Text style={styles.value}>{endDate}</Text>
+              <Text style={[styles.label, isDark && { color: '#9E9E9E' }]}>End Date</Text>
+              <Text style={[styles.value, isDark && { color: '#FFFFFF' }]}>{endDate}</Text>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, isDark && { backgroundColor: 'rgba(255, 168, 107, 0.15)' }]} />
 
             <View style={styles.row}>
-              <Text style={styles.label}>Next Payment</Text>
-              <Text style={styles.value}>{nextPaymentDate}</Text>
+              <Text style={[styles.label, isDark && { color: '#9E9E9E' }]}>Next Payment</Text>
+              <Text style={[styles.value, isDark && { color: '#FFFFFF' }]}>{nextPaymentDate}</Text>
             </View>
           </View>
         </View>
@@ -282,15 +284,15 @@ const CompleteDetailsScreen = ({ route }) => {
         {/* Form Inputs */}
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Full Name*</Text>
-            <View style={styles.inputContainer}>
+            <Text style={[styles.fieldLabel, isDark && { color: '#E0E0E0' }]}>Full Name*</Text>
+            <View style={[styles.inputContainer, isDark && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }]}>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, isDark && { color: '#FFFFFF' }]}
                 placeholder="e.g. Aashna Hegde"
-                placeholderTextColor="#B2B2B2"
+                placeholderTextColor={isDark ? '#555555' : '#B2B2B2'}
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
+                cursorColor={isDark ? '#FFA86B' : '#1e1e1e'}
                 value={fullName}
                 onChangeText={setFullName}
               />
@@ -298,15 +300,15 @@ const CompleteDetailsScreen = ({ route }) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Email Address*</Text>
-            <View style={styles.inputContainer}>
+            <Text style={[styles.fieldLabel, isDark && { color: '#E0E0E0' }]}>Email Address*</Text>
+            <View style={[styles.inputContainer, isDark && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }]}>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, isDark && { color: '#FFFFFF' }]}
                 placeholder="e.g. aashna@email.com"
-                placeholderTextColor="#B2B2B2"
+                placeholderTextColor={isDark ? '#555555' : '#B2B2B2'}
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
+                cursorColor={isDark ? '#FFA86B' : '#1e1e1e'}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -316,19 +318,19 @@ const CompleteDetailsScreen = ({ route }) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Phone Number*</Text>
-            <View style={styles.phoneInputRow}>
-              <View style={styles.countryPicker}>
+            <Text style={[styles.fieldLabel, isDark && { color: '#E0E0E0' }]}>Phone Number*</Text>
+            <View style={[styles.phoneInputRow, isDark && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }]}>
+              <View style={[styles.countryPicker, isDark && { backgroundColor: 'rgba(255, 168, 107, 0.08)', borderRightColor: '#2A2A2A' }]}>
                 <Text style={styles.flag}>🇮🇳</Text>
-                <Text style={styles.code}>+91</Text>
+                <Text style={[styles.code, isDark && { color: '#FFFFFF' }]}>+91</Text>
               </View>
               <TextInput
-                style={styles.phoneInput}
+                style={[styles.phoneInput, isDark && { color: '#FFFFFF' }]}
                 placeholder="98765 43210"
-                placeholderTextColor="#B2B2B2"
+                placeholderTextColor={isDark ? '#555555' : '#B2B2B2'}
                 selectionHandleColor={'#ffa86b'}
                 selectionColor={selectionTwin()}
-                cursorColor={'#1e1e1e'}
+                cursorColor={isDark ? '#FFA86B' : '#1e1e1e'}
                 keyboardType="phone-pad"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
@@ -344,16 +346,18 @@ const CompleteDetailsScreen = ({ route }) => {
           disabled={!isFormValid}
           loading={isApiLoading}
           onPress={handleProceed}
-          style={[styles.btn, isFormValid && styles.btnActive]}
-          textStyle={[styles.btnText, isFormValid && styles.btnTextActive]}
+          isDark={isDark}
+          style={[styles.btn, isFormValid && styles.btnActive, isDark && !isFormValid && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }, isDark && isFormValid && { backgroundColor: '#FFA86B', borderColor: '#FF7819' }]}
+          textStyle={[styles.btnText, isFormValid && styles.btnTextActive, isDark && !isFormValid && { color: '#555555' }, isDark && isFormValid && { color: '#1E1E1E' }]}
           buttonMargin={0}
         />
 
       </KeyboardAwareScrollView>
-      <LoadingOverlay isVisible={isProceeding} />
+      <LoadingOverlay isVisible={isProceeding} isDark={isDark} />
       <SuccessOverlay 
         isVisible={showSuccess} 
         onVisitProfile={handleVisitProfile}
+        isDark={isDark}
       />
     </SafeAreaView>
   );

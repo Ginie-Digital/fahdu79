@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {View, Text, StyleSheet, Modal, Pressable} from 'react-native';
 import {BlurView} from 'expo-blur';
 import {useSelector} from 'react-redux';
@@ -7,19 +7,51 @@ import {logoutExplicit} from '../../../AutoLogout';
 import {Image} from 'expo-image';
 import {WIDTH_SIZES, FONT_SIZES} from '../../../DesiginData/Utility';
 import { useAppTheme } from '../../Hook/useAppTheme';
+import { navigationRef } from '../../../Navigation/RootNavigation';
 
 const ReLoginModal = () => {
   const visible = useSelector(state => state.hideShow.visibility.relogin);
+  const hasToken = useSelector(state => state.auth.user.token);
   const { colors, isDark } = useAppTheme();
+  const [currentRoute, setCurrentRoute] = useState(null);
 
-  if (!visible) return null;
+  useEffect(() => {
+    const handleStateChange = () => {
+      try {
+        const route = navigationRef.getCurrentRoute();
+        setCurrentRoute(route?.name);
+      } catch (e) {
+        console.log('Error getting route:', e);
+      }
+    };
+
+    if (navigationRef.isReady()) {
+      handleStateChange();
+    }
+
+    const unsubscribe = navigationRef.addListener('state', handleStateChange);
+    return unsubscribe;
+  }, []);
+
+  const loginScreens = [
+    'LoginHome',
+    'LoginEmail',
+    'forgetPassword',
+    'LoginPassword',
+    'SignupEmail',
+    'SignupPassword',
+    'createPassword',
+    'Invites',
+  ];
+
+  if (!visible || !hasToken || loginScreens.includes(currentRoute)) return null;
 
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
       <View style={styles.overlay}>
         <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.blurBackground} />
         <View style={[styles.card, {
-          backgroundColor: colors.background,
+          backgroundColor: isDark ? '#1e1e1e' : '#FFFFFF',
           borderWidth: isDark ? 0 : 2,
           borderStyle: isDark ? undefined : 'dashed',
           borderColor: colors.border,

@@ -118,6 +118,9 @@ const AddSvg = ({ name, ...props }) => {
     case 'Wallet':
       Provider = isDark ? WalletDark : Wallet;
       break;
+    case 'WalletLight':
+      Provider = Wallet;
+      break;
     case 'Blocked':
       Provider = Blocked;
       break;

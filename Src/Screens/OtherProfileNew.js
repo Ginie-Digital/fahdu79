@@ -182,6 +182,7 @@ const OtherProfileNew = ({route}) => {
         creatorId: route?.params?.userId,
         creatorName: route?.params?.userName,
       });
+      dispatch(toggleOtherProfileActionSheet({info: {show: -1}}));
       dispatch(toggleOtherProfileActionModal({show: false}));
       setTimeout(() => {
         setUnsubscribeModalVisible(true);
@@ -197,6 +198,7 @@ const OtherProfileNew = ({route}) => {
         creatorId: route?.params?.userId,
         creatorName: route?.params?.userName,
       });
+      dispatch(toggleOtherProfileActionSheet({info: {show: -1}}));
       dispatch(toggleOtherProfileActionModal({show: false}));
       setTimeout(() => {
         setUnsubscribeModalVisible(true);

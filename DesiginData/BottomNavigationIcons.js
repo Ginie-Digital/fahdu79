@@ -6,9 +6,9 @@ import { Image } from 'expo-image';
 
 // Light mode icons (default)
 const iconsObject = {
-  messages: require('./../Assets/svg/Tabsvgs/messages.png'),
-  messagesFocus: require('./../Assets/svg/Tabsvgs/messagesfocus.png'),
-  messageUnRead: require('./../Assets/svg/Tabsvgs/unreadchat.png'),
+  messages: require('../Assets/Images/WhiteModeBottom/WhiteModeUnFocuesNoMessage.png'),
+  messagesFocus: require('../Assets/Images/WhiteModeBottom/WhiteModeFocused.png'),
+  messageUnRead: require('../Assets/Images/WhiteModeBottom/WhiteModeNotifiyUnFocus.png'),
 
   createpostbottomtab: require('./../Assets/svg/Tabsvgs/add.png'),
   createpostbottomtabFocus: require('./../Assets/svg/Tabsvgs/add.png'),
@@ -108,7 +108,7 @@ const BottomNavigationIcons = props => {
       ) : iconName === 'same' ? (
         <Image source={icons.createpostbottomtabFocus} style={styles.createPostIcon} tintColor={props.focused ? undefined : colors.iconTint} />
       ) : (
-        <Image source={iconName} style={styles.defaultIcon} tintColor={(props.focused || props.iconName === 'discover' || props.iconName === 'discoverFocus') ? undefined : colors.iconTint} />
+        <Image source={iconName} style={styles.defaultIcon} tintColor={(props.focused || props.iconName === 'discover' || props.iconName === 'discoverFocus' || props.iconName === 'messages' || props.iconName === 'messagesFocus') ? undefined : colors.iconTint} />
       )}
     </View>
   );

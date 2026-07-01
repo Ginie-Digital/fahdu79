@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Dimensions, Platform } from 'react-native';
+import Modal from 'react-native-modal';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import DIcon from '../../../DesiginData/DIcons';
 import moment from 'moment';
@@ -18,7 +18,6 @@ const REASONS = [
 ];
 
 const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) => {
-  const bottomSheetModalRef = useRef(null);
   const token = useSelector(state => state.auth.user.token);
   const creatorId = item?.userDetails?._id || item?.creatorId;
   const creatorName = item?.userDetails?.name || item?.creatorName || 'the creator';
@@ -60,19 +59,6 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
   const daysRemaining = subData.daysRemaining !== undefined ? subData.daysRemaining : moment(expiryDate).diff(moment(), 'days');
   const formattedExpiry = expiryDate ? moment(expiryDate).format('DD MMM YYYY') : 'N/A';
 
-  useEffect(() => {
-    if (visible) {
-      bottomSheetModalRef.current?.present();
-    } else {
-      bottomSheetModalRef.current?.dismiss();
-    }
-  }, [visible]);
-
-  const renderBackdrop = useCallback(
-    props => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />,
-    []
-  );
-
   const handleProceedUnsubscribe = () => {
     triggerImpactLight();
     setStep(2);
@@ -104,7 +90,7 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
       
       // Sequence: Dismiss current bottom sheet first, then show success modal
       isHandlingSuccess.current = true;
-      bottomSheetModalRef.current?.dismiss();
+      onClose();
       
       setTimeout(() => {
         if (onUpdateList) {
@@ -140,154 +126,159 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
 
   return (
     <>
-      <BottomSheetModal
-      ref={bottomSheetModalRef}
-      index={visible ? 0 : -1}
-      snapPoints={step === 1 ? ['80%'] : ['70%']}
-      backdropComponent={renderBackdrop}
-      onDismiss={() => {
-        if (!isHandlingSuccess.current) {
-          onClose();
-        }
-      }}
-      enableDynamicSizing={false}
-      backgroundStyle={{ borderRadius: 32 }}
-      handleIndicatorStyle={{ backgroundColor: '#E0E0E0', width: 40 }}
-    >
-      <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.title}>{step === 1 ? 'Unsubscribe' : 'One last thing...'}</Text>
-            <Text style={styles.subtitle}>
-              {step === 1 
-                ? 'Fill in your info to proceed' 
-                : 'Tell us why you are cancelling — this helps creators improve (optional)'}
-            </Text>
+      <Modal
+        isVisible={visible}
+        avoidKeyboard={true}
+        statusBarTranslucent={true}
+        backdropColor="#00000060"
+        onBackButtonPress={onClose}
+        onBackdropPress={onClose}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        animationInTiming={200}
+        animationOutTiming={200}
+        style={styles.modalContainer}
+      >
+        <View style={styles.dialog}>
+          <View style={styles.indicatorContainer}>
+            <View style={styles.indicator} />
           </View>
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <DIcon provider="Ionicons" name="close" size={20} color="#1E1E1E" />
-          </TouchableOpacity>
-        </View>
+          <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.headerRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.title}>{step === 1 ? 'Unsubscribe' : 'One last thing...'}</Text>
+                <Text style={styles.subtitle}>
+                  {step === 1 
+                    ? 'Fill in your info to proceed' 
+                    : 'Tell us why you are cancelling — this helps creators improve (optional)'}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <DIcon provider="Ionicons" name="close" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
 
-        {isSubLoading && !subscriptionDetails ? (
-          <View style={{ justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-            <ActivityIndicator size="large" color="#FFA86B" />
-            <Text style={[styles.subtitle, { marginTop: 12 }]}>Fetching subscription details...</Text>
-          </View>
-        ) : (
-          <>
-            {step === 1 ? (
-              <>
-                {/* Selected Plan Box */}
-                <View style={styles.planBox}>
-                  <Text style={styles.planLabel}>Selected Plan</Text>
-                  <View style={styles.planMainRow}>
-                    <Text style={styles.planName}>{planName}</Text>
-                    <Text style={styles.planAmount}>
-                      ₹{planAmount.toLocaleString()}
-                    </Text>
-                  </View>
-                  <View style={styles.separator} />
-                  <View style={styles.planDetailRow}>
-                    <Text style={styles.planDetailLabel}>Subscription Ends</Text>
-                    <Text style={styles.planDetailValue}>{formattedExpiry}</Text>
-                  </View>
-                  <View style={styles.planDetailRow}>
-                    <Text style={styles.planDetailLabel}>Days Remaining</Text>
-                    <Text style={styles.planDetailValue}>{daysRemaining > 0 ? `${daysRemaining} Days` : 'Expires today'}</Text>
-                  </View>
-                </View>
-
-                {/* Benefit Section */}
-                <View style={{ gap: responsiveHeight(2) }}>
-                  <Text style={styles.benefitSectionTitle}>What happens when you cancel?</Text>
-                  <View style={styles.benefitList}>
-                    <BenefitItem
-                      title="Auto-pay will be stopped"
-                      subtitle="You will not be charged next month"
-                      bgColor="#F0FDF4"
-                      borderColor="#D2F9DE"
-                      iconColor="#00A63E"
-                    />
-                    <BenefitItem
-                      title="Access continues till period ends"
-                      subtitle={`You can access everything until ${formattedExpiry}`}
-                      bgColor="#EFF6FF"
-                      borderColor="#DBEAFE"
-                      iconColor="#155DFC"
-                    />
-                    <BenefitItem
-                      title="No Exclusive access after period ends"
-                      subtitle="Exclusive content, DMs, early access — all gone"
-                      bgColor="#FEF2F2"
-                      borderColor="#FFE2E2"
-                      iconColor="#FB2C36"
-                      iconName="x"
-                    />
-                  </View>
-                </View>
-
-                {/* Buttons */}
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity 
-                    style={styles.cancelButton} 
-                    onPress={handleProceedUnsubscribe}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.keepButton} onPress={handleClose}>
-                    <Text style={styles.keepButtonText}>Keep Subscription</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
+            {isSubLoading && !subscriptionDetails ? (
+              <View style={{ justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                <ActivityIndicator size="large" color="#FFA86B" />
+                <Text style={[styles.subtitle, { marginTop: 12 }]}>Fetching subscription details...</Text>
+              </View>
             ) : (
               <>
-                {/* Reason Selection UI */}
-                <View style={styles.reasonList}>
-                  {REASONS.map((reason) => {
-                    const isSelected = selectedReason === reason;
-                    return (
-                      <TouchableOpacity
-                        key={reason}
-                        style={[
-                          styles.reasonItem,
-                          isSelected && styles.reasonItemActive
-                        ]}
-                        onPress={() => {
-                          triggerImpactLight();
-                          setSelectedReason(reason);
-                        }}
-                      >
-                        <Text style={[
-                          styles.reasonText,
-                          isSelected && styles.reasonTextActive
-                        ]}>
-                          {reason}
+                {step === 1 ? (
+                  <>
+                    {/* Selected Plan Box */}
+                    <View style={styles.planBox}>
+                      <Text style={styles.planLabel}>Selected Plan</Text>
+                      <View style={styles.planMainRow}>
+                        <Text style={styles.planName}>{planName}</Text>
+                        <Text style={styles.planAmount}>
+                          ₹{planAmount.toLocaleString()}
                         </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                      </View>
+                      <View style={styles.separator} />
+                      <View style={styles.planDetailRow}>
+                        <Text style={styles.planDetailLabel}>Subscription Ends</Text>
+                        <Text style={styles.planDetailValue}>{formattedExpiry}</Text>
+                      </View>
+                      <View style={styles.planDetailRow}>
+                        <Text style={styles.planDetailLabel}>Days Remaining</Text>
+                        <Text style={styles.planDetailValue}>{daysRemaining > 0 ? `${daysRemaining} Days` : 'Expires today'}</Text>
+                      </View>
+                    </View>
 
-                {/* Confirm Cancel Button */}
-                <TouchableOpacity 
-                  style={styles.confirmButton} 
-                  onPress={handleConfirmCancel}
-                  disabled={isManaging}
-                >
-                  {isManaging ? (
-                    <ActivityIndicator size="small" color="#1E1E1E" />
-                  ) : (
-                    <Text style={styles.confirmButtonText}>Confirm Cancel</Text>
-                  )}
-                </TouchableOpacity>
+                    {/* Benefit Section */}
+                    <View style={{ gap: responsiveHeight(2) }}>
+                      <Text style={styles.benefitSectionTitle}>What happens when you cancel?</Text>
+                      <View style={styles.benefitList}>
+                        <BenefitItem
+                          title="Auto-pay will be stopped"
+                          subtitle="You will not be charged next month"
+                          bgColor="rgba(91, 215, 122, 0.1)"
+                          borderColor="rgba(91, 215, 122, 0.25)"
+                          iconColor="#00A63E"
+                        />
+                        <BenefitItem
+                          title="Access continues till period ends"
+                          subtitle={`You can access everything until ${formattedExpiry}`}
+                          bgColor="rgba(133, 207, 255, 0.1)"
+                          borderColor="rgba(133, 207, 255, 0.2)"
+                          iconColor="#155DFC"
+                        />
+                        <BenefitItem
+                          title="No Exclusive access after period ends"
+                          subtitle="Exclusive content, DMs, early access — all gone"
+                          bgColor="rgba(255, 153, 205, 0.1)"
+                          borderColor="rgba(255, 153, 205, 0.2)"
+                          iconColor="#FB2C36"
+                          iconName="x"
+                        />
+                      </View>
+                    </View>
+
+                    {/* Buttons */}
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity 
+                        style={styles.cancelButton} 
+                        onPress={handleProceedUnsubscribe}
+                      >
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.keepButton} onPress={handleClose}>
+                        <Text style={styles.keepButtonText}>Keep Subscription</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    {/* Reason Selection UI */}
+                    <View style={styles.reasonList}>
+                      {REASONS.map((reason) => {
+                        const isSelected = selectedReason === reason;
+                        return (
+                          <TouchableOpacity
+                            key={reason}
+                            style={[
+                              styles.reasonItem,
+                              isSelected && styles.reasonItemActive
+                            ]}
+                            onPress={() => {
+                              triggerImpactLight();
+                              setSelectedReason(reason);
+                            }}
+                          >
+                            <Text style={[
+                              styles.reasonText,
+                              isSelected && styles.reasonTextActive
+                            ]}>
+                              {reason}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    {/* Confirm Cancel Button */}
+                    <TouchableOpacity 
+                      style={styles.confirmButton} 
+                      onPress={handleConfirmCancel}
+                      disabled={isManaging}
+                    >
+                      {isManaging ? (
+                        <ActivityIndicator size="small" color="#1E1E1E" />
+                      ) : (
+                        <Text style={styles.confirmButtonText}>Confirm Cancel</Text>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                )}
               </>
             )}
-          </>
-        )}
-      </BottomSheetScrollView>
-    </BottomSheetModal>
+          </ScrollView>
+          <View style={styles.bottomExtension} />
+        </View>
+      </Modal>
 
       <SubscriptionCancelledModal
         visible={showSuccessModal}
@@ -298,10 +289,41 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
     </>
   );
 };
-
 const styles = StyleSheet.create({
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
+  dialog: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    backgroundColor: '#121212',
+    width: Dimensions.get('window').width,
+    maxHeight: '85%',
+    position: 'relative',
+  },
+  bottomExtension: {
+    position: 'absolute',
+    bottom: -100,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: '#121212',
+    zIndex: -1,
+  },
+  indicatorContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  indicator: {
+    backgroundColor: '#2C2C2C',
+    width: 40,
+    height: 5,
+    borderRadius: 2.5,
+  },
   contentContainer: {
-    padding: responsiveWidth(8),
+    paddingHorizontal: responsiveWidth(8),
+    paddingBottom: responsiveHeight(8),
     gap: responsiveHeight(3.5),
   },
   headerRow: {
@@ -312,19 +334,19 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.4),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   subtitle: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.5),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     marginTop: responsiveHeight(1),
   },
   closeButton: {
     width: 32,
     height: 32,
     borderWidth: 1.06,
-    borderColor: '#E0E0E0',
+    borderColor: '#1F1F1F',
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
@@ -332,7 +354,7 @@ const styles = StyleSheet.create({
   planBox: {
     backgroundColor: 'rgba(255, 168, 107, 0.2)',
     borderWidth: 1,
-    borderColor: '#FFDCC2',
+    borderColor: '#FFA86B',
     borderRadius: 14,
     padding: responsiveWidth(4.5),
     gap: responsiveHeight(1.5),
@@ -340,7 +362,7 @@ const styles = StyleSheet.create({
   planLabel: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.2),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     letterSpacing: 0.11,
   },
   planMainRow: {
@@ -351,17 +373,17 @@ const styles = StyleSheet.create({
   planName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.2),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   planAmount: {
     fontFamily: 'Inter-Bold',
     fontSize: responsiveFontSize(2.4),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     letterSpacing: -0.45,
   },
   separator: {
     height: 1,
-    backgroundColor: '#FFDCC2',
+    backgroundColor: '#171717',
   },
   planDetailRow: {
     flexDirection: 'row',
@@ -371,18 +393,18 @@ const styles = StyleSheet.create({
   planDetailLabel: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.5),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   planDetailValue: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.5),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'right',
   },
   benefitSectionTitle: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(1.8),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   benefitList: {
     gap: responsiveHeight(1.2),
@@ -406,12 +428,12 @@ const styles = StyleSheet.create({
   benefitTitle: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.5),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   benefitSubtitle: {
     fontFamily: 'Rubik-Regular',
     fontSize: responsiveFontSize(1.3),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -423,16 +445,16 @@ const styles = StyleSheet.create({
     width: responsiveWidth(32),
     height: 48,
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#1F1F1F',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#171717',
   },
   cancelButtonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(1.8),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   keepButton: {
@@ -440,7 +462,7 @@ const styles = StyleSheet.create({
     height: 48,
     backgroundColor: '#FFA86B',
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#FF7819',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
@@ -457,27 +479,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#1E1E1E',
+    borderColor: '#1F1F1F',
     borderRadius: 14,
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#171717',
   },
   reasonItemActive: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#FFA86B',
+    borderColor: '#FF7819',
   },
   reasonText: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.8),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   reasonTextActive: {
-    color: '#FFFFFF',
+    color: '#1E1E1E',
   },
   confirmButton: {
     height: 48,
     backgroundColor: '#FFA86B',
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#FF7819',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',

@@ -13,7 +13,7 @@
 // import { LoginPageErrors, chatRoomSuccess } from "../ErrorSnacks";
 
 import React, {useCallback, useEffect, useState, useRef, useMemo} from 'react';
-import {View, Text, StyleSheet, Linking, Alert, TouchableOpacity, Pressable, BackHandler, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, Linking, Alert, TouchableOpacity, Pressable, BackHandler, ActivityIndicator, Platform} from 'react-native';
 import {BottomSheetBackdrop, BottomSheetModal} from '@gorhom/bottom-sheet';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -79,12 +79,21 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
     setProfileActionList(list);
   }, [haveFollowed, haveSubscribed]);
 
+  const isDismissedByGesture = useRef(false);
+
   useEffect(() => {
     if (visible) {
-      bottomSheetModalRef.current?.present();
+      isDismissedByGesture.current = false;
+      requestAnimationFrame(() => {
+        bottomSheetModalRef.current?.present();
+      });
       triggerImpactLight();
     } else {
-      bottomSheetModalRef.current?.dismiss();
+      if (!isDismissedByGesture.current) {
+        bottomSheetModalRef.current?.dismiss();
+      } else {
+        isDismissedByGesture.current = false;
+      }
       triggerImpactLight();
     }
   }, [visible]);
@@ -134,7 +143,7 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
         }
       }
     },
-    [toCallApiInfo, token, handleClose, dispatcher, unFollowUser, unSubscribe, blockUser],
+    [toCallApiInfo, token, handleClose, dispatcher, unFollowUser, unSubscribe, blockUser, onUnsubscribePress],
   );
 
   const renderBackdrop = useCallback(
@@ -148,7 +157,10 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
       index={visible ? 0 : -1}
       snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      onDismiss={handleClose}
+      onDismiss={() => {
+        isDismissedByGesture.current = true;
+        handleClose();
+      }}
       enableDynamicSizing={false}
       backgroundStyle={{backgroundColor: '#FFFFFF'}}
     >
@@ -159,7 +171,7 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
             keyExtractor={item => item.id.toString()}
             renderItem={({item}) => (
               <Pressable 
-                onPress={() => handleEachOptions(item.id)} 
+                onPress={() => handleEachOptions(item.id)}
                 style={({pressed}) => [styles.eachSortModalList, pressed && styles.highlightedOption]}
               >
                 <View style={styles.itemRow}>

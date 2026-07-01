@@ -79,7 +79,7 @@ export const homeBottomSheetListRoleUser = [
     id: 9,
     name: 'Wallet',
     // provider: "AntDesign",
-    iconName: 'Wallet',
+    iconName: 'WalletLight',
   },
   {
     id: 10,

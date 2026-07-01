@@ -9,6 +9,7 @@ const SubscriptionCancelledModal = ({ visible, onClose, creatorName, expiryDate 
       visible={visible}
       transparent
       animationType="fade"
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
@@ -20,7 +21,7 @@ const SubscriptionCancelledModal = ({ visible, onClose, creatorName, expiryDate 
         <View style={styles.container}>
           {/* Success Icon */}
           <Image 
-            source={require('../../../Assets/Images/paysuccess.png')}
+            source={require('../../../Assets/Images/CheckSubscriptionCancelledModal.png')}
             style={styles.successIcon}
             resizeMode="contain"
           />
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
   container: {
     width: 345,
     height: 314,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#121212',
     borderWidth: 2,
     borderColor: '#1E1E1E',
     borderStyle: 'dashed',
@@ -87,14 +88,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Rubik-Bold',
     fontSize: 20,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'center',
     lineHeight: 20,
   },
   subtitle: {
     fontFamily: 'Rubik-Regular',
     fontSize: 14,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'center',
     lineHeight: 19,
     width: 278,
@@ -103,9 +104,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-Bold',
   },
   accessBox: {
-    backgroundColor: '#FFF3EB',
+    backgroundColor: 'rgba(255, 168, 107, 0.2)',
     borderWidth: 1,
-    borderColor: '#1E1E1E',
+    borderColor: '#FFA86B',
     borderRadius: 56,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -120,12 +121,12 @@ const styles = StyleSheet.create({
   accessText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   footerText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'center',
     lineHeight: 12,
   },

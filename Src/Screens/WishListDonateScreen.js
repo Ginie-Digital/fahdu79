@@ -116,7 +116,7 @@ const WishListDonateScreen = ({navigation}) => {
                   <Text style={[styles.fundValue, isDark && {color: '#FFFFFF'}]}>
                     <Text style={{fontFamily: 'Rubik-Regular'}}>{Number(donateData?.totalCollected).toLocaleString('en-IN')}</Text>/{Number(donateData?.listedCoinsRequired).toLocaleString('en-IN')}
                   </Text>
-                  <Image source={require('../../Assets/Images/Coins.png')} style={styles.coinIcon} />
+                  <Image source={isDark ? require('../../Assets/Images/BlackModeCoin.png') : require('../../Assets/Images/Coins.png')} style={styles.coinIcon} />
                 </View>
               </View>
 

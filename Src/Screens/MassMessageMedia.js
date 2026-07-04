@@ -303,6 +303,12 @@ const MassMessageMedia = ({route}) => {
           return;
         }
 
+        if (forSubscribers && amountSub > 500000) {
+          LoginPageErrors('Set Fee Amount Under 5,00,000');
+          setLoading(false);
+          return;
+        }
+
         if (forSubscribers && amountSub <= 0) {
           LoginPageErrors('Please add amount!');
           setLoading(false);
@@ -419,6 +425,12 @@ const MassMessageMedia = ({route}) => {
       } else {
         if (caption === '') {
           LoginPageErrors('Please write message!');
+          setLoading(false);
+          return;
+        }
+
+        if (forSubscribers && amountSub > 500000) {
+          LoginPageErrors('Set Fee Amount Under 5,00,000');
           setLoading(false);
           return;
         }

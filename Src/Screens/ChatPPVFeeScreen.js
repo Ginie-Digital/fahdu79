@@ -103,8 +103,8 @@ const ChatPPVFeeScreen = () => {
       return;
     }
 
-    if (amount > 50000) {
-      ChatWindowError('Set Fee Amount Under 50,000');
+    if (amount > 500000) {
+      ChatWindowError('Set Fee Amount Under 5,00,000');
       return;
     }
 
@@ -337,7 +337,7 @@ const ChatPPVFeeScreen = () => {
           <View style={styles.amountInputContainer}>
             <TextInput
               editable={!disableSendButton}
-              maxLength={9}
+              maxLength={8}
               keyboardType="number-pad"
               style={styles.amountInput}
               value={amount ? formatIndianNumber(amount) : ''}

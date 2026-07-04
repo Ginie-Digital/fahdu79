@@ -69,22 +69,31 @@ const ChatWindowTipModal = ({chatRoomId: propChatRoomId}) => {
 
   const handleSendTipAmount = () => {
     if (tipAmount >= 10) {
-      if (tipAmount <= 10000) {
+      if (tipAmount <= 100000) {
         setLoading(true);
         sendTip({token, tipAmount, chatRoomId})
           .then(async e => {
-            if (e?.error?.data?.status_code === 2044) {
-              dispatch(authLogout());
-              dispatch(deleteCachedMessages());
-              dispatch(removeRoomList());
-              dispatch(emptyUnreadRoomList());
-              await signOutGoogle();
-            } else if (e?.error?.data?.message?.search('insufficient') >= 0) {
-              handleClose();
-              setTimeout(() => {
-                dispatch(toggleShowRechargeModal({show: true}));
+            if (e?.error) {
+              console.log('💰 [Tip Error]', JSON.stringify(e?.error, null, 2));
+              if (e?.error?.status === 401) {
+                // Session expired — re-login modal is shown by baseQueryWithReauth
                 setLoading(false);
-              }, 500);
+              } else if (e?.error?.data?.status_code === 2044) {
+                dispatch(authLogout());
+                dispatch(deleteCachedMessages());
+                dispatch(removeRoomList());
+                dispatch(emptyUnreadRoomList());
+                await signOutGoogle();
+              } else if (e?.error?.data?.message?.search('insufficient') >= 0) {
+                handleClose();
+                setTimeout(() => {
+                  dispatch(toggleShowRechargeModal({show: true}));
+                  setLoading(false);
+                }, 500);
+              } else {
+                ChatWindowError(e?.error?.data?.message || 'There was error while sending tip');
+                setLoading(false);
+              }
             } else {
               dispatch(updateCacheRoomList({chatRoomId: e?.data?.data?.room_id, createdAt: e?.data?.data?.createdAt, message: e?.data?.data?.message, hasAttachment: false, senderId: e?.data?.data?.sender_id}));
               dispatch(pushSentMessageResponse({chatRoomId: e?.data?.data?.room_id, sentMessageResponse: e?.data?.data}));
@@ -99,7 +108,7 @@ const ChatWindowTipModal = ({chatRoomId: propChatRoomId}) => {
             setLoading(false);
           });
       } else {
-        ChatWindowError('The max tip amount is 10,000');
+        ChatWindowError('The max tip amount is 1,00,000');
       }
     } else {
       ChatWindowError('Minimum tip amount is 10');
@@ -135,7 +144,7 @@ const ChatWindowTipModal = ({chatRoomId: propChatRoomId}) => {
                   </View>
                   <TextInput 
                     placeholder="0" 
-                    maxLength={5} 
+                    maxLength={6} 
                     value={String(tipAmount)} 
                     style={styles.amountInput} 
                     onChangeText={x => {

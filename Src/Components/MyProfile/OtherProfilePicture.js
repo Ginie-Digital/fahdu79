@@ -7,8 +7,10 @@ import { WIDTH_SIZES } from '../../../DesiginData/Utility';
 import { useLazyJoinLiveStreamQuery, useLazyLiveStatusQuery, useLazyOnlineStatusQuery } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { navigate } from '../../../Navigation/RootNavigation';
 import { LoginPageErrors } from '../ErrorSnacks';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const OtherProfilePicture = ({ displayName, userId }) => {
+  const { colors, isDark } = useAppTheme();
 
 
   console.log("DISP",)
@@ -125,14 +127,14 @@ const OtherProfilePicture = ({ displayName, userId }) => {
     <>
       {/* Cover Image */}
       <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-        <ImageBackground key={userProfileDetails?.cover_photo?.url} placeholder={require('../../../Assets/Images/CoverDefault.jpeg')} source={userProfileDetails?.cover_photo?.url} style={styles.coverStyle} />
+        <ImageBackground key={userProfileDetails?.cover_photo?.url} placeholder={require('../../../Assets/Images/CoverDefault.jpeg')} source={userProfileDetails?.cover_photo?.url} style={[styles.coverStyle, { backgroundColor: isDark ? '#0D0D0D' : 'white' }]} />
       </View>
 
       {/* Rotating dashed border - only show if displayName and userId exist */}
       {isLive && displayName && userId && <Animated.View style={[styles.rotatingBorder, { transform: [{ rotate: rotateInterpolation }] }]} />}
 
       {/* Profile Image (static, above border) */}
-      <Pressable onPress={() => handleJoin(liveRoomId)} style={styles.profilePictureWrapper}>
+      <Pressable onPress={() => handleJoin(liveRoomId)} style={[styles.profilePictureWrapper, { backgroundColor: isDark ? '#0D0D0D' : 'white' }]}>
         <Image placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={userProfileDetails?.profile_image?.url} style={styles.profilePicture} resizeMethod="resize" contentFit="contain" />
       </Pressable>
 

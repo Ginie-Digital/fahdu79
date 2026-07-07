@@ -290,7 +290,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               </View>
 
               {/* Followers */}
-              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#E0E0E0', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]}>
+              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#1e1e1e', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]}>
                 <View style={{ height: 16, width: 14 }}>
                   <Image source={require('../../../Assets/Images/follow.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : undefined }} />
                 </View>
@@ -298,7 +298,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               </Pressable>
 
               {/* Likes */}
-              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#E0E0E0', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
+              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#1e1e1e', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]} onPress={() => handleRating(userProfileDetails, isFollowing)}>
                 <View style={{ height: 16, width: 17 }}>
                   <Image source={require('../../../Assets/Images/star.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : undefined }} />
                 </View>
@@ -306,7 +306,7 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               </Pressable>
 
               {/* Share Button */}
-              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#E0E0E0', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
+              <Pressable style={({ pressed }) => [styles.statItem, { borderColor: isDark ? '#212121' : '#1e1e1e', backgroundColor: pressed ? (isDark ? '#1A1A1A' : '#FFEDE0') : (isDark ? '#0D0D0D' : '#FFFFFF') }]} onPress={() => shareLink(userProfileDetails?.deeplink?.link)}>
                 <View style={{ height: 17, width: 22 }}>
                   <Image source={require('../../../Assets/Images/shares.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : undefined }} />
                 </View>
@@ -509,10 +509,16 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               dispatch(toggleOtherProfileActionModal({ show: true }));
             }}
             style={({ pressed }) => ({
-              padding: 6,
+              padding: isDark ? 6 : undefined,
+              height: isDark ? undefined : 16,
+              width: isDark ? undefined : 14,
               opacity: pressed ? 0.5 : 1,
             })}>
-            <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={isDark ? '#FFFFFF' : '#1e1e1e'} />
+            {isDark ? (
+              <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={'#FFFFFF'} />
+            ) : (
+              <Image source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{ flex: 1 }} />
+            )}
           </Pressable>
         </View>
       </View>

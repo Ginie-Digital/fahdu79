@@ -51,10 +51,10 @@ const ReLoginModal = () => {
       <View style={styles.overlay}>
         <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.blurBackground} />
         <View style={[styles.card, {
-          backgroundColor: isDark ? '#1e1e1e' : '#FFFFFF',
+          backgroundColor: isDark ? colors.background : '#FFFFFF',
           borderWidth: isDark ? 0 : 2,
           borderStyle: isDark ? undefined : 'dashed',
-          borderColor: colors.border,
+          borderColor: isDark ? colors.border : '#1e1e1e',
         }]}>
           <View style={styles.content}>
             {/* Icon Container */}
@@ -72,10 +72,10 @@ const ReLoginModal = () => {
 
             {/* Text Section */}
             <View style={styles.textSection}>
-              <Text style={[styles.title, {color: colors.text}]}>
+              <Text style={[styles.title, {color: isDark ? colors.text : '#1e1e1e'}]}>
                 Session Ended
               </Text>
-              <Text style={[styles.description, {color: colors.textSecondary}]}>
+              <Text style={[styles.description, {color: isDark ? colors.textSecondary : '#282828'}]}>
                 Your account has been logged in on another device. For security reasons, you have
                 been logged out from this session.
               </Text>
@@ -87,11 +87,11 @@ const ReLoginModal = () => {
               style={({pressed}) => [
                 styles.button,
                 {
-                  backgroundColor: colors.text,
+                  backgroundColor: isDark ? colors.text : '#1e1e1e',
                   opacity: pressed ? 0.85 : 1,
                 },
               ]}>
-              <Text style={[styles.buttonText, {color: colors.background}]}>
+              <Text style={[styles.buttonText, {color: isDark ? colors.background : '#fff'}]}>
                 Log In Again
               </Text>
             </Pressable>

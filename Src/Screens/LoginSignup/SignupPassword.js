@@ -139,40 +139,40 @@ const SignupPassword = ({route}) => {
   };
 
   return (
-    <SafeAreaView testID="signup-password-screen" style={{flex: 1, backgroundColor: colors.background}}>
+    <SafeAreaView testID="signup-password-screen" style={{flex: 1, backgroundColor: isDark ? colors.background : '#fff'}}>
       <ChevronLoader show={loading} />
 
-      <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <View style={[styles.container, {backgroundColor: isDark ? colors.background : '#fff'}]}>
         <TouchableOpacity testID="signup-password-back-button" accessibilityLabel="signup-password-back-button" style={styles.backButton} onPress={() => navigate('SignupEmail')}>
-          <Back color={colors.text} />
+          <Back color={isDark ? colors.text : '#1e1e1e'} />
         </TouchableOpacity>
-        <Text style={[styles.heading, {color: colors.text}]}>Sign Up</Text>
-        <Text style={[styles.subHead, {color: colors.textSecondary}]}>Earn from your content on your terms.</Text>
+        <Text style={[styles.heading, {color: isDark ? colors.text : '#1e1e1e'}]}>Sign Up</Text>
+        <Text style={[styles.subHead, {color: isDark ? colors.textSecondary : '#282828'}]}>Earn from your content on your terms.</Text>
 
-        <Text style={[styles.fieldName, {color: colors.textLabel}]}>Password</Text>
+        <Text style={[styles.fieldName, {color: isDark ? colors.textLabel : '#1e1e1e'}]}>Password</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'password' && (
-            <InputOverlay isVisible style={{ backgroundColor: colors.overlayBg, borderRadius: 14 }} />
+            <InputOverlay isVisible style={isDark ? { backgroundColor: colors.overlayBg, borderRadius: 14 } : undefined} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0, backgroundColor: colors.inputBg, borderColor: colors.border}]}>
+          <View style={[styles.textInputContainer, {marginTop: 0, backgroundColor: isDark ? colors.inputBg : '#fff', borderColor: isDark ? colors.border : '#1e1e1e'}]}>
             <TextInput
               testID="signup-password-input"
               accessibilityLabel="signup-password-input"
               ref={passwordInputRef}
-              style={[styles.textInputs, {color: colors.text}]}
+              style={[styles.textInputs, {color: isDark ? colors.text : '#1e1e1e'}]}
               secureTextEntry={!showPassword}
               onChangeText={handlePassword}
               onFocus={() => setFocusedInput('password')}
               onBlur={() => setFocusedInput(null)}
-              placeholderTextColor={colors.placeholder}
+              placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
               placeholder="Enter Password "
-              selectionColor={colors.accent}
-              cursorColor={colors.text}
+              selectionColor={isDark ? colors.accent : '#ffa86b'}
+              cursorColor={isDark ? colors.text : '#1e1e1e'}
               maxLength={64}
-              selectionHandleColor={colors.accent}
+              selectionHandleColor={isDark ? colors.accent : '#ffa86b'}
             />
             <Pressable testID="signup-password-toggle-visibility" accessibilityLabel="signup-password-toggle-visibility" style={styles.iconContainer} onPress={() => setShowPassword(prev => !prev)}>
-              {showPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, { tintColor: colors.textSecondary }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, { tintColor: colors.textSecondary }]} />}
+              {showPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: colors.textSecondary }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: colors.textSecondary }]} />}
             </Pressable>
           </View>
         </View>
@@ -187,29 +187,29 @@ const SignupPassword = ({route}) => {
           </>
         )}
 
-        <Text style={[styles.fieldName, {color: colors.textLabel}]}>Confirm Password</Text>
+        <Text style={[styles.fieldName, {color: isDark ? colors.textLabel : '#1e1e1e'}]}>Confirm Password</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'confirmPassword' && (
-            <InputOverlay isVisible style={{ backgroundColor: colors.overlayBg, borderRadius: 14 }} />
+            <InputOverlay isVisible style={isDark ? { backgroundColor: colors.overlayBg, borderRadius: 14 } : undefined} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0, backgroundColor: colors.inputBg, borderColor: colors.border}]}>
+          <View style={[styles.textInputContainer, {marginTop: 0, backgroundColor: isDark ? colors.inputBg : '#fff', borderColor: isDark ? colors.border : '#1e1e1e'}]}>
             <TextInput
               testID="signup-confirm-password-input"
               accessibilityLabel="signup-confirm-password-input"
-              placeholderTextColor={colors.placeholder}
+              placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
               placeholder="Enter Confirm Password "
               ref={confirmPasswordInputRef}
-              style={[styles.textInputs, {color: colors.text}]}
+              style={[styles.textInputs, {color: isDark ? colors.text : '#1e1e1e'}]}
               secureTextEntry={!cShowPassword}
               onChangeText={t => setConfirmPassword(t)}
               onFocus={() => setFocusedInput('confirmPassword')}
               onBlur={() => setFocusedInput(null)}
-              selectionColor={colors.accent}
-              cursorColor={colors.text}
-              selectionHandleColor={colors.accent}
+              selectionColor={isDark ? colors.accent : '#ffa86b'}
+              cursorColor={isDark ? colors.text : '#1e1e1e'}
+              selectionHandleColor={isDark ? colors.accent : '#ffa86b'}
             />
             <Pressable testID="signup-confirm-password-toggle-visibility" accessibilityLabel="signup-confirm-password-toggle-visibility" style={styles.iconContainer} onPress={() => cSetShowPassword(prev => !prev)}>
-              {cShowPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, { tintColor: colors.textSecondary }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, { tintColor: colors.textSecondary }]} />}
+              {cShowPassword ? <Image source={require('../../../Assets/Images/eyeOpen.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: colors.textSecondary }]} /> : <Image source={require('../../../Assets/Images/eyeClose.png')} contentFit="contain" style={[styles.eyeStyle, isDark && { tintColor: colors.textSecondary }]} />}
             </Pressable>
           </View>
         </View>
@@ -224,7 +224,7 @@ const SignupPassword = ({route}) => {
               onToggle={() => {}}
             />
           </View>
-          <Text style={[styles.checkboxLabel, {color: colors.text}]}>
+          <Text style={[styles.checkboxLabel, {color: isDark ? colors.text : '#1e1e1e'}]}>
             Keep me updated with news, feature releases, and announcements via email
           </Text>
         </Pressable>
@@ -239,7 +239,7 @@ const SignupPassword = ({route}) => {
               onToggle={() => {}}
             />
           </View>
-          <Text style={[styles.checkboxLabel, {color: colors.text}]}>
+          <Text style={[styles.checkboxLabel, {color: isDark ? colors.text : '#1e1e1e'}]}>
             I agree to the{' '}
             <Text style={{color: '#FF7F50', fontFamily: 'Rubik-Medium'}}>Terms & Conditions</Text>
             {' '}and{' '}
@@ -251,7 +251,7 @@ const SignupPassword = ({route}) => {
 
         <TouchableOpacity testID="signup-password-login-link" accessibilityLabel="signup-password-login-link" style={styles.alreadyAccountContainer} onPress={() => navigate('LoginEmail')}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={[styles.alreadyAccountText, {color: colors.textSecondary}]}>Do you have an account? </Text>
+            <Text style={[styles.alreadyAccountText, {color: isDark ? colors.textSecondary : '#282828'}]}>Do you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Login</Text>
           </View>
         </TouchableOpacity>

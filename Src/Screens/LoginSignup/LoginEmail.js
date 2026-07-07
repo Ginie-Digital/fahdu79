@@ -38,33 +38,33 @@ const LoginEmail = () => {
   };
 
   return (
-    <SafeAreaView testID="login-email-screen" style={{flex: 1, backgroundColor: colors.background}}>
-      <View style={[styles.container, {backgroundColor: colors.background}]}>
+    <SafeAreaView testID="login-email-screen" style={{flex: 1, backgroundColor: isDark ? colors.background : '#fff'}}>
+      <View style={[styles.container, {backgroundColor: isDark ? colors.background : '#fff'}]}>
         <TouchableOpacity testID="login-email-back-button" accessibilityLabel="login-email-back-button" style={styles.backButton} onPress={() => navigate('LoginHome')}>
-          <Back color={colors.text} />
+          <Back color={isDark ? colors.text : '#1e1e1e'} />
         </TouchableOpacity>
-        <Text style={[styles.heading, {color: colors.text}]}>Login</Text>
-        <Text style={[styles.subHead, {color: colors.textSecondary}]}>Welcome to Fahdu, Login to Continue...</Text>
-        <Text style={[styles.fieldName, {color: colors.textLabel}]}>Email</Text>
+        <Text style={[styles.heading, {color: isDark ? colors.text : '#1e1e1e'}]}>Login</Text>
+        <Text style={[styles.subHead, {color: isDark ? colors.textSecondary : '#282828'}]}>Welcome to Fahdu, Login to Continue...</Text>
+        <Text style={[styles.fieldName, {color: isDark ? colors.textLabel : '#1e1e1e'}]}>Email</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
-          <InputOverlay isVisible={isFocused} style={{ backgroundColor: colors.overlayBg, borderRadius: 14 }} />
+          <InputOverlay isVisible={isFocused} style={isDark ? { backgroundColor: colors.overlayBg, borderRadius: 14 } : undefined} />
 
           <View style={[
             styles.textInputContainer, 
-            {marginTop: 0, backgroundColor: colors.inputBg, borderColor: colors.border},
+            {marginTop: 0, backgroundColor: isDark ? colors.inputBg : '#fff', borderColor: isDark ? colors.border : '#1e1e1e'},
           ]}>
             <TextInput
               testID="login-email-input"
               accessibilityLabel="login-email-input"
-              selectionHandleColor={colors.accent}
-              selectionColor={colors.accent}
-              cursorColor={colors.text}
-              placeholderTextColor={colors.placeholder}
+              selectionHandleColor={isDark ? colors.accent : '#ffa86b'}
+              selectionColor={isDark ? colors.accent : '#ffa86b'}
+              cursorColor={isDark ? colors.text : '#1e1e1e'}
+              placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
               placeholder="Enter Email "
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'none'}
-              style={[styles.textInputs, {color: colors.text}]}
+              style={[styles.textInputs, {color: isDark ? colors.text : '#1e1e1e'}]}
               value={email}
               onChangeText={t => setEmail(t.toLowerCase())}
               maxLength={50}
@@ -78,7 +78,7 @@ const LoginEmail = () => {
 
         <TouchableOpacity testID="login-email-signup-link" accessibilityLabel="login-email-signup-link" style={styles.alreadyAccountContainer} onPress={() => navigate('SignupEmail')}>
           <View style={styles.alreadyAccountRow}>
-            <Text style={[styles.alreadyAccountText, {color: colors.textSecondary}]}>Don't you have an account? </Text>
+            <Text style={[styles.alreadyAccountText, {color: isDark ? colors.textSecondary : '#282828'}]}>Don't you have an account? </Text>
             <Text style={styles.forgotTextTitle}>Sign Up</Text>
           </View>
         </TouchableOpacity>

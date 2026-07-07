@@ -71,23 +71,23 @@ const LoginHome = () => {
 
   // Dark/Light mode dynamic styles
   const dynamicStyles = {
-    pageBackground: colors.background,
-    headingColor: colors.text,
-    descriptionColor: colors.textSecondary,
-    socialButtonBg: colors.inputBg,
-    socialButtonBorder: colors.border,
-    socialButtonText: colors.text,
-    socialButtonPressedBg: colors.pressed,
-    socialButtonPressedText: colors.text,
-    loginButtonBg: colors.accent,
+    pageBackground: isDark ? colors.background : '#fff',
+    headingColor: isDark ? colors.text : '#282828',
+    descriptionColor: isDark ? colors.textSecondary : '#282828',
+    socialButtonBg: isDark ? colors.inputBg : 'transparent',
+    socialButtonBorder: isDark ? colors.border : '#1e1e1e',
+    socialButtonText: isDark ? colors.text : '#1e1e1e',
+    socialButtonPressedBg: isDark ? colors.pressed : '#1e1e1e',
+    socialButtonPressedText: isDark ? colors.text : '#fff',
+    loginButtonBg: isDark ? colors.accent : '#FFA86B',
     loginButtonPressedBg: isDark ? '#e08f53' : '#fff',
     loginButtonText: isDark ? '#000000' : '#1e1e1e',
-    loginButtonBorder: colors.accentBorder,
+    loginButtonBorder: isDark ? colors.accentBorder : '#1e1e1e',
     loginButtonBorderWidth: isDark ? 2 : responsiveWidth(0.4),
-    signupButtonBg: colors.background,
-    signupButtonBorder: colors.border,
-    signupButtonText: colors.text,
-    signupButtonPressedBg: colors.pressed,
+    signupButtonBg: isDark ? colors.background : 'transparent',
+    signupButtonBorder: isDark ? colors.border : '#1e1e1e',
+    signupButtonText: isDark ? colors.text : '#1e1e1e',
+    signupButtonPressedBg: isDark ? colors.pressed : '#FFA86B',
   };
 
   return (

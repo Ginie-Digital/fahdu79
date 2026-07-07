@@ -17,11 +17,20 @@ import {toggleHomeBottomSheet} from '../../../Redux/Slices/NormalSlices/HideShow
 import {homeBottomSheetList, homeBottomSheetListRoleUser} from '../../../DesiginData/Data';
 import AddSvg from '../../../AddSvg';
 import { navigate } from '../../../Navigation/RootNavigation';
+import { Image } from 'expo-image';
 
 import {useLazyGetFSDQuery, useLazyGetFSQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useAppTheme} from '../../Hook/useAppTheme';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
+
+const darkIcons = {
+  'Settings': require('../../../Assets/Images/HomeBottomSheetIconBlack/settings.png'),
+  'Wallet': require('../../../Assets/Images/HomeBottomSheetIconBlack/wallet.png'),
+  'Get Verified': require('../../../Assets/Images/HomeBottomSheetIconBlack/get verified.png'),
+  'Help Center': require('../../../Assets/Images/HomeBottomSheetIconBlack/help center.png'),
+  'App info': require('../../../Assets/Images/HomeBottomSheetIconBlack/APP Info.png'),
+};
 
 const HomeBottomSheet = () => {
   const dispatch = useDispatch();
@@ -146,18 +155,27 @@ const HomeBottomSheet = () => {
           <FlatList
             data={loggedInUserRole === 'creator' ? homeBottomSheetList : homeBottomSheetListRoleUser}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({item}) => (
-              <Pressable 
-                onPress={() => handleEachOptions(item.id)} 
-                style={({pressed}) => [
-                  styles.eachSortModalList, 
-                  pressed && {backgroundColor: isDark ? colors.pressed : '#FFF3EB'}
-                ]}
-              >
-                <AddSvg name={item.iconName} color={colors.text} />
-                <Text style={[styles.eachSortByModalListText, {color: colors.text}]}>{item.name}</Text>
-              </Pressable>
-            )}
+            renderItem={({item}) => {
+              const darkIcon = isDark ? darkIcons[item.name] : null;
+              return (
+                <Pressable 
+                  onPress={() => handleEachOptions(item.id)} 
+                  style={({pressed}) => [
+                    styles.eachSortModalList, 
+                    pressed && {backgroundColor: isDark ? colors.pressed : '#FFF3EB'}
+                  ]}
+                >
+                  {darkIcon ? (
+                    <View style={styles.iconContainer}>
+                      <Image source={darkIcon} style={styles.iconImage} contentFit="contain" />
+                    </View>
+                  ) : (
+                    <AddSvg name={item.iconName} color={colors.text} />
+                  )}
+                  <Text style={[styles.eachSortByModalListText, {color: colors.text}]}>{item.name}</Text>
+                </Pressable>
+              );
+            }}
             ItemSeparatorComponent={() => <View style={[styles.separator, {borderColor: colors.separator}]} />}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 40}}
@@ -218,6 +236,16 @@ const styles = StyleSheet.create({
   separator: {
     borderWidth: responsiveWidth(0.15),
     borderColor: '#EEEEEE',
+  },
+  iconContainer: {
+    height: responsiveWidth(8),
+    width: responsiveWidth(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconImage: {
+    width: responsiveWidth(5.5),
+    height: responsiveWidth(5.5),
   },
 });
 

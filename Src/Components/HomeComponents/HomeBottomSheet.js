@@ -19,11 +19,13 @@ import AddSvg from '../../../AddSvg';
 import { navigate } from '../../../Navigation/RootNavigation';
 
 import {useLazyGetFSDQuery, useLazyGetFSQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const HomeBottomSheet = () => {
   const dispatch = useDispatch();
+  const {colors, isDark} = useAppTheme();
 
 
   const visible = useSelector(state => state.hideShow.visibility.homeBottomSheet === 1);
@@ -133,10 +135,13 @@ const HomeBottomSheet = () => {
       <Animated.View 
         style={[
           styles.dialog, 
-          {transform: [{translateY: slideAnim}]}
+          {
+            backgroundColor: colors.background,
+            transform: [{translateY: slideAnim}]
+          }
         ]}
       >
-        <View style={styles.indicator} />
+        <View style={[styles.indicator, {backgroundColor: colors.border}]} />
         <View style={styles.contentContainer}>
           <FlatList
             data={loggedInUserRole === 'creator' ? homeBottomSheetList : homeBottomSheetListRoleUser}
@@ -146,14 +151,14 @@ const HomeBottomSheet = () => {
                 onPress={() => handleEachOptions(item.id)} 
                 style={({pressed}) => [
                   styles.eachSortModalList, 
-                  pressed && {backgroundColor: '#FFF3EB'}
+                  pressed && {backgroundColor: isDark ? colors.pressed : '#FFF3EB'}
                 ]}
               >
-                <AddSvg name={item.iconName} />
-                <Text style={styles.eachSortByModalListText}>{item.name}</Text>
+                <AddSvg name={item.iconName} color={colors.text} />
+                <Text style={[styles.eachSortByModalListText, {color: colors.text}]}>{item.name}</Text>
               </Pressable>
             )}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ItemSeparatorComponent={() => <View style={[styles.separator, {borderColor: colors.separator}]} />}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 40}}
             scrollEnabled={false}

@@ -19,6 +19,7 @@ import share from 'react-native-share';
 
 import { Image } from 'expo-image';
 import AnimatedButton from '../AnimatedButton';
+import DIcon from '../../../DesiginData/DIcons';
 import { formatNiche, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useMessageNavigation } from '../../Hook/useMessageNavigation';
@@ -508,11 +509,10 @@ const UpperOtherProfile = ({ toCallApiInfo }) => {
               dispatch(toggleOtherProfileActionModal({ show: true }));
             }}
             style={({ pressed }) => ({
-              height: 16,
-              width: 14,
+              padding: 6,
               opacity: pressed ? 0.5 : 1,
             })}>
-            <Image source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{ flex: 1, tintColor: isDark ? '#FFFFFF' : '#1e1e1e' }} />
+            <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={isDark ? '#FFFFFF' : '#1e1e1e'} />
           </Pressable>
         </View>
       </View>

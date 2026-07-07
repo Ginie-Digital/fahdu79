@@ -10,11 +10,13 @@ import {Alert, Linking} from 'react-native';
 import {getVideoMetadata} from '../../../FFMPeg/FFMPegModule';
 import RNFS from 'react-native-fs';
 import {BlurView} from 'expo-blur';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const CreatePostBottomSheet = () => {
   const dispatch = useDispatch();
+  const {colors, isDark} = useAppTheme();
 
   const visible = useSelector(state => state.hideShow.visibility.createPostSheet === 1);
   const {role} = useSelector(state => state.auth.user);
@@ -149,28 +151,28 @@ const CreatePostBottomSheet = () => {
     <View style={styles.overlay}>
       <BlurView intensity={15} style={styles.blurBackground} />
       <Pressable style={styles.touchOutside} onPress={handleClose} />
-      <Animated.View style={[styles.dialog, {transform: [{translateY: slideAnim}]}]}>
-        <View style={styles.indicator} />
-        <View style={styles.contentContainer}>
+      <Animated.View style={[styles.dialog, {backgroundColor: colors.background, transform: [{translateY: slideAnim}]}]}>
+        <View style={[styles.indicator, {backgroundColor: colors.border}]} />
+        <View style={[styles.contentContainer, {backgroundColor: colors.background}]}>
           <View style={styles.createPostListContainer}>
             <Pressable
               style={({pressed}) => [
                 styles.eachlist,
-                {backgroundColor: pressed ? '#FFA86B1C' : '#fff'}
+                {backgroundColor: pressed ? (isDark ? colors.pressed : '#FFA86B1C') : colors.background}
               ]}
               onPress={() => handleGoToItem(1)}>
               <Image source={require('../../../Assets/Images/AddPosts.png')} style={styles.icon} />
-              <Text style={styles.text}>Create Post</Text>
+              <Text style={[styles.text, {color: colors.text}]}>Create Post</Text>
             </Pressable>
 
             <Pressable
               style={({pressed}) => [
                 styles.eachlist,
-                {backgroundColor: pressed ? '#FFA86B1C' : '#fff'}
+                {backgroundColor: pressed ? (isDark ? colors.pressed : '#FFA86B1C') : colors.background}
               ]}
               onPress={() => handleGoToItem(2)}>
               <Image source={require('../../../Assets/Images/AddStories.png')} style={styles.iconLarge} />
-              <Text style={styles.text}>Go Live</Text>
+              <Text style={[styles.text, {color: colors.text}]}>Go Live</Text>
             </Pressable>
           </View>
         </View>

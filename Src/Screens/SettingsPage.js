@@ -19,7 +19,7 @@ import AccMang from '../../Assets/svg/accountManagement.svg';
 import { useAppTheme } from '../Hook/useAppTheme';
 
 const SettingsPage = () => {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const [getUserProfileDetailsApi, { error: getUserProfileError }] = useLazyCreatorProfileQuery({ refetchOnFocus: true });
 
   const [userProfileDetails, setUserProfileDetails] = useState({});
@@ -250,8 +250,8 @@ const SettingsPage = () => {
   const RenderEachSettings = ({ item, index }) => {
     if (item.id === 7 || item.id === 40) {
       return (
-        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1), borderTopColor: colors.border }}>
-          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.pressed : colors.background, justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
+        <View style={{ flexDirection: 'column', gap: 3, borderTopWidth: responsiveWidth(0.1), borderTopColor: isDark ? colors.border : 'black' }}>
+          <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? (isDark ? colors.pressed : '#FFF3EB') : (isDark ? colors.background : '#fff'), justifyContent: 'space-between', paddingHorizontal: responsiveWidth(5) }]} onPress={() => handleSelectOption(item?.id)}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
               <View style={[{ height: responsiveWidth(8), width: responsiveWidth(8), justifyContent: 'center', alignItems: 'center' }]}>
                 <AccMang color={colors.text} />
@@ -266,10 +266,10 @@ const SettingsPage = () => {
 
           {openRevenue && (
             <FlatList
-              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: colors.border }} />}
+              ListHeaderComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: isDark ? colors.border : '#EAEAEA' }} />}
               data={subRevenue}
               renderItem={({ item, index }) => (
-                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.pressed : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
+                <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? (isDark ? colors.pressed : '#FFF3EB') : 'transparent' }]} onPress={() => handleSelectOption(item?.id)}>
                   <View
                     style={{
                       left: responsiveWidth(5),
@@ -282,7 +282,7 @@ const SettingsPage = () => {
                   </View>
                 </Pressable>
               )}
-              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: colors.border }} />}
+              ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.5), width: responsiveWidth(89), borderColor: isDark ? colors.border : '#EAEAEA' }} />}
             />
           )}
         </View>
@@ -290,7 +290,7 @@ const SettingsPage = () => {
     }
 
     return (
-      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.pressed : colors.background }]} onPress={() => handleSelectOption(item?.id)}>
+      <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? (isDark ? colors.pressed : '#FFF3EB') : (isDark ? colors.background : '#fff') }]} onPress={() => handleSelectOption(item?.id)}>
         <View style={{ left: responsiveWidth(5), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: responsiveWidth(6) }}>
           <AddSvg name={item?.iconName} color={colors.text} />
           <Text style={[styles.title, { color: colors.text }]}>{item?.title}</Text>
@@ -300,14 +300,14 @@ const SettingsPage = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? colors.background : '#fff', borderTopColor: isDark ? '#2A2A2A' : '#282828' }]}>
       <View style={styles.settingsContainer}>
         <SectionList
           sections={role === 'creator' ? settingsList : userSettingList}
           keyExtractor={(item, index) => item + index}
           renderItem={({ item }) => (
-            <View style={[styles.eachSettingsWrapper, { borderColor: colors.border }]}>
-              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: colors.border }} />} />
+            <View style={[styles.eachSettingsWrapper, { borderColor: isDark ? colors.border : 'black' }]}>
+              <FlatList data={item.eachSettings} renderItem={({ item, index }) => <RenderEachSettings item={item} index={index} />} ItemSeparatorComponent={() => <View style={{ borderBottomWidth: responsiveWidth(0.3), width: responsiveWidth(89), borderColor: isDark ? colors.border : 'black' }} />} />
             </View>
           )}
           renderSectionHeader={({ section: { title } }) => <Text style={[styles.header, { color: colors.text }]}>{title}</Text>}

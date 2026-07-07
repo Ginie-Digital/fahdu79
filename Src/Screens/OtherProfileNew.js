@@ -241,17 +241,17 @@ const OtherProfileNew = ({route}) => {
         {route?.params?.role === 'creator' ? (
           <Tabs.Container
             renderHeader={() => <UpperOtherProfile toCallApiInfo={route?.params} />}
-            renderTabBar={props => <MaterialTabBar {...props} style={{backgroundColor: colors.background}} indicatorStyle={{backgroundColor: colors.accent, height: responsiveWidth(0.4)}} />}
+            renderTabBar={props => <MaterialTabBar {...props} style={{backgroundColor: colors.background}} indicatorStyle={{backgroundColor: isDark ? colors.accent : '#1E1E1E', height: responsiveWidth(0.4)}} />}
             onTabChange={({tabName}) => setCurrentTab(tabName)}>
-            <Tabs.Tab name="profile" label={({name}) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
+            <Tabs.Tab name="profile" label={({name}) => (currentTab === name ? <FAbout color={isDark ? colors.accent : '#1E1E1E'} /> : <UFAbout color={isDark ? '#9E9E9E' : '#D2D2D2'} />)}>
               <OtherProfileFeedPost contactDescription={contactDescription} />
             </Tabs.Tab>
 
-            <Tabs.Tab name="post" label={({name}) => (currentTab === name ? <FPost size={20} /> : <UFPost />)}>
+            <Tabs.Tab name="post" label={({name}) => (currentTab === name ? <FPost size={20} color={isDark ? colors.accent : '#1E1E1E'} /> : <UFPost color={isDark ? '#9E9E9E' : '#D2D2D2'} />)}>
             <OtherGridFeedPostComponent toCallApiInfo={route?.params} />
             </Tabs.Tab>
 
-            <Tabs.Tab name="wishlist" label={({name}) => (currentTab === name ? <FWishlist size={20} /> : <UFWishlist />)}>
+            <Tabs.Tab name="wishlist" label={({name}) => (currentTab === name ? <FWishlist size={20} color={isDark ? colors.accent : '#1E1E1E'} /> : <UFWishlist color={isDark ? '#9E9E9E' : '#D2D2D2'} />)}>
               <OtherWishListPostComponent toCallApiInfo={route?.params} />
             </Tabs.Tab>
           </Tabs.Container>

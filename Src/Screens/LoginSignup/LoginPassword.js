@@ -287,7 +287,7 @@ const LoginPassword = ({ route }) => {
           </View>
         </View>
 
-        <Pressable testID="login-password-forgot-password-link" accessibilityLabel="login-password-forgot-password-link" style={{ alignSelf: 'flex-end', marginTop: responsiveWidth(2.93) }} onPress={() => !isLoginDisabled && navigate('ForgetPassword', { email: route.params.email })} disabled={isLoginDisabled}>
+        <Pressable testID="login-password-forgot-password-link" accessibilityLabel="login-password-forgot-password-link" style={{ alignSelf: 'flex-end', marginTop: responsiveWidth(2.93) }} onPress={() => !isLoginDisabled && navigate('forgetPassword', { email: route.params.email })} disabled={isLoginDisabled}>
           <Text
             style={{
               fontFamily: 'Rubik-Medium',

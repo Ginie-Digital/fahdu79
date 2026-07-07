@@ -52,7 +52,7 @@ const showContentList = [
 ];
 
 const TopTabNavigation = ({ notificationData }) => {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   const [isFocused, setIsFocused] = useState(false); // Track focus state
   const userInformation = useSelector(state => state.auth.user);
 
@@ -140,16 +140,16 @@ const TopTabNavigation = ({ notificationData }) => {
   return (
     <>
       {(userInformation?.role === 'creator' || userInformation?.role === 'admin') && (
-        <Tabs.Container ref={tabsRef} renderTabBar={props => <MaterialTabBar {...props} style={{ backgroundColor: colors.background }} indicatorStyle={{ backgroundColor: colors.text, height: responsiveWidth(0.4) }} />} renderHeader={() => <UpperProfile isFocused={isFocused} />} onTabChange={({ tabName }) => setCurrentTab(tabName)}>
-          <Tabs.Tab name="profile" label={({ name }) => (currentTab === name ? <FAbout /> : <UFAbout />)}>
+        <Tabs.Container ref={tabsRef} renderTabBar={props => <MaterialTabBar {...props} style={{ backgroundColor: colors.background }} indicatorStyle={{ backgroundColor: isDark ? colors.accent : '#1E1E1E', height: responsiveWidth(0.4) }} />} renderHeader={() => <UpperProfile isFocused={isFocused} />} onTabChange={({ tabName }) => setCurrentTab(tabName)}>
+          <Tabs.Tab name="profile" label={({ name }) => (currentTab === name ? <FAbout color={isDark ? colors.accent : '#1E1E1E'} /> : <UFAbout color={isDark ? '#9E9E9E' : '#D2D2D2'} />)}>
             <FeedPostComponent />
           </Tabs.Tab>
 
-          <Tabs.Tab name="post" label={({ name }) => (currentTab === name ? <FPost size={10} /> : <UFPost />)}>
+          <Tabs.Tab name="post" label={({ name }) => (currentTab === name ? <FPost size={10} color={isDark ? colors.accent : '#1E1E1E'} /> : <UFPost color={isDark ? '#9E9E9E' : '#D2D2D2'} />)}>
             <GridFeedPostComponent />
           </Tabs.Tab>
 
-          <Tabs.Tab name="wishlist" label={({ name }) => (currentTab === name ? <FWishlist size={10} /> : <UFWishlist />)}>
+          <Tabs.Tab name="wishlist" label={({ name }) => (currentTab === name ? <FWishlist size={10} color={isDark ? colors.accent : '#1E1E1E'} /> : <UFWishlist color={isDark ? '#9E9E9E' : '#D2D2D2'} />)}>
             <WishListPostComponent wishlistId={notificationData?.wishlistScrollId} />
           </Tabs.Tab>
         </Tabs.Container>

@@ -151,7 +151,15 @@ const ProfileUser = () => {
         </View>
 
         <Pressable
-          style={[styles.addCoinsButton, buttonClickRecharge && { backgroundColor: '#FFA86B' }]}
+          style={[
+            styles.addCoinsButton,
+            {
+              backgroundColor: isDark 
+                ? (buttonClickRecharge ? '#FFA86B' : '#1C1C1C') 
+                : (buttonClickRecharge ? '#EBEBEB' : '#FFFFFF'),
+              borderColor: isDark ? '#212121' : '#1E1E1E',
+            }
+          ]}
           onPressIn={() => setButtonClickRecharge(true)}
           onPressOut={() => setButtonClickRecharge(false)}
           onPress={() => {
@@ -162,8 +170,8 @@ const ProfileUser = () => {
             navigate('wallet');
           }}>
           <View style={styles.addCoinsRow}>
-            <Image source={require('../../../Assets/Images/PlusMyProfileUserIconWallet.png')} style={{width: 16, height: 16}} contentFit="contain" tintColor={buttonClickRecharge ? '#1E1E1E' : '#FFFFFF'} />
-            <Text style={[styles.addCoinsText, buttonClickRecharge && { color: '#1E1E1E' }]}>Add Coins</Text>
+            <Image source={require('../../../Assets/Images/PlusMyProfileUserIconWallet.png')} style={{width: 16, height: 16}} contentFit="contain" tintColor={isDark ? (buttonClickRecharge ? '#1E1E1E' : '#FFFFFF') : '#1E1E1E'} />
+            <Text style={[styles.addCoinsText, { color: isDark ? (buttonClickRecharge ? '#1E1E1E' : '#FFFFFF') : '#1E1E1E' }]}>Add Coins</Text>
           </View>
         </Pressable>
       </View>

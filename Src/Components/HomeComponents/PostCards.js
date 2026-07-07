@@ -52,6 +52,14 @@ const handlePostActionHandler = async (postId, image, displayName, description) 
 
 const PostCards = ({item, index, token}) => {
   const { colors, isDark } = useAppTheme();
+  const cardBg = isDark ? colors.background : '#FFFFFF';
+  const cardBorderBottom = isDark ? colors.separator : '#E9E9E9';
+  const profileBorder = isDark ? colors.border : '#1e1e1e';
+  const textCol = isDark ? colors.text : '#1e1e1e';
+  const textSecCol = isDark ? colors.textSecondary : '#1e1e1e';
+  const placeholderCol = isDark ? colors.placeholder : '#b2b2b2';
+  const postBorder = isDark ? colors.border : '#E9E9E9';
+  const pinCol = isDark ? colors.textSecondary : '#9E9E9E';
   const [activeSlide, setActiveSlide] = useState(0);
   const [postPayment, {isLoading: isUnlocking}] = usePostPaymentMutation();
   const [unlockClick, setUnlockClick] = useState(false);
@@ -321,12 +329,12 @@ const PostCards = ({item, index, token}) => {
   if (unlockedFiles) {
     if (unlockedFiles?.[0]?.format === 'video') {
       return (
-        <View style={[styles.cardContainer, {marginTop: responsiveWidth(2), marginBottom: responsiveWidth(2), borderColor: colors.border, backgroundColor: colors.background, borderBottomColor: colors.separator}]}>
+        <View style={[styles.cardContainer, {marginTop: responsiveWidth(2), marginBottom: responsiveWidth(2), borderColor: postBorder, backgroundColor: cardBg, borderBottomColor: cardBorderBottom}]}>
           <View>
             <View style={[styles.cardHeaderWrapper, {paddingHorizontal: responsiveWidth(2), marginBottom: responsiveWidth(3)}]}>
               <View style={styles.headerLeftWrapper}>
                 <View style={styles.headerLeftContentContainer}>
-                  <Pressable style={[styles.profileImageContainer, {borderColor: colors.border}]} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                  <Pressable style={[styles.profileImageContainer, {borderColor: profileBorder}]} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
                     <Image cachePolicy="memory-disk" placeholderContentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
                   </Pressable>
 
@@ -334,7 +342,7 @@ const PostCards = ({item, index, token}) => {
                     <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
                       <View style={{flexDirection: 'column'}}>
                         <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
-                          <Text style={[styles.userName, {color: colors.text}]} numberOfLines={1} ellipsizeMode="tail">
+                          <Text style={[styles.userName, {color: textCol}]} numberOfLines={1} ellipsizeMode="tail">
                             {item?.createdBy?.displayName}
                           </Text>
                           {item?.createdBy?.role === 'creator' && (
@@ -343,7 +351,7 @@ const PostCards = ({item, index, token}) => {
                             </View>
                           )}
                         </View>
-                        <Moment style={[styles.timiming, {color: colors.textSecondary}]} element={Text} fromNow>
+                        <Moment style={[styles.timiming, {color: textSecCol}]} element={Text} fromNow>
                           {item?.createdAt}
                         </Moment>
                       </View>
@@ -354,12 +362,12 @@ const PostCards = ({item, index, token}) => {
 
               {item?.pinned && (
                 <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
-                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={colors.textSecondary} />
+                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={pinCol} />
                 </View>
               )}
 
               <TouchableOpacity
-                style={styles.iconContainer}
+                style={[styles.iconContainer, !isDark && {height: 19, width: 5}]}
                 onPress={() =>
                   dispatch(
                     togglePostActionBottomSheet({
@@ -373,7 +381,11 @@ const PostCards = ({item, index, token}) => {
                     }),
                   )
                 }>
-                <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={colors.text} />
+                {isDark ? (
+                  <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={colors.text} />
+                ) : (
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{flex: 1}} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -447,28 +459,28 @@ const PostCards = ({item, index, token}) => {
                     </View>
                   ) : (
                     <View style={styles.bottomIconContainer}>
-                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                     </View>
                   )}
                 </TouchableOpacity>
 
-                <Text style={[styles.likeCommentText, {color: colors.text}]}>{likeCount === 0 ? null : likeCount}</Text>
+                <Text style={[styles.likeCommentText, {color: textCol}]}>{likeCount === 0 ? null : likeCount}</Text>
               </View>
 
               <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
                 <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
                   <View style={styles.bottomIconContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                   </View>
                 </TouchableOpacity>
 
-                <Text style={[styles.likeCommentText, {color: colors.text}]}>{commentCount === 0 ? null : commentCount}</Text>
+                <Text style={[styles.likeCommentText, {color: textCol}]}>{commentCount === 0 ? null : commentCount}</Text>
               </View>
 
               <View style={{flexDirection: 'row', marginTop: responsiveWidth(0.83)}}>
                 <TouchableOpacity onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
                   <View style={styles.bottomIconContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -477,7 +489,7 @@ const PostCards = ({item, index, token}) => {
             <TouchableOpacity onPress={() => handleCoinClicks()}>
               <View style={{right: responsiveWidth(3.2)}}>
                 <View style={styles.coinContainer}>
-                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/CoinBlack.png')} contentFit="contain" style={{flex: 1}} />
+                  <Image cachePolicy="memory-disk" source={isDark ? require('../../../Assets/Images/CoinBlack.png') : require('../../../Assets/Images/Coins.png')} contentFit="contain" style={{flex: 1}} />
                 </View>
               </View>
             </TouchableOpacity>
@@ -498,11 +510,11 @@ const PostCards = ({item, index, token}) => {
                 justifyContent: 'space-between',
               }}>
               <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', marginLeft: 22}}>
-                <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5, borderColor: colors.border}}>
+                <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5, borderColor: profileBorder}}>
                   <Image source={{uri: item?.createdBy?.profile_image?.url}} contentFit="contain" style={{flex: 1}} />
                 </View>
 
-                <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular', color: colors.placeholder}]}>
+                <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular', color: placeholderCol}]}>
                   Add a Comment...
                 </Text>
               </View>
@@ -512,12 +524,12 @@ const PostCards = ({item, index, token}) => {
       );
     } else {
       return (
-        <View style={[styles.cardContainer, {backgroundColor: colors.background, borderBottomColor: colors.separator}]}>
+        <View style={[styles.cardContainer, {backgroundColor: cardBg, borderBottomColor: cardBorderBottom}]}>
           <View style={{paddingHorizontal: responsiveWidth(2)}}>
             <View style={styles.cardHeaderWrapper}>
               <View style={styles.headerLeftWrapper}>
                 <View style={styles.headerLeftContentContainer}>
-                  <Pressable style={[styles.profileImageContainer, {borderColor: colors.border}]} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                  <Pressable style={[styles.profileImageContainer, {borderColor: profileBorder}]} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
                     <Image cachePolicy="memory-disk" placeholderContentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
                   </Pressable>
 
@@ -525,7 +537,7 @@ const PostCards = ({item, index, token}) => {
                     <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
                       <View style={{flexDirection: 'column'}}>
                         <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
-                          <Text style={[styles.userName, {color: colors.text}]} numberOfLines={1} ellipsizeMode="tail">
+                          <Text style={[styles.userName, {color: textCol}]} numberOfLines={1} ellipsizeMode="tail">
                             {item?.createdBy?.displayName}
                           </Text>
                           {item?.createdBy?.role === 'creator' && (
@@ -534,7 +546,7 @@ const PostCards = ({item, index, token}) => {
                             </View>
                           )}
                         </View>
-                        <Moment style={[styles.timiming, {color: colors.textSecondary}]} element={Text} fromNow>
+                        <Moment style={[styles.timiming, {color: textSecCol}]} element={Text} fromNow>
                           {item?.createdAt}
                         </Moment>
                       </View>
@@ -544,12 +556,12 @@ const PostCards = ({item, index, token}) => {
               </View>
               {item?.pinned && (
                 <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
-                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={colors.textSecondary} />
+                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={pinCol} />
                 </View>
               )}
 
               <TouchableOpacity
-                style={styles.iconContainer}
+                style={[styles.iconContainer, !isDark && {height: 19, width: 5}]}
                 onPress={() =>
                   dispatch(
                     togglePostActionBottomSheet({
@@ -563,12 +575,16 @@ const PostCards = ({item, index, token}) => {
                     }),
                   )
                 }>
-                <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={colors.text} />
+                {isDark ? (
+                  <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={colors.text} />
+                ) : (
+                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{flex: 1}} />
+                )}
               </TouchableOpacity>
             </View>
             <View style={styles.cardTextWrapper}>
               {item?.postContent ? (
-                <MentionText content={item?.postContent} style={[styles.cardText, {color: colors.text}]} maxLines={3} />
+                <MentionText content={item?.postContent} style={[styles.cardText, {color: textCol}]} maxLines={3} />
               ) : null}
             </View>
           </View>
@@ -679,27 +695,27 @@ const PostCards = ({item, index, token}) => {
                     </View>
                   ) : (
                     <View style={styles.bottomIconContainer}>
-                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                     </View>
                   )}
                 </TouchableOpacity>
 
-                <Text style={[styles.likeCommentText, {color: colors.text}]}>{likeCount === 0 ? null : likeCount}</Text>
+                <Text style={[styles.likeCommentText, {color: textCol}]}>{likeCount === 0 ? null : likeCount}</Text>
               </View>
 
               <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
                 <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
                   <View style={styles.bottomIconContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                   </View>
                 </TouchableOpacity>
-                <Text style={[styles.likeCommentText, {color: colors.text}]}>{commentCount === 0 ? null : commentCount}</Text>
+                <Text style={[styles.likeCommentText, {color: textCol}]}>{commentCount === 0 ? null : commentCount}</Text>
               </View>
 
               <View style={{flexDirection: 'row', marginTop: responsiveWidth(0.83)}}>
                 <TouchableOpacity onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
                   <View style={styles.bottomIconContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -709,7 +725,7 @@ const PostCards = ({item, index, token}) => {
               <TouchableOpacity onPress={() => handleCoinClicks()}>
                 <View style={{right: responsiveWidth(3.2)}}>
                   <View style={styles.coinContainer}>
-                    <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/CoinBlack.png')} contentFit="contain" style={{flex: 1}} />
+                    <Image cachePolicy="memory-disk" source={isDark ? require('../../../Assets/Images/CoinBlack.png') : require('../../../Assets/Images/Coins.png')} contentFit="contain" style={{flex: 1}} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -732,11 +748,11 @@ const PostCards = ({item, index, token}) => {
                 justifyContent: 'space-between',
               }}>
               <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', marginLeft: 22}}>
-                <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5, borderColor: colors.border}}>
+                <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5, borderColor: profileBorder}}>
                   <Image source={{uri: item?.createdBy?.profile_image?.url}} contentFit="contain" style={{flex: 1}} />
                 </View>
 
-                <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular', color: colors.placeholder}]}>
+                <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular', color: placeholderCol}]}>
                   Add a Comment...
                 </Text>
               </View>
@@ -747,12 +763,12 @@ const PostCards = ({item, index, token}) => {
     }
   } else {
     return (
-      <View style={[styles.cardContainer, {marginBottom: 0, backgroundColor: colors.background, borderBottomColor: colors.separator}]}>
+      <View style={[styles.cardContainer, {marginBottom: 0, backgroundColor: cardBg, borderBottomColor: cardBorderBottom}]}>
         <View style={{paddingHorizontal: responsiveWidth(2), paddingBottom: 0}}>
           <View style={styles.cardHeaderWrapper}>
             <View style={styles.headerLeftWrapper}>
               <View style={styles.headerLeftContentContainer}>
-                <Pressable style={[styles.profileImageContainer, {borderColor: colors.border}]} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
+                <Pressable style={[styles.profileImageContainer, {borderColor: profileBorder}]} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
                   <Image cachePolicy="memory-disk" placeholderContentFit="cover" placeholder={require('../../../Assets/Images/DefaultProfile.jpg')} source={{uri: item?.createdBy?.profile_image?.url}} resizeMethod="resize" style={styles.profileImage} />
                 </Pressable>
 
@@ -760,7 +776,7 @@ const PostCards = ({item, index, token}) => {
                   <Pressable style={styles.headerInformation} onPress={() => handleGoToOthersProfile(item?.createdBy?.displayName)}>
                     <View style={{flexDirection: 'column'}}>
                       <View style={{flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(1)}}>
-                        <Text style={[styles.userName, {color: colors.text}]} numberOfLines={1} ellipsizeMode="tail">
+                        <Text style={[styles.userName, {color: textCol}]} numberOfLines={1} ellipsizeMode="tail">
                           {item?.createdBy?.displayName}
                         </Text>
                         {item?.createdBy?.role === 'creator' && (
@@ -769,7 +785,7 @@ const PostCards = ({item, index, token}) => {
                           </View>
                         )}
                       </View>
-                      <Moment style={[styles.timiming, {color: colors.textSecondary}]} element={Text} fromNow>
+                      <Moment style={[styles.timiming, {color: textSecCol}]} element={Text} fromNow>
                         {item?.createdAt}
                       </Moment>
                     </View>
@@ -780,12 +796,14 @@ const PostCards = ({item, index, token}) => {
 
             {item?.pinned && (
               <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
-                <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={colors.textSecondary} />
+                <View>
+                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={pinCol} />
+                </View>
               </View>
             )}
 
             <TouchableOpacity
-              style={styles.iconContainer}
+              style={[styles.iconContainer, !isDark && {height: 19, width: 5}]}
               onPress={() =>
                 dispatch(
                   togglePostActionBottomSheet({
@@ -800,12 +818,16 @@ const PostCards = ({item, index, token}) => {
                   }),
                 )
               }>
-              <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={colors.text} />
+              {isDark ? (
+                <DIcon provider={'Entypo'} name={'dots-three-vertical'} size={18} color={colors.text} />
+              ) : (
+                <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/threeDots.png')} contentFit="contain" style={{flex: 1}} />
+              )}
             </TouchableOpacity>
           </View>
           <View style={styles.cardTextWrapper}>
             {item?.postContent ? (
-              <MentionText content={item?.postContent} style={[styles.cardText, {color: colors.text}]} maxLines={3} />
+              <MentionText content={item?.postContent} style={[styles.cardText, {color: textCol}]} maxLines={3} />
             ) : null}
           </View>
         </View>
@@ -903,26 +925,26 @@ const PostCards = ({item, index, token}) => {
                       </View>
                     ) : (
                       <View style={styles.bottomIconContainer}>
-                        <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                        <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/heartOutline.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                       </View>
                     )}
                   </TouchableOpacity>
-                  <Text style={[styles.likeCommentText, {color: colors.text}]}>{likeCount === 0 ? null : likeCount}</Text>
+                  <Text style={[styles.likeCommentText, {color: textCol}]}>{likeCount === 0 ? null : likeCount}</Text>
                 </View>
 
                 <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center'}}>
                   <TouchableOpacity onPress={() => handleOpenCommentSheet(item?._id, false)}>
                     <View style={styles.bottomIconContainer}>
-                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/comment.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                     </View>
                   </TouchableOpacity>
-                  <Text style={[styles.likeCommentText, {color: colors.text}]}>{commentCount === 0 ? null : commentCount}</Text>
+                  <Text style={[styles.likeCommentText, {color: textCol}]}>{commentCount === 0 ? null : commentCount}</Text>
                 </View>
 
                 <View style={{flexDirection: 'row', marginTop: responsiveWidth(0.83)}}>
                   <TouchableOpacity onPress={() => handlePostActionHandler(item?._id, item?.createdBy?.profile_image?.url, item?.createdBy?.displayName, item?.postContent)}>
                     <View style={styles.bottomIconContainer}>
-                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={{flex: 1, tintColor: colors.text}} />
+                      <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/share.png')} contentFit="contain" style={isDark ? {flex: 1, tintColor: colors.text} : {flex: 1}} />
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -930,7 +952,7 @@ const PostCards = ({item, index, token}) => {
 
               {item?.pinned && (
                 <View style={{marginLeft: responsiveWidth(30), transform: [{rotate: '25deg'}]}}>
-                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={colors.textSecondary} />
+                  <DIcon provider={'Ionicons'} name={'pin'} size={responsiveWidth(6)} color={pinCol} />
                 </View>
               )}
             </View>
@@ -949,11 +971,11 @@ const PostCards = ({item, index, token}) => {
                   justifyContent: 'space-between',
                 }}>
                 <View style={{flexDirection: 'row', gap: responsiveWidth(1), alignItems: 'center', marginLeft: 22}}>
-                  <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5, borderColor: colors.border}}>
+                  <View style={{height: responsiveWidth(5.5), width: responsiveWidth(5.5), borderRadius: responsiveWidth(5), overflow: 'hidden', borderWidth: 1.5, borderColor: profileBorder}}>
                     <Image source={{uri: item?.createdBy?.profile_image?.url}} contentFit="contain" style={{flex: 1}} />
                   </View>
 
-                  <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular', color: colors.placeholder}]}>
+                  <Text onPress={() => handleOpenCommentSheet(item?._id, true)} style={[styles.addCommentsText, {marginLeft: responsiveWidth(1), fontFamily: 'Rubik-Regular', color: placeholderCol}]}>
                     Add a Comment...
                   </Text>
                 </View>

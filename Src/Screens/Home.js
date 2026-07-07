@@ -52,13 +52,13 @@ import LiveUsersScroll from '../LiveStream/LiveUsersScroll';
 import useJoinLiveStream from '../Hook/useJoinLiveStream';
 
 const PlaceHolder = ({ text }) => {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   return (
     <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
       <Text
         style={{
           fontFamily: 'MabryPro-Regular',
-          color: colors.textSecondary,
+          color: isDark ? colors.textSecondary : '#282828',
           fontSize: responsiveFontSize(2),
         }}>
         {text}
@@ -70,8 +70,8 @@ const PlaceHolder = ({ text }) => {
 const SocialPostRender = memo(({ item, index, token }) => <PostCards item={item} index={index} token={token} />);
 
 const Home = () => {
-  const { colors } = useAppTheme();
-  const FeedItemSeparator = useCallback(() => <View style={{ backgroundColor: colors.separator, height: 4 }} />, [colors]);
+  const { colors, isDark } = useAppTheme();
+  const FeedItemSeparator = useCallback(() => <View style={{ backgroundColor: isDark ? colors.separator : '#E9E9E9', height: 4 }} />, [colors, isDark]);
   const token = useSelector(state => state.auth.user.token);
 
   const homeFlashRef = useRef(null);
@@ -446,14 +446,14 @@ const Home = () => {
         <Text
           style={{
             fontFamily: 'MabryPro-Bold',
-            color: '#9E9E9E',
+            color: isDark ? '#9E9E9E' : '#282828',
             textAlign: 'center',
           }}>
           You're all caught up!
         </Text>
       );
     } else {
-      return <ActivityIndicator size={'large'} color={'#555555'} />;
+      return <ActivityIndicator size={'large'} color={isDark ? '#555555' : '#e7e8ea'} />;
     }
   };
 
@@ -472,7 +472,7 @@ const Home = () => {
   // console.log(cachedFeed[0])
 
   return (
-    <GestureHandlerRootView style={[styles.homeContainer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+    <GestureHandlerRootView style={[styles.homeContainer, { backgroundColor: isDark ? colors.background : '#fff', borderTopColor: isDark ? colors.border : '#282828' }]}>
       <FlashList
         ref={homeFlashRef}
         data={filteredFeed}

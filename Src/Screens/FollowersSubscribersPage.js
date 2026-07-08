@@ -11,41 +11,43 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FONT_SIZES, WIDTH_SIZES } from '../../DesiginData/Utility';
 import FollowersShimmer from '../Components/Shimmers/FollowersShimmer';
 import UnSubscribeModal from '../Components/MyProfile/UnSubscribeModal';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const EachList = ({ item, index, followersLength, handleGoToOthersProfile, isSubscribedList, onUnsubscribe, isFetching }) => {
+  const { colors, isDark } = useAppTheme();
   console.log(':::::', item?.userDetails?.displayName);
 
   if (item?.userDetails?.displayName !== undefined) {
     return (
       <View style={styles.listItemContainer}>
         <Pressable style={styles.listItem} onPress={() => handleGoToOthersProfile(item?.userDetails?.displayName, item?.userDetails?._id, item?.userDetails?.role)}>
-          <View style={styles.imageContainer}>
+          <View style={isDark ? styles.imageContainerDark : styles.imageContainerLight}>
             <Image source={{ uri: item?.userDetails?.profile_image?.url }} style={styles.profileImage} placeholderContentFit="contain" placeholder={require('../../Assets/Images/DefaultProfile.jpg')} contentFit="cover" />
           </View>
 
           <View style={{ flex: 1, flexDirection: 'column', alignItems: 'flex-start' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(0.8) }}>
-              <Text style={styles.name}>{item?.userDetails?.fullName}</Text>
+              <Text style={[styles.name, isDark && { color: '#FFFFFF' }]}>{item?.userDetails?.fullName}</Text>
               {item?.userDetails?.role === 'creator' && (
                 <View style={styles.verifyContainer}>
                   <Image cachePolicy="memory-disk" source={require('../../Assets/Images/verify.png')} contentFit="contain" style={{ flex: 1 }} />
                 </View>
               )}
             </View>
-            <Text style={styles.username}>@{item?.userDetails?.displayName}</Text>
+            <Text style={[styles.username, isDark && { color: '#FFFFFF' }]}>@{item?.userDetails?.displayName}</Text>
           </View>
         </Pressable>
 
         {isSubscribedList && Platform.OS !== 'ios' && (
           <TouchableOpacity 
-            style={[styles.unsubscribeButton, isFetching && { opacity: 0.7 }]} 
+            style={[isDark ? styles.unsubscribeButtonDark : styles.unsubscribeButtonLight, isFetching && { opacity: 0.7 }]} 
             onPress={() => !isFetching && onUnsubscribe(item)}
             disabled={isFetching}
           >
             {isFetching ? (
               <ActivityIndicator size="small" color="#1E1E1E" />
             ) : (
-              <Text style={styles.unsubscribeButtonText}>Unsubscribe</Text>
+              <Text style={isDark ? styles.unsubscribeButtonTextDark : styles.unsubscribeButtonTextLight}>Unsubscribe</Text>
             )}
           </TouchableOpacity>
         )}
@@ -55,6 +57,8 @@ const EachList = ({ item, index, followersLength, handleGoToOthersProfile, isSub
 };
 
 const FollowersSubscribersPage = ({ route, navigation }) => {
+  const { colors, isDark } = useAppTheme();
+
   const [getFS] = useLazyGetFSQuery();
 
   const [getFSD] = useLazyGetFSDQuery();
@@ -258,22 +262,20 @@ const FollowersSubscribersPage = ({ route, navigation }) => {
     }, [route?.params?.title, isActive, route?.params?.token, route?.params?.role, refreshList])
   );
 
-
-
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, isDark && { backgroundColor: '#121212' }]}>
         {route?.params?.title === 'Subscribers' || route?.params?.title === 'Subscribed' ? (
-          <View style={{ borderWidth: responsiveWidth(0.5), borderRadius: responsiveWidth(3.73), width: responsiveWidth(92), alignSelf: 'center', overflow: 'hidden', backgroundColor: '#fff', marginBottom: 10 }}>
-            <View style={styles.FollowersSubScribersToggle}>
-              <TouchableOpacity onPress={() => setIsActive(!isActive)} style={[styles.Followers, isActive === true ? { backgroundColor: '#FFA86B', borderWidth: responsiveWidth(0.3), borderRadius: responsiveWidth(2.5) } : null]}>
-                <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES[14], color: '#282828' }} key={'1Followers'}>
+          <View style={isDark ? styles.toggleWrapperDark : styles.toggleWrapperLight}>
+            <View style={[styles.FollowersSubScribersToggle, isDark && { backgroundColor: '#121212', gap: 0 }]}>
+              <TouchableOpacity onPress={() => setIsActive(true)} style={[styles.Followers, isActive === true ? (isDark ? styles.activeTabDark : styles.activeTabLight) : null]}>
+                <Text style={[styles.tabText, isDark ? { color: isActive === true ? '#1E1E1E' : colors.text } : { color: '#282828' }]} key={'1Followers'}>
                   Active
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setIsActive(!isActive)} style={[styles.SubScribers, isActive === false ? { backgroundColor: '#FFA86B', borderWidth: responsiveWidth(0.3), borderRadius: responsiveWidth(2.5) } : null]}>
-                <Text key={'2SubScribers'} style={{ fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES[14], color: '#282828' }}>
+              <TouchableOpacity onPress={() => setIsActive(false)} style={[styles.SubScribers, isActive === false ? (isDark ? styles.activeTabDark : styles.activeTabLight) : null]}>
+                <Text key={'2SubScribers'} style={[styles.tabText, isDark ? { color: isActive === false ? '#1E1E1E' : colors.text } : { color: '#282828' }]}>
                   In active
                 </Text>
               </TouchableOpacity>
@@ -287,26 +289,26 @@ const FollowersSubscribersPage = ({ route, navigation }) => {
 
   if (route?.params?.count === 0) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }, isDark && { backgroundColor: '#121212' }]}>
         <Pressable style={styles.signupPressable} onPress={() => navigate('discover')}>
-          <Text style={styles.signupText}>Not found.{'\n'}</Text>
+          <Text style={[styles.signupText, isDark && { color: '#FFFFFF' }]}>Not found.{'\n'}</Text>
         </Pressable>
       </View>
     );
   } else {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, isDark && { backgroundColor: '#121212' }]}>
         {route?.params?.title === 'Subscribers' || route?.params?.title === 'Subscribed' ? (
-          <View style={{ borderWidth: responsiveWidth(0.5), borderRadius: responsiveWidth(3.73), width: responsiveWidth(92), alignSelf: 'center', overflow: 'hidden', backgroundColor: '#fff' }}>
-            <View style={styles.FollowersSubScribersToggle}>
-              <TouchableOpacity onPress={() => setIsActive(!isActive)} style={[styles.Followers, isActive === true ? { backgroundColor: '#FFA86B', borderWidth: responsiveWidth(0.3), borderRadius: responsiveWidth(2.5) } : null]}>
-                <Text style={{ fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES[14], color: '#282828' }} key={'1Followers'}>
+          <View style={isDark ? styles.toggleWrapperDark : styles.toggleWrapperLight}>
+            <View style={[styles.FollowersSubScribersToggle, isDark && { backgroundColor: '#121212', gap: 0 }]}>
+              <TouchableOpacity onPress={() => setIsActive(true)} style={[styles.Followers, isActive === true ? (isDark ? styles.activeTabDark : styles.activeTabLight) : null]}>
+                <Text style={[styles.tabText, isDark ? { color: isActive === true ? '#1E1E1E' : colors.text } : { color: '#282828' }]} key={'1Followers'}>
                   Active
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setIsActive(!isActive)} style={[styles.SubScribers, isActive === false ? { backgroundColor: '#FFA86B', borderWidth: responsiveWidth(0.3), borderRadius: responsiveWidth(2.5) } : null]}>
-                <Text key={'2SubScribers'} style={{ fontFamily: 'Rubik-SemiBold', fontSize: FONT_SIZES[14], color: '#282828' }}>
+              <TouchableOpacity onPress={() => setIsActive(false)} style={[styles.SubScribers, isActive === false ? (isDark ? styles.activeTabDark : styles.activeTabLight) : null]}>
+                <Text key={'2SubScribers'} style={[styles.tabText, isDark ? { color: isActive === false ? '#1E1E1E' : colors.text } : { color: '#282828' }]}>
                   In active
                 </Text>
               </TouchableOpacity>
@@ -316,25 +318,25 @@ const FollowersSubscribersPage = ({ route, navigation }) => {
 
         {route?.params?.title === 'Following' ? (
           <FlatList
-            ItemSeparatorComponent={() => <View style={{ height: 1.5, backgroundColor: '#E9E9E9', width: '100%' }} />}
+            ItemSeparatorComponent={() => <View style={{ height: isDark ? 2 : 1.5, backgroundColor: isDark ? '#212121' : '#E9E9E9', width: '100%' }} />}
             data={followers}
             renderItem={({ item, index }) => <EachList item={item} index={index} followersLength={followers?.length} handleGoToOthersProfile={handleGoToOthersProfile} />}
             onEndReached={loadMoreData}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={() => isLoadingMore ? <View style={{ padding: 10, alignItems: 'center' }}><Text style={{ fontFamily: 'Rubik-Regular', color: '#888' }}>Loading...</Text></View> : null}
+            ListFooterComponent={() => isLoadingMore ? (isDark ? <View style={{ padding: 10, alignItems: 'center' }}><ActivityIndicator size="small" color="#FFA86B" /></View> : <View style={{ padding: 10, alignItems: 'center' }}><Text style={{ fontFamily: 'Rubik-Regular', color: '#888' }}>Loading...</Text></View>) : null}
           />
         ) : route?.params?.title === 'Followers' || route?.params?.title === 'Followed' ? (
           <FlatList
-            ItemSeparatorComponent={() => <View style={{ height: 1.5, backgroundColor: '#E9E9E9', width: '100%' }} />}
+            ItemSeparatorComponent={() => <View style={{ height: isDark ? 2 : 1.5, backgroundColor: isDark ? '#212121' : '#E9E9E9', width: '100%' }} />}
             data={followers}
             renderItem={({ item, index }) => <EachList item={item} index={index} followersLength={followers?.length} handleGoToOthersProfile={handleGoToOthersProfile} />}
             onEndReached={loadMoreData}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={() => isLoadingMore ? <View style={{ padding: 10, alignItems: 'center' }}><Text style={{ fontFamily: 'Rubik-Regular', color: '#888' }}>Loading...</Text></View> : null}
+            ListFooterComponent={() => isLoadingMore ? (isDark ? <View style={{ padding: 10, alignItems: 'center' }}><ActivityIndicator size="small" color="#FFA86B" /></View> : <View style={{ padding: 10, alignItems: 'center' }}><Text style={{ fontFamily: 'Rubik-Regular', color: '#888' }}>Loading...</Text></View>) : null}
           />
         ) : (
           <FlatList
-            ItemSeparatorComponent={() => <View style={{ height: 0.5, backgroundColor: '#E9E9E9', width: '100%' }} />}
+            ItemSeparatorComponent={() => <View style={{ height: isDark ? 2 : 0.5, backgroundColor: isDark ? '#212121' : '#E9E9E9', width: '100%' }} />}
             data={subscriberss}
             renderItem={({ item, index }) => (
               <EachList 
@@ -349,7 +351,7 @@ const FollowersSubscribersPage = ({ route, navigation }) => {
             )}
             onEndReached={loadMoreData}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={() => isLoadingMore ? <View style={{ padding: 10, alignItems: 'center' }}><Text style={{ fontFamily: 'Rubik-Regular', color: '#888' }}>Loading...</Text></View> : null}
+            ListFooterComponent={() => isLoadingMore ? (isDark ? <View style={{ padding: 10, alignItems: 'center' }}><ActivityIndicator size="small" color="#FFA86B" /></View> : <View style={{ padding: 10, alignItems: 'center' }}><Text style={{ fontFamily: 'Rubik-Regular', color: '#888' }}>Loading...</Text></View>) : null}
           />
         )}
 
@@ -387,39 +389,6 @@ const styles = StyleSheet.create({
     gap: responsiveWidth(4),
     paddingLeft: responsiveWidth(4),
     paddingVertical: responsiveWidth(3),
-  },
-
-  imageContainer: {
-    borderColor: 'purple',
-    borderRadius: responsiveWidth(15),
-    position: 'relative',
-    borderColor: '#282828',
-    resizeMode: 'cover',
-    height: responsiveWidth(12),
-    width: responsiveWidth(12),
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-
-  profileImage: {
-    flex: 1,
-    borderRadius: responsiveWidth(12),
-    borderWidth: 1,
-    borderColor: '#282828',
-    width: '100%',
-    resizeMode: 'cover',
-  },
-
-  name: {
-    fontFamily: 'Rubik-Medium',
-    fontSize: responsiveFontSize(1.8),
-    color: '#282828',
-  },
-
-  userName: {
-    fontFamily: 'Rubik-Medium',
-    fontSize: responsiveFontSize(1.7),
-    color: '#282828',
   },
 
   detailContainer: {
@@ -505,22 +474,53 @@ const styles = StyleSheet.create({
     width: responsiveWidth(4),
     height: responsiveWidth(4),
   },
-  imageContainer: {
+  imageContainerLight: {
     width: responsiveWidth(13.3),
     height: responsiveWidth(13.3),
     borderRadius: responsiveWidth(105),
     marginRight: responsiveWidth(1.5),
     borderWidth: 1.5,
-    overflow: 'hidden', // Clip the image if it exceeds the container
-    alignItems: 'center', // Center the image horizontally
-    justifyContent: 'center', // Center the image vertically
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageContainerDark: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: responsiveWidth(1.5),
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileImage: {
-    width: '100%', // Fill the container width
-    height: '100%', // Fill the container height
-    resizeMode: 'cover', // Ensure the image covers the container while maintaining aspect ratio
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
 
+  toggleWrapperLight: {
+    borderWidth: responsiveWidth(0.5),
+    borderRadius: responsiveWidth(3.73),
+    width: responsiveWidth(92),
+    alignSelf: 'center',
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    marginBottom: 10,
+  },
+  toggleWrapperDark: {
+    borderWidth: 1.5,
+    borderColor: '#212121',
+    borderRadius: responsiveWidth(3.73),
+    width: responsiveWidth(92),
+    alignSelf: 'center',
+    overflow: 'hidden',
+    backgroundColor: '#1E1E1E',
+    marginBottom: 10,
+    marginTop: 10,
+  },
   FollowersSubScribersToggle: {
     alignSelf: 'center',
     flexDirection: 'row',
@@ -545,13 +545,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  activeTabLight: {
+    backgroundColor: '#FFA86B',
+    borderWidth: responsiveWidth(0.3),
+    borderRadius: responsiveWidth(2.5),
+  },
+  activeTabDark: {
+    backgroundColor: '#FFA86B',
+    borderWidth: 1,
+    borderColor: '#FF7819',
+    borderRadius: responsiveWidth(2.5),
+  },
+  tabText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: FONT_SIZES[14],
+  },
   listItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: responsiveWidth(5),
   },
-  unsubscribeButton: {
+  unsubscribeButtonLight: {
     borderWidth: 1,
     borderColor: '#1E1E1E',
     borderRadius: responsiveWidth(2),
@@ -559,9 +574,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(3),
     backgroundColor: '#FFA86B',
   },
-  unsubscribeButtonText: {
+  unsubscribeButtonDark: {
+    borderWidth: 1,
+    borderColor: '#FF7819',
+    borderRadius: 10,
+    width: 109,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFA86B',
+  },
+  unsubscribeButtonTextLight: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(1.6),
+    color: '#1E1E1E',
+  },
+  unsubscribeButtonTextDark: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 12,
     color: '#1E1E1E',
   },
 });

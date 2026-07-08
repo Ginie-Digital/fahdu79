@@ -110,7 +110,7 @@ import FeedbackScreen from '../Src/Screens/FeedbackScreen';
 import NetworkLoggerScreen from '../Src/Screens/NetworkLoggerScreen';
 
 const StackNavigation = () => {
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   //Redux Work
   const is_user_loggedIn = useSelector(state => state.auth.user.token);
 
@@ -798,12 +798,11 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
-                  color: '#FFFFFF',
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: '#121212' },
+                headerStyle: { backgroundColor: isDark ? '#121212' : colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: '#FFFFFF',
+                headerTintColor: colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />

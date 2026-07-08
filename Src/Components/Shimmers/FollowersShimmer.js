@@ -1,8 +1,10 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, View, StyleSheet, FlatList} from 'react-native';
 import { responsiveWidth } from 'react-native-responsive-dimensions';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const FollowersShimmer = () => {
+  const { colors, isDark } = useAppTheme();
   const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -25,14 +27,14 @@ const FollowersShimmer = () => {
   const renderShimmerItem = () => (
     <View style={styles.itemContainer}>
       {/* Profile Picture Placeholder */}
-      <Animated.View style={[styles.profilePic, {opacity: shimmerOpacity}]} />
+      <Animated.View style={[styles.profilePic, { backgroundColor: isDark ? '#1E1E1E' : '#e0e0e0', opacity: shimmerOpacity }]} />
 
       {/* Text Container */}
       <View style={styles.textContainer}>
         {/* Name Placeholder */}
-        <Animated.View style={[styles.name, {opacity: shimmerOpacity}]} />
+        <Animated.View style={[styles.name, { backgroundColor: isDark ? '#1E1E1E' : '#e0e0e0', opacity: shimmerOpacity }]} />
         {/* Username Placeholder */}
-        <Animated.View style={[styles.username, {opacity: shimmerOpacity}]} />
+        <Animated.View style={[styles.username, { backgroundColor: isDark ? '#1E1E1E' : '#e0e0e0', opacity: shimmerOpacity }]} />
       </View>
     </View>
   );
@@ -42,8 +44,8 @@ const FollowersShimmer = () => {
       data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]} 
       renderItem={renderShimmerItem}
       keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={styles.listContainer}
-      ItemSeparatorComponent={() => <View style={{ height: 1.5, backgroundColor: '#E9E9E9', width: '100%' }} />}
+      contentContainerStyle={[styles.listContainer, isDark && { backgroundColor: '#121212' }]}
+      ItemSeparatorComponent={() => <View style={{ height: isDark ? 2 : 1.5, backgroundColor: isDark ? '#212121' : '#E9E9E9', width: '100%' }} />}
     />
   );
 };

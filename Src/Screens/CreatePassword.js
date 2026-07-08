@@ -121,25 +121,25 @@ const CreatePassword = ({route}) => {
 
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'password' && (
-            <InputOverlay isVisible style={{backgroundColor: colors.overlayBg, borderRadius: 14}} />
+            <InputOverlay isVisible style={isDark ? {backgroundColor: colors.overlayBg, borderRadius: 14} : {backgroundColor: 'transparent'}} />
           )}
-          <View style={[styles.textInputContainer, {backgroundColor: colors.inputBg, borderColor: colors.border}, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {backgroundColor: 'rgba(255, 82, 82, 0.12)', borderColor: colors.error} : null, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, {backgroundColor: isDark ? colors.inputBg : '#FFFFFF', borderColor: isDark ? colors.border : '#1E1E1E', borderWidth: isDark ? 1.5 : 2, borderRadius: isDark ? responsiveWidth(3.73) : responsiveWidth(4)}, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {backgroundColor: isDark ? 'rgba(255, 82, 82, 0.12)' : '#FEEBEB', borderColor: colors.error} : null, {marginTop: 0}]}>
             <TextInput
               ref={passwordInputRef} // Ref for this input
-              style={[styles.textInputs, {color: colors.text}, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {color: colors.error, backgroundColor: 'rgba(255, 82, 82, 0.12)'} : null]}
+              style={[styles.textInputs, {color: colors.text}, Platform.OS === "ios" && !isPasswordStrong && password.length > 0 ? {color: colors.error} : null]}
               secureTextEntry={!showPassword}
               onChangeText={handlePassword}
               onFocus={() => setFocusedInput('password')}
               onBlur={() => setFocusedInput(null)}
-              selectionColor={colors.accent}
-              cursorColor={colors.accent}
+              selectionColor={isDark ? colors.accent : '#ffa86b'}
+              cursorColor={isDark ? colors.accent : '#1e1e1e'}
               maxLength={64}
               placeholder='Enter new password'
-              selectionHandleColor={colors.accent}
-              placeholderTextColor={colors.placeholder}
+              selectionHandleColor={isDark ? colors.accent : '#ffa86b'}
+              placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
             />
             <Pressable style={styles.iconContainer} onPress={() => setShowPassword(prev => !prev)}>
-              {showPassword ? <Image  source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" />}
+              {showPassword ? <Image  source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} tintColor={isDark ? '#888888' : undefined} /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} tintColor={isDark ? '#888888' : undefined} />}
             </Pressable>
           </View>
         </View>
@@ -158,9 +158,9 @@ const CreatePassword = ({route}) => {
 
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'confirmPassword' && (
-            <InputOverlay isVisible style={{backgroundColor: colors.overlayBg, borderRadius: 14}} />
+            <InputOverlay isVisible style={isDark ? {backgroundColor: colors.overlayBg, borderRadius: 14} : {backgroundColor: 'transparent'}} />
           )}
-          <View style={[styles.textInputContainer, {backgroundColor: colors.inputBg, borderColor: colors.border}, {marginTop: 0}]}>
+          <View style={[styles.textInputContainer, {backgroundColor: isDark ? colors.inputBg : '#FFFFFF', borderColor: isDark ? colors.border : '#1E1E1E', borderWidth: isDark ? 1.5 : 2, borderRadius: isDark ? responsiveWidth(3.73) : responsiveWidth(4)}, {marginTop: 0}]}>
             <TextInput
               ref={confirmPasswordInputRef} // Ref for this input
               style={[styles.textInputs, {color: colors.text}]}
@@ -168,15 +168,15 @@ const CreatePassword = ({route}) => {
               onChangeText={t => setConfirmPassword(t)}
               onFocus={() => setFocusedInput('confirmPassword')}
               onBlur={() => setFocusedInput(null)}
-              selectionColor={colors.accent}
-              cursorColor={colors.accent}
+              selectionColor={isDark ? colors.accent : '#ffa86b'}
+              cursorColor={isDark ? colors.accent : '#1e1e1e'}
               maxLength={64}
               placeholder='Confirm new password'
-              selectionHandleColor={colors.accent}
-              placeholderTextColor={colors.placeholder}
+              selectionHandleColor={isDark ? colors.accent : '#ffa86b'}
+              placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
             />
             <Pressable style={styles.iconContainer} onPress={() => cSetShowPassword(prev => !prev)}>
-              {cShowPassword ? <Image source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} tintColor="#888888" />}
+              {cShowPassword ? <Image source={require('../../Assets/Images/eyeOpen.png')} contentFit="contain" style={styles.eyeStyle} tintColor={isDark ? '#888888' : undefined} /> : <Image source={require('../../Assets/Images/eyeClose.png')} contentFit="contain" style={styles.eyeStyle} tintColor={isDark ? '#888888' : undefined} />}
             </Pressable>
           </View>
         </View>

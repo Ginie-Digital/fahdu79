@@ -2,11 +2,13 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {nTwins} from '../../DesiginData/Utility';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const InputOverlay = ({isVisible, style}) => {
+  const { isDark } = useAppTheme();
   if (!isVisible) return null; // Render nothing if overlay is not visible
 
-  return <View style={[styles.overlay,  style]}></View>;
+  return <View style={[styles.overlay, !isDark && { backgroundColor: 'transparent' }, style]}></View>;
 };
 
 export default InputOverlay;

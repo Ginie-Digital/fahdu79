@@ -798,11 +798,12 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
+                  color: '#FFFFFF',
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: colors.headerBg },
+                headerStyle: { backgroundColor: '#121212' },
                 animation: 'slide_from_right',
-                headerTintColor: colors.headerTint,
+                headerTintColor: '#FFFFFF',
                 headerBackTitleVisible: false,
               })}
             />

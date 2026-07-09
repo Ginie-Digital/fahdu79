@@ -29,7 +29,7 @@ const ConfirmLiveStreamJoin = ({ route }) => {
     try {
       setFetchingCoins(true);
 
-      let { data } = await axios.get('https://api.fahdu.com/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 10000 });
+      let { data } = await axios.get('https://api.fahdu.in/api/wallet/get-coins', { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 10000 });
 
       setCoins(data?.data);
 

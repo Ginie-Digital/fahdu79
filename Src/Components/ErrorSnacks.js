@@ -71,7 +71,7 @@ export const VerifyEmail = (text, email, token) => {
       onPress: async () => {
         try {
           const { data, status } = await axios.post(
-            'https://api.fahdu.com/api/user/verify/email/resend',
+            'https://api.fahdu.in/api/user/verify/email/resend',
             { email, token },
             {
               headers: {

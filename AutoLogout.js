@@ -14,7 +14,7 @@ import { BASE_URL } from './Src/Configs/ApiConfig';
 
 const logoutUser = async token => {
   try {
-    let { data } = await axios.get('https://api.fahdu.com/api/user/logout', { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 10000 });
+    let { data } = await axios.get('https://api.fahdu.in/api/user/logout', { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, timeout: 10000 });
 
     console.log(data?.data);
   } catch (e) {

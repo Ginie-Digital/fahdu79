@@ -8,6 +8,7 @@ import { useGetCreatorsPlanQuery, useUnSubscribeMutation, useLazyGetCashfreeSubs
 import { useSelector } from 'react-redux';
 import { triggerImpactLight, triggerImpactMedium, triggerSelection } from '../../Utils/Haptics';
 import SubscriptionCancelledModal from './SubscriptionCancelledModal';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const REASONS = [
   'Too Expensive',
@@ -19,6 +20,7 @@ const REASONS = [
 
 const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) => {
   const token = useSelector(state => state.auth.user.token);
+  const { colors, isDark } = useAppTheme();
   const creatorId = item?.userDetails?._id || item?.creatorId;
   const creatorName = item?.userDetails?.name || item?.creatorName || 'the creator';
 
@@ -118,8 +120,8 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
         <DIcon provider="Feather" name={iconName} size={14} color={iconColor} />
       </View>
       <View style={styles.benefitTextStack}>
-        <Text style={styles.benefitTitle}>{title}</Text>
-        <Text style={styles.benefitSubtitle}>{subtitle}</Text>
+        <Text style={[styles.benefitTitle, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>{title}</Text>
+        <Text style={[styles.benefitSubtitle, { color: isDark ? '#FFFFFF' : '#666666' }]}>{subtitle}</Text>
       </View>
     </View>
   );
@@ -139,30 +141,30 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
         animationOutTiming={200}
         style={styles.modalContainer}
       >
-        <View style={styles.dialog}>
+        <View style={[styles.dialog, { backgroundColor: isDark ? '#121212' : '#FFFFFF' }]}>
           <View style={styles.indicatorContainer}>
-            <View style={styles.indicator} />
+            <View style={[styles.indicator, { backgroundColor: isDark ? '#2C2C2C' : '#E0E0E0' }]} />
           </View>
           <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
             {/* Header */}
             <View style={styles.headerRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.title}>{step === 1 ? 'Unsubscribe' : 'One last thing...'}</Text>
-                <Text style={styles.subtitle}>
+                <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>{step === 1 ? 'Unsubscribe' : 'One last thing...'}</Text>
+                <Text style={[styles.subtitle, { color: isDark ? '#FFFFFF' : '#666666' }]}>
                   {step === 1 
                     ? 'Fill in your info to proceed' 
                     : 'Tell us why you are cancelling — this helps creators improve (optional)'}
                 </Text>
               </View>
-              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                <DIcon provider="Ionicons" name="close" size={20} color="#FFFFFF" />
+              <TouchableOpacity onPress={handleClose} style={[styles.closeButton, { borderColor: isDark ? '#1F1F1F' : '#E0E0E0' }]}>
+                <DIcon provider="Ionicons" name="close" size={20} color={isDark ? '#FFFFFF' : '#1E1E1E'} />
               </TouchableOpacity>
             </View>
 
             {isSubLoading && !subscriptionDetails ? (
               <View style={{ justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
                 <ActivityIndicator size="large" color="#FFA86B" />
-                <Text style={[styles.subtitle, { marginTop: 12 }]}>Fetching subscription details...</Text>
+                <Text style={[styles.subtitle, { color: isDark ? '#FFFFFF' : '#666666', marginTop: 12 }]}>Fetching subscription details...</Text>
               </View>
             ) : (
               <>
@@ -170,27 +172,27 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
                   <>
                     {/* Selected Plan Box */}
                     <View style={styles.planBox}>
-                      <Text style={styles.planLabel}>Selected Plan</Text>
+                      <Text style={[styles.planLabel, { color: isDark ? '#FFFFFF' : '#666666' }]}>Selected Plan</Text>
                       <View style={styles.planMainRow}>
-                        <Text style={styles.planName}>{planName}</Text>
-                        <Text style={styles.planAmount}>
+                        <Text style={[styles.planName, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>{planName}</Text>
+                        <Text style={[styles.planAmount, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>
                           ₹{planAmount.toLocaleString()}
                         </Text>
                       </View>
-                      <View style={styles.separator} />
+                      <View style={[styles.separator, { backgroundColor: isDark ? '#171717' : '#EEEEEE' }]} />
                       <View style={styles.planDetailRow}>
-                        <Text style={styles.planDetailLabel}>Subscription Ends</Text>
-                        <Text style={styles.planDetailValue}>{formattedExpiry}</Text>
+                        <Text style={[styles.planDetailLabel, { color: isDark ? '#FFFFFF' : '#666666' }]}>Subscription Ends</Text>
+                        <Text style={[styles.planDetailValue, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>{formattedExpiry}</Text>
                       </View>
                       <View style={styles.planDetailRow}>
-                        <Text style={styles.planDetailLabel}>Days Remaining</Text>
-                        <Text style={styles.planDetailValue}>{daysRemaining > 0 ? `${daysRemaining} Days` : 'Expires today'}</Text>
+                        <Text style={[styles.planDetailLabel, { color: isDark ? '#FFFFFF' : '#666666' }]}>Days Remaining</Text>
+                        <Text style={[styles.planDetailValue, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>{daysRemaining > 0 ? `${daysRemaining} Days` : 'Expires today'}</Text>
                       </View>
                     </View>
 
                     {/* Benefit Section */}
                     <View style={{ gap: responsiveHeight(2) }}>
-                      <Text style={styles.benefitSectionTitle}>What happens when you cancel?</Text>
+                      <Text style={[styles.benefitSectionTitle, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>What happens when you cancel?</Text>
                       <View style={styles.benefitList}>
                         <BenefitItem
                           title="Auto-pay will be stopped"
@@ -220,10 +222,10 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
                     {/* Buttons */}
                     <View style={styles.buttonRow}>
                       <TouchableOpacity 
-                        style={styles.cancelButton} 
+                        style={[styles.cancelButton, { backgroundColor: isDark ? '#171717' : '#F5F5F5', borderColor: isDark ? '#1F1F1F' : '#E0E0E0' }]} 
                         onPress={handleProceedUnsubscribe}
                       >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                        <Text style={[styles.cancelButtonText, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>Cancel</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.keepButton} onPress={handleClose}>
                         <Text style={styles.keepButtonText}>Keep Subscription</Text>
@@ -241,6 +243,7 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
                             key={reason}
                             style={[
                               styles.reasonItem,
+                              { backgroundColor: isDark ? '#171717' : '#F5F5F5', borderColor: isDark ? '#1F1F1F' : '#E0E0E0' },
                               isSelected && styles.reasonItemActive
                             ]}
                             onPress={() => {
@@ -250,6 +253,7 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
                           >
                             <Text style={[
                               styles.reasonText,
+                              { color: isDark ? '#FFFFFF' : '#1E1E1E' },
                               isSelected && styles.reasonTextActive
                             ]}>
                               {reason}
@@ -276,7 +280,7 @@ const UnSubscribeModal = ({ visible, onClose, item, onSuccess, onUpdateList }) =
               </>
             )}
           </ScrollView>
-          <View style={styles.bottomExtension} />
+          <View style={[styles.bottomExtension, { backgroundColor: isDark ? '#121212' : '#FFFFFF' }]} />
         </View>
       </Modal>
 

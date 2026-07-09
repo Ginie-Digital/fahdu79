@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Image } from 'react-native';
 import { responsiveFontSize, responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import DIcon from '../../../DesiginData/DIcons';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const SubscriptionCancelledModal = ({ visible, onClose, creatorName, expiryDate }) => {
+  const { colors, isDark } = useAppTheme();
   return (
     <Modal
       visible={visible}
@@ -18,7 +20,7 @@ const SubscriptionCancelledModal = ({ visible, onClose, creatorName, expiryDate 
           onPress={onClose} 
           style={styles.backdrop} 
         />
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#FFFFFF', borderColor: isDark ? '#1E1E1E' : '#E0E0E0' }]}>
           {/* Success Icon */}
           <Image 
             source={require('../../../Assets/Images/CheckSubscriptionCancelledModal.png')}
@@ -28,8 +30,8 @@ const SubscriptionCancelledModal = ({ visible, onClose, creatorName, expiryDate 
 
           {/* Text Content */}
           <View style={styles.textContainer}>
-            <Text style={styles.title}>Subscription Cancelled</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>Subscription Cancelled</Text>
+            <Text style={[styles.subtitle, { color: isDark ? '#FFFFFF' : '#666666' }]}>
               Your subscription to <Text style={styles.boldText}>{creatorName || 'Rohan Fitness'}</Text> has been cancelled
             </Text>
           </View>
@@ -38,14 +40,14 @@ const SubscriptionCancelledModal = ({ visible, onClose, creatorName, expiryDate 
           <View style={styles.accessBox}>
             <View style={styles.accessRow}>
               <DIcon provider="Feather" name="calendar" size={14} color="#FFA86B" />
-              <Text style={styles.accessText}>
+              <Text style={[styles.accessText, { color: isDark ? '#FFFFFF' : '#1E1E1E' }]}>
                 Access till: <Text style={styles.boldText}>{expiryDate || '28 Mar 2026'}</Text>
               </Text>
             </View>
           </View>
 
           {/* Footer Text */}
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: isDark ? '#FFFFFF' : '#666666' }]}>
             You can re-subscribe anytime from their profile
           </Text>
         </View>

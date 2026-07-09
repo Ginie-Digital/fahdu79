@@ -14,10 +14,13 @@ import Back from '../../../Assets/svg/back.svg';
 import Verify from '../../../Assets/svg/veribig.svg';
 import { Image } from 'expo-image';
 import AnimatedButton from '../../Components/AnimatedButton';
+import { useAppTheme } from '../../Hook/useAppTheme';
+
 const ConfirmLiveStreamJoin = ({ route }) => {
   console.log(route?.params?.data?.creatorInfo, route?.params?.roomId);
 
   const token = useSelector(state => state.auth.user.token);
+  const { colors, isDark } = useAppTheme();
 
   const [fetchingCoins, setFetchingCoins] = useState(true);
 
@@ -62,9 +65,9 @@ const ConfirmLiveStreamJoin = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.flexOne}>
+    <SafeAreaView style={[styles.flexOne, isDark && { backgroundColor: colors.background }]}>
       <ScrollView>
-        <View style={[styles.flexOne, styles.container]}>
+        <View style={[styles.flexOne, styles.container, isDark && { backgroundColor: colors.background }]}>
           <View style={{ flexDirection: 'row', marginTop: responsiveWidth(2) }}>{/* <Text style={styles.titleText}> Livestream</Text> */}</View>
           {/* <View style={{marginTop: Platform.OS === 'ios' ? responsiveWidth(-4) : responsiveWidth(4)}}>
           <View style={styles.outerBigBox}>
@@ -83,8 +86,8 @@ const ConfirmLiveStreamJoin = ({ route }) => {
 
           <View style={styles.containerImg}>
             {/* Outer Dashed Border */}
-            <View style={styles.outerBorder}>
-              <View style={styles.innerBorder}>
+            <View style={[styles.outerBorder, isDark && { borderColor: colors.text }]}>
+              <View style={[styles.innerBorder, isDark && { borderColor: colors.text }]}>
                 {/* Image Container */}
                 <Image source={{ uri: route?.params?.data?.creatorInfo?.profile_image?.url }} style={styles.image} contentFit="cover" />
               </View>
@@ -96,15 +99,15 @@ const ConfirmLiveStreamJoin = ({ route }) => {
             </View>
           </View>
 
-          <Text style={[styles.title, { marginTop: WIDTH_SIZES[16], fontSize: responsiveFontSize(2.3) }]}>
+          <Text style={[styles.title, { marginTop: WIDTH_SIZES[16], fontSize: responsiveFontSize(2.3) }, isDark && { color: colors.text }]}>
             Join <Text style={{ fontFamily: 'Rubik-Bold' }}>{route?.params?.data?.creatorInfo?.displayName}'s</Text> Livestream
           </Text>
 
           <View style={{ marginTop: WIDTH_SIZES[32] }}>
-            <View style={[styles.card, { backgroundColor: '#FFF6F0', borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), borderColor: 'black', flexDirection: 'column' }]}>
+            <View style={[styles.card, { backgroundColor: '#FFF6F0', borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), borderColor: 'black', flexDirection: 'column' }, isDark && { backgroundColor: 'rgba(255, 168, 107, 0.2)', borderColor: '#FFA86B' }]}>
               <View style={[styles.card, { borderStyle: 'dashed' }]}>
                 <View style={styles.cardLeftView}>
-                  <Text style={styles.heading}>Fee Details</Text>
+                  <Text style={[styles.heading, isDark && { color: colors.text }]}>Fee Details</Text>
                   {/*
                 <View style={styles.eachDetailWrapper}>
                   <View
@@ -125,15 +128,15 @@ const ConfirmLiveStreamJoin = ({ route }) => {
                   </View>
                 </View> */}
 
-                  <View style={styles.containerSub}>
-                    <Text style={styles.text}>Follower Fee</Text>
+                  <View style={[styles.containerSub, isDark && { backgroundColor: '#121212', borderColor: '#FF7819' }]}>
+                    <Text style={[styles.text, isDark && { color: colors.text }]}>Follower Fee</Text>
                     <View style={styles.rightSection}>
-                      <Text style={styles.amount}>{route?.params?.data?.feeDetails?.followers}</Text>
+                      <Text style={[styles.amount, isDark && { color: colors.text }]}>{route?.params?.data?.feeDetails?.followers}</Text>
                       <Paisa />
                     </View>
                   </View>
 
-                  <Text style={[styles.description, { color: '#1E1E1E', left: responsiveWidth(55) }]}>*Live/Minute</Text>
+                  <Text style={[styles.description, { color: isDark ? colors.text : '#1E1E1E', left: responsiveWidth(55) }]}>*Live/Minute</Text>
 
                   {/* <View style={styles.eachDetailWrapper}>
                   <View
@@ -154,24 +157,24 @@ const ConfirmLiveStreamJoin = ({ route }) => {
                     <Paisa />
                   </View>
                 </View> */}
-                  <View style={styles.containerSub}>
-                    <Text style={styles.text}>Subscriber Fee</Text>
+                  <View style={[styles.containerSub, isDark && { backgroundColor: '#121212', borderColor: '#FF7819' }]}>
+                    <Text style={[styles.text, isDark && { color: colors.text }]}>Subscriber Fee</Text>
                     <View style={styles.rightSection}>
-                      <Text style={styles.amount}>{route?.params?.data?.feeDetails?.subscribers}</Text>
+                      <Text style={[styles.amount, isDark && { color: colors.text }]}>{route?.params?.data?.feeDetails?.subscribers}</Text>
                       <Paisa />
                     </View>
                   </View>
 
-                  <Text style={[styles.description, { color: '#1E1E1E', left: responsiveWidth(55) }]}>*Live/Minute</Text>
+                  <Text style={[styles.description, { color: isDark ? colors.text : '#1E1E1E', left: responsiveWidth(55) }]}>*Live/Minute</Text>
                 </View>
               </View>
             </View>
           </View>
 
-          <View style={[styles.card, { borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), backgroundColor: '#FFF6F0', flexDirection: 'column', marginTop: responsiveWidth(8) }]}>
+          <View style={[styles.card, { borderStyle: 'dashed', borderWidth: responsiveWidth(0.5), backgroundColor: '#FFF6F0', flexDirection: 'column', marginTop: responsiveWidth(8) }, isDark && { backgroundColor: 'rgba(255, 168, 107, 0.2)', borderColor: '#FFA86B' }]}>
             <View style={[styles.card, {}]}>
               <View style={styles.cardLeftView}>
-                <Text style={styles.heading}>My Wallet</Text>
+                <Text style={[styles.heading, isDark && { color: colors.text }]}>My Wallet</Text>
 
                 {/* <View style={styles.eachDetailWrapper}>
                 <View style={{height: responsiveWidth(11.2)}}>
@@ -195,10 +198,10 @@ const ConfirmLiveStreamJoin = ({ route }) => {
                 </View>
               </View> */}
 
-                <View style={styles.containerSub}>
-                  <Text style={styles.text}>Coins</Text>
+                <View style={[styles.containerSub, isDark && { backgroundColor: '#121212', borderColor: '#FF7819' }]}>
+                  <Text style={[styles.text, isDark && { color: colors.text }]}>Coins</Text>
                   <View style={styles.rightSection}>
-                    <Text style={styles.amount}>{Math.trunc(coins || 0).toLocaleString('en-IN')}</Text>
+                    <Text style={[styles.amount, isDark && { color: colors.text }]}>{Math.trunc(coins || 0).toLocaleString('en-IN')}</Text>
                     <Paisa />
                   </View>
                 </View>
@@ -215,7 +218,7 @@ const ConfirmLiveStreamJoin = ({ route }) => {
         </View> */}
 
           <View style={{ width: '84%' }}>
-            <AnimatedButton title={'Join Now'} onPress={handleButton} disabled={fetchingCoins} />
+            <AnimatedButton title={'Join Now'} onPress={handleButton} disabled={fetchingCoins} isDark={isDark} />
           </View>
 
           <View style={{ height: 100 }} />

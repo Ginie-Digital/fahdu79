@@ -77,7 +77,7 @@ const ConfirmLiveStreamJoin = ({ route }) => {
               </View>
               <View style={{zIndex: 222, position: 'absolute', top: responsiveWidth(1), right: 2}}>
                 <View style={styles.verifyContainer}>
-                  <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/verify.png')} contentFit="contain" style={{flex: 1}} />
+                  <Image cachePolicy="memory-disk" source={isDark ? require('../../../Assets/Images/blackVerified.png') : require('../../../Assets/Images/whiteVerified.png')} contentFit="contain" style={{flex: 1}} />
                 </View>
               </View>
             </View>
@@ -95,7 +95,7 @@ const ConfirmLiveStreamJoin = ({ route }) => {
 
             {/* Verification Badge */}
             <View style={styles.verifyContainer}>
-              <Image source={require('../../../Assets/Images/verify.png')} style={styles.verifyIcon} contentFit="contain" />
+              <Image source={isDark ? require('../../../Assets/Images/blackVerified.png') : require('../../../Assets/Images/whiteVerified.png')} style={styles.verifyIcon} contentFit="contain" />
             </View>
           </View>
 

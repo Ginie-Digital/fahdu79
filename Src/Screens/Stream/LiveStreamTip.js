@@ -182,20 +182,34 @@ const LiveStreamTip = () => {
           <View
             style={[
               styles.modalInnerWrapper,
-              { backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 40 : 20 },
+              { backgroundColor: isDark ? colors.background : '#FFFFFF', paddingBottom: Platform.OS === 'ios' ? 40 : 20 },
+              !isDark && {
+                shadowColor: '#9A9A9A',
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.5,
+                shadowRadius: 25,
+                elevation: 25,
+              }
             ]}>
             <View style={styles.headerRow}>
-              <Text style={[styles.sendTipText, { color: colors.text }]}>Send Tip</Text>
+              <Text style={[styles.sendTipText, { color: isDark ? colors.text : '#1E1E1E' }]}>Send Tip</Text>
               <TouchableOpacity onPress={() => {
                 dispatch(customTipAmount({ amount: 10 }));
                 dispatch(toggleLiveStreamTipModal({ info: { roomId: '', show: false } }));
               }}>
-                <DIcon provider={'Entypo'} name={'cross'} color={colors.text} size={responsiveFontSize(3.5)} />
+                <DIcon provider={'Entypo'} name={'cross'} color={isDark ? colors.text : '#1E1E1E'} size={responsiveFontSize(3.5)} />
               </TouchableOpacity>
             </View>
             <View style={styles.tipContainer}>
               <View style={styles.tipCounterContainer}>
-                <View style={[styles.sendTipInputContainer, { borderColor: isDark ? '#212121' : colors.border, backgroundColor: isDark ? '#1C1C1C' : colors.inputBg }]}>
+                <View style={[
+                  styles.sendTipInputContainer,
+                  {
+                    borderColor: isDark ? '#212121' : '#1E1E1E',
+                    borderWidth: isDark ? 2 : 1.5,
+                    backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF'
+                  }
+                ]}>
                   {tipAmount >= 0 && tipAmount < 10 && (
                     <Animated.View style={{ position: 'absolute', right: 95, backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{ translateX: shakeAnimation }] }}>
                       <Text style={{ fontSize: 10, color: colors.accent, fontFamily: 'Rubik-Regular', fontStyle: 'italic' }}>Min is 10</Text>
@@ -208,7 +222,7 @@ const LiveStreamTip = () => {
                       placeholderTextColor={colors.placeholder}
                       maxLength={5} 
                       value={String(tipAmount)} 
-                      style={[styles.amountInput, { color: colors.text }]} 
+                      style={[styles.amountInput, { color: isDark ? colors.text : '#1E1E1E' }]} 
                       onChangeText={x => dispatch(customTipAmount({ amount: x.replace(/[^0-9]/g, '') }))} 
                       keyboardType="numeric" 
                       showsVerticalScrollIndicator={false}
@@ -221,8 +235,14 @@ const LiveStreamTip = () => {
                         dispatch(decreaseTipAmount());
                         triggerImpactHeavy();
                       }}>
-                      <View style={[styles.plusMinusButtonInside, { backgroundColor: isDark ? '#212121' : colors.card, borderColor: isDark ? '#292929' : colors.border }]}>
-                        <DIcon provider={'Entypo'} name={'minus'} size={18} color={colors.text} />
+                      <View style={[
+                        styles.plusMinusButtonInside,
+                        {
+                          backgroundColor: isDark ? '#212121' : '#FFFFFF',
+                          borderColor: isDark ? '#292929' : '#1E1E1E'
+                        }
+                      ]}>
+                        <DIcon provider={'Entypo'} name={'minus'} size={18} color={isDark ? colors.text : '#1E1E1E'} />
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity 
@@ -231,8 +251,14 @@ const LiveStreamTip = () => {
                         dispatch(increaseTipAmount());
                         triggerImpactHeavy();
                       }}>
-                      <View style={[styles.plusMinusButtonInside, { backgroundColor: isDark ? '#FFA86B' : colors.accent, borderColor: isDark ? '#FF7819' : colors.border }]}>
-                        <DIcon provider={'Entypo'} name={'plus'} size={18} color={isDark ? '#222124' : '#000000'} />
+                      <View style={[
+                        styles.plusMinusButtonInside,
+                        {
+                          backgroundColor: isDark ? '#FFA86B' : '#FFA86B',
+                          borderColor: isDark ? '#FF7819' : '#1E1E1E'
+                        }
+                      ]}>
+                        <DIcon provider={'Entypo'} name={'plus'} size={18} color={isDark ? '#222124' : '#1E1E1E'} />
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -240,7 +266,7 @@ const LiveStreamTip = () => {
               </View>
 
               <View style={{ flexDirection: 'row', gap: 10, marginTop: responsiveWidth(4), justifyContent: 'center', width: responsiveWidth(80), alignSelf: 'center' }}>
-                {[10, 20, 50].map((amount) => (
+                {[10, 20, 100].map((amount) => (
                   <Pressable 
                     key={amount} 
                     onPress={() => {
@@ -256,12 +282,18 @@ const LiveStreamTip = () => {
                       borderRadius: 36,
                       width: 101.67,
                       height: 49,
-                      backgroundColor: tipAmount === amount ? colors.accent : (pressed ? '#1C1C1C80' : '#1C1C1C'),
-                      borderColor: tipAmount === amount ? colors.accent : '#212121',
+                      backgroundColor: isDark 
+                        ? (tipAmount === amount ? colors.accent : (pressed ? '#1C1C1C80' : '#1C1C1C')) 
+                        : (tipAmount === amount ? '#FFA86B' : (pressed ? '#F5F5F5' : '#FFFFFF')),
+                      borderColor: isDark 
+                        ? (tipAmount === amount ? colors.accent : '#212121') 
+                        : '#1E1E1E',
                     })}>
                     <Paisa />
                     <Text style={{ 
-                      color: tipAmount === amount ? '#000000' : '#FFFFFF', 
+                      color: isDark 
+                        ? (tipAmount === amount ? '#000000' : '#FFFFFF') 
+                        : '#1E1E1E', 
                       fontFamily: 'Rubik-Medium',
                       fontSize: 14,
                       lineHeight: 17,
@@ -273,7 +305,19 @@ const LiveStreamTip = () => {
               <TouchableOpacity 
                 disabled={loading} 
                 onPress={handleSendTipAmount}
-                style={[styles.sendButton, { backgroundColor: colors.accent, borderColor: colors.accentBorder }]}>
+                style={[
+                  styles.sendButton,
+                  {
+                    backgroundColor: isDark ? colors.accent : '#FFA86B',
+                    borderColor: isDark ? colors.accentBorder : '#1E1E1E'
+                  },
+                  !isDark && {
+                    shadowColor: '#1E1E1E',
+                    shadowOffset: { width: 4, height: 4 },
+                    shadowOpacity: 1,
+                    shadowRadius: 0,
+                  }
+                ]}>
                 {loading ? (
                   <ActivityIndicator size="small" color="#1E1E1E" />
                 ) : (

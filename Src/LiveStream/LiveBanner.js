@@ -22,7 +22,7 @@ const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
                     source={{ uri: avatarUrl || 'https://via.placeholder.com/48' }}
                     style={[
                         styles.avatar,
-                        { borderColor: isDark ? '#212121' : '#E0E0E0' }
+                        { borderColor: isDark ? '#212121' : '#000000' }
                     ]}
                 />
                 <View>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 12,
-        borderWidth: 1,
+        borderWidth: 1.5,
     },
     username: {
         fontSize: 16,

@@ -3,23 +3,44 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {Dialog} from 'react-native-simple-dialogs';
 import {responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {FONT_SIZES} from '../../../DesiginData/Utility';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const StreamEndedUserModal = ({visible, onPress, title = 'Livestream has ended...'}) => {
-
+  const {isDark} = useAppTheme();
 
   return (
     <Dialog
       visible={visible}
-      dialogStyle={styles.dialog}
+      dialogStyle={[
+        styles.dialog,
+        {
+          backgroundColor: isDark ? '#121212' : '#fff',
+          borderColor: isDark ? '#000000' : '#1e1e1e',
+          borderWidth: isDark ? 1.5 : 2,
+          shadowColor: isDark ? '#585858' : '#000000',
+          shadowOffset: {width: 0, height: 0},
+          shadowOpacity: isDark ? 0.8 : 0.1,
+          shadowRadius: isDark ? 24 : 10,
+          elevation: isDark ? 24 : 5,
+        },
+      ]}
       contentStyle={{paddingVertical: 32, paddingHorizontal: 32}}
       onTouchOutside={onPress}
       onRequestClose={onPress}
     >
       <View style={styles.content}>
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>
+          {title}
+        </Text>
 
         <TouchableOpacity
-          style={styles.okButton}
+          style={[
+            styles.okButton,
+            {
+              borderColor: isDark ? '#FF7819' : '#1e1e1e',
+              borderWidth: isDark ? 1.5 : 2,
+            },
+          ]}
           onPress={onPress}
           activeOpacity={0.7}
         >
@@ -33,12 +54,9 @@ const StreamEndedUserModal = ({visible, onPress, title = 'Livestream has ended..
 const styles = StyleSheet.create({
   dialog: {
     borderRadius: responsiveWidth(5),
-    borderWidth: 2,
     borderStyle: 'dashed',
     alignSelf: 'center',
-    backgroundColor: '#fff',
     width: responsiveWidth(90),
-    borderColor: '#1e1e1e',
     padding: 0,
   },
   content: {
@@ -47,9 +65,8 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: FONT_SIZES[16],
+    fontSize: FONT_SIZES[20] || FONT_SIZES[16],
     textAlign: 'center',
-    color: '#1e1e1e',
     width: responsiveWidth(75),
     marginTop: responsiveWidth(2.2),
   },
@@ -57,17 +74,15 @@ const styles = StyleSheet.create({
     width: '100%',
     height: responsiveHeight(6.65),
     borderRadius: responsiveWidth(3.73),
-    backgroundColor: 'rgba(255, 168, 107, 1)',
+    backgroundColor: '#FFA86B',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#1e1e1e',
     marginTop: responsiveWidth(7),
   },
   okButtonText: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: FONT_SIZES[16],
-    color: '#1e1e1e',
+    fontSize: FONT_SIZES[14],
+    color: '#1E1E1E',
   },
 });
 

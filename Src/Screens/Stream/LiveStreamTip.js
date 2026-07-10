@@ -17,8 +17,8 @@ import axios from 'axios';
 import { updateWallet } from '../../../Redux/Slices/NormalSlices/Wallet/WalletSlice';
 
 import Paisa from '../../../Assets/svg/paisa.svg';
-import AnimatedButton from '../../Components/AnimatedButton';
 import { triggerImpactHeavy, triggerImpactLight, triggerImpactMedium } from '../../Utils/Haptics';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const LiveStreamTip = () => {
   const keyboard = useKeyboard();
@@ -36,6 +36,8 @@ const LiveStreamTip = () => {
   const [tipForGoal] = useTipForGoalMutation();
 
   const flashGoals = useSelector(state => state.livechats.data.goals);
+
+  const { colors, isDark } = useAppTheme();
 
   const fetchCoins = async () => {
     try {
@@ -180,37 +182,38 @@ const LiveStreamTip = () => {
           <View
             style={[
               styles.modalInnerWrapper,
-              { paddingBottom: Platform.OS === 'ios' ? 40 : 20 },
+              { backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 40 : 20 },
             ]}>
             <View style={styles.headerRow}>
-              <Text style={styles.sendTipText}>Send Tip</Text>
+              <Text style={[styles.sendTipText, { color: colors.text }]}>Send Tip</Text>
               <TouchableOpacity onPress={() => {
                 dispatch(customTipAmount({ amount: 10 }));
                 dispatch(toggleLiveStreamTipModal({ info: { roomId: '', show: false } }));
               }}>
-                <DIcon provider={'Entypo'} name={'cross'} color={'#000'} size={responsiveFontSize(3.5)} />
+                <DIcon provider={'Entypo'} name={'cross'} color={colors.text} size={responsiveFontSize(3.5)} />
               </TouchableOpacity>
             </View>
             <View style={styles.tipContainer}>
               <View style={styles.tipCounterContainer}>
-                <View style={styles.sendTipInputContainer}>
+                <View style={[styles.sendTipInputContainer, { borderColor: isDark ? '#212121' : colors.border, backgroundColor: isDark ? '#1C1C1C' : colors.inputBg }]}>
                   {tipAmount >= 0 && tipAmount < 10 && (
-                    <Animated.View style={{ position: 'absolute', right: responsiveWidth(24), backgroundColor: '#EAEAEA', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{ translateX: shakeAnimation }] }}>
-                      <Text style={{ fontSize: 10, color: '#666', fontFamily: 'Rubik-Regular', fontStyle: 'italic' }}>Min is 10</Text>
+                    <Animated.View style={{ position: 'absolute', right: 95, backgroundColor: colors.card, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, transform: [{ translateX: shakeAnimation }] }}>
+                      <Text style={{ fontSize: 10, color: colors.accent, fontFamily: 'Rubik-Regular', fontStyle: 'italic' }}>Min is 10</Text>
                     </Animated.View>
                   )}
-                  <View style={styles.leftAction}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                     <Paisa />
+                    <TextInput 
+                      placeholder="0" 
+                      placeholderTextColor={colors.placeholder}
+                      maxLength={5} 
+                      value={String(tipAmount)} 
+                      style={[styles.amountInput, { color: colors.text }]} 
+                      onChangeText={x => dispatch(customTipAmount({ amount: x.replace(/[^0-9]/g, '') }))} 
+                      keyboardType="numeric" 
+                      showsVerticalScrollIndicator={false}
+                    />
                   </View>
-                  <TextInput 
-                    placeholder="0" 
-                    maxLength={5} 
-                    value={String(tipAmount)} 
-                    style={styles.amountInput} 
-                    onChangeText={x => dispatch(customTipAmount({ amount: x.replace(/[^0-9]/g, '') }))} 
-                    keyboardType="numeric" 
-                    showsVerticalScrollIndicator={false}
-                  />
                   <View style={styles.rightAction}>
                     <TouchableOpacity 
                       style={styles.plusMinusButton} 
@@ -218,8 +221,8 @@ const LiveStreamTip = () => {
                         dispatch(decreaseTipAmount());
                         triggerImpactHeavy();
                       }}>
-                      <View style={[styles.plusMinusButtonInside, {backgroundColor: '#ff6961'}]}>
-                        <DIcon provider={'Entypo'} name={'minus'} size={18} />
+                      <View style={[styles.plusMinusButtonInside, { backgroundColor: isDark ? '#212121' : colors.card, borderColor: isDark ? '#292929' : colors.border }]}>
+                        <DIcon provider={'Entypo'} name={'minus'} size={18} color={colors.text} />
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity 
@@ -228,16 +231,16 @@ const LiveStreamTip = () => {
                         dispatch(increaseTipAmount());
                         triggerImpactHeavy();
                       }}>
-                      <View style={[styles.plusMinusButtonInside, {backgroundColor: '#bafca2'}]}>
-                        <DIcon provider={'Entypo'} name={'plus'} size={18} />
+                      <View style={[styles.plusMinusButtonInside, { backgroundColor: isDark ? '#FFA86B' : colors.accent, borderColor: isDark ? '#FF7819' : colors.border }]}>
+                        <DIcon provider={'Entypo'} name={'plus'} size={18} color={isDark ? '#222124' : '#000000'} />
                       </View>
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: responsiveWidth(2.5), marginTop: responsiveWidth(4), justifyContent: 'center', width: responsiveWidth(80), alignSelf: 'center' }}>
-                {[10, 20, 50].map((amount, index) => (
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: responsiveWidth(4), justifyContent: 'center', width: responsiveWidth(80), alignSelf: 'center' }}>
+                {[10, 20, 50].map((amount) => (
                   <Pressable 
                     key={amount} 
                     onPress={() => {
@@ -246,24 +249,37 @@ const LiveStreamTip = () => {
                     }}
                     style={({pressed}) => ({
                       flexDirection: 'row',
-                      gap: responsiveWidth(2),
+                      gap: 7,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderWidth: responsiveWidth(0.3),
-                      borderRadius: responsiveWidth(4),
-                      padding: responsiveWidth(1),
-                      width: responsiveWidth(25),
-                      backgroundColor: pressed ? '#FFA86B' : 'transparent',
+                      borderWidth: 1.5,
+                      borderRadius: 36,
+                      width: 101.67,
+                      height: 49,
+                      backgroundColor: tipAmount === amount ? colors.accent : (pressed ? '#1C1C1C80' : '#1C1C1C'),
+                      borderColor: tipAmount === amount ? colors.accent : '#212121',
                     })}>
                     <Paisa />
-                    <Text style={{ color: 'black' }}>{amount}</Text>
+                    <Text style={{ 
+                      color: tipAmount === amount ? '#000000' : '#FFFFFF', 
+                      fontFamily: 'Rubik-Medium',
+                      fontSize: 14,
+                      lineHeight: 17,
+                    }}>{amount}</Text>
                   </Pressable>
                 ))}
               </View>
 
-              <View style={{ width: responsiveWidth(78), alignSelf: 'center', marginTop: responsiveWidth(6) }}>
-                <AnimatedButton loading={loading} title={'Send'} onPress={handleSendTipAmount} />
-              </View>
+              <TouchableOpacity 
+                disabled={loading} 
+                onPress={handleSendTipAmount}
+                style={[styles.sendButton, { backgroundColor: colors.accent, borderColor: colors.accentBorder }]}>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#1E1E1E" />
+                ) : (
+                  <Text style={styles.sendButtonText}>Send</Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -274,11 +290,12 @@ const LiveStreamTip = () => {
 const styles = StyleSheet.create({
   modalInnerWrapper: {
     width: responsiveWidth(100),
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 16,
     alignItems: 'center',
+    alignSelf: 'center',
   },
   headerRow: {
     flexDirection: 'row',
@@ -290,12 +307,11 @@ const styles = StyleSheet.create({
   },
   sendTipText: {
     fontFamily: 'Rubik-Bold',
-    color: 'black',
     fontSize: responsiveFontSize(2.3),
   },
   tipContainer: {
     marginTop: responsiveWidth(1),
-    width: responsiveWidth(80),
+    width: 329,
   },
   tipCounterContainer: {
     flexDirection: 'row',
@@ -304,42 +320,38 @@ const styles = StyleSheet.create({
     marginTop: responsiveWidth(4),
   },
   plusMinusButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     zIndex: 2,
     elevation: 2,
   },
   plusMinusButtonInside: {
-    borderWidth: WIDTH_SIZES[1.5],
-    height: responsiveWidth(9),
-    width: responsiveWidth(9),
+    borderWidth: 1.5,
+    height: 38,
+    width: 38,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: responsiveWidth(2),
-    borderColor: '#282828',
-  },
-  leftAction: {
-    width: 'auto',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: responsiveWidth(5),
+    borderRadius: 8,
   },
   rightAction: {
-    width: responsiveWidth(25),
+    width: 83,
+    height: 38,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: responsiveWidth(1),
+    gap: 7,
   },
   sendTipInputContainer: {
-    borderWidth: WIDTH_SIZES[1.5],
+    borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: responsiveWidth(80),
-    borderColor: '#282828',
-    height: responsiveWidth(14),
-    borderRadius: responsiveWidth(3),
-    backgroundColor: '#FFFFFF', 
+    width: 329,
+    height: 54,
+    borderRadius: 14,
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingLeft: 20,
+    paddingRight: 8,
     overflow: 'hidden', 
     zIndex: 1,
     elevation: 1,
@@ -348,11 +360,26 @@ const styles = StyleSheet.create({
   amountInput: {
     flex: 1,
     textAlign: 'left',
-    color: '#282828',
-    fontFamily: 'MabryPro-Regular',
-    fontSize: responsiveFontSize(2.2),
-    paddingLeft: responsiveWidth(3),
-    paddingVertical: Platform.OS === 'ios' ? responsiveWidth(3) : 0,
+    fontFamily: 'Rubik-Bold',
+    fontSize: 16,
+    paddingLeft: 0,
+    paddingVertical: 0,
+  },
+  sendButton: {
+    width: 329,
+    height: 48,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: responsiveWidth(6),
+  },
+  sendButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 14,
+    lineHeight: 14,
+    color: '#1E1E1E',
   },
 });
 export default LiveStreamTip;

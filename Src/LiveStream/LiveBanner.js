@@ -1,20 +1,33 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Pressable, Platform } from 'react-native';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
+    const { colors, isDark } = useAppTheme();
+
     return (
         <Pressable
             onPress={onJoin}
-            style={({ pressed }) => [styles.container, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+            style={({ pressed }) => [
+                styles.container,
+                {
+                    backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF',
+                    borderColor: isDark ? '#FFA86B' : '#FF7819',
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+            ]}
         >
             <View style={styles.leftSection}>
                 <Image
                     source={{ uri: avatarUrl || 'https://via.placeholder.com/48' }}
-                    style={styles.avatar}
+                    style={[
+                        styles.avatar,
+                        { borderColor: isDark ? '#212121' : '#E0E0E0' }
+                    ]}
                 />
                 <View>
-                    <Text style={styles.username}>{username}</Text>
-                    <Text style={styles.subtitle}>is Live Now</Text>
+                    <Text style={[styles.username, { color: colors.text }]}>{username}</Text>
+                    <Text style={[styles.subtitle, { color: isDark ? '#FFFFFF' : '#666666' }]}>is Live Now</Text>
                 </View>
             </View>
 
@@ -38,8 +51,6 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 1.5,
         borderStyle: 'dashed',
-        borderColor: '#FFA86B',
-        backgroundColor: '#1C1C1C',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -56,17 +67,14 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#212121',
     },
     username: {
         fontSize: 16,
-        color: '#FFFFFF',
         fontFamily: 'Rubik-Bold',
         lineHeight: 16,
     },
     subtitle: {
         fontSize: 12,
-        color: '#FFFFFF',
         fontFamily: 'Rubik-Medium',
         lineHeight: 12,
         marginTop: 6,

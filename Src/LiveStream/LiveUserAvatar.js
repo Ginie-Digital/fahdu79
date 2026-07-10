@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Image, Pressable, StyleSheet, Animated, Easing } from 'react-native';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const LiveUserAvatar = ({ username, avatarUrl, onPress }) => {
     const rotateAnim = useRef(new Animated.Value(0)).current;
+    const { colors, isDark } = useAppTheme();
 
     useEffect(() => {
         const rotation = Animated.loop(
@@ -34,18 +36,18 @@ const LiveUserAvatar = ({ username, avatarUrl, onPress }) => {
                 <Animated.View style={[styles.rotatingBorder, { transform: [{ rotate }] }]} />
 
                 {/* Fixed avatar image */}
-                <View style={styles.avatarWrapper}>
+                <View style={[styles.avatarWrapper, { backgroundColor: colors.card }]}>
                     <Image
                         source={{ uri: avatarUrl || 'https://via.placeholder.com/64' }}
                         style={styles.avatar}
                     />
                 </View>
 
-                <View style={styles.liveBadge}>
-                    <Text style={styles.liveBadgeText}>Live</Text>
+                <View style={[styles.liveBadge, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF' }]}>
+                    <Text style={[styles.liveBadgeText, { color: isDark ? '#FFFFFF' : '#FF7819' }]}>Live</Text>
                 </View>
             </View>
-            <Text style={styles.username} numberOfLines={1}>
+            <Text style={[styles.username, { color: colors.text }]} numberOfLines={1}>
                 {username}
             </Text>
         </Pressable>
@@ -78,7 +80,6 @@ const styles = StyleSheet.create({
         width: 65,
         height: 65,
         borderRadius: 80,
-        backgroundColor: '#1A1A1A',
         overflow: 'hidden',
     },
     avatar: {
@@ -93,7 +94,6 @@ const styles = StyleSheet.create({
         transform: [{ translateX: -26 }],
         width: 52,
         height: 20,
-        backgroundColor: '#1A1A1A',
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
@@ -101,13 +101,11 @@ const styles = StyleSheet.create({
         borderColor: '#FFA86B',
     },
     liveBadgeText: {
-        color: '#FFFFFF',
         fontSize: 10,
         fontFamily: 'Rubik-Medium',
     },
     username: {
         fontSize: 12,
-        color: '#FFFFFF',
         fontFamily: 'Rubik-Medium',
         maxWidth: 70,
         textAlign: 'center',

@@ -70,10 +70,10 @@ const CallRequestsScreen = ({ route }) => {
     else setLoading(true);
 
     const endpoints = [
-      { key: 'scheduled', url: 'https://api.fahdu.in/api/stream/scheduled/calls' },
-      { key: 'pending', url: 'https://api.fahdu.in/api/stream/pending/calls' },
-      { key: 'completed', url: 'https://api.fahdu.in/api/stream/completed/calls' },
-      { key: 'missed', url: 'https://api.fahdu.in/api/stream/missed/calls' },
+      { key: 'scheduled', url: 'https://api.fahdu.com/api/stream/scheduled/calls' },
+      { key: 'pending', url: 'https://api.fahdu.com/api/stream/pending/calls' },
+      { key: 'completed', url: 'https://api.fahdu.com/api/stream/completed/calls' },
+      { key: 'missed', url: 'https://api.fahdu.com/api/stream/missed/calls' },
     ];
 
     try {
@@ -129,10 +129,10 @@ const CallRequestsScreen = ({ route }) => {
     setLoadingMore(prev => ({ ...prev, [tabKey]: true }));
 
     const urlMap = {
-      scheduled: 'https://api.fahdu.in/api/stream/scheduled/calls',
-      pending: 'https://api.fahdu.in/api/stream/pending/calls',
-      completed: 'https://api.fahdu.in/api/stream/completed/calls',
-      missed: 'https://api.fahdu.in/api/stream/missed/calls',
+      scheduled: 'https://api.fahdu.com/api/stream/scheduled/calls',
+      pending: 'https://api.fahdu.com/api/stream/pending/calls',
+      completed: 'https://api.fahdu.com/api/stream/completed/calls',
+      missed: 'https://api.fahdu.com/api/stream/missed/calls',
     };
 
     try {

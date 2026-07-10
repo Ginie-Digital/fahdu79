@@ -1,4 +1,4 @@
-https://api.fahdu.in/api/connect/social
+https://api.fahdu.com/api/connect/social
 
 
 //Payload

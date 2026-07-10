@@ -3,6 +3,7 @@ import React, { memo, useEffect, useRef, useState } from 'react';
 import DIcon from '../../../DesiginData/DIcons';
 import { FONT_SIZES, nTwins, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import { useSelector } from 'react-redux';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 import { useSendMessageLiveStreamMutation } from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { token as memoizedToken, token } from '../../../Redux/Slices/NormalSlices/AuthSlice';
@@ -14,6 +15,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaskedView from '@react-native-masked-view/masked-view';
 
 const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
+  const { isDark } = useAppTheme();
   const commentChat = useRef('');
 
   const [loading, setLoading] = useState(false);
@@ -134,17 +136,28 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
 
       <View>
         <View style={styles.keyboardContainer}>
-          <View style={styles.inputContainer}>
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                backgroundColor: isDark ? '#191919' : 'white',
+                borderWidth: isDark ? 1.5 : responsiveWidth(0.3),
+                borderColor: isDark ? '#292929' : undefined,
+              },
+            ]}>
             <TextInput
               enterKeyHint="send"
-              placeholderTextColor={'#282828'}
+              placeholderTextColor={isDark ? '#7A7A7A' : '#282828'}
               placeholder="Comments..."
               returnKeyType="none"
               onChangeText={t => (commentChat.current.value = t)}
               multiline={false}
-              style={styles.textInput}
+              style={[
+                styles.textInput,
+                { color: isDark ? '#fff' : '#282828' }
+              ]}
               ref={commentChat}
-              keyboardAppearance="light"
+              keyboardAppearance={isDark ? 'dark' : 'light'}
               onSubmitEditing={() => (loading ? null : emitMessage())}
               blurOnSubmit={false}
               maxLength={50}
@@ -155,7 +168,17 @@ const LiveStreamTextInput = ({ roomId, setShowCommentArea }) => {
               onPress={() => !loading && emitMessage()} // disable press when loading
               disabled={loading} // makes sure it's not pressable
             >
-              {loading ? <ActivityIndicator size="small" color="#1e1e1e" /> : ({ pressed }) => <Feather name="send" size={24} color={pressed ? '#999' : '#1e1e1e'} />}
+              {loading ? (
+                <ActivityIndicator size="small" color={isDark ? '#fff' : '#1e1e1e'} />
+              ) : (
+                ({ pressed }) => (
+                  <Feather
+                    name="send"
+                    size={24}
+                    color={isDark ? (pressed ? '#ccc' : '#fff') : (pressed ? '#999' : '#1e1e1e')}
+                  />
+                )
+              )}
             </Pressable>
           </View>
         </View>
@@ -247,15 +270,17 @@ const styles = StyleSheet.create({
     borderRadius: WIDTH_SIZES[14],
     borderWidth: responsiveWidth(0.3),
     width: WIDTH_SIZES[345],
+    height: responsiveWidth(14),
     paddingHorizontal: responsiveWidth(2),
-    paddingVertical: 10,
     marginBottom: 19,
   },
   textInput: {
     flex: 1,
     fontSize: responsiveFontSize(1.8),
     color: '#282828',
-    paddingVertical: responsiveWidth(2),
+    paddingVertical: 0,
+    paddingLeft: responsiveWidth(3),
+    textAlignVertical: 'center',
     fontFamily: 'Rubik-Regular',
   },
   sendButton: {

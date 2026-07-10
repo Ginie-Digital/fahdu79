@@ -1,4 +1,4 @@
-import { Image, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View, findNodeHandle, TouchableOpacity, KeyboardAvoidingView, Keyboard, Alert, BackHandler, Animated } from 'react-native';
+import { Image, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View, findNodeHandle, TouchableOpacity, KeyboardAvoidingView, Keyboard, Alert, BackHandler, Animated, StatusBar } from 'react-native';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ZegoExpressEngine, { ZegoRoomConfig, ZegoScenario, ZegoTextureView, ZegoViewMode } from 'zego-express-engine-reactnative';
 import DIcon from '../../../DesiginData/DIcons';
@@ -49,7 +49,6 @@ import Add from '../../../Assets/svg/Add.svg';
 import Dropd from '../../../Assets/svg/ddup.svg';
 import Speak from '../../../Assets/svg/speaker.svg';
 import Vol from '../../../Assets/svg/volume.svg';
-import Wall from '../../../Assets/svg/wall.svg';
 import Verify from '../../../Assets/svg/vvv.svg';
 import Share from '../../../Assets/svg/shh.svg';
 import Pay from '../../../Assets/svg/pay.svg';
@@ -66,12 +65,15 @@ import MuteComponent from './MuteComponent';
 import LowBalanceModal from '../../Components/LowBalanceModal';
 import socketServices from '../../../SocketServices';
 import { AppLog } from '../../../Src/Utils/Logger';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 // let isCameraFront = true;
 
 let tokenTimeOut;
 
 const LiveStream = ({ route }) => {
+  const { isDark } = useAppTheme();
+
   const previewViewRef = useRef(null);
 
   const lottieRef = useRef(null);
@@ -657,6 +659,7 @@ const LiveStream = ({ route }) => {
 
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
       <SafeAreaView style={{ flex: 1, position: 'relative' }}>
         <View style={styles.contianer}>
           {showCommentArea && <LiveStreamTextInput roomId={route?.params?.data?.isStarting ? streamDetails?.roomId : route?.params?.data?.roomId} setShowCommentArea={setShowCommentArea} />}
@@ -707,13 +710,13 @@ const LiveStream = ({ route }) => {
                       {/* Verification Badge */}
                       <View
                         style={{
-                          width: responsiveWidth(4.7),
-                          height: responsiveWidth(4.5),
+                          width: 17.88,
+                          height: 17.06,
                           position: 'absolute',
-                          bottom: responsiveWidth(7.6),
-                          right: 0,
+                          top: 0,
+                          right: -5.95,
                         }}>
-                        <Image source={require('../../../Assets/Images/verify.png')} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+                        <Image source={isDark ? require('../../../Assets/Images/blackVerified.png') : require('../../../Assets/Images/verify.png')} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
                       </View>
                     </Pressable>
 
@@ -724,7 +727,7 @@ const LiveStream = ({ route }) => {
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row', width: responsiveWidth(39), justifyContent: 'space-between' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                         <ViewContainer views={viewers} />
                         <Timer />
                       </View>
@@ -890,23 +893,34 @@ const LiveStream = ({ route }) => {
                           <View style={{ marginBottom: responsiveWidth(2) }}>
                             <View
                               style={{
-                                gap: responsiveWidth(3),
-                                borderWidth: responsiveWidth(0.5),
+                                width: 82,
+                                height: 32,
+                                borderRadius: 22,
+                                borderWidth: 2,
+                                borderColor: '#1E1E1E',
+                                backgroundColor: '#FFFFFF',
                                 flexDirection: 'row',
-                                backgroundColor: 'white',
-                                paddingVertical: responsiveWidth(1),
-                                paddingHorizontal: responsiveWidth(4),
-                                borderRadius: responsiveWidth(5),
+                                justifyContent: 'center',
                                 alignItems: 'center',
+                                gap: 6,
                               }}>
-                              <Wall />
+                              <Image
+                                source={require('../../../Assets/Images/newWallet.png')}
+                                style={{
+                                  width: 14,
+                                  height: 14,
+                                  resizeMode: 'contain',
+                                  tintColor: '#1E1E1E',
+                                }}
+                              />
                               <Text
                                 style={[
                                   styles.text,
                                   {
-                                    color: '#1e1e1e',
-                                    fontSize: FONT_SIZES[14],
-                                    fontFamily: 'Rubk-Medium',
+                                    color: '#1E1E1E',
+                                    fontSize: 14,
+                                    fontFamily: 'Rubik-Medium',
+                                    lineHeight: 14,
                                   },
                                 ]}>
                                 {formatIndianNumber(coins)}
@@ -933,9 +947,10 @@ const LiveStream = ({ route }) => {
                               style={[
                                 styles.text,
                                 {
-                                  color: '#000',
+                                  color: '#1E1E1E',
                                   fontFamily: 'Rubik-Medium',
-                                  fontSize: responsiveFontSize(1.7),
+                                  fontSize: 12,
+                                  textAlign: 'center',
                                 },
                               ]}>
                               Subscribe
@@ -953,17 +968,18 @@ const LiveStream = ({ route }) => {
                   <View
                     style={{
                       flexDirection: 'row',
-                      backgroundColor: '#fff',
+                      backgroundColor: isDark ? '#191919' : '#fff',
                       borderRadius: WIDTH_SIZES[14],
                       marginTop: responsiveWidth(4),
                       alignSelf: 'center',
                       width: WIDTH_SIZES[345],
                       overflow: 'hidden',
-                      borderWidth: WIDTH_SIZES[2],
+                      borderWidth: isDark ? 1.5 : WIDTH_SIZES[2],
+                      borderColor: isDark ? '#292929' : undefined,
                     }}>
                     <View
                       style={{
-                        backgroundColor: '#fff',
+                        backgroundColor: isDark ? '#191919' : '#fff',
                         width: '100%',
                         height: responsiveWidth(14),
                         flexDirection: 'row',
@@ -983,10 +999,11 @@ const LiveStream = ({ route }) => {
                         }}>
                         <TextInput
                           placeholder="Type Something..."
+                          placeholderTextColor={isDark ? '#7A7A7A' : undefined}
                           style={{
                             fontFamily: 'Rubik-Regular',
                             fontSize: FONT_SIZES[14],
-                            color: '#1e1e1e',
+                            color: isDark ? '#fff' : '#1e1e1e',
                             textAlignVertical: 'center', // Ensure vertical alignment
                             padding: 0, // Remove default padding
                             margin: 0, // Remove default margin
@@ -1006,8 +1023,8 @@ const LiveStream = ({ route }) => {
                             <Image
                               source={require('../../../Assets/Images/Coins2.png')}
                               style={{
-                                height: WIDTH_SIZES[18],
-                                width: WIDTH_SIZES[18],
+                                height: WIDTH_SIZES[24],
+                                width: WIDTH_SIZES[24],
                                 resizeMode: 'contain',
                                 alignSelf: 'center',
                                 marginLeft: responsiveWidth(1),
@@ -1019,8 +1036,8 @@ const LiveStream = ({ route }) => {
                             <Image
                               source={require('../../../Assets/Images/Goals.png')}
                               style={{
-                                height: WIDTH_SIZES[18],
-                                width: WIDTH_SIZES[18],
+                                height: WIDTH_SIZES[24],
+                                width: WIDTH_SIZES[24],
                                 resizeMode: 'contain',
                                 alignSelf: 'center',
                                 marginLeft: responsiveWidth(1),
@@ -1094,15 +1111,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: responsiveWidth(2),
   },
   profileImageContainer: {
-    width: responsiveWidth(12.2),
-    height: responsiveWidth(12.2),
+    width: 45.93,
+    height: 45.93,
     top: responsiveWidth(4),
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-
-    // borderWidth: 1,
-    // borderRadius: responsiveWidth(10),
   },
   profileImage: {
     resizeMode: 'cover',
@@ -1110,8 +1124,8 @@ const styles = StyleSheet.create({
     height: '100%',
     borderWidth: 1.5,
     borderColor: '#1e1e1e',
-    borderRadius: responsiveWidth(50),
-    // borderRadius: responsiveWidth(4),
+    borderRadius: 69,
+    backgroundColor: '#FFA86B',
   },
   profile: {
     width: '100%',
@@ -1226,13 +1240,13 @@ const styles = StyleSheet.create({
 
   subscribe: {
     justifyContent: 'center',
-    alignSelf: 'flex-start',
-    // marginLeft: responsiveWidth(1),
+    alignItems: 'center',
     backgroundColor: '#FFA86B',
-    height: responsiveWidth(9),
-    borderRadius: responsiveWidth(3),
-    borderWidth: responsiveWidth(0.5),
-    width: responsiveWidth(28),
+    borderColor: '#1E1E1E',
+    borderWidth: 2,
+    borderRadius: 22,
+    width: 82,
+    height: 32,
   },
 
   boxGoal: {

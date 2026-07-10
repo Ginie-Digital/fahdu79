@@ -5,12 +5,14 @@ import { useSelector } from 'react-redux';
 import TextTicker from 'react-native-text-ticker';
 import { nTwins, nTwinsFont, WIDTH_SIZES } from '../../../DesiginData/Utility';
 import { BlurView } from 'expo-blur';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 
 const RIGHT_WIDTH = responsiveWidth(28); // Reserve fixed space for coin+amount
 
 // Update RenderEachItem to accept style prop
 const RenderEachItem = memo(({ item, style, isFlexible }) => {
+  const { isDark } = useAppTheme();
   const progressWidth =
     item.collected === 0
       ? 0
@@ -23,14 +25,14 @@ const RenderEachItem = memo(({ item, style, isFlexible }) => {
         flex: isFlexible ? 1 : undefined,
         flexShrink: isFlexible ? 1 : undefined,
         alignSelf: 'center',
-        borderWidth: responsiveWidth(0.4),
-        borderRadius: responsiveWidth(3.5),
+        borderWidth: 1.5,
+        borderRadius: 14,
         height: responsiveWidth(13),
         overflow: 'hidden',
-        borderColor: '#ffffff60',
-        backgroundColor: 'transparent',
+        borderColor: isDark ? '#292929' : 'rgba(255, 255, 255, 0.6)',
+        backgroundColor: isDark ? 'rgba(30, 30, 30, 0.54)' : 'rgba(255, 255, 255, 0.4)',
       }, style]}>
-      <BlurView intensity={30} tint="light" style={{ flex: 1, width: '100%' }}>
+      <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, width: '100%' }}>
         {/* Progress Bar */}
         <View
           style={[
@@ -59,10 +61,11 @@ const RenderEachItem = memo(({ item, style, isFlexible }) => {
               style={[
                 styles.text,
                 {
-                  fontSize: responsiveFontSize(2),
+                  fontSize: 14,
                   textAlignVertical: 'center',
                   lineHeight: Platform.OS === 'ios' ? 35 : undefined,
                   flexShrink: 1,
+                  color: '#1e1e1e',
                 },
               ]}
               numberOfLines={1}
@@ -89,6 +92,7 @@ const RenderEachItem = memo(({ item, style, isFlexible }) => {
                   lineHeight: Platform.OS === 'ios' ? 35 : undefined,
                   marginRight: responsiveWidth(1),
                   flexShrink: 0,
+                  color: '#1e1e1e',
                 },
               ]}>
               {item?.collected}/{item?.amount}

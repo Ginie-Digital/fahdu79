@@ -5,8 +5,10 @@ import {nTwins, nTwinsFont} from '../../../DesiginData/Utility';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
 import {Image} from 'expo-image';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const Timer = () => {
+  const {isDark} = useAppTheme();
   const [countup, setCountup] = useState('00');
 
   useEffect(() => {
@@ -37,12 +39,24 @@ const Timer = () => {
   }, []);
 
   return (
-    <View style={styles.box}>
-      <BlurView intensity={30} tint="light" style={styles.blurContainer}>
+    <View
+      style={[
+        styles.box,
+        {
+          borderColor: isDark ? 'rgba(18, 18, 18, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+          backgroundColor: isDark ? 'rgba(18, 18, 18, 0.6)' : 'rgba(255, 255, 255, 0.5)',
+        },
+      ]}>
+      <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.blurContainer}>
         <View style={styles.verifyContainer}>
-          <Image cachePolicy="memory-disk" source={require('../../../Assets/Images/timer.png')} contentFit="contain" style={{flex: 1}} />
+          <Image
+            cachePolicy="memory-disk"
+            source={require('../../../Assets/Images/timer.png')}
+            contentFit="contain"
+            style={{flex: 1, tintColor: isDark ? '#FFFFFF' : '#1E1E1E'}}
+          />
         </View>
-        <Text style={styles.text}>{countup}</Text>
+        <Text style={[styles.text, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]}>{countup}</Text>
       </BlurView>
     </View>
   );
@@ -55,9 +69,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    borderRadius: responsiveWidth(1.3),
-    width: responsiveWidth(22.5),
-    borderWidth: responsiveWidth(0.4),
+    borderRadius: 5,
+    width: 73,
+    borderWidth: 1.5,
     borderColor: '#ffffff60',
     height: 22,
     overflow: 'hidden', // Ensures blur stays within rounded edges
@@ -66,7 +80,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     flexDirection: 'row',
-    borderRadius: responsiveWidth(2),
+    borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 2,

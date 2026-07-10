@@ -57,11 +57,13 @@ import CreatePostBottomSheet from './Src/Components/HomeComponents/CreatePostBot
 import CreateCommentBottomSheet from './Src/Components/HomeComponents/CreateCommentBottomSheet';
 import PostActionBottomSheet from './Src/Components/HomeComponents/PostActionBottomSheet';
 import SwitcherSheet from './Src/Components/HomeComponents/SwitcherSheet';
+import { useAppTheme } from './Src/Hook/useAppTheme';
 
 // Module-level guard: survives hot reload (unlike React refs)
 let __bootstrapInitialHandled = false;
 
 const Main = () => {
+  const { colors, isDark } = useAppTheme();
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
   const token = useSelector(state => state.auth.user.token);
   const currentChatRoomId = useSelector(state => state.chatWindowCurrentChattingRoom.data.roomId);
@@ -1056,7 +1058,7 @@ const Main = () => {
 
   return (
     <View style={styles.SafeAreaViewStyle}>
-      <StatusBar backgroundColor={'#0D0D0D'} barStyle={'light-content'} />
+      <StatusBar backgroundColor={isDark ? '#0D0D0D' : '#FFFFFF'} barStyle={isDark ? 'light-content' : 'dark-content'} />
       <StackNavigation />
       <FlashMessage position="top" />
       <ReLoginModal />

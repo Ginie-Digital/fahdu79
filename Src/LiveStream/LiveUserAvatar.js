@@ -33,7 +33,7 @@ const LiveUserAvatar = ({ username, avatarUrl, onPress }) => {
         >
             <View style={styles.avatarContainer}>
                 {/* Rotating dashed border */}
-                <Animated.View style={[styles.rotatingBorder, { transform: [{ rotate }] }]} />
+                <Animated.View style={[styles.rotatingBorder, { transform: [{ rotate }], borderColor: isDark ? '#FFA86B' : '#000000' }]} />
 
                 {/* Fixed avatar image */}
                 <View style={[styles.avatarWrapper, { backgroundColor: colors.card }]}>
@@ -43,8 +43,8 @@ const LiveUserAvatar = ({ username, avatarUrl, onPress }) => {
                     />
                 </View>
 
-                <View style={[styles.liveBadge, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF' }]}>
-                    <Text style={[styles.liveBadgeText, { color: isDark ? '#FFFFFF' : '#FF7819' }]}>Live</Text>
+                <View style={[styles.liveBadge, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF', borderColor: isDark ? '#FFA86B' : '#000000' }]}>
+                    <Text style={[styles.liveBadgeText, { color: isDark ? '#FFFFFF' : '#000000' }]}>Live</Text>
                 </View>
             </View>
             <Text style={[styles.username, { color: colors.text }]} numberOfLines={1}>

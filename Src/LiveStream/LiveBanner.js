@@ -33,7 +33,11 @@ const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
 
             <Pressable
                 onPress={onJoin}
-                style={({ pressed }) => [styles.joinButton, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [
+                    styles.joinButton,
+                    { borderColor: isDark ? '#FF7819' : '#000000' },
+                    pressed && { opacity: 0.8 },
+                ]}
             >
                 <Text style={styles.joinText}>Join Now</Text>
             </Pressable>
@@ -83,7 +87,6 @@ const styles = StyleSheet.create({
         width: 80,
         height: 34,
         backgroundColor: '#FFA86B',
-        borderColor: '#FF7819',
         borderWidth: 1.5,
         borderRadius: 12,
         justifyContent: 'center',

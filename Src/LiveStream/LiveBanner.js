@@ -12,7 +12,7 @@ const LiveBanner = ({ username, avatarUrl, onJoin, userDetails }) => {
                 styles.container,
                 {
                     backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF',
-                    borderColor: isDark ? '#FFA86B' : '#FF7819',
+                    borderColor: isDark ? '#FFA86B' : '#000000',
                     transform: [{ scale: pressed ? 0.98 : 1 }],
                 },
             ]}

@@ -86,8 +86,20 @@ const ConfirmLiveStreamJoin = ({ route }) => {
 
           <View style={styles.containerImg}>
             {/* Outer Dashed Border */}
-            <View style={[styles.outerBorder, isDark && { borderColor: colors.text }]}>
-              <View style={[styles.innerBorder, isDark && { borderColor: colors.text }]}>
+            <View style={[
+              styles.outerBorder,
+              {
+                borderColor: isDark ? '#1C1C1C' : '#1e1e1e',
+                backgroundColor: isDark ? '#121212' : '#FFFFFF',
+              }
+            ]}>
+              <View style={[
+                styles.innerBorder,
+                {
+                  borderColor: isDark ? '#1C1C1C' : '#1e1e1e',
+                  backgroundColor: isDark ? '#121212' : '#FFFFFF',
+                }
+              ]}>
                 {/* Image Container */}
                 <Image source={{ uri: route?.params?.data?.creatorInfo?.profile_image?.url }} style={styles.image} contentFit="cover" />
               </View>
@@ -351,10 +363,7 @@ const styles = StyleSheet.create({
     padding: padios(responsiveWidth(2.6)),
     overflow: 'hidden',
   },
-  verifyContainer: {
-    width: 30,
-    height: 30,
-  },
+
 
   //jkgh
 
@@ -363,18 +372,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   outerBorder: {
-    width: 110,
-    height: 110,
-    borderRadius: 24,
-    borderWidth: 1.5,
+    width: 100,
+    height: 100,
+    borderRadius: 22,
+    borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
   },
   innerBorder: {
-    width: 90,
-    height: 90,
+    width: 84,
+    height: 84,
     borderRadius: 18,
     borderWidth: 2,
     borderStyle: 'solid',
@@ -392,8 +401,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -5,
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 26.73,
   },
   verifyIcon: {
     width: '100%',

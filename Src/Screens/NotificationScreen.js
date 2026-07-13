@@ -35,6 +35,9 @@ const NotificationScreen = () => {
   const filterListRef = useRef(null);
 
   const filters = useMemo(() => {
+    if (userRole === 'user') {
+      return ['All', 'liveStream', 'Chats', 'Subscription', 'Calls', 'Wishlist'];
+    }
     const list = ['All', 'Like', 'Comments', 'liveStream', 'Chats', 'Subscription', 'Calls', 'Wishlist'];
     if (userRole === 'creator') {
       list.splice(3, 0, 'Payments');
@@ -101,6 +104,7 @@ const NotificationScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fetchNotifications(selectedFilter, 1, false);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFilter]),
   );
 

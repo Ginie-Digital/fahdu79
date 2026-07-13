@@ -1,8 +1,10 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, View, StyleSheet, FlatList} from 'react-native';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const TransactionShimmer = () => {
+  const { colors, isDark } = useAppTheme();
   const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -25,18 +27,18 @@ const TransactionShimmer = () => {
   const renderShimmerItem = () => (
     <View style={styles.itemContainer}>
       {/* Profile Picture Placeholder */}
-      <Animated.View style={[styles.profilePic, {opacity: shimmerOpacity}]} />
+      <Animated.View style={[styles.profilePic, {opacity: shimmerOpacity, backgroundColor: colors.border}]} />
 
       {/* Details Container */}
       <View style={styles.detailsContainer}>
         {/* Name Placeholder */}
-        <Animated.View style={[styles.name, {opacity: shimmerOpacity}]} />
+        <Animated.View style={[styles.name, {opacity: shimmerOpacity, backgroundColor: colors.border}]} />
         {/* Date Placeholder */}
-        <Animated.View style={[styles.date, {opacity: shimmerOpacity}]} />
+        <Animated.View style={[styles.date, {opacity: shimmerOpacity, backgroundColor: colors.border}]} />
       </View>
 
       {/* Amount Placeholder */}
-      <Animated.View style={[styles.amount, {opacity: shimmerOpacity}]} />
+      <Animated.View style={[styles.amount, {opacity: shimmerOpacity, backgroundColor: colors.border}]} />
     </View>
   );
 
@@ -45,8 +47,8 @@ const TransactionShimmer = () => {
       data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
       renderItem={renderShimmerItem}
       keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={styles.listContainer}
-      ItemSeparatorComponent={() => <View style={{height: 1.5, backgroundColor: '#E9E9E9', width: '100%'}} />}
+      contentContainerStyle={[styles.listContainer, { backgroundColor: colors.background }]}
+      ItemSeparatorComponent={() => <View style={{height: 1.5, backgroundColor: isDark ? '#1A1A1A' : '#E9E9E9', width: '100%'}} />}
     />
   );
 };

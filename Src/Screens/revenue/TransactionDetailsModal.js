@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {View, Text, StyleSheet, Linking, Alert, FlatList, Platform, Pressable, Dimensions, TouchableOpacity} from 'react-native';
-import {Dialog} from 'react-native-simple-dialogs';
+import Modal from 'react-native-modal';
 import AnimatedButton from '../../Components/AnimatedButton';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {BlurView} from 'expo-blur';
@@ -13,8 +13,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import {TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {useLazyAlreadyFilledBankDetailsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import DIcon from '../../../DesiginData/DIcons';
+import { useAppTheme, darkColors, lightColors } from '../../Hook/useAppTheme';
 
-const TransactionDetailsModal = ({visible, transaction}) => {
+const TransactionDetailsModal = ({visible, transaction, isDark: customIsDark}) => {
+  const { colors: themeColors, isDark: systemIsDark } = useAppTheme();
+  const isDark = customIsDark !== undefined ? customIsDark : systemIsDark;
+  const colors = isDark ? darkColors : lightColors;
   const dispatch = useDispatch();
 
   const [contentHeight, setContentHeight] = useState(0);
@@ -41,64 +45,100 @@ const TransactionDetailsModal = ({visible, transaction}) => {
   function Detail({label, value, bold}) {
     return (
       <View style={{marginBottom: 14}}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, bold && {fontWeight: 'bold'}]}>{value}</Text>
+        <Text style={[styles.label, { color: isDark ? '#FFFFFF' : '#1e1e1e', opacity: isDark ? 0.4 : 1 }]}>{label}</Text>
+        <Text style={[styles.value, { color: isDark ? '#FFFFFF' : '#1e1e1e' }, bold && {fontWeight: 'bold'}]}>{value}</Text>
       </View>
     );
   }
 
 
   return (
-    visible && (
-      <View style={styles.overlay}>
-        <BlurView experimentalBlurMethod intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={[styles.dialog, {height: calculateModalHeight() + 50}]} contentStyle={{padding: 0, paddingTop: 0, backgroundColor: '#fff'}} onTouchOutside={() => dispatch(toggleTransactionDetailModal({show: false}))}>
-          <View style={{position: 'relative'}}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Transaction Details</Text>
-              <TouchableOpacity onPress={() => dispatch(toggleTransactionDetailModal({show: false}))}>
-                {/* <Ionicons name="close" size={24} color="black" /> */}
-                <DIcon provider={'Ionicons'} name={'close'} />
-              </TouchableOpacity>
-            </View>
+    <Modal
+      isVisible={visible}
+      backdropColor="#000000"
+      backdropOpacity={0.6}
+      onBackButtonPress={() => dispatch(toggleTransactionDetailModal({show: false}))}
+      onBackdropPress={() => dispatch(toggleTransactionDetailModal({show: false}))}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      animationInTiming={300}
+      animationOutTiming={250}
+      backdropTransitionInTiming={300}
+      backdropTransitionOutTiming={250}
+      hideModalContentWhileAnimating={true}
+      useNativeDriver={true}
+      useNativeDriverForBackdrop={true}
+      style={styles.modalContainer}
+    >
+      <View 
+        style={[
+          styles.dialog, 
+          { 
+            backgroundColor: isDark ? '#121212' : '#fff', 
+            borderColor: isDark ? '#212121' : '#1e1e1e',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingTop: 32,
+            paddingHorizontal: 32,
+            paddingBottom: 40,
+          }
+        ]}>
+        <View style={{position: 'relative'}}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1e1e1e' }]}>Transaction Details</Text>
+            <TouchableOpacity onPress={() => dispatch(toggleTransactionDetailModal({show: false}))}>
+              <DIcon provider={'Ionicons'} name={'close'} color={isDark ? '#FFFFFF' : '#1e1e1e'} />
+            </TouchableOpacity>
+          </View>
 
-            <View>
+          <View>
+            {!isDark && (
               <View style={[styles.overlayTwo, {width: '100%', height: contentHeight}]} />
+            )}
 
-              <View
-                style={styles.content}
-                onLayout={event => {
-                  const {height} = event.nativeEvent.layout;
-                  setContentHeight(height);
-                }}>
-                <Detail label="Transaction ID" value={transaction.id} bold />
-                <Detail label="Transfer Amount" value={`₹${transaction.amount}`} />
-                <Detail label="Transfer Date" value={transaction.date} />
-                <Detail label="Transfer Time" value={transaction.time} bold />
-                <Detail label="Transfer Account" value={transaction.account} />
-                <Detail label="Transfer Category" value={transaction.category} />
-                <Detail label="Transfer Status" value={transaction.status} />
-              </View>
+            <View
+              style={[
+                styles.content, 
+                { 
+                  backgroundColor: isDark ? '#1C1C1C' : '#fff', 
+                  borderColor: isDark ? '#212121' : '#1e1e1e',
+                  borderWidth: isDark ? 1.5 : 1,
+                  borderRadius: isDark ? 16 : 12,
+                }
+              ]}
+              onLayout={event => {
+                const {height} = event.nativeEvent.layout;
+                setContentHeight(height);
+              }}>
+              <Detail label="Transaction ID" value={transaction.id} bold />
+              <Detail label="Transfer Amount" value={`₹${transaction.amount}`} />
+              <Detail label="Transfer Date" value={transaction.date} />
+              <Detail label="Transfer Time" value={transaction.time} bold />
+              <Detail label="Transfer Account" value={transaction.account} />
+              <Detail label="Transfer Category" value={transaction.category} />
+              <Detail label="Transfer Status" value={transaction.status} />
             </View>
           </View>
-        </Dialog>
+        </View>
       </View>
-    )
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
   dialog: {
     borderTopLeftRadius: responsiveWidth(5.33),
     borderTopRightRadius: responsiveWidth(5.33),
-    alignSelf: 'center',
     padding: 32,
     backgroundColor: '#fff',
-    width: WINDOW_WIDTH,
+    width: '100%',
     borderColor: '#1e1e1e',
-    position: 'absolute',
-    bottom: 0,
-    zIndex: 1,
+    borderWidth: 1.5,
+    borderBottomWidth: 0,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -132,7 +172,6 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    marginTop: 8,
     borderWidth: 1,
     borderColor: '#1e1e1e',
     borderRadius: 12,

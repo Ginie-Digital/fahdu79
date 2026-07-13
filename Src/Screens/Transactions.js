@@ -198,6 +198,7 @@ import {responsiveWidth} from 'react-native-responsive-dimensions';
 import TransactionDetailsModal from './revenue/TransactionDetailsModal';
 import {useLazyTransactionDataQuery} from '../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {useDispatch, useSelector} from 'react-redux';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 import moment from 'moment';
 import {toggleTransactionDetailModal} from '../../Redux/Slices/NormalSlices/HideShowSlice';
@@ -227,6 +228,7 @@ function formatTransactionData(rawData) {
 }
 
 const Transactions = () => {
+  const { colors, isDark } = useAppTheme();
   const [selected, setSelected] = useState('All');
   const filterListRef = useRef(null);
 
@@ -277,6 +279,7 @@ const Transactions = () => {
 
   useEffect(() => {
     changeFilter('All');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   console.log(selected);
@@ -284,7 +287,7 @@ const Transactions = () => {
   const formatedData = formatTransactionData(actualTransactionData);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={{marginVertical: WIDTH_SIZES[24]}}>
         <FlatList
           ref={filterListRef}
@@ -294,8 +297,16 @@ const Transactions = () => {
           contentContainerStyle={styles.containerSelector}
           keyExtractor={item => item}
           renderItem={({item}) => (
-            <TouchableOpacity style={[styles.button, selected === item && styles.selectedButton]} onPress={() => changeFilter(item)}>
-              <Text style={[styles.text, selected === item && styles.selectedText]}>{item}</Text>
+            <TouchableOpacity 
+              style={[
+                styles.button, 
+                { 
+                  borderColor: selected === item ? '#1E1E1E' : (isDark ? '#212121' : '#1e1e1e'), 
+                  backgroundColor: selected === item ? '#FFA86B' : (isDark ? '#1C1C1C' : '#fff') 
+                }
+              ]} 
+              onPress={() => changeFilter(item)}>
+              <Text style={[styles.text, { color: selected === item ? '#1E1E1E' : (isDark ? '#FFFFFF' : '#1e1e1e') }]}>{item}</Text>
             </TouchableOpacity>
           )}
           onScrollToIndexFailed={info => {
@@ -314,36 +325,44 @@ const Transactions = () => {
           sections={formatedData}
           keyExtractor={item => item.id}
           renderSectionHeader={({section}) => (
-            <View style={styles.header}>
-              <Text style={styles.headerText}>{section.month}</Text>
-              <Text style={styles.headerAmount}>{'₹ ' + Math.abs(Number(section.totalEarning)).toLocaleString('en-IN')}</Text>
+            <View style={[styles.header, { backgroundColor: isDark ? '#1A1A1A' : '#F3F3F3' }]}>
+              <Text style={[styles.headerText, { color: colors.text }]}>{section.month}</Text>
+              <Text style={[styles.headerAmount, { color: colors.text }]}>{'₹ ' + Math.abs(Number(section.totalEarning)).toLocaleString('en-IN')}</Text>
             </View>
           )}
-          ItemSeparatorComponent={() => <View style={{height: WIDTH_SIZES[1.5], backgroundColor: '#E9E9E9'}} />}
+          ItemSeparatorComponent={() => <View style={{height: WIDTH_SIZES[1.5], backgroundColor: isDark ? '#1A1A1A' : '#E9E9E9'}} />}
           renderItem={({item}) => (
             <Pressable
               onPress={() => {
                 dispatch(toggleTransactionDetailModal({show: true}));
                 setDetailsData(item);
               }}
-              style={({pressed}) => [styles.item, {backgroundColor: pressed ? '#FFA86B1C' : 'transparent'}]}>
-              <Image source={{uri: item.image}} style={styles.image} />
+              style={({pressed}) => [
+                styles.item, 
+                {
+                  backgroundColor: pressed ? 'rgba(255, 168, 107, 0.2)' : colors.background,
+                  borderTopWidth: 2,
+                  borderBottomWidth: 2,
+                  borderColor: pressed ? '#FFA86B' : 'transparent',
+                }
+              ]}>
+              <Image source={{uri: item.image}} style={[styles.image, { borderColor: isDark ? colors.border : '#1E1E1E' }]} />
               <View style={styles.details}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.date}>{item.date}</Text>
+                <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+                <Text style={[styles.date, { color: colors.textSecondary }]}>{item.date}</Text>
               </View>
-              <Text style={[styles.amount, {color: item?.type === 'CR' ? '#3EB150' : '#FA3535'}]}>₹{item.amount}</Text>
+              <Text style={[styles.amount, {color: item?.type === 'CR' ? '#10A832' : '#FA3535'}]}>₹{item.amount}</Text>
             </Pressable>
           )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Nothing to show</Text>
-              <Text style={styles.emptySubText}>There are no transactions recorded for this filter category yet.</Text>
+              <Text style={[styles.emptyText, { color: colors.text }]}>Nothing to show</Text>
+              <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>There are no transactions recorded for this filter category yet.</Text>
             </View>
           }
         />
       )}
-      <TransactionDetailsModal visible={showModal} transaction={detailsData} />
+      <TransactionDetailsModal visible={showModal} transaction={detailsData} isDark={isDark} />
     </View>
   );
 };
@@ -367,28 +386,27 @@ const styles = StyleSheet.create({
   //Selector
   containerSelector: {
     flexDirection: 'row', // Ensure items are placed in a row
-    gap: 10,
+    gap: 12,
     paddingLeft: WIDTH_SIZES[24],
     alignItems: 'center', // Ensures elements don’t stretch
   },
   button: {
-    paddingVertical: 13,
-    paddingHorizontal: WIDTH_SIZES[24],
-    borderRadius: WIDTH_SIZES[10],
-    borderWidth: WIDTH_SIZES[1.5],
-    borderColor: '#1e1e1e',
-    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    height: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedButton: {
     backgroundColor: '#FFA86B',
   },
   text: {
-    fontSize: FONT_SIZES[14],
-    fontFamily: 'Rubik-SemiBold',
-    color: '#1e1e1e',
+    fontSize: 16,
+    fontFamily: 'Rubik-Medium',
   },
   selectedText: {
-    color: '#fff',
+    color: '#1E1E1E',
   },
 
   //SectionList
@@ -421,9 +439,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   image: {
-    width: 45,
-    height: 45,
-    borderRadius: responsiveWidth(20),
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
     marginRight: WIDTH_SIZES[12],
   },
   details: {

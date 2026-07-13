@@ -12,8 +12,10 @@ import { useLazyJoinLiveStreamQuery, useLazyMyPostListQuery } from '../../Redux/
 import { WIDTH_SIZES } from '../../DesiginData/Utility';
 import NotificationScreenShimmer from '../Components/Shimmers/NotificationScreenShimmer';
 import { setFeedCacheMyPost } from '../../Redux/Slices/NormalSlices/Posts/MyProfileFeedCacheSlice';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const NotificationScreen = () => {
+  const { colors, isDark } = useAppTheme();
   const [joinLiveStream] = useLazyJoinLiveStreamQuery();
   const token = useSelector(state => state.auth.user.token);
   const userRole = useSelector(state => state.auth.user.role);
@@ -223,8 +225,16 @@ const NotificationScreen = () => {
         onPress={() => {
           handleLinks(item?.type, item?.type === 'liveStream' ? item?.data : item?.type === 'wishlist' ? item?.data?.wishlistItem : (item?.type === 'chats' || item?.type === 'calls' || item?.type === 'reminders') ? item : item?.data?.postId, item?.title);
         }}
-        style={({ pressed }) => [styles.notificationCard, { backgroundColor: pressed ? '#FFA86B1C' : '#fff' }]}>
-        <View style={styles.profileImageContainer}>
+        style={({ pressed }) => [
+          styles.notificationCard,
+          {
+            backgroundColor: pressed ? 'rgba(255, 168, 107, 0.2)' : colors.background,
+            borderTopWidth: 2,
+            borderBottomWidth: 2,
+            borderColor: pressed ? '#FFA86B' : 'transparent',
+          },
+        ]}>
+        <View style={[styles.profileImageContainer, { borderColor: isDark ? colors.border : '#1E1E1E' }]}>
           <Image
             source={{ uri: item?.createdBy?.profile_image?.url }}
             placeholder={{
@@ -236,11 +246,11 @@ const NotificationScreen = () => {
         </View>
 
         <View style={styles.textContainer}>
-          <Text style={styles.notificationText}>
-            {(item.type !== 'calls' && item.type !== 'reminders') && <Text style={styles.usernameText}>{username}</Text>}
-            <Text style={styles.messageText}>{(item.type !== 'calls' && item.type !== 'reminders' ? ' ' : '') + renderNotificationMessage(item)}</Text>
+          <Text style={[styles.notificationText, { color: colors.text }]}>
+            {(item.type !== 'calls' && item.type !== 'reminders') && <Text style={[styles.usernameText, { color: colors.text }]}>{username}</Text>}
+            <Text style={[styles.messageText, { color: colors.text }]}>{(item.type !== 'calls' && item.type !== 'reminders' ? ' ' : '') + renderNotificationMessage(item)}</Text>
           </Text>
-          <Moment element={Text} style={styles.timeText} fromNow>
+          <Moment element={Text} style={[styles.timeText, { color: colors.textSecondary }]} fromNow>
             {item.createdAt}
           </Moment>
         </View>
@@ -248,7 +258,7 @@ const NotificationScreen = () => {
         {item?.data?.postContent?.file && (
           <Image 
             source={{ uri: item?.data?.postContent?.file }} 
-            style={styles.thumbnail} 
+            style={[styles.thumbnail, { borderColor: isDark ? colors.border : '#000000' }]} 
             contentFit="cover" 
             blurRadius={shouldBlur ? 150 : 0} 
           />
@@ -258,7 +268,7 @@ const NotificationScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={{ paddingLeft: 24, justifyContent: 'center', paddingRight: WIDTH_SIZES['10'] }}>
         <FlatList
           ref={filterListRef}
@@ -278,8 +288,23 @@ const NotificationScreen = () => {
                   setPage(1);
                   setHasMore(true);
                 }}
-                style={[styles.filterButton, isActive ? styles.activeFilterButton : styles.inactiveFilterButton]}>
-                <Text style={[styles.filterText, isActive && styles.activeFilterText]}>{item}</Text>
+                style={[
+                  styles.filterButton,
+                  {
+                    borderColor: isDark ? colors.border : '#1e1e1e',
+                    backgroundColor: isActive ? '#FFA868' : (isDark ? colors.card : '#fff'),
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.filterText,
+                    {
+                      color: isActive ? '#1e1e1e' : (isDark ? colors.text : '#1e1e1e'),
+                    },
+                    isActive && styles.activeFilterText,
+                  ]}>
+                  {item}
+                </Text>
               </TouchableOpacity>
             );
           }}
@@ -307,7 +332,7 @@ const NotificationScreen = () => {
             <View
               style={{
                 height: WIDTH_SIZES[1.5],
-                backgroundColor: '#E9E9E9',
+                backgroundColor: isDark ? '#1A1A1A' : '#E9E9E9',
               }}
             />
           )}
@@ -388,28 +413,30 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   thumbnail: {
-    height: responsiveWidth(12),
-    width: responsiveWidth(12),
-    borderRadius: responsiveWidth(2),
+    height: 48,
+    width: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#000000',
     marginLeft: responsiveWidth(3),
     backgroundColor: '#eee',
   },
 
   profileImageContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#1e1e1e',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
 
   profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
 
   notificationText: {

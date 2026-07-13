@@ -1,7 +1,9 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, View, StyleSheet, FlatList} from 'react-native';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const NotificationScreenShimmer = () => {
+  const { colors } = useAppTheme();
   const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -23,11 +25,11 @@ const NotificationScreenShimmer = () => {
 
   // Render Shimmer Item
   const renderShimmerItem = () => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
       {/* Header Section */}
       <View style={styles.headerContainer}>
-        <Animated.View style={[styles.profilePic, {opacity: shimmerOpacity}]} />
-        <Animated.View style={[styles.header, {opacity: shimmerOpacity}]} />
+        <Animated.View style={[styles.profilePic, {opacity: shimmerOpacity, backgroundColor: colors.border}]} />
+        <Animated.View style={[styles.header, {opacity: shimmerOpacity, backgroundColor: colors.border}]} />
       </View>
     </View>
   );
@@ -37,7 +39,7 @@ const NotificationScreenShimmer = () => {
       data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]} // Placeholder data for 3 posts
       renderItem={renderShimmerItem}
       keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={styles.listContainer}
+      contentContainerStyle={[styles.listContainer, { backgroundColor: colors.background }]}
     />
   );
 };

@@ -9,10 +9,15 @@ import {triggerImpactLight} from '../../Utils/Haptics';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useLazySearchedCreatorsQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {Image} from 'expo-image';
+import { useAppTheme, darkColors, lightColors } from '../../Hook/useAppTheme';
 
 const {width: WINDOW_WIDTH} = Dimensions.get('window');
 
-const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
+const CreatorSelectorModal = ({onSelect, onClose, initialSearch = '', isDark: customIsDark}) => {
+  const { colors: themeColors, isDark: systemIsDark } = useAppTheme();
+  const isDark = customIsDark !== undefined ? customIsDark : systemIsDark;
+  const colors = isDark ? darkColors : lightColors;
+
   const {width: windowWidth, height: windowHeight} = useWindowDimensions();
   const dispatch = useDispatch();
   const visible = useSelector(state => state.hideShow.visibility.creatorSelectorModal);
@@ -56,6 +61,7 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
       setLocalCreators([]); // Clear old results on open
       if (initialSearch) triggerSearch({name: initialSearch});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, initialSearch]);
 
   useEffect(() => {
@@ -63,6 +69,7 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
       if (searchQuery.trim().length > 0) triggerSearch({name: searchQuery});
     }, 500);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const handleSelect = (creator) => {
@@ -81,22 +88,22 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
 
   const renderCreator = ({item, index}) => (
     <Pressable 
-      style={[styles.row, index === localCreators.length - 1 && {borderBottomWidth: 0}]} 
+      style={[styles.row, { borderBottomColor: isDark ? colors.border : '#F5F5F5' }, index === localCreators.length - 1 && {borderBottomWidth: 0}]} 
       onPress={() => handleSelect(item)}
     >
       <View style={styles.creatorInfo}>
         <Image 
           source={{uri: item.profile_image?.url}} 
-          style={styles.avatar} 
+          style={[styles.avatar, { backgroundColor: colors.card }]} 
           placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
           contentFit="cover"
         />
         <View style={styles.textDetails}>
-          <Text style={styles.fullName} numberOfLines={1}>{item.fullName}</Text>
-          <Text style={styles.displayName} numberOfLines={1}>@{item.displayName}</Text>
+          <Text style={[styles.fullName, { color: colors.text }]} numberOfLines={1}>{item.fullName}</Text>
+          <Text style={[styles.displayName, { color: isDark ? colors.textSecondary : '#888' }]} numberOfLines={1}>@{item.displayName}</Text>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={responsiveFontSize(2)} color="#CCC" />
+      <Ionicons name="chevron-forward" size={responsiveFontSize(2)} color={isDark ? colors.textSecondary : '#CCC'} />
     </Pressable>
   );
 
@@ -122,11 +129,11 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
       useNativeDriverForBackdrop={true}
       style={styles.modalContainer}
     >
-      <View style={[styles.dialog, { width: windowWidth, maxHeight: dialogMaxHeight }]}>
+      <View style={[styles.dialog, { width: windowWidth, maxHeight: dialogMaxHeight, backgroundColor: colors.background }]}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.indicator} />
-          <Text style={styles.mainHeading}>Select Creator</Text>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <View style={[styles.indicator, { backgroundColor: isDark ? colors.border : '#E0E0E0' }]} />
+          <Text style={[styles.mainHeading, { color: colors.text }]}>Select Creator</Text>
         </View>
 
         {/* Results */}
@@ -144,30 +151,30 @@ const CreatorSelectorModal = ({onSelect, onClose, initialSearch = ''}) => {
         ) : (
           searchQuery.length > 0 && !isFetching && (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No creators found</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No creators found</Text>
             </View>
           )
         )}
 
         {/* Bottom Search Input */}
-        <View style={styles.bottomInputWrapper}>
-          <View style={styles.searchPill}>
-            <Ionicons name="search" size={responsiveFontSize(2)} color="#999" style={styles.searchIcon} />
+        <View style={[styles.bottomInputWrapper, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+          <View style={[styles.searchPill, { backgroundColor: isDark ? colors.inputBg : '#F5F5F5' }]}>
+            <Ionicons name="search" size={responsiveFontSize(2)} color={isDark ? colors.textSecondary : '#999'} style={styles.searchIcon} />
             <TextInput 
               ref={inputRef}
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Search creator..."
-              placeholderTextColor="#999"
+              placeholderTextColor={isDark ? colors.placeholder : '#999'}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCorrect={false}
               autoCapitalize="none"
             />
             {(isFetching || isLoading) ? (
-              <ActivityIndicator size="small" color="#999" />
+              <ActivityIndicator size="small" color={isDark ? colors.textSecondary : '#999'} />
             ) : searchQuery.length > 0 && (
               <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-                <Ionicons name="close-circle" size={responsiveFontSize(2)} color="#999" />
+                <Ionicons name="close-circle" size={responsiveFontSize(2)} color={isDark ? colors.textSecondary : '#999'} />
               </Pressable>
             )}
           </View>

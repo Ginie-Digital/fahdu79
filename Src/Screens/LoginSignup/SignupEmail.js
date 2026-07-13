@@ -134,7 +134,11 @@ const SignupEmail = () => {
           </View>
         </TouchableOpacity>
       </View>
-      <CreatorSelectorModal onSelect={handleCreatorSelect} initialSearch={referralCode.includes('@') ? referralCode.split('@').pop() : ''} />
+      <CreatorSelectorModal 
+        onSelect={handleCreatorSelect} 
+        initialSearch={referralCode.includes('@') ? referralCode.split('@').pop() : ''} 
+        isDark={isDark} 
+      />
     </SafeAreaView>
   );
 };

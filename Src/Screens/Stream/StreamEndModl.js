@@ -6,17 +6,19 @@ import {useDispatch} from 'react-redux';
 import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
 import {toggleEmailVerificationModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const StreamEndModl = ({visible, onYesPress, onNoPress}) => {
+  const { colors, isDark } = useAppTheme();
   const dispatch = useDispatch();
 
   return (
     visible && (
       <View style={styles.overlay}>
         <BlurView intensity={20} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{paddingVertical: 32, paddingHorizontal: 32}} onTouchOutside={() => dispatch(toggleEmailVerificationModal({show: false}))}>
+        <Dialog visible={visible} dialogStyle={[styles.dialog, {backgroundColor: isDark ? colors.card : '#fff', borderColor: isDark ? colors.border : '#1e1e1e'}]} contentStyle={{paddingVertical: 32, paddingHorizontal: 32}} onTouchOutside={() => dispatch(toggleEmailVerificationModal({show: false}))}>
           <View style={styles.content}>
-            <Text style={styles.text}>Do you want to end the Livestream right now?</Text>
+            <Text style={[styles.text, isDark && {color: colors.text}]}>Do you want to end the Livestream right now?</Text>
 
             <View style={styles.buttonContainer}>
               <Pressable
@@ -25,7 +27,8 @@ const StreamEndModl = ({visible, onYesPress, onNoPress}) => {
                   styles.button,
                   styles.yesButton,
                   {
-                    backgroundColor: pressed ? '#FFC399' : '#FFA86B',
+                    backgroundColor: pressed ? (isDark ? '#FF7819' : '#FFC399') : (isDark ? colors.accent : '#FFA86B'),
+                    borderColor: isDark ? colors.border : '#1E1E1E',
                   },
                 ]}>
                 <Text style={[styles.buttonText, {color: '#000'}]}>Yes</Text>
@@ -37,10 +40,11 @@ const StreamEndModl = ({visible, onYesPress, onNoPress}) => {
                   styles.button,
                   styles.noButton,
                   {
-                    backgroundColor: pressed ? '#FFF3EB' : '#fff',
+                    backgroundColor: pressed ? (isDark ? colors.pressed : '#FFF3EB') : (isDark ? colors.inputBg : '#fff'),
+                    borderColor: isDark ? colors.border : '#1E1E1E',
                   },
                 ]}>
-                <Text style={[styles.buttonText, {color: '#000'}]}>No</Text>
+                <Text style={[styles.buttonText, {color: isDark ? colors.text : '#000'}]}>No</Text>
               </Pressable>
             </View>
           </View>

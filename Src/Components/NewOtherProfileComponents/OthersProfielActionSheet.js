@@ -1,41 +1,23 @@
-// import { StyleSheet, View, TouchableOpacity, Text, Image, Pressable, BackHandler } from "react-native";
-// import React, { useMemo, useCallback, useRef, useState, useEffect } from "react";
-// import { responsiveWidth, responsiveFontSize } from "react-native-responsive-dimensions";
-// import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
-// import DIcon from "../../../DesiginData/DIcons";
-// import { FlatList } from "react-native-gesture-handler";
-// import { homeBottomSheetList, homeBottomSheetListRoleUser, profileActionList } from "../../../DesiginData/Data";
-// import { LinearGradient } from 'expo-linear-gradient';
-// import { useDispatch, useSelector } from "react-redux";
-// import { toggleOtherProfileActionSheet } from "../../../Redux/Slices/NormalSlices/HideShowSlice";
-
-// import { token as memoizedToken } from "../../../Redux/Slices/NormalSlices/AuthSlice";
-// import { LoginPageErrors, chatRoomSuccess } from "../ErrorSnacks";
-
+/* eslint-disable react-native/no-inline-styles */
 import React, {useCallback, useEffect, useState, useRef, useMemo} from 'react';
-import {View, Text, StyleSheet, Linking, Alert, TouchableOpacity, Pressable, BackHandler, ActivityIndicator, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, ActivityIndicator, Platform} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {BottomSheetBackdrop, BottomSheetModal} from '@gorhom/bottom-sheet';
-import Feather from 'react-native-vector-icons/Feather';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import DIcon from '../../../DesiginData/DIcons';
-import AnimatedButton from '../../Components/AnimatedButton';
-import {responsiveFontSize, responsiveHeight, responsiveWidth} from 'react-native-responsive-dimensions';
-import {BlurView} from 'expo-blur';
-import {Image} from 'expo-image';
 import {useDispatch, useSelector} from 'react-redux';
-import {FONT_SIZES, nTwins, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import {chatRoomSuccess, LoginPageErrors} from '../ErrorSnacks';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {unFollowProfileCache, unSubscribeProfileCache} from '../../../Redux/Slices/NormalSlices/Posts/ProfileFeedCacheSlice';
 import {useBlockUserMutation, useUnFollowUserMutation, useUnSubscribeMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import {toggleOtherProfileActionModal, toggleRefreshOtherProfile} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
-import {FlatList, TouchableWithoutFeedback} from 'react-native-gesture-handler';
 import {triggerImpactLight} from '../../Utils/Haptics';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetchingSubscription}) => {
   const dispatcher = useDispatch();
   const bottomSheetModalRef = useRef(null);
-  const snapPoints = useMemo(() => ['32%'], []);
+  const {bottom: bottomInset} = useSafeAreaInsets();
+  const {isDark} = useAppTheme();
 
   const {haveFollowed, haveSubscribed} = useSelector(state => state.profileFeedCache.data);
   const token = useSelector(state => state.auth.user.token);
@@ -53,7 +35,6 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
       list.push({
         id: 4,
         title: 'Unsubscribe',
-        subtitle: 'You will lose your exclusive member pricing and access to private updates. Future purchases will revert to standard follower rates.',
         provider: 'MaterialCommunityIcons',
         iconName: 'tag-remove-outline',
       });
@@ -61,23 +42,26 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
       list.push({
         id: 1,
         title: 'Unfollow',
-        subtitle: "You will stop seeing this user's posts in your feed, but you will still keep your current pricing benefits if you are a subscriber.",
         provider: 'Feather',
-        iconName: 'eye-off',
+        iconName: 'user-minus',
       });
     }
 
     list.push({
       id: 3,
-      title: 'Block user',
-      subtitle: 'Completely hide this profile. They will no longer be able to see your content, message you, or interact with your profile in any way.',
-      provider: 'MaterialCommunityIcons',
-      iconName: 'shield-alert-outline',
-      titleColor: '#8B0000',
+      title: 'Block',
+      provider: 'MaterialIcons',
+      iconName: 'block',
     });
 
     setProfileActionList(list);
   }, [haveFollowed, haveSubscribed]);
+
+  const snapPoints = useMemo(() => {
+    const itemCount = profileActionList.length;
+    const height = itemCount * 59 + 51 + bottomInset;
+    return [height];
+  }, [profileActionList, bottomInset]);
 
   const isDismissedByGesture = useRef(false);
 
@@ -114,7 +98,9 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
           dispatcher(unFollowProfileCache());
           handleClose();
         }
-        if (error) LoginPageErrors(error?.data?.message);
+        if (error) {
+          LoginPageErrors(error?.data?.message);
+        }
       }
 
       if (id === 4) {
@@ -130,12 +116,14 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
             handleClose();
             dispatcher(toggleRefreshOtherProfile());
           }
-          if (error) LoginPageErrors(error?.data?.message);
+          if (error) {
+            LoginPageErrors(error?.data?.message);
+          }
         }
       }
 
       if (id === 3) {
-        let {data, error} = await blockUser({token, data: {id: toCallApiInfo?.userId}});
+        let {data} = await blockUser({token, data: {id: toCallApiInfo?.userId}});
         if (data) {
           handleClose();
           chatRoomSuccess('We have blocked the user for you!');
@@ -151,6 +139,12 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
     [],
   );
 
+  const themeBg = isDark ? '#121212' : '#FFFFFF';
+  const themeBorder = isDark ? '#2A2A2A' : '#E0E0E0';
+  const themeText = isDark ? '#FFFFFF' : '#1E1E1E';
+  const themeIcon = isDark ? '#E5E7EB' : '#4A4A4A';
+  const themePressed = isDark ? '#1E1E1E' : '#F2F2F2';
+
   return (
     <BottomSheetModal
       ref={bottomSheetModalRef}
@@ -162,115 +156,110 @@ const OthersProfileActionSheet = ({toCallApiInfo, onUnsubscribePress, isFetching
         handleClose();
       }}
       enableDynamicSizing={false}
-      backgroundStyle={{backgroundColor: '#FFFFFF'}}
+      handleComponent={null}
+      backgroundStyle={[styles.modalBackground, {backgroundColor: themeBg}]}
     >
-      <View style={styles.contentContainer}>
-        <View style={styles.optionsBox}>
-          <FlatList
-            data={profileActionList}
-            keyExtractor={item => item.id.toString()}
-            renderItem={({item}) => (
-              <Pressable 
-                onPress={() => handleEachOptions(item.id)}
-                style={({pressed}) => [styles.eachSortModalList, pressed && styles.highlightedOption]}
-              >
-                <View style={styles.itemRow}>
-                  <View style={[styles.iconBox]}>
-                    {item.id === 4 && isFetchingSubscription ? (
-                      <ActivityIndicator size="small" color="#282828" />
-                    ) : (
-                      <DIcon 
-                        provider={item.provider} 
-                        name={item.iconName} 
-                        size={item.provider === 'MaterialCommunityIcons' ? 32 : 30} 
-                        color={item.id === 3 ? '#8B0000' : '#282828'} 
-                      />
-                    )}
-                  </View>
-                  <View style={styles.textStack}>
-                    <Text style={[styles.titleText, item.titleColor ? {color: item.titleColor} : null]}>
-                    {item.title}
-                  </Text>
-                  {item.id === 4 && (
-                    <Text style={[styles.subtitleText]}>
-                      <Text style={styles.subtitleBold}>Lose exclusive member pricing</Text> and access to private updates.
-                    </Text>
-                  )}
-                  {item.id === 1 && (
-                    <Text style={[styles.subtitleText]}>
-                      Stop seeing posts in your feed. <Text style={styles.subtitleBold}>Keep your current pricing benefits</Text>.
-                    </Text>
-                  )}
-                  {item.id === 3 && (
-                    <Text style={[styles.subtitleText, {color: 'rgba(139, 0, 0, 0.7)'}]}>
-                      <Text style={[styles.subtitleBold, {color: '#8B0000'}]}>Completely hide</Text> this profile. Stops all interactions and content visibility.
-                    </Text>
-                  )}
-                </View>
-                </View>
-              </Pressable>
-            )}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
-        </View>
+      <View style={[styles.contentContainer, {backgroundColor: themeBg}]}>
+        {profileActionList.map((item, index) => {
+          const isFirst = index === 0;
+          return (
+            <Pressable
+              key={item.id}
+              onPress={() => handleEachOptions(item.id)}
+              style={({pressed}) => [
+                styles.itemContainer,
+                {
+                  backgroundColor: themeBg,
+                  borderBottomColor: themeBorder,
+                },
+                isFirst && styles.firstItem,
+                pressed && {backgroundColor: themePressed},
+              ]}
+            >
+              <View style={styles.itemRow}>
+                {item.id === 4 && isFetchingSubscription ? (
+                  <ActivityIndicator size="small" color={themeText} />
+                ) : (
+                  <DIcon
+                    provider={item.provider}
+                    name={item.iconName}
+                    size={18}
+                    color={item.id === 3 ? '#FF2020' : themeIcon}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.itemText,
+                    {color: item.id === 3 ? '#E53935' : themeText},
+                  ]}
+                >
+                  {item.title}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+        <Pressable
+          onPress={handleClose}
+          style={({pressed}) => [
+            styles.cancelContainer,
+            {
+              backgroundColor: themeBg,
+              paddingBottom: 14 + bottomInset,
+            },
+            pressed && {backgroundColor: themePressed},
+          ]}
+        >
+          <Text style={[styles.cancelText, {color: themeText}]}>Cancel</Text>
+        </Pressable>
       </View>
     </BottomSheetModal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalBackground: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
   contentContainer: {
-    paddingTop: 12,
-    paddingHorizontal: responsiveWidth(4),
-  },
-  optionsBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     overflow: 'hidden',
+    width: '100%',
   },
-  eachSortModalList: {
-    paddingVertical: responsiveWidth(5),
-    paddingHorizontal: responsiveWidth(5),
+  itemContainer: {
+    width: '100%',
+    height: 59,
+    borderBottomWidth: 2,
     justifyContent: 'center',
+    paddingLeft: 32,
   },
-  highlightedOption: {
-    backgroundColor: '#F5F5F5',
+  firstItem: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  iconBox: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  textStack: {
-    flex: 1,
-  },
-  titleText: {
-    fontSize: FONT_SIZES[16] || 16,
+  itemText: {
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
-    marginBottom: 2,
+    fontSize: 16,
+    lineHeight: 19,
+    marginLeft: 12,
   },
-  subtitleText: {
-    fontSize: FONT_SIZES[12] || 12,
-    fontFamily: 'Rubik-Regular',
-    color: '#4A4A4A',
-    lineHeight: 16,
+  cancelContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 18,
   },
-  subtitleBold: {
-    fontFamily: 'Rubik-Bold',
-    color: '#1e1e1e',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
-    marginHorizontal: responsiveWidth(5),
+  cancelText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 16,
+    lineHeight: 19,
   },
 });
 

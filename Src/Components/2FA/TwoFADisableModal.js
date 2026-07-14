@@ -22,8 +22,10 @@ import {LoginPageErrors, chatRoomSuccess} from '../ErrorSnacks';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {FONT_SIZES, padios, selectionTwin, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import AnimatedButton from '../AnimatedButton';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const TwoFADisableModal = ({token}) => {
+  const { colors, isDark } = useAppTheme();
   const inputRefs = React.useRef([]);
 
   const show = useSelector(state => state.hideShow.visibility.disableAuthModal.show);
@@ -147,14 +149,14 @@ const TwoFADisableModal = ({token}) => {
         margin: 0,
         justifyContent: 'flex-end',
       }}>
-      <View style={styles.modalInnerWrapper}>
+      <View style={[styles.modalInnerWrapper, isDark && {backgroundColor: colors.card, borderColor: colors.border}]}>
         <View style={styles.headerContainer}>
-          <Text style={styles.heading}>Security Check</Text>
+          <Text style={[styles.heading, isDark && {color: colors.text}]}>Security Check</Text>
           <TouchableOpacity style={styles.closeIcon} onPress={() => handleClose()}>
-            <DIcon provider={'Ionicons'} name="close" size={20} color="black" />
+            <DIcon provider={'Ionicons'} name="close" size={20} color={isDark ? colors.iconTint : 'black'} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.subtext}>Enter the security code we just sent on your email address.</Text>
+        <Text style={[styles.subtext, isDark && {color: colors.textSecondary}]}>Enter the security code we just sent on your email address.</Text>
 
         <View style={styles.tipContainer}>
           <View style={styles.tipCounterContainer}>
@@ -174,11 +176,19 @@ const TwoFADisableModal = ({token}) => {
                     maxLength={1}
                     autoCapitalize="characters"
                     keyboardType="default"
-                    style={[styles.codeBox, verificationCode[index] ? styles.codeBoxFilled : null]}
+                    style={[
+                      styles.codeBox,
+                      isDark && {
+                        backgroundColor: colors.inputBg,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                      verificationCode[index] ? styles.codeBoxFilled : null
+                    ]}
                     selectionColor={selectionTwin()}
                     selectionHandleColor={'#ffa86b'}
-                    cursorColor={'#1e1e1e'}
-                    placeholderTextColor="#B2B2B2"
+                    cursorColor={isDark ? colors.accent : '#1e1e1e'}
+                    placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
                   />
                 ))}
               </View>
@@ -187,12 +197,12 @@ const TwoFADisableModal = ({token}) => {
 
 
 
-          <AnimatedButton title={'Verify'} buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} />
+          <AnimatedButton title={'Verify'} buttonMargin={0} onPress={handleVerification} loading={loading} disabled={loading} isDark={isDark} />
 
           <TouchableOpacity style={styles.alreadyAccountContainer} onPress={() => handleResendCode()}>
             <View style={styles.alreadyAccountRow}>
-              <Text style={styles.alreadyAccountText}>Didn’t receive code? </Text>
-              <Text style={styles.forgotTextTitle}>Resend</Text>
+              <Text style={[styles.alreadyAccountText, {color: isDark ? colors.textSecondary : '#1e1e1e'}]}>Didn’t receive code? </Text>
+              <Text style={[styles.forgotTextTitle, {color: isDark ? colors.accent : '#FF7F50'}]}>Resend</Text>
             </View>
           </TouchableOpacity>
         </View>

@@ -12,8 +12,10 @@ import {navigate} from '../../Navigation/RootNavigation';
 import {FONT_SIZES, WIDTH_SIZES} from '../../DesiginData/Utility';
 import LinkingModal from './LoginSignup/LinkingModal';
 import {toggleLinkingModal} from '../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const LinkAccount = () => {
+  const { colors, isDark } = useAppTheme();
   const [accountLinkStatus] = useLazyAccountLinkStatusQuery();
 
   const [linkAccount] = useLinkAccountMutation();
@@ -88,24 +90,29 @@ const LinkAccount = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
-        <ActivityIndicator size={'small'} color={'#ffa07a'} />
+      <View style={[styles.container, {backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center'}]}>
+        <ActivityIndicator size={'small'} color={isDark ? colors.accent : '#ffa07a'} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background, borderTopColor: isDark ? colors.border : '#282828'}]}>
       <Pressable
         style={({pressed}) => [
           styles.loginWithGoogle,
-          {flexDirection: 'row', alignItems: 'center', gap: 8},
-          pressed && {backgroundColor: '#1e1e1e'}, // only background changes
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: pressed ? (isDark ? colors.pressed : '#1e1e1e') : (isDark ? colors.card : '#fff'),
+            borderColor: isDark ? colors.border : '#1e1e1e',
+          },
         ]}
         onPress={connectDisconnectHandler}>
         {({pressed}) =>
           loadingInfo ? (
-            <ActivityIndicator size={'small'} color={pressed ? 'white' : '#1e1e1e'} />
+            <ActivityIndicator size={'small'} color={pressed ? 'white' : (isDark ? colors.text : '#1e1e1e')} />
           ) : (
             <>
               <Image
@@ -121,7 +128,7 @@ const LinkAccount = () => {
               <Text
                 style={{
                   fontFamily: 'Rubik-Medium',
-                  color: pressed ? 'white' : '#1e1e1e',
+                  color: pressed ? 'white' : (isDark ? colors.text : '#1e1e1e'),
                   fontSize: FONT_SIZES['16'],
                 }}>
                 {googleAccount ? 'Disconnect' : 'Connect'}
@@ -131,7 +138,7 @@ const LinkAccount = () => {
         }
       </Pressable>
 
-      <Text style={styles.textHighlight}>*Your account is linked with Google. Disconnect here to secure it with a password.</Text>
+      <Text style={[styles.textHighlight, {color: isDark ? colors.textSecondary : '#1e1e1e'}]}>*Your account is linked with Google. Disconnect here to secure it with a password.</Text>
       <LinkingModal />
     </View>
   );

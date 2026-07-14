@@ -10,8 +10,10 @@ import {useGetTFACodeMutation, useGetTFAEmailCodeMutation, useLazyGetTFAStatusQu
 import {useFocusEffect} from '@react-navigation/native';
 import TwoFADisableModal from './TwoFADisableModal';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const TwoFALanding = () => {
+  const {colors, isDark} = useAppTheme();
   const token = useSelector(state => state.auth.user.token);
 
   const dispatch = useDispatch();
@@ -32,8 +34,21 @@ const TwoFALanding = () => {
   const CustomToggle = ({ value, onToggle }) => {
     return (
       <Pressable onPress={onToggle} style={styles.toggleContainer}>
-        <View style={[styles.track, value && styles.trackActive]}>
-          <View style={[styles.thumb, value && styles.thumbActive]} />
+        <View style={[
+          styles.track,
+          {
+            backgroundColor: isDark ? colors.inputBg : '#fff',
+            borderColor: isDark ? colors.border : '#000',
+          },
+          value && styles.trackActive
+        ]}>
+          <View style={[
+            styles.thumb,
+            {
+              backgroundColor: isDark ? '#555555' : '#1e1e1e80',
+            },
+            value && [styles.thumbActive, {backgroundColor: isDark ? colors.accent : '#f89f7b'}]
+          ]} />
         </View>
       </Pressable>
     );
@@ -106,18 +121,18 @@ const TwoFALanding = () => {
 
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.card, {backgroundColor: '#FFF9F5', flexDirection: 'column', marginTop: responsiveWidth(8), borderWidth: WIDTH_SIZES['1.5'], overflow: 'hidden'}]}>
-        <View style={[styles.card, {elevation: 0}]}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <View style={[styles.card, {backgroundColor: isDark ? colors.card : '#FFF9F5', flexDirection: 'column', marginTop: responsiveWidth(8), borderWidth: WIDTH_SIZES['1.5'], overflow: 'hidden'}, isDark && {borderColor: colors.border}]}>
+        <View style={[styles.card, {elevation: 0}, isDark && {backgroundColor: colors.card}]}>
           <View style={styles.cardLeftView}>
-            <View style = {{width : "100%", backgroundColor : '#FFF9F5', flexDirection : 'row', alignItems : 'center', justifyContent : 'space-between'}}>
-              <Text style={styles.heading}>With E-Mail Address</Text>
+            <View style = {{width : "100%", backgroundColor : isDark ? colors.card : '#FFF9F5', flexDirection : 'row', alignItems : 'center', justifyContent : 'space-between'}}>
+              <Text style={[styles.heading, isDark && {color: colors.text}]}>With E-Mail Address</Text>
               <View style={styles.cardRightView}>
                       <CustomToggle value={x.email} onToggle={() => toggleSwitchAuth("email")} />
               </View>
             </View>
 
-            <Text style={styles.description}>Receive email code for added security, Authenticate your account easily and securely.</Text>
+            <Text style={[styles.description, isDark && {color: colors.textSecondary}]}>Receive email code for added security, Authenticate your account easily and securely.</Text>
           </View>
         </View>
       </View>

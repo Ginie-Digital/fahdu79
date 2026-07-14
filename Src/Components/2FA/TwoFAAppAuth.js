@@ -12,8 +12,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleAuthenticatorVia } from "../../../Redux/Slices/NormalSlices/HideShowSlice";
 import { padios } from "../../../DesiginData/Utility";
 import { useKeyboard } from "@react-native-community/hooks";
+import { useAppTheme } from "../../Hook/useAppTheme";
 
 const TwoFAAppAuth = ({ route }) => {
+  const { colors, isDark } = useAppTheme();
   const { code, imageUrl } = route?.params;
 
   const [authCode, setAuthCode] = useState("");
@@ -61,17 +63,17 @@ const TwoFAAppAuth = ({ route }) => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={[{ flexGrow: 1 }, keyboard.keyboardShown && Platform.OS === "ios" ? {paddingBottom : keyboard.keyboardHeight +  responsiveWidth(10)} : {}]} showsVerticalScrollIndicator={false}>
         <Text style={[styles.level]}>1. Copy code or scan QR for the code</Text>
         <View style={{ height: responsiveWidth(15), borderLeftWidth: 2, alignSelf: "center", borderRadius: responsiveWidth(1), borderColor: "#FF7A7A" }} />
         <DIcon provider={"Ionicons"} name={"caret-down-outline"} style={{ alignSelf: "center", color: "#FF7A7A", marginTop: responsiveWidth(-2) }} />
-        <View style={styles.card}>
+        <View style={[styles.card, isDark && {backgroundColor: colors.card}]}>
           <Image source={{ uri: imageUrl }} style={{ height: responsiveWidth(40), width: responsiveWidth(40), resizeMode: "contain", alignSelf: "center" }} />
 
           <View style={{ flexDirection: "row", alignItems: "center", gap: responsiveWidth(4) }}>
-            <Text style={styles.code}>{code}</Text>
-            <DIcon provider={"MaterialIcons"} name={"content-copy"} onPress={() => handleCopyToClipBoard()} />
+            <Text style={[styles.code, isDark && {color: colors.text}]}>{code}</Text>
+            <DIcon provider={"MaterialIcons"} name={"content-copy"} color={isDark ? '#FFFFFF' : undefined} onPress={() => handleCopyToClipBoard()} />
           </View>
         </View>
 
@@ -81,13 +83,13 @@ const TwoFAAppAuth = ({ route }) => {
         <Text style={[styles.level, { marginTop: responsiveWidth(0) }]}>3. Paste authenticator code below</Text>
         <View style={{ height: responsiveWidth(12), borderLeftWidth: 2, alignSelf: "center", borderRadius: responsiveWidth(1), borderColor: "#FF7A7A" }} />
         <DIcon provider={"Ionicons"} name={"caret-down-outline"} style={{ alignSelf: "center", color: "#FF7A7A", marginTop: responsiveWidth(-2) }} />
-        <View placeholder="Code" style={styles.codeInputContainer}>
-          <TextInput style={styles.codeInput} value={authCode} onChangeText={(t) => setAuthCode(t)} />
+        <View placeholder="Code" style={[styles.codeInputContainer, isDark && {borderColor: colors.inputBorder}]}>
+          <TextInput style={[styles.codeInput, isDark && {backgroundColor: colors.inputBg, color: colors.text}]} value={authCode} onChangeText={(t) => setAuthCode(t)} />
         </View>
 
         <View style={{ position: "relative", alignSelf: "center" }}>
           <Pressable onPress={() => handleEnableThirdPartyAuth()}>
-            <Text style={[styles.loginButton]}>ENABLE</Text>
+            <Text style={[styles.loginButton, {backgroundColor: isDark ? colors.accent : '#ffa07a', color: isDark ? '#000000' : '#282828', borderTopColor: isDark ? 'transparent' : '#282828', borderLeftColor: isDark ? 'transparent' : '#282828'}]}>ENABLE</Text>
           </Pressable>
         </View>
       </ScrollView>

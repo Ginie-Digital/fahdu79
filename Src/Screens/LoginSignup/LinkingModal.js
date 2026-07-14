@@ -8,8 +8,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import {toggleLinkingModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {FONT_SIZES} from '../../../DesiginData/Utility';
 import {useAreYouACreatorNotificationMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const LinkingModal = () => {
+  const { colors, isDark } = useAppTheme();
   const visible = useSelector(state => state.hideShow.visibility.linkingModal);
 
   // const visible = true
@@ -49,20 +51,20 @@ const LinkingModal = () => {
     visible && (
       <View style={styles.overlay}>
         <BlurView intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{padding: 0, paddingTop: 0}}>
+        <Dialog visible={visible} dialogStyle={[styles.dialog, {backgroundColor: isDark ? colors.card : '#fff', borderColor: isDark ? colors.border : '#1e1e1e'}]} contentStyle={{padding: 0, paddingTop: 0}}>
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
-              <Text style={styles.textYesNo} numberOfLines={1}>
+              <Text style={[styles.textYesNo, {color: colors.text}]} numberOfLines={1}>
                 Create a password to proceed!
               </Text>
 
               <View style={styles.buttonContainer}>
-                <Pressable onPress={() => handleButtonPress(true)} style={({pressed}) => [styles.button, styles.yesButton, pressed && {backgroundColor: '#FFC399'}]}>
-                  <Text style={styles.buttonText}>Create</Text>
+                <Pressable onPress={() => handleButtonPress(true)} style={({pressed}) => [styles.button, styles.yesButton, {backgroundColor: isDark ? colors.accent : '#ffa86b', borderColor: isDark ? colors.border : '#1E1E1E'}, pressed && {backgroundColor: isDark ? '#FF7819' : '#FFC399'}]}>
+                  <Text style={[styles.buttonText, {color: isDark ? '#000000' : '#1e1e1e'}]}>Create</Text>
                 </Pressable>
 
-                <Pressable onPress={() => handleButtonPress(false)} style={({pressed}) => [styles.button, styles.noButton, pressed && {backgroundColor: '#FFF3EB'}]}>
-                  <Text style={styles.buttonText}>Cancel</Text>
+                <Pressable onPress={() => handleButtonPress(false)} style={({pressed}) => [styles.button, styles.noButton, {backgroundColor: isDark ? colors.inputBg : '#fff', borderColor: isDark ? colors.border : '#1E1E1E'}, pressed && {backgroundColor: isDark ? colors.pressed : '#FFF3EB'}]}>
+                  <Text style={[styles.buttonText, {color: isDark ? colors.text : '#1e1e1e'}]}>Cancel</Text>
                 </Pressable>
               </View>
             </View>

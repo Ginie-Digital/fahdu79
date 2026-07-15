@@ -10,25 +10,26 @@ const Management = () => {
   const {colors, isDark} = useAppTheme();
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
+    <View style={[styles.container, {backgroundColor: isDark ? '#121212' : '#FFFFFF'}]}>
       <Pressable
         style={({pressed}) => [
           styles.cardWrapper,
           {
-            borderColor: isDark ? colors.accent : '#1e1e1e',
-            backgroundColor: pressed
-              ? (isDark ? colors.pressed : '#FFE6D5')
-              : (isDark ? 'rgba(255, 168, 107, 0.1)' : '#FFF9F5'),
-          },
+            backgroundColor: isDark
+              ? '#171717'
+              : (pressed ? '#FFE6D5' : '#FFF9F5'),
+            borderColor: isDark ? '#1F1F1F' : '#1e1e1e',
+            borderWidth: isDark ? 1.5 : WIDTH_SIZES['1.5'],
+          }
         ]}
         onPress={() => navigate('deleteaccount')}>
         <View style={styles.topRow}>
-          <Text style={[styles.heading, {color: colors.text}]}>Permanently Remove Account</Text>
-          <DIcon provider="Entypo" name="chevron-right" size={responsiveWidth(4.5)} color={colors.text} />
+          <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Permanently Remove Account</Text>
+          <DIcon provider="Entypo" name="chevron-right" size={responsiveWidth(4.5)} color={isDark ? '#FFFFFF' : '#1e1e1e'} />
         </View>
 
-        <Text style={[styles.description, {color: colors.textSecondary}]}>
-          Erase your presence with <Text style={{color: isDark ? colors.accent : '#1e1e1e'}}>“Permanently Remove Account”.</Text> A one way journey to a clean state.
+        <Text style={[styles.description, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>
+          Erase your presence with “Permanently Remove Account”. A one way journey to a clean state.
         </Text>
       </Pressable>
     </View>
@@ -40,16 +41,15 @@ export default Management;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: responsiveWidth(10),
-    paddingHorizontal: responsiveWidth(5),
-    alignItems: 'center',
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
   cardWrapper: {
-    borderWidth: WIDTH_SIZES['1.5'],
     borderStyle: 'dashed',
-    borderRadius: WIDTH_SIZES['14'],
-    padding: responsiveWidth(4),
-    width: responsiveWidth(85),
+    borderRadius: 14,
+    padding: 20,
+    width: '100%',
   },
   topRow: {
     flexDirection: 'row',

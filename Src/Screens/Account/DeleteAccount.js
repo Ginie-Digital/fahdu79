@@ -292,31 +292,38 @@ const DeleteAccount = () => {
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background, borderColor: colors.border}]}>
+    <View style={[styles.container, {backgroundColor: isDark ? '#121212' : '#FFFFFF'}]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: responsiveWidth(30)}}>
         <FlatList
           scrollEnabled={false}
           data={data}
           renderItem={({item, index}) => (
             <View>
-              <Text style={[styles.normalHeading, {color: colors.text}]}>{`${index + 1}. ${item.heading}`}</Text>
-              <Text style={[styles.description, {color: colors.textSecondary}]}>{item.desc}</Text>
+              <Text style={[styles.normalHeading, {color: isDark ? '#FFFFFF' : '#000000'}]}>{`${index + 1}. ${item.heading}`}</Text>
+              <Text style={[styles.description, {color: isDark ? '#9E9E9E' : '#1e1e1e'}]}>{item.desc}</Text>
             </View>
           )}
           ItemSeparatorComponent={() => <View style={{height: responsiveWidth(6)}} />}
         />
 
         <Pressable onPress={() => setRead(!read)} style={styles.checkboxContainer}>
-          <View style={[styles.checkbox, {borderColor: isDark ? colors.text : '#1e1e1e', backgroundColor: read ? '#f89f7b' : (isDark ? colors.card : '#fff')}]}>
-            {read && <Icon name="check" size={16} color="#fff" />}
+          <View style={[
+            styles.checkbox,
+            {
+              backgroundColor: isDark ? '#171717' : (read ? '#f89f7b' : '#FFFFFF'),
+              borderColor: isDark ? '#1F1F1F' : '#1e1e1e',
+            },
+            read && isDark && {borderColor: '#FF9E65'}
+          ]}>
+            {read && <Icon name="check" size={12} color={isDark ? '#FF9E65' : '#000000'} />}
           </View>
-          <Text style={[styles.checkboxLabel, {color: colors.text}]}>I accept terms & conditions</Text>
+          <Text style={[styles.checkboxLabel, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>I accept terms & conditions</Text>
         </Pressable>
 
         {/* Leave space here for custom button */}
 
         <View style={{width: '98%'}}>
-          <AnimatedButton title={'Delete my Account'} buttonMargin={8} onPress={onPress} isDark={isDark} />
+          <AnimatedButton title={'Delete My Account'} buttonMargin={8} onPress={onPress} isDark={isDark} />
         </View>
       </ScrollView>
 
@@ -329,25 +336,29 @@ export default DeleteAccount;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: responsiveWidth(4),
+    paddingHorizontal: 24,
     flex: 1,
-    paddingTop: responsiveWidth(4),
+    paddingTop: 24,
+    backgroundColor: '#121212',
   },
   titleText: {
     fontFamily: 'Rubik-Bold',
     fontSize: responsiveFontSize(2.5),
     textAlign: 'center',
     marginBottom: responsiveWidth(8),
+    color: '#FFFFFF',
   },
   normalHeading: {
     fontSize: 16,
     fontFamily: 'Rubik-SemiBold',
     marginBottom: responsiveWidth(1),
+    color: '#FFFFFF',
   },
   description: {
     fontSize: 14,
     fontFamily: 'Rubik-Regular',
     lineHeight: responsiveFontSize(2.2),
+    color: '#9E9E9E',
   },
   card: {
     paddingHorizontal: responsiveWidth(4),
@@ -363,6 +374,7 @@ const styles = StyleSheet.create({
   headingRead: {
     fontFamily: 'Rubik-Medium',
     fontSize: responsiveFontSize(1.8),
+    color: '#FFFFFF',
   },
 
   checkboxContainer: {
@@ -370,18 +382,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: responsiveWidth(8),
     alignSelf: 'flex-start',
-    gap: responsiveWidth(3),
+    gap: 9,
   },
   checkbox: {
-    height: responsiveWidth(5),
-    width: responsiveWidth(5),
-    borderRadius: responsiveWidth(1),
-    borderWidth: WIDTH_SIZES['1.5'],
+    height: 17,
+    width: 17,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#1F1F1F',
+    backgroundColor: '#171717',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxLabel: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
+    color: '#FFFFFF',
   },
 });

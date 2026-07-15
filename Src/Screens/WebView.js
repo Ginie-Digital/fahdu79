@@ -21,15 +21,18 @@ const WebView = ({route}) => {
     url = 'https://fahdu.com/refund-policy/';
   }
 
-  // Determine injected CSS based on active theme
-  const injectedCSS = isDark
+  const isRefundOrDark = type === 'refund' || isDark;
+  const activeBg = isRefundOrDark ? '#121212' : colors.background;
+
+  // Determine injected CSS based on active theme or refund type
+  const injectedCSS = isRefundOrDark
     ? `
       html, body, p, span, div, section, article, main, header, footer, h1, h2, h3, h4, h5, h6, li, ul, ol, table, tbody, tr, td, th {
         background-color: transparent !important;
         color: #FFFFFF !important;
       }
       html, body, #page, .site {
-        background-color: #0D0D0D !important;
+        background-color: #121212 !important;
       }
       a {
         color: #FFA86B !important;
@@ -75,16 +78,16 @@ const WebView = ({route}) => {
   // If no URL found or an error occurred, show error view
   if (!url || error) {
     return (
-      <View style={[styles.container, styles.center, {backgroundColor: colors.background}]}>
+      <View style={[styles.container, styles.center, {backgroundColor: activeBg}]}>
         <Text style={[styles.errorText, {color: colors.text}]}>There was some error</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background, borderTopColor: isDark ? '#2A2A2A' : '#282828'}]}>
+    <View style={[styles.container, {backgroundColor: activeBg, borderTopColor: isDark ? '#2A2A2A' : '#282828'}]}>
       {loading && (
-        <View style={[styles.loaderContainer, styles.center, {backgroundColor: colors.background}]}>
+        <View style={[styles.loaderContainer, styles.center, {backgroundColor: activeBg}]}>
           <ActivityIndicator size="large" color={colors.accent || '#FFA86B'} />
         </View>
       )}
@@ -92,7 +95,7 @@ const WebView = ({route}) => {
         source={{uri: url}}
         onError={() => setError(true)}
         onLoadEnd={() => setLoading(false)}
-        style={{flex: 1, backgroundColor: colors.background}}
+        style={{flex: 1, backgroundColor: activeBg}}
         injectedJavaScript={injectedJS}
         injectedJavaScriptBeforeContentLoaded={injectedJS}
         onMessage={() => {}}

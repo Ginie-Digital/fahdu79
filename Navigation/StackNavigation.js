@@ -674,18 +674,22 @@ const StackNavigation = () => {
             <Stack.Screen
               name="webView"
               component={WebView}
-              options={({ route }) => ({
-                title: route.params.title,
-                headerTitleStyle: {
-                  fontFamily: 'Rubik-SemiBold',
-                  fontSize: Math.round(responsiveFontSize(2.7)),
-                },
-                headerShadowVisible: false,
-                headerStyle: { backgroundColor: colors.headerBg },
-                animation: 'slide_from_right',
-                headerTintColor: colors.headerTint,
-                headerBackTitleVisible: false,
-              })}
+              options={({ route }) => {
+                const isRefundOrDark = route.params.type === 'refund' || isDark;
+                return {
+                  title: route.params.title,
+                  headerTitleStyle: {
+                    fontFamily: 'Rubik-SemiBold',
+                    fontSize: Math.round(responsiveFontSize(2.7)),
+                    color: isRefundOrDark ? '#FFFFFF' : colors.headerText,
+                  },
+                  headerShadowVisible: false,
+                  headerStyle: { backgroundColor: isRefundOrDark ? '#121212' : colors.headerBg },
+                  animation: 'slide_from_right',
+                  headerTintColor: isRefundOrDark ? '#FFFFFF' : colors.headerTint,
+                  headerBackTitleVisible: false,
+                };
+              }}
             />
 
             <Stack.Screen
@@ -747,11 +751,12 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
+                  color: isDark ? '#FFFFFF' : colors.headerText,
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: colors.headerBg },
+                headerStyle: { backgroundColor: isDark ? '#121212' : colors.headerBg },
                 animation: 'slide_from_bottom',
-                headerTintColor: colors.headerTint,
+                headerTintColor: isDark ? '#FFFFFF' : colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -764,11 +769,12 @@ const StackNavigation = () => {
                 headerTitleStyle: {
                   fontFamily: 'Rubik-SemiBold',
                   fontSize: Math.round(responsiveFontSize(2.7)),
+                  color: isDark ? '#FFFFFF' : colors.headerText,
                 },
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: colors.headerBg },
+                headerStyle: { backgroundColor: isDark ? '#121212' : colors.headerBg },
                 animation: 'slide_from_right',
-                headerTintColor: colors.headerTint,
+                headerTintColor: isDark ? '#FFFFFF' : colors.headerTint,
                 headerBackTitleVisible: false,
               })}
             />
@@ -830,7 +836,7 @@ const StackNavigation = () => {
               options={{
                 title: 'Posts',
 
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3) },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(2, 2.3) },
 
                 headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
@@ -871,7 +877,7 @@ const StackNavigation = () => {
               options={{
                 title: 'Posts',
 
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3) },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(2, 2.3) },
 
                 headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
@@ -1003,7 +1009,7 @@ const StackNavigation = () => {
               component={OtherProfileNew}
               options={{
                 headerTitle: 'Profile',
-                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: Math.round(responsiveFontSize(2.7)), fontSize: nTwinsFont(2, 2.3), color: colors.headerText },
+                headerTitleStyle: { fontFamily: 'Rubik-SemiBold', fontSize: nTwinsFont(2, 2.3), color: colors.headerText },
                 headerLeft: () => <Back tintColor={colors.headerTint} />,
                 headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,

@@ -33,14 +33,16 @@ const DeleteAccountModal = ({deleteAccountApi}) => {
           dialogStyle={[
             styles.dialog,
             {
-              backgroundColor: colors.background,
-              borderColor: isDark ? colors.accent : '#1E1E1E',
+              backgroundColor: isDark ? '#121212' : '#FFFFFF',
+              borderWidth: isDark ? 0 : 2,
+              borderColor: isDark ? 'transparent' : '#1E1E1E',
+              borderStyle: isDark ? 'solid' : 'dashed',
             },
           ]}
           contentStyle={{padding: 0, paddingTop: 0}}>
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
-              <Text style={[styles.textYesNo, {color: colors.text}]} numberOfLines={1}>
+              <Text style={[styles.textYesNo, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]} numberOfLines={2}>
                 Permanently delete my account ?
               </Text>
 
@@ -50,8 +52,10 @@ const DeleteAccountModal = ({deleteAccountApi}) => {
                   style={({pressed}) => [
                     styles.button,
                     styles.yesButton,
-                    {borderColor: isDark ? colors.accentBorder : '#1E1E1E'},
-                    pressed && {backgroundColor: isDark ? '#E5975F' : '#FFC399'},
+                    {
+                      borderColor: isDark ? '#FF7819' : '#1E1E1E',
+                    },
+                    pressed && {backgroundColor: '#FFC399'},
                   ]}>
                   <Text style={[styles.buttonText, {color: '#1E1E1E'}]}>Delete</Text>
                 </Pressable>
@@ -62,12 +66,12 @@ const DeleteAccountModal = ({deleteAccountApi}) => {
                     styles.button,
                     styles.noButton,
                     {
-                      backgroundColor: isDark ? colors.card : '#fff',
-                      borderColor: isDark ? colors.border : '#1E1E1E',
+                      backgroundColor: isDark ? '#171717' : '#FFFFFF',
+                      borderColor: isDark ? '#1F1F1F' : '#1E1E1E',
                     },
-                    pressed && {backgroundColor: isDark ? colors.pressed : '#FFF3EB'},
+                    pressed && {backgroundColor: isDark ? '#2A2A2A' : '#FFF3EB'},
                   ]}>
-                  <Text style={[styles.buttonText, {color: colors.text}]}>Cancel</Text>
+                  <Text style={[styles.buttonText, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]}>Cancel</Text>
                 </Pressable>
               </View>
             </View>
@@ -80,13 +84,11 @@ const DeleteAccountModal = ({deleteAccountApi}) => {
 
 const styles = StyleSheet.create({
   dialog: {
-    borderRadius: responsiveWidth(5.33),
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    borderRadius: 24,
     alignSelf: 'center',
     padding: 32,
-    width: responsiveWidth(88), // Adjusted for consistency
-    height: responsiveWidth(44), // Adjusted for consistency
+    width: 345,
+    height: 188,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -110,24 +112,26 @@ const styles = StyleSheet.create({
   },
   textYesNo: {
     fontFamily: 'Rubik-SemiBold',
-    fontSize: FONT_SIZES['16'], // Adjust font size if needed
+    fontSize: 20,
+    lineHeight: 26,
     textAlign: 'center',
-    width: '100%', // Ensure the text container takes full width
-    flexShrink: 1, // Prevent text from wrapping
+    width: 281,
+    height: 52,
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: Platform.OS === 'ios' ? 4 : 0,
-    width: '100%',
-    marginTop: Platform.OS === 'ios' ? 16 : 12,
+    gap: 16,
+    width: 281,
+    height: 48,
+    marginTop: 24,
+    justifyContent: 'space-between',
   },
   button: {
-    width: responsiveWidth(34.5), // Adjusted for consistency
+    width: 132.5,
     height: 48,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: Platform.OS === 'android' ? 6 : 8,
     borderWidth: 1.5,
   },
   yesButton: {

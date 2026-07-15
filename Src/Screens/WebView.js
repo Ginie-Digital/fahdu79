@@ -2,8 +2,10 @@ import {StyleSheet, Text, View, ActivityIndicator} from 'react-native';
 import React, {useState} from 'react';
 import {responsiveWidth} from 'react-native-responsive-dimensions';
 import {WebView as WV} from 'react-native-webview';
+import {useAppTheme} from '../Hook/useAppTheme';
 
 const WebView = ({route}) => {
+  const {colors, isDark} = useAppTheme();
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -19,27 +21,81 @@ const WebView = ({route}) => {
     url = 'https://fahdu.com/refund-policy/';
   }
 
+  // Determine injected CSS based on active theme
+  const injectedCSS = isDark
+    ? `
+      html, body, p, span, div, section, article, main, header, footer, h1, h2, h3, h4, h5, h6, li, ul, ol, table, tbody, tr, td, th {
+        background-color: transparent !important;
+        color: #FFFFFF !important;
+      }
+      html, body, #page, .site {
+        background-color: #0D0D0D !important;
+      }
+      a {
+        color: #FFA86B !important;
+      }
+      .button-talk {
+        background-color: #1A1A1A !important;
+        border: 2px solid #FFA86B !important;
+        box-shadow: 2px 2px 0 0 #FF7819, 4px 4px 0 0 #000000 !important;
+      }
+      .button-talk-text {
+        color: #FFFFFF !important;
+      }
+      .fahdu_siteheader, .site_footer, .ditted_pattern, .download-btn, .toggle_button, .back_drop {
+        display: none !important;
+      }
+      section.account_delete_sec {
+        margin: 10px !important;
+        padding: 15px !important;
+        border: none !important;
+      }
+    `
+    : `
+      .fahdu_siteheader, .site_footer, .ditted_pattern, .download-btn, .toggle_button, .back_drop {
+        display: none !important;
+      }
+      section.account_delete_sec {
+        margin: 10px !important;
+        padding: 15px !important;
+        border: none !important;
+      }
+    `;
+
+  const injectedJS = `
+    (function() {
+      var style = document.createElement('style');
+      style.type = 'text/css';
+      style.innerHTML = \`${injectedCSS.replace(/\n/g, ' ')}\`;
+      document.head.appendChild(style);
+    })();
+    true;
+  `;
+
   // If no URL found or an error occurred, show error view
   if (!url || error) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <Text style={styles.errorText}>There was some error</Text>
+      <View style={[styles.container, styles.center, {backgroundColor: colors.background}]}>
+        <Text style={[styles.errorText, {color: colors.text}]}>There was some error</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background, borderTopColor: isDark ? '#2A2A2A' : '#282828'}]}>
       {loading && (
-        <View style={[styles.loaderContainer, styles.center]}>
-          <ActivityIndicator size="large" color="#282828" />
+        <View style={[styles.loaderContainer, styles.center, {backgroundColor: colors.background}]}>
+          <ActivityIndicator size="large" color={colors.accent || '#FFA86B'} />
         </View>
       )}
       <WV
         source={{uri: url}}
         onError={() => setError(true)}
         onLoadEnd={() => setLoading(false)}
-        style={{flex: 1}}
+        style={{flex: 1, backgroundColor: colors.background}}
+        injectedJavaScript={injectedJS}
+        injectedJavaScriptBeforeContentLoaded={injectedJS}
+        onMessage={() => {}}
       />
     </View>
   );
@@ -64,7 +120,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'white', 
+    backgroundColor: 'white',
     zIndex: 1,
   },
   errorText: {

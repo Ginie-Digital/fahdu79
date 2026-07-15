@@ -106,7 +106,15 @@ export default function DiscoverScreen() {
             style={[styles.tab, tab === 'New' && { borderColor: isDark ? '#FF7819' : '#1e1e1e', backgroundColor: '#FFA86B', borderWidth: WIDTH_SIZES['1.5'] }]}
             onPress={() => setTab('New')}
           >
-            <Image source={require('../../Assets/Images/new_creator_icon.png')} style={styles.tabIcon} contentFit="contain" />
+            <Image
+              source={
+                tab === 'New'
+                  ? require('../../Assets/Images/new_creator_icon.png')
+                  : require('../../Assets/Images/new_creator_unfocused_icon.png')
+              }
+              style={styles.tabIcon}
+              contentFit="contain"
+            />
             <Text style={[styles.tabLabel, { color: isDark ? colors.textSecondary : '#999' }, tab === 'New' && styles.tabLabelActive]}>New</Text>
           </TouchableOpacity>
 

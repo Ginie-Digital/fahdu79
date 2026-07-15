@@ -235,6 +235,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AnimatedButton from '../../Components/AnimatedButton';
 import DeleteAccountModal from '../LoginSignup/DeleteAccountModal';
 import { toggleAccountDeleteModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const data = [
   {
@@ -264,6 +265,7 @@ const data = [
 ];
 
 const DeleteAccount = () => {
+  const {colors, isDark} = useAppTheme();
   const [read, setRead] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -290,69 +292,33 @@ const DeleteAccount = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background, borderColor: colors.border}]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: responsiveWidth(30)}}>
         <FlatList
           scrollEnabled={false}
           data={data}
           renderItem={({item, index}) => (
             <View>
-              <Text style={styles.normalHeading}>{`${index + 1}. ${item.heading}`}</Text>
-              <Text style={styles.description}>{item.desc}</Text>
+              <Text style={[styles.normalHeading, {color: colors.text}]}>{`${index + 1}. ${item.heading}`}</Text>
+              <Text style={[styles.description, {color: colors.textSecondary}]}>{item.desc}</Text>
             </View>
           )}
           ItemSeparatorComponent={() => <View style={{height: responsiveWidth(6)}} />}
         />
 
-        {/* Checkbox-like Switch */}
-        {/* <View style={styles.card}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: responsiveWidth(3) }}>
-            <Switch
-              trackColor={{ false: "#767577", true: "#f89f7b" }}
-              thumbColor={read ? "#f89f7b" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={() => setRead(!read)}
-              value={read}
-            />
-            <Text style={styles.headingRead}>I accept terms & conditions</Text>
-          </View>
-        </View> */}
-
         <Pressable onPress={() => setRead(!read)} style={styles.checkboxContainer}>
-          <View style={[styles.checkbox, {backgroundColor: read ? '#f89f7b' : '#fff'}]}>{read && <Icon name="check" size={16} color="#fff" />}</View>
-          <Text style={styles.checkboxLabel}>I accept terms & conditions</Text>
+          <View style={[styles.checkbox, {borderColor: isDark ? colors.text : '#1e1e1e', backgroundColor: read ? '#f89f7b' : (isDark ? colors.card : '#fff')}]}>
+            {read && <Icon name="check" size={16} color="#fff" />}
+          </View>
+          <Text style={[styles.checkboxLabel, {color: colors.text}]}>I accept terms & conditions</Text>
         </Pressable>
 
         {/* Leave space here for custom button */}
 
         <View style={{width: '98%'}}>
-          <AnimatedButton title={'Delete my Account'} buttonMargin={8} onPress={onPress} />
+          <AnimatedButton title={'Delete my Account'} buttonMargin={8} onPress={onPress} isDark={isDark} />
         </View>
       </ScrollView>
-
-      {/* <ConfirmDialog
-        title="Delete account permanently"
-        message="Are you sure about that?"
-        visible={modalVisible}
-        onTouchOutside={() => setModalVisible(false)} 
-        titleStyle={{fontFamily: 'Rubik-Medium'}}
-        messageStyle={{fontFamily: 'Rubik-Regular'}}
-        dialogStyle={{borderRadius: responsiveWidth(2)}}
-        positiveButton={{
-          title: 'YES',
-          onPress: () => {
-            setModalVisible(false);
-            deleteAccountApi();
-          },
-        }}
-        negativeButton={{
-          title: 'NO',
-          onPress: () => setModalVisible(false),
-          titleStyle: {color: 'red'},
-        }}
-      />
-
- */}
 
       <DeleteAccountModal deleteAccountApi={deleteAccountApi} />
     </View>
@@ -364,14 +330,11 @@ export default DeleteAccount;
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: responsiveWidth(4),
-    borderColor: '#1e1e1e',
     flex: 1,
-    backgroundColor: '#fff',
     paddingTop: responsiveWidth(4),
   },
   titleText: {
     fontFamily: 'Rubik-Bold',
-    color: '#1e1e1e',
     fontSize: responsiveFontSize(2.5),
     textAlign: 'center',
     marginBottom: responsiveWidth(8),
@@ -379,17 +342,14 @@ const styles = StyleSheet.create({
   normalHeading: {
     fontSize: 16,
     fontFamily: 'Rubik-SemiBold',
-    color: '#000',
     marginBottom: responsiveWidth(1),
   },
   description: {
     fontSize: 14,
     fontFamily: 'Rubik-Regular',
-    color: '#1e1e1e',
     lineHeight: responsiveFontSize(2.2),
   },
   card: {
-    backgroundColor: '#fff',
     paddingHorizontal: responsiveWidth(4),
     paddingVertical: responsiveWidth(4),
     flexDirection: 'row',
@@ -399,11 +359,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginTop: responsiveWidth(8),
     borderWidth: 1,
-    borderColor: '#f1f1f1',
   },
   headingRead: {
     fontFamily: 'Rubik-Medium',
-    color: '#1e1e1e',
     fontSize: responsiveFontSize(1.8),
   },
 
@@ -419,13 +377,11 @@ const styles = StyleSheet.create({
     width: responsiveWidth(5),
     borderRadius: responsiveWidth(1),
     borderWidth: WIDTH_SIZES['1.5'],
-    borderColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxLabel: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#1e1e1e',
   },
 });

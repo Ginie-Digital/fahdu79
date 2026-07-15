@@ -8,8 +8,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import {toggleAccountDeleteModal, toggleAreYou} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {FONT_SIZES} from '../../../DesiginData/Utility';
 import {useAreYouACreatorNotificationMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const DeleteAccountModal = ({deleteAccountApi}) => {
+  const {colors, isDark} = useAppTheme();
   const visible = useSelector(state => state.hideShow.visibility.accountDeleteModal);
 
   const dispatch = useDispatch();
@@ -25,21 +27,47 @@ const DeleteAccountModal = ({deleteAccountApi}) => {
   return (
     visible && (
       <View style={styles.overlay}>
-        <BlurView intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{padding: 0, paddingTop: 0}}>
+        <BlurView intensity={15} tint={isDark ? 'dark' : 'light'} style={styles.blurBackground} />
+        <Dialog
+          visible={visible}
+          dialogStyle={[
+            styles.dialog,
+            {
+              backgroundColor: colors.background,
+              borderColor: isDark ? colors.accent : '#1E1E1E',
+            },
+          ]}
+          contentStyle={{padding: 0, paddingTop: 0}}>
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
-              <Text style={styles.textYesNo} numberOfLines={1}>
+              <Text style={[styles.textYesNo, {color: colors.text}]} numberOfLines={1}>
                 Permanently delete my account ?
               </Text>
 
               <View style={styles.buttonContainer}>
-                <Pressable onPress={() => handleButtonPress(true)} style={({pressed}) => [styles.button, styles.yesButton, pressed && {backgroundColor: '#FFC399'}]}>
-                  <Text style={styles.buttonText}>Delete</Text>
+                <Pressable
+                  onPress={() => handleButtonPress(true)}
+                  style={({pressed}) => [
+                    styles.button,
+                    styles.yesButton,
+                    {borderColor: isDark ? colors.accentBorder : '#1E1E1E'},
+                    pressed && {backgroundColor: isDark ? '#E5975F' : '#FFC399'},
+                  ]}>
+                  <Text style={[styles.buttonText, {color: '#1E1E1E'}]}>Delete</Text>
                 </Pressable>
 
-                <Pressable onPress={() => handleButtonPress(false)} style={({pressed}) => [styles.button, styles.noButton, pressed && {backgroundColor: '#FFF3EB'}]}>
-                  <Text style={styles.buttonText}>Cancel</Text>
+                <Pressable
+                  onPress={() => handleButtonPress(false)}
+                  style={({pressed}) => [
+                    styles.button,
+                    styles.noButton,
+                    {
+                      backgroundColor: isDark ? colors.card : '#fff',
+                      borderColor: isDark ? colors.border : '#1E1E1E',
+                    },
+                    pressed && {backgroundColor: isDark ? colors.pressed : '#FFF3EB'},
+                  ]}>
+                  <Text style={[styles.buttonText, {color: colors.text}]}>Cancel</Text>
                 </Pressable>
               </View>
             </View>
@@ -57,10 +85,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     alignSelf: 'center',
     padding: 32,
-    backgroundColor: '#fff',
     width: responsiveWidth(88), // Adjusted for consistency
     height: responsiveWidth(44), // Adjusted for consistency
-    borderColor: '#1e1e1e',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -86,7 +112,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-SemiBold',
     fontSize: FONT_SIZES['16'], // Adjust font size if needed
     textAlign: 'center',
-    color: '#1e1e1e',
     width: '100%', // Ensure the text container takes full width
     flexShrink: 1, // Prevent text from wrapping
   },
@@ -104,18 +129,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: Platform.OS === 'android' ? 6 : 8,
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
   },
   yesButton: {
     backgroundColor: '#ffa86b',
   },
   noButton: {
-    backgroundColor: '#fff',
   },
   buttonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#1e1e1e',
   },
 });
 

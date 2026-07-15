@@ -10,9 +10,10 @@ import { useHelpCenterRequestMutation, useLazyGetSupportRoomIdQuery } from '../.
 import { toggleHelpCenterModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import { LoginPageErrors } from '../../Components/ErrorSnacks';
 import { useNavigation } from '@react-navigation/native';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const HelpCenterModal = ({ visible , phone }) => {
-
+  const {colors, isDark} = useAppTheme();
   console.log(phone)
 
   const dispatch = useDispatch();
@@ -110,7 +111,7 @@ const HelpCenterModal = ({ visible , phone }) => {
   return (
     visible && (
       <View style={styles.overlay}>
-        <BlurView intensity={15} tint="dark" style={styles.blurBackground} experimentalBlurMethod='dimezisBlurView'/>
+        <BlurView intensity={15} tint={isDark ? 'dark' : 'light'} style={styles.blurBackground} experimentalBlurMethod='dimezisBlurView'/>
         <Dialog
           visible={visible}
           dialogStyle={[
@@ -119,6 +120,8 @@ const HelpCenterModal = ({ visible , phone }) => {
               height: dialogHeight + WIDTH_SIZES[16]|| undefined, // Use undefined instead of 'auto'
               minHeight: responsiveHeight(30), // Ensure minimum height
               maxHeight: responsiveHeight(80), // Ensure doesn't exceed screen
+              backgroundColor: isDark ? '#0D0D0D' : '#FFFFFF',
+              borderColor: '#1E1E1E',
             }
           ]}
           contentStyle={{ padding: 0 }}
@@ -135,26 +138,30 @@ const HelpCenterModal = ({ visible , phone }) => {
               });
             }}
           >
-            <Text style={styles.heading}>Select Your Preferred Help Option:</Text>
+            <Text style={[styles.heading, {color: isDark ? '#FFFFFF' : '#1e1e1e'}]}>Select Your Preferred Help Option:</Text>
 
             {options.map((option) => (
               <TouchableOpacity
                 key={option.label}
                 style={[
                   styles.optionButton,
-                  selected === option.label && styles.selectedOption,
+                  {
+                    backgroundColor: isDark ? '#1A1A1A' : (selected === option.label ? '#FF9E65' : '#FFFFFF'),
+                    borderColor: isDark ? '#2A2A2A' : '#1e1e1e',
+                  },
+                  selected === option.label && isDark && styles.selectedOption,
                 ]}
                 onPress={() => handleApi(option.label, option.title)}
               >
                 <Feather
                   name={option.icon}
                   size={responsiveFontSize(2.5)}
-                  color={selected === option.label ? '#1e1e1e' : '#FFFFFF'}
+                  color={isDark ? (selected === option.label ? '#1e1e1e' : '#FFFFFF') : '#1e1e1e'}
                     />
                 <Text
                   style={[
                     styles.optionText,
-                    selected === option.label && styles.selectedText,
+                    {color: isDark ? (selected === option.label ? '#1e1e1e' : '#FFFFFF') : '#1e1e1e'},
                   ]}
                 >
                   {option.label}
@@ -177,9 +184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 32,
     paddingBottom: 32,
-    backgroundColor: '#0D0D0D',
     width: nTwins(88, 92),
-    borderColor: '#1E1E1E',
   },
   content: {
     alignItems: 'center',
@@ -189,7 +194,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-SemiBold',
     fontSize: FONT_SIZES[16],
     textAlign: 'center',
-    color: '#FFFFFF',
   },
   optionButton: {
     flexDirection: 'row',
@@ -198,8 +202,6 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: responsiveWidth(5),
     borderWidth: 2,
-    borderColor: '#2A2A2A',
-    backgroundColor: '#1A1A1A',
     borderRadius: WIDTH_SIZES[14],
     marginVertical: responsiveWidth(2),
   },
@@ -211,10 +213,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.2),
     marginLeft: responsiveWidth(3),
-    color: '#FFFFFF',
-  },
-  selectedText: {
-    color: '#1e1e1e',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

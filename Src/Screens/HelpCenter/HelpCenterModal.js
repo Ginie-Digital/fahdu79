@@ -78,7 +78,7 @@ const HelpCenterModal = ({ visible , phone }) => {
   const navigateToSupportChat = async () => {
     try {
       const { data, error } = await getSupportRoomId({ token });
-
+ 
       console.log(error)
   
       if (error || !data?.data?.supportRoomId) {
@@ -110,7 +110,7 @@ const HelpCenterModal = ({ visible , phone }) => {
   return (
     visible && (
       <View style={styles.overlay}>
-        <BlurView intensity={15} style={styles.blurBackground} experimentalBlurMethod='dimezisBlurView'/>
+        <BlurView intensity={15} tint="dark" style={styles.blurBackground} experimentalBlurMethod='dimezisBlurView'/>
         <Dialog
           visible={visible}
           dialogStyle={[
@@ -149,7 +149,7 @@ const HelpCenterModal = ({ visible , phone }) => {
                 <Feather
                   name={option.icon}
                   size={responsiveFontSize(2.5)}
-                  color={'#1e1e1e'}
+                  color={selected === option.label ? '#1e1e1e' : '#FFFFFF'}
                     />
                 <Text
                   style={[
@@ -177,9 +177,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingTop: 32,
     paddingBottom: 32,
-    backgroundColor: '#fff',
+    backgroundColor: '#0D0D0D',
     width: nTwins(88, 92),
-    borderColor: '#1e1e1e',
+    borderColor: '#1E1E1E',
   },
   content: {
     alignItems: 'center',
@@ -189,8 +189,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik-SemiBold',
     fontSize: FONT_SIZES[16],
     textAlign: 'center',
-    // marginBottom: responsiveWidth(4),
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   optionButton: {
     flexDirection: 'row',
@@ -199,18 +198,20 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: responsiveWidth(5),
     borderWidth: 2,
-    borderColor: '#1e1e1e',
+    borderColor: '#2A2A2A',
+    backgroundColor: '#1A1A1A',
     borderRadius: WIDTH_SIZES[14],
     marginVertical: responsiveWidth(2),
   },
   selectedOption: {
     backgroundColor: '#FF9E65',
+    borderColor: '#FF7819',
   },
   optionText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.2),
     marginLeft: responsiveWidth(3),
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   selectedText: {
     color: '#1e1e1e',

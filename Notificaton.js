@@ -1,4 +1,4 @@
-import notifee, {AuthorizationStatus} from '@notifee/react-native';
+import notifee, {AuthorizationStatus, AndroidCategory} from '@notifee/react-native';
 import {AndroidColor, AndroidImportance, AndroidStyle, AndroidLaunchActivityFlag} from '@notifee/react-native/dist/types/NotificationAndroid';
 import {Alert} from 'react-native';
 
@@ -565,6 +565,81 @@ export async function showMentionNotification(remoteMessage) {
     console.log('✅ Mention notification displayed');
   } catch (error) {
     console.log('❌ Error displaying mention notification:', error);
+  }
+}
+
+export async function showIncomingCallNotification(callDetails) {
+  try {
+    const channelId = await notifee.createChannel({
+      id: 'incoming_calls',
+      name: 'Incoming Calls',
+      importance: AndroidImportance.HIGH,
+      sound: 'call',
+      vibration: true,
+      vibrationPattern: [300, 500, 300, 500],
+    });
+
+    await notifee.displayNotification({
+      id: 'incoming_call_' + callDetails.roomId,
+      title: callDetails.displayName || callDetails.name || 'Incoming Call',
+      body: `${callDetails.callType === 'video' ? 'Video' : 'Audio'} call in progress...`,
+      data: {
+        roomId: String(callDetails.roomId || ''),
+        callType: String(callDetails.callType || ''),
+        senderId: String(callDetails.senderId || callDetails.callerId || ''),
+        displayName: String(callDetails.displayName || callDetails.name || ''),
+        profileImage: String(callDetails.profileImage || callDetails.profileImageUrl || ''),
+        callId: String(callDetails.callId || ''),
+        type: 'incoming_call',
+      },
+      android: {
+        channelId,
+        smallIcon: 'icon_notification',
+        largeIcon: callDetails.profileImage || callDetails.profileImageUrl || undefined,
+        circularLargeIcon: true,
+        importance: AndroidImportance.HIGH,
+        category: AndroidCategory.CALL,
+        ongoing: true,
+        autoCancel: false,
+        color: '#E8210C',
+        fullScreenAction: {
+          id: 'default',
+          launchActivity: 'default',
+        },
+        pressAction: {
+          id: 'default',
+          launchActivity: 'default',
+        },
+        actions: [
+          {
+            title: 'Decline',
+            pressAction: {
+              id: 'decline_call',
+              launchActivity: 'default',
+            },
+          },
+          {
+            title: 'Accept',
+            pressAction: {
+              id: 'accept_call',
+              launchActivity: 'default',
+            },
+          },
+        ],
+      },
+    });
+    console.log('✅ Notifee incoming call notification displayed for room:', callDetails.roomId);
+  } catch (error) {
+    console.log('❌ Error displaying Notifee incoming call notification:', error);
+  }
+}
+
+export async function cancelIncomingCallNotification(roomId) {
+  try {
+    await notifee.cancelNotification('incoming_call_' + roomId);
+    console.log('✅ Cancelled call notification for room:', roomId);
+  } catch (error) {
+    console.log('❌ Error cancelling call notification:', error);
   }
 }
 

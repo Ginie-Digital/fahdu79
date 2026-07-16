@@ -3,6 +3,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import StackNavigation from './Navigation/StackNavigation';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import socketServcies from './SocketServices';
 import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission, onNotificationOpenedApp, getInitialNotification as getFirebaseInitialNotification } from '@react-native-firebase/messaging';
 import {dismissProgressNotification, displayNotificationProgressIndicator, showMentionNotification, showOthersCategoryNotification, showSubscriptionNotification, showCallRelatedNotification, showCallReminderNotification, liveStreamNotification, onDisplayNotification, showPostInteractionNotification} from './Notificaton';
@@ -10,6 +11,7 @@ import { enableNotificationModal, resetAllModal, setLatestTip, setUnReadChatIcon
 import { authLogout, currentUserInformation, token as memoizedToken } from './Redux/Slices/NormalSlices/AuthSlice';
 import { markRoomAsProcessed, markRoomAsAccepted, clearProcessedRoomId } from './Redux/Slices/NormalSlices/Call/CallSlice';
 import { useSendFcmTokenMutation } from './Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import IncomingCallService from './Src/Services/IncomingCallService';
 
 import notifee, { EventType } from '@notifee/react-native';
 
@@ -102,10 +104,75 @@ const Main = () => {
     dispatch(toggleCallAccepted({ status: false }));
   }, []);
 
+  // Initialize iOS VoIP / CallKit incoming call service once
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    let cleanup;
+    try {
+      IncomingCallService.configure();
+      cleanup = IncomingCallService.registerVoipPushes();
+      console.log('[IncomingCallService] iOS incoming call service initialized');
+    } catch (error) {
+      console.warn('[IncomingCallService] initialization failed:', error?.message || error);
+    }
+
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
+
   // Settle any stuck calls on cold start (handles force-quit scenarios)
   const hasSettledRef = useRef(false);
+  const pendingCallDataRef = useRef(null);
+
+  const handlePendingCallStartup = useCallback(async (callData) => {
+    if (!callData?.roomId) return;
+
+    if (callData.callAccepted) {
+      console.log('📱 [Main:Startup] Call was accepted via notification action, routing directly to call screen');
+      navigate(callData.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+        roomId: callData.roomId,
+        name: callData.callerName || callData.displayName || 'Call',
+        callType: callData.callType,
+        callerId: callData.senderId,
+        profileImageUrl: callData.profileImage,
+        callAccepted: true,
+      });
+    } else {
+      console.log('📱 [Main:Startup] Showing incoming call UI');
+      navigate('incomingCall', {
+        name: callData.callerName || callData.displayName || 'Call',
+        profileImageUrl: callData.profileImage,
+        roomId: callData.roomId,
+        callType: callData.callType,
+        callerId: callData.senderId,
+        callId: callData.callId,
+      });
+    }
+  }, []);
+
   useEffect(() => {
-    if (token && !hasSettledRef.current) {
+    const checkPendingCallOnStartup = async () => {
+      try {
+        const raw = await AsyncStorage.getItem('pendingCall');
+        if (raw) {
+          const callData = JSON.parse(raw);
+          console.log('📱 [Main:Startup] Found pending call on launch:', callData);
+          pendingCallDataRef.current = callData;
+
+          if (token) {
+            await AsyncStorage.removeItem('pendingCall');
+            await handlePendingCallStartup(callData);
+            pendingCallDataRef.current = null;
+          }
+        }
+      } catch (error) {
+        console.error('❌ [Main:Startup] Error processing pending call startup check:', error);
+      }
+    };
+
+    if (!hasSettledRef.current) {
       hasSettledRef.current = true;
       const settleCallOnStartup = async () => {
         try {
@@ -121,9 +188,27 @@ const Main = () => {
           console.log('❌ [Settle] Failed:', error?.response?.data || error?.message);
         }
       };
+
       settleCallOnStartup();
+      checkPendingCallOnStartup();
     }
-  }, [token]);
+  }, [token, handlePendingCallStartup]);
+
+  useEffect(() => {
+    const tryPendingCallAfterLogin = async () => {
+      if (!token || !pendingCallDataRef.current) return;
+      const callData = pendingCallDataRef.current;
+      pendingCallDataRef.current = null;
+      try {
+        await AsyncStorage.removeItem('pendingCall');
+      } catch (err) {
+        console.warn('⚠️ [Main:Startup] Failed to remove pendingCall after login:', err?.message || err);
+      }
+      await handlePendingCallStartup(callData);
+    };
+
+    tryPendingCallAfterLogin();
+  }, [token, handlePendingCallStartup]);
 
   // Unified incoming call handler to prevent duplicates (Socket vs FCM)
   // Uses callId from backend (same across Socket & FCM) for reliable deduplication
@@ -151,6 +236,14 @@ const Main = () => {
     }
 
     console.log(`✅ [Main:IncomingCall] ALLOWED: Processing incoming call from ${source}`);
+
+    if (Platform.OS === 'ios') {
+      console.log('📱 [Main:IncomingCall] Routing iOS call through IncomingCallService');
+      IncomingCallService.showIncomingCall(callData).catch(err => {
+        console.warn('[Main:IncomingCall] IncomingCallService.showIncomingCall failed:', err?.message || err);
+      });
+      return;
+    }
 
     try {
       navigate('incomingCall', {
@@ -746,6 +839,47 @@ const Main = () => {
         } catch (e) {
           console.log('Error navigating to CallRequests on bootstrap (call_request)', e?.message);
         }
+      } else if (initialNotification?.notification?.data?.type === 'incoming_call' || initialNotification?.notification?.data?.type === 'call') {
+        console.log('📌 [Bootstrap] Incoming call notification tapped from killed state');
+        const callInfo = initialNotification?.notification?.data;
+        const actionId = initialNotification?.pressAction?.id || initialNotification?.notification?.pressAction?.id;
+
+        if (actionId === 'accept_call') {
+          console.log('📌 [Bootstrap] Incoming call accept action detected, routing to active call screen');
+          try {
+            navigate(callInfo?.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+              roomId: callInfo?.roomId,
+              name: callInfo?.displayName || callInfo?.callerName || 'Call',
+              callType: callInfo?.callType,
+              callerId: callInfo?.senderId,
+              profileImageUrl: callInfo?.profileImage,
+              callAccepted: true,
+            });
+          } catch (e) {
+            console.log('Error navigating to call screen on bootstrap accept', e?.message);
+          }
+        } else if (actionId === 'decline_call') {
+          console.log('📌 [Bootstrap] Incoming call decline action detected, clearing pending call');
+          await AsyncStorage.removeItem('pendingCall');
+          try {
+            navigate('home');
+          } catch (e) {
+            console.log('Error navigating home on bootstrap decline', e?.message);
+          }
+        } else {
+          try {
+            navigate('incomingCall', {
+              name: callInfo?.displayName || callInfo?.callerName || 'Call',
+              profileImageUrl: callInfo?.profileImage,
+              roomId: callInfo?.roomId,
+              callType: callInfo?.callType,
+              callerId: callInfo?.senderId,
+              callId: callInfo?.callId,
+            });
+          } catch (e) {
+            console.log('Error navigating to incomingCall on bootstrap', e?.message);
+          }
+        }
       } else if (initialNotification?.notification?.data?.type === 'others') {
         console.log('📌 [Bootstrap] Others notification tapped from killed state');
         const link = initialNotification?.notification?.data?.link;
@@ -800,6 +934,27 @@ const Main = () => {
             name: content.username,
             profileImageUrl: content.profile_image,
           });
+        } else if (type === 'call' || type === 'incoming_call') {
+          console.log('📌 [Main:Firebase] Incoming call notification tapped from native notification');
+          if (content?.callAccepted) {
+            navigate(content?.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+              roomId: content.roomId,
+              name: content.displayName || content.callerName || 'Call',
+              callType: content.callType,
+              callerId: content.senderId,
+              profileImageUrl: content.profileImage,
+              callAccepted: true,
+            });
+          } else {
+            navigate('incomingCall', {
+              name: content.displayName || content.callerName || 'Call',
+              profileImageUrl: content.profileImage,
+              roomId: content.roomId,
+              callType: content.callType,
+              callerId: content.senderId,
+              callId: content.callId,
+            });
+          }
         } else if (type === 'call_accepted' || type === 'call_request_accepted') {
           navigate('CallRequests', { activeTab: 'scheduled' });
         } else if (type === 'call_request') {
@@ -922,9 +1077,42 @@ const Main = () => {
       }
 
       // Handle notification action press
+      else if (type === EventType.ACTION_PRESS) {
+        const pressActionId = detail?.pressAction?.id;
+        const callData = detail?.notification?.data;
+        console.log(`📌 [Main:onForegroundEvent] ACTION_PRESS - actionId: ${pressActionId}`, callData);
+
+        if (pressActionId === 'accept_call' && callData?.roomId) {
+          await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
+          await AsyncStorage.setItem(
+            'pendingCall',
+            JSON.stringify({
+              roomId: callData.roomId,
+              callerName: callData.displayName,
+              callType: callData.callType,
+              senderId: callData.senderId,
+              profileImage: callData.profileImage,
+              callId: callData.callId,
+              callAccepted: true,
+            }),
+          );
+          await notifee.cancelNotification(detail.notification.id);
+          navigate(callData.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+            roomId: callData.roomId,
+            name: callData.displayName || callData.callerName || 'Call',
+            callType: callData.callType,
+            callerId: callData.senderId,
+            profileImageUrl: callData.profileImage,
+            callAccepted: true,
+          });
+        } else if (pressActionId === 'decline_call' && callData?.roomId) {
+          await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
+          await AsyncStorage.removeItem('pendingCall');
+          await notifee.cancelNotification(detail.notification.id);
+        }
 
       // Handle notification dismissal
-      else if (type === EventType.DISMISSED) {
+      } else if (type === EventType.DISMISSED) {
         console.log('Notification dismissed');
       }
     });

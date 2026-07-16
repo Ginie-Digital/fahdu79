@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import RingtoneManager from './RingtoneManager';
-import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, BackHandler, StatusBar, Pressable, findNodeHandle, Animated as RNAnimated, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, BackHandler, StatusBar, Pressable, findNodeHandle, Animated as RNAnimated, ActivityIndicator, Dimensions, AppState } from 'react-native';
 import { responsiveHeight, responsiveWidth, responsiveFontSize } from 'react-native-responsive-dimensions';
 import Back from '../../../Assets/svg/back.svg';
 import { Image } from 'expo-image';
@@ -34,6 +34,7 @@ import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 import { AppLog } from '../../Utils/Logger';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
+import { shouldTreatBlurAsCallEnd } from './callLifecycle';
 
 const requestPermissions = async () => {
   if (Platform.OS === 'ios') {
@@ -71,6 +72,7 @@ const VideoCallScreen = ({route}) => {
   const isCallEndedRef = useRef(false);
   const timeoutIdRef = useRef(null);
   const hasNavigatedAwayRef = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
 
   const stopAndUnloadRingtone = useCallback(async () => {
     RingtoneManager.stopAll();
@@ -529,15 +531,29 @@ const VideoCallScreen = ({route}) => {
     return () => x.remove();
   }, [isOtherUserInRoom]);
 
-  // 🧭 Navigation Blur Guard: If the screen loses focus (e.g. socket navigates away, or user leaves)
+  useEffect(() => {
+    if (DESIGN_MODE) return;
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      appStateRef.current = nextAppState;
+      if (nextAppState === 'background') {
+        console.log('📱 [VideoCallScreen] App moved to background; keeping call active.');
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // 🧭 Navigation Blur Guard: If the screen loses focus while the app is active,
   // we must immediately end the call context, stop ringing, and clear the 60s timeout.
   useEffect(() => {
     if (DESIGN_MODE) return;
     const unsubscribe = navigation.addListener('blur', () => {
-      console.log(`🧭 [VideoCallScreen] BLUR event fired - user navigated away from room ${route?.params?.roomId}`);
-      if (!isCallEndedRef.current) {
+      console.log(`🧭 [VideoCallScreen] BLUR event fired - user navigated away from room ${route?.params?.roomId} (appState=${appStateRef.current})`);
+      if (!isCallEndedRef.current && shouldTreatBlurAsCallEnd({ appState: appStateRef.current, isCallEnded: isCallEndedRef.current })) {
         hasNavigatedAwayRef.current = true; // Mark as navigated away since we lost focus!
         handleLogout(true); // End the call context (fromSocket = true skips duplicate API calls)
+      } else {
+        console.log('🧭 [VideoCallScreen] BLUR ignored while app is backgrounded; keeping call alive');
       }
     });
     return unsubscribe;

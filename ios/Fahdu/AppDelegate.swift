@@ -4,6 +4,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
+import PushKit
 import RNBootSplash
 import EXUpdates
 
@@ -53,6 +54,27 @@ class AppDelegate: ExpoAppDelegate {
     }
 
     return true
+  }
+
+  // MARK: - PushKit forwarding for react-native-voip-push-notification
+  @objc func pushRegistry(_ registry: PKPushRegistry, didUpdatePushCredentials credentials: PKPushCredentials, forType type: PKPushType) {
+    // Forward to RNVoipPushNotificationManager class method if available
+    let sel = NSSelectorFromString("didUpdatePushCredentials:forType:")
+    if let cls: AnyObject = NSClassFromString("RNVoipPushNotificationManager") as AnyObject? {
+      if cls.responds(to: sel) {
+        _ = cls.perform(sel, with: credentials, with: type.rawValue)
+      }
+    }
+  }
+
+  @objc func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, forType type: PKPushType) {
+    // Forward incoming VoIP push to RNVoipPushNotificationManager
+    let sel = NSSelectorFromString("didReceiveIncomingPushWithPayload:forType:")
+    if let cls: AnyObject = NSClassFromString("RNVoipPushNotificationManager") as AnyObject? {
+      if cls.responds(to: sel) {
+        _ = cls.perform(sel, with: payload, with: type.rawValue)
+      }
+    }
   }
 
   override func application(

@@ -84,13 +84,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.fahdu"
+    namespace 'com.fahdu'
     defaultConfig {
-        applicationId "com.fahdu"
+        applicationId 'com.fahdu'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 497
-        versionName "54.00.00"
+        versionCode 131
+        versionName "0.0.1"
         missingDimensionStrategy 'react-native-capture-protection', 'base'
     }
     signingConfigs {

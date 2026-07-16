@@ -7,6 +7,6 @@ index 954c2aa..2c424fe 100644
  
    s.dependency "React-Core"
 -  s.dependency 'TOCropViewController', '2.5.3'
-+  s.dependency 'TOCropViewController', '2.7.4'
++  s.dependency 'TOCropViewController', '2.8.0'
  end
  

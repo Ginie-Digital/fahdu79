@@ -10,8 +10,10 @@ import AnimatedButton from '../../Components/AnimatedButton';
 import {nTwins, selectionTwin} from '../../../DesiginData/Utility';
 import HelpCenterModal from './HelpCenterModal';
 import {toggleHelpCenterModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const PhoneNumberScreen = () => {
+  const { colors, isDark } = useAppTheme();
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
@@ -59,27 +61,27 @@ const PhoneNumberScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
-      <View style={styles.container}>
+    <SafeAreaView style={{flex: 1, backgroundColor: isDark ? '#0D0D0D' : '#fff'}}>
+      <View style={[styles.container, isDark && { backgroundColor: '#0D0D0D' }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Back />
+          <Back tintColor={isDark ? '#FFFFFF' : undefined} />
         </TouchableOpacity>
 
-        <Text style={styles.heading}>Help Center</Text>
-        <Text style={styles.subHead}>Please submit the required details so the team can assist you better.</Text>
+        <Text style={[styles.heading, isDark && { color: '#FFFFFF' }]}>Help Center</Text>
+        <Text style={[styles.subHead, isDark && { color: '#9E9E9E' }]}>Please submit the required details so the team can assist you better.</Text>
 
-        <Text style={styles.fieldName}>Phone Number</Text>
+        <Text style={[styles.fieldName, isDark && { color: '#E0E0E0' }]}>Phone Number</Text>
         <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
           {focusedInput === 'phone' && (
-            <InputOverlay isVisible />
+            <InputOverlay isVisible style={isDark ? {backgroundColor: '#292929', borderRadius: responsiveWidth(3.73)} : undefined} />
           )}
-          <View style={[styles.textInputContainer, {marginTop: 0, overflow: 'hidden'}, phoneError ? styles.errorInput : null]}>
-            <View style={styles.countryPicker}>
-              <Text style={styles.code}>+91</Text>
+          <View style={[styles.textInputContainer, isDark && { backgroundColor: '#1A1A1A', borderColor: '#2A2A2A' }, {marginTop: 0, overflow: 'hidden'}, phoneError ? styles.errorInput : null]}>
+            <View style={[styles.countryPicker, { borderRightColor: isDark ? '#2A2A2A' : '#1e1e1e' }]}>
+              <Text style={[styles.code, { color: colors.text }]}>+91</Text>
             </View>
             <TextInput
               ref={phoneInputRef}
-              style={[styles.textInputs, {paddingLeft: responsiveWidth(4)}, phoneError ? styles.errorTextInput : null]}
+              style={[styles.textInputs, {paddingLeft: responsiveWidth(4), color: colors.text}, phoneError ? styles.errorTextInput : null]}
               onChangeText={handlePhoneChange}
               onFocus={() => setFocusedInput('phone')}
               onBlur={() => setFocusedInput(null)}
@@ -87,20 +89,20 @@ const PhoneNumberScreen = () => {
               value={phone}
               keyboardType="number-pad"
               placeholder="9876543210"
-              selectionHandleColor={'#ffa86b'}
-              cursorColor={'#1e1e1e'}
-              placeholderTextColor="#B2B2B2"
-              selectionColor={selectionTwin()}
+              selectionHandleColor={isDark ? '#FFA86B' : '#ffa86b'}
+              cursorColor={isDark ? '#FFA86B' : '#1e1e1e'}
+              placeholderTextColor={colors.placeholder}
+              selectionColor={isDark ? '#FFA86B' : selectionTwin()}
             />
           </View>
         </View>
         {phoneError ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{phoneError}</Text>
+            <Text style={[styles.errorText, isDark && { color: '#FF6B6B' }]}>{phoneError}</Text>
           </View>
         ) : null}
 
-        <AnimatedButton title={'Submit'} onPress={handleSubmit} loading={loading} />
+        <AnimatedButton isDark={isDark} title={'Submit'} onPress={handleSubmit} loading={loading} />
       </View>
 
       <HelpCenterModal visible={showHelpModal} phone={phone} />

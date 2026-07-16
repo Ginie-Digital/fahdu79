@@ -16,8 +16,9 @@ import axios from 'axios';
 import {useLazyOnlineStatusQuery} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import { BASE_URL } from '../../Configs/ApiConfig';
 
-const HeaderLeft = () => {
-  const navigation = useNavigation();
+const HeaderLeft = ({ navigation: propNavigation }) => {
+  const localNavigation = useNavigation();
+  const navigation = propNavigation || localNavigation;
   const senderBioDetail = useSelector(state => state.senderDetail.bio);
 
   const currentUserRole = useSelector(state => state.auth.user.role);

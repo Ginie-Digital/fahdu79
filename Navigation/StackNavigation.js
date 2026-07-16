@@ -419,9 +419,9 @@ const StackNavigation = () => {
             <Stack.Screen
               name="Chats"
               component={ChatWindow}
-              options={{
+              options={({ navigation }) => ({
                 headerTitle: '',
-                header: () => <HeaderLeft />,
+                header: () => <HeaderLeft navigation={navigation} />,
                 headerStyle: { backgroundColor: colors.headerBg },
                 headerShadowVisible: false,
                 // Add these to ensure smooth transition
@@ -430,7 +430,7 @@ const StackNavigation = () => {
                 // This prevents the header from animating separately
                 headerTransparent: false,
                 gestureEnabled: true,
-              }}
+              })}
             />
 
             <Stack.Screen

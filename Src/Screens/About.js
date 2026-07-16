@@ -1,19 +1,20 @@
 import { StyleSheet, Text, View, Image } from "react-native";
-
 import React from "react";
-
 import { responsiveWidth } from "react-native-responsive-dimensions";
 import DeviceInfo from "react-native-device-info";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SVGs from "../../Assets/svg/FAHDU.svg";
+import { useAppTheme } from "../Hook/useAppTheme";
 
 const About = () => {
+  const { colors, isDark } = useAppTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? colors.background : "#ffffff" }]}>
       <View style={styles.innerContainer}>
         <Image source={require("../../Assets/Images/About.png")} style={{ height: responsiveWidth(50), width: responsiveWidth(50), resizeMode: "contain", alignSelf: "center" }} />
-        <Text style={[styles.versionTitle, {color : "#282828"}]}>Version {DeviceInfo.getVersion()}</Text>
-        <Text style={[styles.versionTitle, { fontSize: responsiveWidth(3), position: "absolute", bottom: 0 }]}>Copyright 2025, Ginie Digital Pvt. Ltd.</Text>
+        <Text style={[styles.versionTitle, { color: isDark ? colors.text : "#282828" }]}>Version {DeviceInfo.getVersion()}</Text>
+        <Text style={[styles.versionTitle, { fontSize: responsiveWidth(3), position: "absolute", bottom: 0, color: isDark ? colors.textSecondary : "#7A7A7A" }]}>Copyright 2025, Ginie Digital Pvt. Ltd.</Text>
       </View>
     </View>
   );

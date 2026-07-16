@@ -16,11 +16,13 @@ import {useCoverUpdateProfileMutation, useFinalVerificationSubmissionMutation, u
 import {chatRoomSuccess, LoginPageErrors} from '../../Components/ErrorSnacks';
 import {autoLogout} from '../../../AutoLogout';
 import DIcon from '../../../DesiginData/DIcons';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 const WINDOW_WIDTH = Dimensions.get('window').width;
 
 const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
+  const {colors, isDark} = useAppTheme();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
@@ -196,6 +198,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
       
       <Animated.View style={[
         styles.dialog, 
+        isDark && {backgroundColor: colors.card, borderColor: colors.border},
         {
           transform: [{translateY: slideAnim}],
           paddingBottom: isKeyboardVisible
@@ -203,46 +206,46 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
             : (Platform.OS === 'ios' ? Math.max(insets.bottom, 20) + 20 : Math.max(insets.bottom, 20) + 16)
         }
       ]}>
-        <View style={styles.headerIndicator} />
+        <View style={[styles.headerIndicator, isDark && {backgroundColor: colors.border}]} />
         
         {showConfirmation === 'stepone' && (
           <View style={styles.content}>
-            <Text style={styles.titleText}>Enter Instagram ID</Text>
-            <Text style={styles.subTitleText}>Please provide your Instagram username for verification.</Text>
+            <Text style={[styles.titleText, isDark && {color: colors.text}]}>Enter Instagram ID</Text>
+            <Text style={[styles.subTitleText, isDark && {color: colors.textSecondary}]}>Please provide your Instagram username for verification.</Text>
 
             <View style={styles.inputSection}>
-              <View style={styles.textInputContainer}>
+              <View style={[styles.textInputContainer, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
                 <TextInput
                   value={instagram}
                   onChangeText={setInstagram}
                   maxLength={30}
-                  selectionColor={'#FFA86B'}
-                  cursorColor={'#FFA86B'}
-                  placeholderTextColor="#B2B2B2"
+                  selectionColor={isDark ? colors.accent : '#FFA86B'}
+                  cursorColor={isDark ? colors.accent : '#FFA86B'}
+                  placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
                   placeholder="e.g. fahduIndia"
                   spellCheck={false}
                   autoCorrect={false}
                   autoCapitalize={'none'}
-                  style={styles.textInputs}
+                  style={[styles.textInputs, isDark && {color: colors.text}]}
                 />
               </View>
             </View>
 
             <TouchableOpacity 
               activeOpacity={0.8}
-              style={[styles.mainButton, loading && styles.disabledButton]} 
+              style={[styles.mainButton, isDark && {backgroundColor: colors.accent}, loading && styles.disabledButton]} 
               onPress={() => !loading && handleVerify()}
               disabled={loading}
             >
-              {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Submit</Text>}
+              {loading ? <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#fff'} /> : <Text style={[styles.buttonText, isDark && {color: '#1E1E1E'}]}>Submit</Text>}
             </TouchableOpacity>
           </View>
         )}
 
         {showConfirmation === 'steptwo' && (
           <View style={styles.content}>
-            <Text style={styles.titleText}>Confirm Username</Text>
-            <Text style={styles.subTitleText}>
+            <Text style={[styles.titleText, isDark && {color: colors.text}]}>Confirm Username</Text>
+            <Text style={[styles.subTitleText, isDark && {color: colors.textSecondary}]}>
               Is your Instagram Username{"\n"}
               <Text style={styles.highLightText}>@{instagram}</Text> correct?
             </Text>
@@ -250,18 +253,18 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
             <View style={styles.confirmButtonRow}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.mainButton, {flex: 1, marginRight: 8}]}
+                style={[styles.mainButton, isDark && {backgroundColor: colors.accent}, {flex: 1, marginRight: 8}]}
                 onPress={() => setShowConfirmation('stepthree')}
               >
-                <Text style={styles.buttonText}>Yes, Correct</Text>
+                <Text style={[styles.buttonText, isDark && {color: '#1E1E1E'}]}>Yes, Correct</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.secondaryButton, {flex: 1, marginLeft: 8}]}
+                style={[styles.secondaryButton, isDark && {backgroundColor: colors.pressed, borderColor: colors.border}, {flex: 1, marginLeft: 8}]}
                 onPress={() => setShowConfirmation('stepone')}
               >
-                <Text style={styles.secondaryButtonText}>No, Edit</Text>
+                <Text style={[styles.secondaryButtonText, isDark && {color: colors.text}]}>No, Edit</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -269,13 +272,13 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
 
         {showConfirmation === 'stepthree' && (
           <View style={styles.content}>
-            <Text style={styles.titleText}>Verification Message</Text>
-            <Text style={styles.subTitleText}>Tap the button below to copy this message and open Instagram DM for @fahduofficial</Text>
+            <Text style={[styles.titleText, isDark && {color: colors.text}]}>Verification Message</Text>
+            <Text style={[styles.subTitleText, isDark && {color: colors.textSecondary}]}>Tap the button below to copy this message and open Instagram DM for @fahduofficial</Text>
             
-            <View style={styles.copyBox}>
+            <View style={[styles.copyBox, isDark && {backgroundColor: '#2C1D13', borderColor: '#5C381E'}]}>
               <View style={{flex: 1}}>
-                <Text style={styles.copyLabel}>Message payload:</Text>
-                <Text style={styles.copyContent}>
+                <Text style={[styles.copyLabel, isDark && {color: colors.placeholder}]}>Message payload:</Text>
+                <Text style={[styles.copyContent, isDark && {color: colors.text}]}>
                   I applied for creator verification on FAHDU - 
                   <Text style={{fontFamily: 'Rubik-Bold'}}> {stepOneVerifyObj?.dmMessage?.split('-')[1]}</Text>
                 </Text>
@@ -284,16 +287,16 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
 
             <TouchableOpacity 
               activeOpacity={0.8}
-              style={[styles.mainButton, {marginTop: 24}, loading && styles.disabledButton]} 
+              style={[styles.mainButton, isDark && {backgroundColor: colors.accent}, {marginTop: 24}, loading && styles.disabledButton]} 
               onPress={() => !loading && handleFinalSubmission(stepOneVerifyObj?.dmMessage?.split('-')[1])}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#fff'} />
               ) : (
                 <View style={styles.row}>
-                  <Text style={styles.buttonText}>Send to Instagram </Text>
-                  <DIcon provider={'Entypo'} name={'instagram'} size={18} color="#fff" />
+                  <Text style={[styles.buttonText, isDark && {color: '#1E1E1E'}]}>Send to Instagram </Text>
+                  <DIcon provider={'Entypo'} name={'instagram'} size={18} color={isDark ? '#1E1E1E' : '#fff'} />
                 </View>
               )}
             </TouchableOpacity>

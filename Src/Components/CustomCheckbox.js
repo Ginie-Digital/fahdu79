@@ -2,14 +2,16 @@ import React from 'react';
 import {TouchableOpacity, View, StyleSheet} from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import {WIDTH_SIZES} from '../../DesiginData/Utility';
+import {useAppTheme} from '../Hook/useAppTheme';
 
 function CustomCheckbox({checked, onToggle, disabled}) {
+  const {colors, isDark} = useAppTheme();
 
   console.log("Checked", checked)
 
   return (
-    <TouchableOpacity onPress={disabled ? null : onToggle} activeOpacity={disabled ? 1 : 0.7} style={[styles.wrapper, disabled && styles.disabledWrapper]}>
-      <View style={[styles.box, checked && styles.checked, disabled && styles.disabledBox]}>{checked && <Feather name="check" size={12} color="#1e1e1e" />}</View>
+    <TouchableOpacity onPress={disabled ? null : onToggle} activeOpacity={disabled ? 1 : 0.7} style={[styles.wrapper, isDark && {borderColor: colors.border}, disabled && styles.disabledWrapper]}>
+      <View style={[styles.box, checked && styles.checked, isDark && {backgroundColor: colors.card}, checked && isDark && {backgroundColor: colors.accent}, disabled && styles.disabledBox]}>{checked && <Feather name="check" size={12} color="#1e1e1e" />}</View>
     </TouchableOpacity>
   );
 }

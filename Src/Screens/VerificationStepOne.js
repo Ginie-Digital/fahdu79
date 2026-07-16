@@ -20,11 +20,13 @@ import AnimatedButton from '../Components/AnimatedButton';
 import GetVerifiedInstagram from './LoginSignup/GetVerifiedInstagram';
 import VerifiedModal from '../Components/Verification/VerifiedModal';
 import VerificationInformation from '../Components/Verification/VerificationInformation';
+import {useAppTheme} from '../Hook/useAppTheme';
 
 const options = ['Health & Wellness', 'Lifestyle', 'Education & Career', 'Culinary', 'Personal Development', 'Travel', 'Entertainment', 'Astrology', 'Dating Expert'];
 
 const VerificationStepOne = ({route}) => {
   const {isKeyboardVisible, keyboardHeight} = useKeyboardHook();
+  const {colors, isDark} = useAppTheme();
 
   const [fullName, setFullName] = useState('');
 
@@ -344,34 +346,34 @@ const VerificationStepOne = ({route}) => {
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <KeyboardAwareScrollView
-        style={styles.chatRoomContainer}
+        style={[styles.chatRoomContainer, isDark && {backgroundColor: colors.background}]}
         contentContainerStyle={{flexGrow: 1, paddingBottom: 20}}
         nestedScrollEnabled={true}
         showsVerticalScrollIndicator={false}
         alwaysBounceVertical={true}
       >
-        <MyProfilePicture isEditable={true} />
+        <MyProfilePicture isEditable={true} isDark={isDark} />
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
           <View style={{marginTop: responsiveWidth(8)}}>
-            <Text style={styles.titles}>Personal Information</Text>
+            <Text style={[styles.titles, isDark && {color: colors.text}]}>Personal Information</Text>
           </View>
           <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'fullName' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={isDark ? {backgroundColor: colors.overlayBg, borderRadius: responsiveWidth(3.73)} : undefined} />
             )}
-            <View style={[styles.textInputContainer, {marginTop: 0}]}>
+            <View style={[styles.textInputContainer, {marginTop: 0}, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
               <TextInput
                 onFocus={() => setFocusedInput('fullName')}
                 maxLength={30}
-                selectionColor={'#1e1e1e'}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                selectionColor={isDark ? colors.accent : '#1e1e1e'}
+                cursorColor={isDark ? colors.accent : '#1e1e1e'}
+                placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
                 placeholder="Full Name"
                 spellCheck={false}
                 autoCorrect={false}
                 autoCapitalize={'sentences'}
-                style={styles.textInputs}
+                style={[styles.textInputs, isDark && {color: colors.text}]}
                 value={fullName}
                 onChangeText={t => setFullName(t)}
               />
@@ -380,20 +382,20 @@ const VerificationStepOne = ({route}) => {
 
           <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'fahduUserName' && (
-              <InputOverlay isVisible={isKeyboardVisible} />
+              <InputOverlay isVisible={isKeyboardVisible} style={isDark ? {backgroundColor: colors.overlayBg, borderRadius: responsiveWidth(3.73)} : undefined} />
             )}
-            <View style={[styles.textInputContainer, {marginTop: 0}]}>
+            <View style={[styles.textInputContainer, {marginTop: 0}, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
               <TextInput
                 maxLength={30}
-                selectionColor={'#1e1e1e'}
-                cursorColor={'#1e1e1e'}
-                placeholderTextColor="#B2B2B2"
+                selectionColor={isDark ? colors.accent : '#1e1e1e'}
+                cursorColor={isDark ? colors.accent : '#1e1e1e'}
+                placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
                 placeholder="Set Fahdu Username"
                 onFocus={() => setFocusedInput('fahduUserName')}
                 spellCheck={false}
                 autoCorrect={false}
                 autoCapitalize={'none'}
-                style={styles.textInputs}
+                style={[styles.textInputs, isDark && {color: colors.text}]}
                 onChangeText={t => setFahduUserName(t)}
               />
             </View>
@@ -401,7 +403,7 @@ const VerificationStepOne = ({route}) => {
 
           {availability === 'TAKEN' && (
             <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>*{'Username not available'}</Text>
+              <Text style={[styles.errorText, isDark && {color: colors.error}]}>*{'Username not available'}</Text>
             </View>
           )}
         </View>
@@ -415,29 +417,29 @@ const VerificationStepOne = ({route}) => {
             marginTop: 6,
           }}
           onPress={() => dispatch(toggleDateTimePicker({show: 1, type: 'dob', date: date ? date.toISOString() : new Date().toISOString()}))}>
-          <View style={styles.textInputContainer}>
+          <View style={[styles.textInputContainer, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
             <TextInput
               pointerEvents="none"
               editable={false}
-              selectionColor={'#1e1e1e'}
-              cursorColor={'#1e1e1e'}
-              placeholderTextColor="#B2B2B2"
+              selectionColor={isDark ? colors.accent : '#1e1e1e'}
+              cursorColor={isDark ? colors.accent : '#1e1e1e'}
+              placeholderTextColor={isDark ? colors.placeholder : '#B2B2B2'}
               placeholder="Enter Date of Birth"
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'sentences'}
-              style={[styles.textInputs]}
+              style={[styles.textInputs, isDark && {color: colors.text}]}
               value={dob}
             />
 
             <TouchableOpacity style={styles.calenderContainer} onPress={() => dispatch(toggleDateTimePicker({show: 1, type: 'dob', date: date ? date.toISOString() : new Date().toISOString()}))}>
-              <Image source={require('../../Assets/Images/calenderdob.png')} contentFit="contain" style={{flex: 1}} />
+              <Image source={require('../../Assets/Images/calenderdob.png')} contentFit="contain" style={[{flex: 1}, isDark && {tintColor: colors.text}]} />
             </TouchableOpacity>
           </View>
         </Pressable>
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
-          <Text style={styles.titles}>Select Creator's Niche</Text>
+          <Text style={[styles.titles, isDark && {color: colors.text}]}>Select Creator's Niche</Text>
         </View>
 
         <Pressable
@@ -448,31 +450,35 @@ const VerificationStepOne = ({route}) => {
             alignSelf: 'center',
           }}
           onPress={() => handleDropdownPress()}>
-          <View style={styles.textInputContainer}>
+          <View style={[styles.textInputContainer, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
             <TextInput
               pointerEvents="none"
               editable={false}
-              selectionColor={'#1e1e1e'}
-              cursorColor={'#1e1e1e'}
-              placeholderTextColor="#474747"
+              selectionColor={isDark ? colors.accent : '#1e1e1e'}
+              cursorColor={isDark ? colors.accent : '#1e1e1e'}
+              placeholderTextColor={isDark ? colors.textSecondary : '#474747'}
               placeholder="--Select Your Niche--"
               spellCheck={false}
               autoCorrect={false}
               autoCapitalize={'sentences'}
-              style={[styles.textInputs, {fontSize: responsiveFontSize(2)}]}
+              style={[styles.textInputs, {fontSize: responsiveFontSize(2)}, isDark && {color: colors.text}]}
             />
             <TouchableOpacity style={styles.calenderContainer} onPress={() => handleDropdownPress()}>
-              {!dropdownVisible ? <Image source={require('../../Assets/Images/VerificationDown.png')} contentFit="contain" style={{flex: 1}} /> : <Image source={require('../../Assets/Images/verificationUp.png')} contentFit="contain" style={{flex: 1}} />}
+              {!dropdownVisible ? (
+                <Image source={require('../../Assets/Images/VerificationDown.png')} contentFit="contain" style={[{flex: 1}, isDark && {tintColor: colors.text}]} />
+              ) : (
+                <Image source={require('../../Assets/Images/verificationUp.png')} contentFit="contain" style={[{flex: 1}, isDark && {tintColor: colors.text}]} />
+              )}
             </TouchableOpacity>
           </View>
         </Pressable>
 
-        <View style={selectedItems.length > 0 ? styles.nicheContainer : { marginBottom: responsiveWidth(4) }}>
+        <View style={selectedItems.length > 0 ? [styles.nicheContainer, isDark && {backgroundColor: colors.background, borderColor: colors.border}] : { marginBottom: responsiveWidth(4) }}>
           <BubbleView selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
         </View>
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
-          <AnimatedButton title={'Next'} onPress={() => updateProfileHandler()} disabled={!isAgeValid} />
+          <AnimatedButton title={'Next'} onPress={() => updateProfileHandler()} disabled={!isAgeValid} isDark={isDark} />
         </View>
 
         <View style={{height: responsiveWidth(16)}} />

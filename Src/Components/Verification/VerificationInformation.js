@@ -16,20 +16,25 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
-const EligibilityItem = memo(({icon, title, description}) => (
-  <View style={styles.termItemRow}>
-    <View style={styles.iconContainer}>
-      <Ionicons name={icon} size={20} color="#FFA86B" />
+const EligibilityItem = memo(({icon, title, description}) => {
+  const {colors, isDark} = useAppTheme();
+  return (
+    <View style={styles.termItemRow}>
+      <View style={styles.iconContainer}>
+        <Ionicons name={icon} size={20} color="#FFA86B" />
+      </View>
+      <View style={{flex: 1}}>
+        <Text style={[styles.termTitle, isDark && {color: colors.text}]}>{title}</Text>
+        <Text style={[styles.termDescription, isDark && {color: colors.textSecondary}]}>{description}</Text>
+      </View>
     </View>
-    <View style={{flex: 1}}>
-      <Text style={styles.termTitle}>{title}</Text>
-      <Text style={styles.termDescription}>{description}</Text>
-    </View>
-  </View>
-));
+  );
+});
 
 const VerificationInformation = ({agreeModal, setAgreeModal}) => {
+  const {colors, isDark} = useAppTheme();
   const insets = useSafeAreaInsets();
   const [isChecked, setIsChecked] = useState(false);
   const [isItalicState, setIsItalicState] = useState(false);
@@ -125,8 +130,8 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
       enableContentPanningGesture={false} // Prevents sheet from dragging via content, allowing scroll view to work
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
-      backgroundStyle={styles.modalBackground}
-      handleIndicatorStyle={styles.indicator}
+      backgroundStyle={[styles.modalBackground, isDark && {backgroundColor: colors.background}]}
+      handleIndicatorStyle={[styles.indicator, isDark && {backgroundColor: colors.border}]}
       onDismiss={() => {
         if (!isAgreedRef.current) {
           navigate('home');
@@ -136,14 +141,14 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
       
       <BottomSheetView style={{flex: 1}}>
         {/* FIXED HEADER */}
-        <View style={styles.headerContainer}>
+        <View style={[styles.headerContainer, isDark && {borderBottomColor: colors.border}]}>
           <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
-            <Text style={styles.headerText}>Eligibility</Text>
+            <Text style={[styles.headerText, isDark && {color: colors.text}]}>Eligibility</Text>
             <TouchableOpacity onPress={() => bottomSheetModalRef.current?.dismiss()} style={styles.closeIcon}>
-              <Ionicons name="close" size={24} color="#1e1e1e" />
+              <Ionicons name="close" size={24} color={isDark ? colors.text : "#1e1e1e"} />
             </TouchableOpacity>
           </View>
-          <Text style={styles.subHeaderText}>Please ensure you meet the following criteria to apply for verification:</Text>
+          <Text style={[styles.subHeaderText, isDark && {color: colors.textSecondary}]}>Please ensure you meet the following criteria to apply for verification:</Text>
         </View>
 
         {/* SCROLLABLE CONTENT */}
@@ -158,15 +163,15 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
         </BottomSheetScrollView>
 
         {/* PINNED FOOTER */}
-        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) + 6 : Math.max(insets.bottom, 40) + 10}]}>
+        <View style={[styles.footer, {paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) + 6 : Math.max(insets.bottom, 40) + 10}, isDark && {backgroundColor: colors.background, borderTopColor: colors.border}]}>
           <View style={styles.checkboxWrapper}>
             <TouchableOpacity 
               activeOpacity={0.7}
-              style={[styles.checkbox, isChecked && styles.checkedCheckbox]} 
+              style={[styles.checkbox, isChecked && styles.checkedCheckbox, isDark && {borderColor: colors.border}]} 
               onPress={() => setIsChecked(!isChecked)}>
               {isChecked && <Tik />}
             </TouchableOpacity>
-            <Animated.Text onPress={() => setIsChecked(!isChecked)} style={[styles.acceptAllText, animatedTextStyle]}>
+            <Animated.Text onPress={() => setIsChecked(!isChecked)} style={[styles.acceptAllText, animatedTextStyle, isDark && {color: colors.text}]}>
               Accept All.
             </Animated.Text>
           </View>
@@ -175,10 +180,10 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
             onPress={handleButtonPress}
             onPressIn={() => (buttonScale.value = withTiming(0.95))}
             onPressOut={() => (buttonScale.value = withTiming(1))}
-            style={styles.doneButton}>
+            style={[styles.doneButton, isDark && {backgroundColor: colors.accent}]}>
             <Animated.View style={[styles.buttonContent, animatedButtonStyle]}>
-              <Text style={styles.doneText}>I Agree</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{marginLeft: 6}} />
+              <Text style={[styles.doneText, isDark && {color: '#1E1E1E'}]}>I Agree</Text>
+              <Ionicons name="arrow-forward" size={16} color={isDark ? '#1E1E1E' : '#FFFFFF'} style={{marginLeft: 6}} />
             </Animated.View>
           </Pressable>
         </View>

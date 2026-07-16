@@ -45,7 +45,7 @@ const MyProfilePicture = ({isEditable, isDark = false}) => {
         <ImageBackground placeholder={require('../../../Assets/Images/CoverDefault.jpeg')} source={userInfo?.currentUserCoverPicture ? {uri: userInfo?.currentUserCoverPicture} : require('../../../Assets/Images/light_gray.jpg')} style={[styles.coverStyle, isDark && {backgroundColor: '#1A1A1A'}]}></ImageBackground>
       </View>
 
-      <View style={[styles.overlayButton, isDark && {backgroundColor: '#FF7819'}]} />
+      <View style={[styles.overlayButton, isDark && {backgroundColor: '#000000'}]} />
       <View style={styles.profilePictureContainer}>
         <Image
           placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
@@ -62,7 +62,7 @@ const MyProfilePicture = ({isEditable, isDark = false}) => {
           onPressOut={() => setClickTwo(false)}
           style={[{borderRadius: responsiveWidth(10), backgroundColor: isDark ? '#1A1A1A' : '#fff', position: 'absolute', zIndex: 4, transform: [{translateX: responsiveWidth(22)}, {translateY: responsiveWidth(50)}]}, clickTwo && {backgroundColor: isDark ? '#FF7819' : '#FFE1CC'}]}
           onPress={() => handlePictureChange('Profile')}>
-          <Image source={require('../../../Assets/Images/ChangeProfile.png')} style={{height: responsiveWidth(8), width: responsiveWidth(8), resizeMode: 'contain', zIndex: 8, alignSelf: 'center'}} />
+          <Image source={isDark ? require('../../../Assets/Images/ChangeProfileDark.png') : require('../../../Assets/Images/ChangeProfile.png')} style={{height: responsiveWidth(8), width: responsiveWidth(8), resizeMode: 'contain', zIndex: 8, alignSelf: 'center'}} />
         </Pressable>
       ) : null}
 
@@ -71,7 +71,7 @@ const MyProfilePicture = ({isEditable, isDark = false}) => {
         onPressOut={() => setClick(false)}
         style={[{position: 'absolute', backgroundColor: isDark ? '#1A1A1A' : '#fff', borderRadius: responsiveWidth(10), transform: [{translateX: responsiveWidth(88)}, {translateY: responsiveWidth(38)}]}, click && {backgroundColor: isDark ? '#FF7819' : '#FFE1CC'}]}
         onPress={isEditable ? () => handlePictureChange('Cover') : () => navigate('editProfile')}>
-        <Image source={require('../../../Assets/Images/ChangeProfile.png')} style={{height: responsiveWidth(8), width: responsiveWidth(8), resizeMode: 'contain', zIndex: 8, alignSelf: 'center'}} />
+        <Image source={isDark ? require('../../../Assets/Images/ChangeProfileDark.png') : require('../../../Assets/Images/ChangeProfile.png')} style={{height: responsiveWidth(8), width: responsiveWidth(8), resizeMode: 'contain', zIndex: 8, alignSelf: 'center'}} />
       </Pressable>
     </>
   );

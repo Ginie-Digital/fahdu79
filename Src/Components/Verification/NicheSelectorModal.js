@@ -9,11 +9,14 @@ import CustomCheckbox from '../CustomCheckbox';
 import {FONT_SIZES, WIDTH_SIZES} from '../../../DesiginData/Utility';
 import {triggerImpactLight} from '../../Utils/Haptics';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const WINDOW_WIDTH = Dimensions.get('window').width;
 
 const NicheSelectorModal = () => {
-  const {width: windowWidth, height: windowHeight} = useWindowDimensions();
+  const {colors, isDark} = useAppTheme();
+  const windowWidth = useWindowDimensions().width;
+  const windowHeight = useWindowDimensions().height;
   const dispatch = useDispatch();
   const visible = useSelector(state => state.hideShow.visibility.nicheSelectorModal);
   const confirmed = useSelector(state => state.hideShow.visibility.confirmedNiches);
@@ -97,43 +100,44 @@ const NicheSelectorModal = () => {
       useNativeDriverForBackdrop={true}
       style={styles.modalContainer}
     >
-      <View style={[styles.dialog, { width: windowWidth, maxHeight: dialogMaxHeight }]}>
-        <View style={styles.header}>
-            <View style={styles.indicator} />
-            <Text style={styles.mainHeading}>Select Creator's Niche</Text>
-            <Text style={styles.subHeading}>Choose up to 3 categories that best describe your content.</Text>
+      <View style={[styles.dialog, isDark && {backgroundColor: colors.card}, { width: windowWidth, maxHeight: dialogMaxHeight }]}>
+        <View style={[styles.header, isDark && {borderBottomColor: colors.border}]}>
+            <View style={[styles.indicator, isDark && {backgroundColor: colors.border}]} />
+            <Text style={[styles.mainHeading, isDark && {color: colors.text}]}>Select Creator's Niche</Text>
+            <Text style={[styles.subHeading, isDark && {color: colors.textSecondary}]}>Choose up to 3 categories that best describe your content.</Text>
             
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={18} color="#999" style={styles.searchIcon} />
+            <View style={[styles.searchContainer, isDark && {backgroundColor: colors.inputBg}]}>
+                <Ionicons name="search" size={18} color={isDark ? colors.placeholder : "#999"} style={styles.searchIcon} />
                 <TextInput 
                     ref={inputRef}
-                    style={styles.searchInput}
+                    style={[styles.searchInput, isDark && {color: colors.text}]}
                     placeholder="Search niche..."
-                    placeholderTextColor="#999"
+                    placeholderTextColor={isDark ? colors.placeholder : "#999"}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     autoCorrect={false}
                 />
                 {searchQuery.length > 0 && (
                     <Pressable onPress={() => setSearchQuery('')}>
-                        <Ionicons name="close-circle" size={18} color="#999" />
+                        <Ionicons name="close-circle" size={18} color={isDark ? colors.placeholder : "#999"} />
                     </Pressable>
                 )}
             </View>
         </View>
 
-        <ScrollView style={styles.scrollView} bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={[styles.scrollView, isDark && {backgroundColor: colors.card}]} bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map((item, index) => (
               <Pressable 
                 key={item} 
                 style={[
                   styles.row, 
+                  isDark && {borderBottomColor: colors.border},
                   index === filteredOptions.length - 1 && { borderBottomWidth: 0 }
                 ]} 
                 onPress={() => toggleSelection(item)}
               >
-                <Text style={styles.label}>{item}</Text>
+                <Text style={[styles.label, isDark && {color: colors.text}]}>{item}</Text>
                 <CustomCheckbox 
                   checked={tempSelected.includes(item)} 
                   onToggle={() => toggleSelection(item)} 
@@ -142,16 +146,16 @@ const NicheSelectorModal = () => {
             ))
           ) : (
             <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No niche found matching "{searchQuery}"</Text>
+                <Text style={[styles.emptyText, isDark && {color: colors.textSecondary}]}>No niche found matching "{searchQuery}"</Text>
             </View>
           )}
         </ScrollView>
 
-        <SafeAreaView edges={['bottom']} style={styles.footer}>
+        <SafeAreaView edges={['bottom']} style={[styles.footer, isDark && {backgroundColor: colors.card, borderTopColor: colors.border}]}>
           <View style={styles.applyRow}>
-            <Text style={styles.selectionCount}>{tempSelected.length}/3 Selected</Text>
-            <Pressable onPress={handleApply} style={styles.doneButton}>
-              <Text style={styles.doneText}>Apply</Text>
+            <Text style={[styles.selectionCount, isDark && {color: colors.textSecondary}]}>{tempSelected.length}/3 Selected</Text>
+            <Pressable onPress={handleApply} style={[styles.doneButton, isDark && {backgroundColor: colors.accent}]}>
+              <Text style={[styles.doneText, isDark && {color: '#1E1E1E'}]}>Apply</Text>
             </Pressable>
           </View>
         </SafeAreaView>

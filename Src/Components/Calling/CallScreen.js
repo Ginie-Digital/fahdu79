@@ -27,6 +27,7 @@ import { AppLog } from '../../Utils/Logger';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
 import { shouldTreatBlurAsCallEnd } from './callLifecycle';
+import { getLocalCallTerminationStatus } from './callFlow';
 
 const requestMicrophonePermission = async () => {
   if (Platform.OS === 'ios') {
@@ -348,12 +349,11 @@ const CallScreen = ({ route }) => {
     dispatch(toggleCallAccepted({ status: false }));
 
     if (!fromSocket) {
-      if (callAcceptedRef.current) {
-        // Call was accepted/active → Always use LEAVE
+      const terminationStatus = getLocalCallTerminationStatus({callAccepted: callAcceptedRef.current});
+      if (terminationStatus === 'LEAVE') {
         await leaveCallHandler();
         console.log('Leaving call (call was accepted)...');
       } else {
-        // Call was never accepted → REJECT
         await rejectCallHandler();
         console.log('Rejecting call (not accepted yet)...');
       }

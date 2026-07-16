@@ -167,6 +167,7 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
           senderId: callDetails?.senderId,
           profileImage: callDetails?.profileImage,
           callId: callDetails?.callId,
+          status: 'PENDING',
         }),
       );
 
@@ -248,28 +249,23 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
     console.log(`📌 [index:onBackgroundEvent] ACTION_PRESS - actionId: ${pressActionId}`, callData);
 
     if (pressActionId === 'accept_call' && callData?.roomId) {
-      console.log('📱 [index:onBackgroundEvent] Answering call via background action...');
-      const result = await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
-      if (result.success) {
-        await AsyncStorage.setItem(
-          'pendingCall',
-          JSON.stringify({
-            roomId: callData.roomId,
-            callerName: callData.displayName,
-            callType: callData.callType,
-            senderId: callData.senderId,
-            profileImage: callData.profileImage,
-            callId: callData.callId,
-            callAccepted: true,
-          }),
-        );
-      } else {
-        console.log('❌ [index:onBackgroundEvent] Failed to accept call in background:', result.error);
-      }
+      console.log('📱 [index:onBackgroundEvent] Notification accept pressed; routing to incoming call UI');
+      await AsyncStorage.setItem(
+        'pendingCall',
+        JSON.stringify({
+          roomId: callData.roomId,
+          callerName: callData.displayName,
+          callType: callData.callType,
+          senderId: callData.senderId,
+          profileImage: callData.profileImage,
+          callId: callData.callId,
+          callAccepted: false,
+          status: 'PENDING',
+        }),
+      );
       await notifee.cancelNotification(detail.notification.id);
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
-      console.log('📱 [index:onBackgroundEvent] Declining call via background action...');
-      await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
+      console.log('📱 [index:onBackgroundEvent] Notification decline pressed; clearing pending call');
       await AsyncStorage.removeItem('pendingCall');
       await notifee.cancelNotification(detail.notification.id);
     }
@@ -314,34 +310,29 @@ notifee.onForegroundEvent(async ({ type, detail }) => {
     console.log(`📌 [index:onForegroundEvent] ACTION_PRESS - actionId: ${pressActionId}`, callData);
     
     if (pressActionId === 'accept_call' && callData?.roomId) {
-      const result = await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
-      if (result.success) {
-        await AsyncStorage.setItem(
-          'pendingCall',
-          JSON.stringify({
-            roomId: callData.roomId,
-            callerName: callData.displayName,
-            callType: callData.callType,
-            senderId: callData.senderId,
-            profileImage: callData.profileImage,
-            callId: callData.callId,
-            callAccepted: true,
-          }),
-        );
-        await notifee.cancelNotification(detail.notification.id);
-        navigate(callData.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+      await AsyncStorage.setItem(
+        'pendingCall',
+        JSON.stringify({
           roomId: callData.roomId,
-          name: callData.displayName,
+          callerName: callData.displayName,
           callType: callData.callType,
-          callerId: callData.senderId,
-          profileImageUrl: callData.profileImage,
-          callAccepted: true,
-        });
-      } else {
-        console.log('❌ [index:onForegroundEvent] Failed to accept call in foreground:', result.error);
-      }
+          senderId: callData.senderId,
+          profileImage: callData.profileImage,
+          callId: callData.callId,
+          callAccepted: false,
+          status: 'PENDING',
+        }),
+      );
+      await notifee.cancelNotification(detail.notification.id);
+      navigate('incomingCall', {
+        name: callData.displayName || callData.callerName || 'Call',
+        profileImageUrl: callData.profileImage,
+        roomId: callData.roomId,
+        callType: callData.callType,
+        callerId: callData.senderId,
+        callId: callData.callId,
+      });
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
-      await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
       await AsyncStorage.removeItem('pendingCall');
       await notifee.cancelNotification(detail.notification.id);
     }

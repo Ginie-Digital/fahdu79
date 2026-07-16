@@ -34,6 +34,7 @@ import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 import { AppLog } from '../../Utils/Logger';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
+import { getLocalCallTerminationStatus } from './callFlow';
 import { shouldTreatBlurAsCallEnd } from './callLifecycle';
 
 const requestPermissions = async () => {
@@ -430,12 +431,11 @@ const VideoCallScreen = ({route}) => {
     dispatch(toggleCallAccepted({status: false}));
 
     if (!fromSocket) {
-      if (callAcceptedRef.current) {
-        // Call was accepted/active → Always use LEAVE
+      const terminationStatus = getLocalCallTerminationStatus({callAccepted: callAcceptedRef.current});
+      if (terminationStatus === 'LEAVE') {
         await leaveCallHandler();
         console.log('Leaving call (call was accepted)...');
       } else {
-        // Call was never accepted → REJECT
         await rejectCallHandler();
         console.log('Rejecting call (not accepted yet)...');
       }

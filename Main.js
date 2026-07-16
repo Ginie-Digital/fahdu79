@@ -99,6 +99,27 @@ const Main = () => {
   // Ref for deep link handler so Firebase [] useEffect can access latest version
   const handleDeepLinkRef = useRef(null);
 
+  const callAcceptAPI = useCallback(async (roomId, callType, status) => {
+    if (!roomId) return { success: false, error: 'No roomId' };
+    const token = tokenRef.current;
+    if (!token) return { success: false, error: 'No token' };
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/stream/call/accept/manual`,
+        { roomId, callType: callType || 'audio', status },
+        {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          timeout: 10000,
+        },
+      );
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.log('❌ [Main:callAcceptAPI] Failed', error?.response?.data || error?.message || error);
+      return { success: false, error: error?.response?.data || error?.message || 'API error' };
+    }
+  }, []);
+
   // Reset persisted call state on fresh app launch
   useEffect(() => {
     dispatch(toggleCallAccepted({ status: false }));
@@ -129,7 +150,14 @@ const Main = () => {
   const handlePendingCallStartup = useCallback(async (callData) => {
     if (!callData?.roomId) return;
 
-    if (callData.callAccepted) {
+    const status = callData.status || (callData.callAccepted ? 'ACCEPTED' : 'PENDING');
+    if (status === 'REJECTED' || status === 'UNAVAILABLE' || status === 'CANCELLED') {
+      console.log('📱 [Main:Startup] Ignoring resolved pending call with status:', status);
+      await AsyncStorage.removeItem('pendingCall');
+      return;
+    }
+
+    if (status === 'ACCEPTED') {
       console.log('📱 [Main:Startup] Call was accepted via notification action, routing directly to call screen');
       navigate(callData.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
         roomId: callData.roomId,
@@ -139,17 +167,18 @@ const Main = () => {
         profileImageUrl: callData.profileImage,
         callAccepted: true,
       });
-    } else {
-      console.log('📱 [Main:Startup] Showing incoming call UI');
-      navigate('incomingCall', {
-        name: callData.callerName || callData.displayName || 'Call',
-        profileImageUrl: callData.profileImage,
-        roomId: callData.roomId,
-        callType: callData.callType,
-        callerId: callData.senderId,
-        callId: callData.callId,
-      });
+      return;
     }
+
+    console.log('📱 [Main:Startup] Showing incoming call UI');
+    navigate('incomingCall', {
+      name: callData.callerName || callData.displayName || 'Call',
+      profileImageUrl: callData.profileImage,
+      roomId: callData.roomId,
+      callType: callData.callType,
+      callerId: callData.senderId,
+      callId: callData.callId,
+    });
   }, []);
 
   useEffect(() => {
@@ -845,21 +874,34 @@ const Main = () => {
         const actionId = initialNotification?.pressAction?.id || initialNotification?.notification?.pressAction?.id;
 
         if (actionId === 'accept_call') {
-          console.log('📌 [Bootstrap] Incoming call accept action detected, routing to active call screen');
-          try {
-            navigate(callInfo?.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+          console.log('📌 [Bootstrap] Incoming call accept action detected; routing to incoming call UI');
+          await AsyncStorage.setItem(
+            'pendingCall',
+            JSON.stringify({
               roomId: callInfo?.roomId,
+              callerName: callInfo?.displayName || callInfo?.callerName,
+              callType: callInfo?.callType,
+              senderId: callInfo?.senderId,
+              profileImage: callInfo?.profileImage,
+              callId: callInfo?.callId,
+              callAccepted: false,
+              status: 'PENDING',
+            }),
+          );
+          try {
+            navigate('incomingCall', {
               name: callInfo?.displayName || callInfo?.callerName || 'Call',
+              profileImageUrl: callInfo?.profileImage,
+              roomId: callInfo?.roomId,
               callType: callInfo?.callType,
               callerId: callInfo?.senderId,
-              profileImageUrl: callInfo?.profileImage,
-              callAccepted: true,
+              callId: callInfo?.callId,
             });
           } catch (e) {
-            console.log('Error navigating to call screen on bootstrap accept', e?.message);
+            console.log('Error navigating to incomingCall on bootstrap accept', e?.message);
           }
         } else if (actionId === 'decline_call') {
-          console.log('📌 [Bootstrap] Incoming call decline action detected, clearing pending call');
+          console.log('📌 [Bootstrap] Incoming call decline action detected; clearing pending call');
           await AsyncStorage.removeItem('pendingCall');
           try {
             navigate('home');
@@ -1083,32 +1125,41 @@ const Main = () => {
         console.log(`📌 [Main:onForegroundEvent] ACTION_PRESS - actionId: ${pressActionId}`, callData);
 
         if (pressActionId === 'accept_call' && callData?.roomId) {
-          await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
-          await AsyncStorage.setItem(
-            'pendingCall',
-            JSON.stringify({
+          const result = await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
+          if (result.success) {
+            await AsyncStorage.setItem(
+              'pendingCall',
+              JSON.stringify({
+                roomId: callData.roomId,
+                callerName: callData.displayName,
+                callType: callData.callType,
+                senderId: callData.senderId,
+                profileImage: callData.profileImage,
+                callId: callData.callId,
+                callAccepted: true,
+                status: 'ACCEPTED',
+              }),
+            );
+            await notifee.cancelNotification(detail.notification.id);
+            navigate(callData.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
               roomId: callData.roomId,
-              callerName: callData.displayName,
+              name: callData.displayName || callData.callerName || 'Call',
               callType: callData.callType,
-              senderId: callData.senderId,
-              profileImage: callData.profileImage,
-              callId: callData.callId,
+              callerId: callData.senderId,
+              profileImageUrl: callData.profileImage,
               callAccepted: true,
-            }),
-          );
-          await notifee.cancelNotification(detail.notification.id);
-          navigate(callData.callType === 'video' ? 'videoCallScreen' : 'callScreen', {
-            roomId: callData.roomId,
-            name: callData.displayName || callData.callerName || 'Call',
-            callType: callData.callType,
-            callerId: callData.senderId,
-            profileImageUrl: callData.profileImage,
-            callAccepted: true,
-          });
+            });
+          } else {
+            console.log('❌ [Main:onForegroundEvent] Accept API failed:', result.error);
+          }
         } else if (pressActionId === 'decline_call' && callData?.roomId) {
-          await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
+          const result = await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
+          if (!result.success) {
+            console.log('❌ [Main:onForegroundEvent] Reject API failed:', result.error);
+          }
           await AsyncStorage.removeItem('pendingCall');
           await notifee.cancelNotification(detail.notification.id);
+          navigate('home');
         }
 
       // Handle notification dismissal

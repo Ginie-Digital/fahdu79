@@ -33,6 +33,7 @@ import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import MicPermissionModal from './MicPermissionModal';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
+import { getLocalCallTerminationStatus, shouldRejectIncomingCall } from './callFlow';
 
 const { width, height } = Dimensions.get('window');
 const ACCEPT_THRESHOLD = 100;
@@ -281,13 +282,35 @@ const IncomingCallScreen = ({ route, navigation }) => {
     RingtoneManager.stopAll();
   }, []);
 
+  const finalizeIncomingCallAction = useCallback(async (status, reason) => {
+    if (hasActedRef.current) return;
+    hasActedRef.current = true;
+    stopRingtone();
+    clearSafetyTimer();
+
+    if (callId) dispatch(clearProcessedRoomId(callId));
+
+    try {
+      await callAcceptManual({
+        token,
+        data: {
+          roomId,
+          callType: callType || 'audio',
+          status,
+          reason,
+        },
+      });
+    } catch (error) {
+      console.warn('[IncomingCall] finalizeIncomingCallAction failed:', error?.message || error);
+    }
+  }, [callAcceptManual, callId, clearSafetyTimer, callType, dispatch, roomId, stopRingtone, token]);
+
   // ─── Safety timeout (60s) ───
   useEffect(() => {
     safetyTimerRef.current = setTimeout(() => {
       if (!hasActedRef.current) {
         console.log('⏰ Incoming call safety timeout — auto-dismissing');
-        // Clear dedup guard so caller can retry
-        if (callId) dispatch(clearProcessedRoomId(callId));
+        finalizeIncomingCallAction('UNAVAILABLE', 'timeout');
         navigation.goBack();
       }
     }, 60000);
@@ -397,7 +420,11 @@ const IncomingCallScreen = ({ route, navigation }) => {
   // ─── Decline call (JS Thread - Optimistic Dismissal) ───
   const handleDecline = useCallback(() => {
     if (hasActedRef.current) return;
-    hasActedRef.current = true;
+    if (shouldRejectIncomingCall({ isCallActive: true, hasActed: hasActedRef.current })) {
+      hasActedRef.current = true;
+    } else {
+      return;
+    }
     stopRingtone();
     clearSafetyTimer();
     ReactNativeHapticFeedback.trigger('impactLight');

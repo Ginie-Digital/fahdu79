@@ -52,6 +52,8 @@ const normalizeCall = payload => {
     name: content.name || content.displayName || content.username || 'Incoming call',
     callerId: content.callerId || content.senderId || content.sender_id || '',
     profileImageUrl: content.profileImageUrl || content.profileImage || content.profile_image || content.profileImageurl || '',
+    status: 'PENDING',
+    callAccepted: false,
   };
 };
 
@@ -139,18 +141,22 @@ const _startAppStateWatcher = () => {
         if (next === 'active') {
           const pending = await getPendingCall();
           if (pending && pending.roomId) {
-            // If the user unlocked the device / opened the app while a call is pending,
-            // show the in-app incoming call screen so they can interact with it directly.
-            try {
-              navigate('incomingCall', {
-                roomId: pending.roomId,
-                name: pending.name,
-                callType: pending.callType,
-                callerId: pending.callerId,
-                profileImageUrl: pending.profileImageUrl,
-              });
-            } catch (navErr) {
-              console.warn('[IncomingCallService] Navigation to incomingCall failed:', navErr?.message || navErr);
+            if (pending.status === 'ACCEPTED' || pending.callAccepted) {
+              openAcceptedCall(pending);
+            } else if (pending.status === 'REJECTED') {
+              await clear();
+            } else {
+              try {
+                navigate('incomingCall', {
+                  roomId: pending.roomId,
+                  name: pending.name,
+                  callType: pending.callType,
+                  callerId: pending.callerId,
+                  profileImageUrl: pending.profileImageUrl,
+                });
+              } catch (navErr) {
+                console.warn('[IncomingCallService] Navigation to incomingCall failed:', navErr?.message || navErr);
+              }
             }
           }
         }

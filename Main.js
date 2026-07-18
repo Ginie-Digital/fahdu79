@@ -40,6 +40,8 @@ import {
   markCallAcceptedSync,
   markCallRejectedSync,
   openActiveCallScreen,
+  openIncomingCallScreen,
+  prepareIncomingCall,
   wasRecentlyAccepted,
   wasRecentlyRejected,
 } from './Src/Utils/callAcceptFlow';
@@ -187,17 +189,23 @@ const Main = () => {
       status === 'REJECTED' ||
       status === 'UNAVAILABLE' ||
       status === 'CANCELLED' ||
-      wasRecentlyRejected(syncPending.roomId)
+      wasRecentlyRejected(syncPending)
     ) {
-      console.log('📱 [Main:Startup] Ignoring resolved pending call with status:', status);
-      await clearPendingCall();
+      // If Reject was stamped but API never completed, retry so caller side cuts.
+      if (status === 'REJECTED' && !syncPending.apiDone) {
+        console.log('📱 [Main:Startup] Rejected pending without apiDone — retrying reject API');
+        await declineCallFromNotification(syncPending, { dismissUi: true });
+      } else {
+        console.log('📱 [Main:Startup] Ignoring resolved pending call with status:', status);
+        await clearPendingCall();
+      }
       return;
     }
 
     if (
       status === 'ACCEPTED' ||
       syncPending.callAccepted ||
-      wasRecentlyAccepted(syncPending.roomId)
+      wasRecentlyAccepted(syncPending)
     ) {
       console.log('📱 [Main:Startup] Call was accepted via notification action, routing directly to call screen');
       await ensureAcceptedCallReady(syncPending);
@@ -210,14 +218,7 @@ const Main = () => {
     }
 
     console.log('📱 [Main:Startup] Showing incoming call UI');
-    navigate('incomingCall', {
-      name: syncPending.callerName || syncPending.displayName || 'Call',
-      profileImageUrl: syncPending.profileImage,
-      roomId: syncPending.roomId,
-      callType: syncPending.callType,
-      callerId: syncPending.senderId,
-      callId: syncPending.callId,
-    });
+    openIncomingCallScreen(syncPending);
   }, [dispatch]);
 
   useEffect(() => {
@@ -268,7 +269,7 @@ const Main = () => {
           console.log('🔄 [Settle] Skipping settle — incoming/pending call exists');
           return;
         }
-        if (wasRecentlyAccepted(pending?.roomId) || wasRecentlyRejected(pending?.roomId)) {
+        if (pending && (wasRecentlyAccepted(pending) || wasRecentlyRejected(pending))) {
           return;
         }
         if (!token) return;
@@ -304,6 +305,39 @@ const Main = () => {
     tryPendingCallAfterLogin();
   }, [token, handlePendingCallStartup]);
 
+  // App was backgrounded (not killed) when call arrived — show IncomingCall on resume.
+  useEffect(() => {
+    const onAppStateChange = nextState => {
+      if (nextState !== 'active' || !token) return;
+
+      const pending = getPendingCallSync();
+      if (!pending?.roomId) return;
+
+      if (wasRecentlyRejected(pending) || pending.status === 'REJECTED') {
+        clearPendingCall();
+        return;
+      }
+
+      if (
+        pending.status === 'ACCEPTED' ||
+        pending.callAccepted ||
+        wasRecentlyAccepted(pending)
+      ) {
+        dispatch(toggleCallAccepted({ status: true }));
+        acceptCallFromNotification(pending, { navigateNow: true });
+        return;
+      }
+
+      if (pending.status === 'PENDING') {
+        console.log('📱 [Main:AppState] Resumed with pending incoming call — opening screen');
+        openIncomingCallScreen(pending);
+      }
+    };
+
+    const sub = AppState.addEventListener('change', onAppStateChange);
+    return () => sub.remove();
+  }, [token, dispatch]);
+
   // Unified incoming call handler to prevent duplicates (Socket vs FCM)
   // Uses callId from backend (same across Socket & FCM) for reliable deduplication
   const handleIncomingCall = useCallback((callData, source) => {
@@ -331,6 +365,9 @@ const Main = () => {
 
     console.log(`✅ [Main:IncomingCall] ALLOWED: Processing incoming call from ${source}`);
 
+    // Reset stale Accept/Reject guards for this chat so IncomingCall always shows.
+    prepareIncomingCall(callData);
+
     if (Platform.OS === 'ios') {
       console.log('📱 [Main:IncomingCall] Routing iOS call through IncomingCallService');
       IncomingCallService.showIncomingCall(callData).catch(err => {
@@ -340,14 +377,7 @@ const Main = () => {
     }
 
     try {
-      navigate('incomingCall', {
-        name: callData?.name || callData?.displayName,
-        profileImageUrl: callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
-        roomId: roomId,
-        callType: callData?.callType,
-        callerId: callData?.callerId || callData?.senderId,
-        callId: callId,
-      });
+      openIncomingCallScreen(callData);
       console.log(`🚀 [Main:IncomingCall] Navigation to 'incomingCall' triggered successfully from ${source}`);
       console.log(`==========================================\n`);
     } catch (e) {
@@ -952,18 +982,14 @@ const Main = () => {
         } else if (actionId === 'decline_call') {
           console.log('📌 [Bootstrap] Incoming call decline action detected; rejecting call');
           markCallRejectedSync(callInfo);
-          await declineCallFromNotification(callInfo);
-          try {
-            navigate('home');
-          } catch (e) {
-            console.log('Error navigating home on bootstrap decline', e?.message);
-          }
+          await declineCallFromNotification(callInfo, { dismissUi: true });
         } else {
           // Body tap / full-screen — still join if Accept already stamped, else IncomingCall.
           const pending = getPendingCallSync();
+          const callRef = callInfo || pending;
           if (
             pending?.roomId === callInfo?.roomId &&
-            (pending.status === 'ACCEPTED' || pending.callAccepted || wasRecentlyAccepted(callInfo?.roomId))
+            (pending.status === 'ACCEPTED' || pending.callAccepted || wasRecentlyAccepted(callRef))
           ) {
             try {
               if (claimLaunchCallHandling()) {
@@ -973,18 +999,12 @@ const Main = () => {
             } catch (e) {
               console.log('Error joining accepted call on bootstrap body tap', e?.message);
             }
-          } else if (wasRecentlyRejected(callInfo?.roomId) || pending?.status === 'REJECTED') {
+          } else if (wasRecentlyRejected(callRef) || pending?.status === 'REJECTED') {
             await clearPendingCall();
           } else {
             try {
-              navigate('incomingCall', {
-                name: callInfo?.displayName || callInfo?.callerName || 'Call',
-                profileImageUrl: callInfo?.profileImage,
-                roomId: callInfo?.roomId,
-                callType: callInfo?.callType,
-                callerId: callInfo?.senderId,
-                callId: callInfo?.callId,
-              });
+              prepareIncomingCall(callInfo);
+              openIncomingCallScreen(callInfo);
             } catch (e) {
               console.log('Error navigating to incomingCall on bootstrap', e?.message);
             }
@@ -1047,28 +1067,20 @@ const Main = () => {
         } else if (type === 'call' || type === 'incoming_call') {
           console.log('📌 [Main:Firebase] Incoming call notification tapped from native notification');
           const pending = getPendingCallSync();
+          const callRef = content || pending;
           const alreadyAccepted =
             content?.callAccepted ||
-            wasRecentlyAccepted(content?.roomId) ||
+            wasRecentlyAccepted(callRef) ||
             (pending?.roomId === content?.roomId &&
               (pending.status === 'ACCEPTED' || pending.callAccepted));
           if (alreadyAccepted) {
             dispatch(toggleCallAccepted({ status: true }));
             acceptCallFromNotification(content || pending, { navigateNow: true });
-          } else if (
-            wasRecentlyRejected(content?.roomId) ||
-            pending?.status === 'REJECTED'
-          ) {
+          } else if (wasRecentlyRejected(callRef) || pending?.status === 'REJECTED') {
             clearPendingCall();
           } else {
-            navigate('incomingCall', {
-              name: content.displayName || content.callerName || 'Call',
-              profileImageUrl: content.profileImage,
-              roomId: content.roomId,
-              callType: content.callType,
-              callerId: content.senderId,
-              callId: content.callId,
-            });
+            prepareIncomingCall(content);
+            openIncomingCallScreen(content);
           }
         } else if (type === 'call_accepted' || type === 'call_request_accepted') {
           navigate('CallRequests', { activeTab: 'scheduled' });
@@ -1189,6 +1201,22 @@ const Main = () => {
           }
         }
 
+        else if (notificationType === 'incoming_call' || notificationType === 'call') {
+          console.log('📌 [Main:onForegroundEvent] Incoming call notification body pressed');
+          if (wasRecentlyRejected(notificationData) || getPendingCallSync()?.status === 'REJECTED') {
+            await clearPendingCall();
+          } else if (
+            wasRecentlyAccepted(notificationData) ||
+            getPendingCallSync()?.status === 'ACCEPTED'
+          ) {
+            dispatch(toggleCallAccepted({ status: true }));
+            await acceptCallFromNotification(notificationData, { navigateNow: true });
+          } else {
+            prepareIncomingCall(notificationData);
+            openIncomingCallScreen(notificationData);
+          }
+        }
+
       }
 
       // Handle notification action press
@@ -1213,7 +1241,7 @@ const Main = () => {
           }
         } else if (pressActionId === 'decline_call' && callData?.roomId) {
           markCallRejectedSync(callData);
-          const result = await declineCallFromNotification(callData);
+          const result = await declineCallFromNotification(callData, { dismissUi: true });
           if (!result.success) {
             console.log('❌ [Main:onForegroundEvent] Reject API failed:', result.error);
           }

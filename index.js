@@ -31,7 +31,7 @@ import {
   markCallAcceptedSync,
   markCallRejectedSync,
   getPendingCallSync,
-  persistPendingCallSync,
+  prepareIncomingCall,
   clearPendingCall,
 } from './Src/Utils/callAcceptFlow';
 
@@ -88,28 +88,30 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
       console.log(`📱 [index:FCM:Background] Saving to AsyncStorage - callId: ${callDetails?.callId}, roomId: ${callDetails?.roomId}`);
       AppLog('INCOMING_CALL_FCM_BG', 'Received full call notification in background', remoteNotificationData);
 
-      // Never overwrite Accept/Reject intent with PENDING (race with action press).
+      // Never overwrite Accept/Reject intent with PENDING for the SAME call session.
       const existingPending = getPendingCallSync();
-      const sameRoom = existingPending?.roomId && existingPending.roomId === callDetails?.roomId;
+      const sameCallSession =
+        existingPending?.roomId &&
+        existingPending.roomId === callDetails?.roomId &&
+        (!callDetails?.callId ||
+          !existingPending.callId ||
+          existingPending.callId === callDetails?.callId);
       const alreadyResolved =
-        sameRoom &&
+        sameCallSession &&
         (existingPending.status === 'ACCEPTED' ||
           existingPending.status === 'REJECTED' ||
           existingPending.callAccepted);
 
       if (!alreadyResolved) {
-        persistPendingCallSync(
-          {
-            roomId: callDetails?.roomId,
-            callerName: callDetails?.displayName,
-            displayName: callDetails?.displayName,
-            callType: callDetails?.callType || 'audio',
-            senderId: callDetails?.senderId,
-            profileImage: callDetails?.profileImage,
-            callId: callDetails?.callId,
-          },
-          {},
-        );
+        prepareIncomingCall({
+          roomId: callDetails?.roomId,
+          callerName: callDetails?.displayName,
+          displayName: callDetails?.displayName,
+          callType: callDetails?.callType || 'audio',
+          senderId: callDetails?.senderId,
+          profileImage: callDetails?.profileImage,
+          callId: callDetails?.callId,
+        });
       } else {
         console.log('📱 [index:FCM:Background] Skipping PENDING write — call already', existingPending.status);
       }
@@ -206,11 +208,11 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
         await notifee.cancelNotification('incoming_call_' + callData.roomId);
       } catch (_) {}
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
-      // Sync stamp FIRST. No launchActivity — reject in background, keep app closed.
+      // Sync stamp FIRST — Reject now uses launchActivity for reliability.
       markCallRejectedSync(callData);
       console.log('📱 [index:onBackgroundEvent] REJECT — declining call');
       try {
-        await declineCallFromNotification(callData);
+        await declineCallFromNotification(callData, { dismissUi: true });
       } catch (e) {
         console.log('❌ [index:onBackgroundEvent] Decline failed:', e?.message || e);
       }
@@ -273,11 +275,14 @@ notifee.onForegroundEvent(async ({ type, detail }) => {
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
       markCallRejectedSync(callData);
       try {
-        await declineCallFromNotification(callData);
+        await declineCallFromNotification(callData, { dismissUi: true });
       } catch (e) {
         console.log('❌ [index:onForegroundEvent] Decline failed:', e?.message || e);
       }
       if (notificationId) await notifee.cancelNotification(notificationId);
+      try {
+        await notifee.cancelNotification('incoming_call_' + callData.roomId);
+      } catch (_) {}
     }
   }
 

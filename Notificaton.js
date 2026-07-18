@@ -616,10 +616,12 @@ export async function showIncomingCallNotification(callDetails) {
         },
         actions: [
           {
-            // No launchActivity — reject in background, keep app closed
+            // launchActivity so Reject is delivered reliably (killed + background).
+            // Startup/bootstrap decline path dismisses UI and does not show IncomingCall.
             title: 'Reject',
             pressAction: {
               id: 'decline_call',
+              launchActivity: 'default',
             },
           },
           {

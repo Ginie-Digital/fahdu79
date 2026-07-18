@@ -1,18 +1,32 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createMMKV } from 'react-native-mmkv';
+import { StackActions } from '@react-navigation/native';
+import notifee from '@notifee/react-native';
 import store from '../../Redux/Store';
 import { BASE_URL } from '../Configs/ApiConfig';
-import { navigate } from '../../Navigation/RootNavigation';
+import { navigate, navigationRef } from '../../Navigation/RootNavigation';
+import RingtoneManager from '../Components/Calling/RingtoneManager';
 
 const PENDING_CALL_KEY = 'pendingCall';
-/** In-memory guard across background handler + cold-start bootstrap. */
-const recentlyAcceptedRooms = new Set();
-const recentlyRejectedRooms = new Set();
-const acceptInFlightRooms = new Set();
+/** In-memory guards keyed by callId (fallback roomId). Never block the next call. */
+const recentlyAcceptedKeys = new Set();
+const recentlyRejectedKeys = new Set();
+const acceptInFlightKeys = new Set();
+const rejectInFlightKeys = new Set();
+/** Keys where REJECTED API already succeeded (allows safe skip). */
+const rejectedApiDoneKeys = new Set();
 /** Prevent double navigation from bootstrap + pendingCall startup. */
 let launchCallHandled = false;
 
 const mmkv = createMMKV({ id: 'default' });
+
+/** Prefer callId — roomId is reused across calls in the same chat. */
+export const callGuardKey = callData => {
+  if (!callData) return null;
+  if (callData.callId) return `call:${callData.callId}`;
+  if (callData.roomId) return `room:${callData.roomId}`;
+  return null;
+};
 
 const readTokenFromMmkv = () => {
   try {
@@ -41,7 +55,6 @@ export const getAuthToken = async (maxAttempts = 20) => {
       return token;
     }
 
-    // Headless background often has no PersistGate — read storage directly.
     const mmkvToken = readTokenFromMmkv();
     if (mmkvToken) {
       return mmkvToken;
@@ -64,6 +77,20 @@ export const getAuthToken = async (maxAttempts = 20) => {
   }
 
   return readTokenFromMmkv() || (await AsyncStorage.getItem('data').catch(() => null));
+};
+
+const getCurrentUserId = () => {
+  try {
+    const fromStore = store.getState()?.auth?.user?.data?._id;
+    if (fromStore) return fromStore;
+    const raw = mmkv.getString('persist:root');
+    if (!raw) return null;
+    const root = JSON.parse(raw);
+    const auth = typeof root?.auth === 'string' ? JSON.parse(root.auth) : root?.auth;
+    return auth?.user?.data?._id || null;
+  } catch (_) {
+    return null;
+  }
 };
 
 /**
@@ -90,7 +117,7 @@ export const callAcceptAPI = async (roomId, callType, status) => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        roomId,
+        roomId: String(roomId),
         callType: callType || 'audio',
         status,
       }),
@@ -110,6 +137,49 @@ export const callAcceptAPI = async (roomId, callType, status) => {
   }
 };
 
+/** Fallback reject endpoint used by CallScreen hangup-before-accept. */
+export const callRejectAPI = async callData => {
+  const roomId = callData?.roomId;
+  if (!roomId) {
+    return { success: false, error: 'No roomId' };
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    return { success: false, error: 'No token' };
+  }
+
+  const userId = callData.userId || callData.receiverId || getCurrentUserId();
+  console.log('📡 [callRejectAPI] Starting reject-call', { roomId, userId });
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/stream/reject-call`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        roomId: String(roomId),
+        callType: callData.callType || 'audio',
+        userId,
+      }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    console.log('✅ [callRejectAPI] API Response:', response.status, result);
+
+    if (!response.ok) {
+      return { success: false, error: result?.message || `HTTP ${response.status}`, data: result };
+    }
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('❌ [callRejectAPI] API Error:', error);
+    return { success: false, error: error?.message || 'API error' };
+  }
+};
+
 export const buildPendingCallPayload = (callData, { accepted, rejected, apiDone } = {}) => ({
   roomId: callData.roomId,
   callerName: callData.displayName || callData.callerName || 'Call',
@@ -120,7 +190,6 @@ export const buildPendingCallPayload = (callData, { accepted, rejected, apiDone 
   callId: callData.callId,
   callAccepted: !!accepted,
   status: rejected ? 'REJECTED' : accepted ? 'ACCEPTED' : 'PENDING',
-  // Only true after accept/reject API succeeds (used for cold-start retry).
   apiDone: !!apiDone,
 });
 
@@ -174,23 +243,54 @@ export const getPendingCall = async () => {
 };
 
 /**
- * Instant accept intent — call this BEFORE any await when Accept is pressed.
- * Fixes Android launchActivity racing ahead of the background JS handler.
+ * New ringing call arrived — clear stale Accept/Reject guards for this chat room
+ * so the next call always shows IncomingCall.
  */
-export const markCallAcceptedSync = callData => {
+export const prepareIncomingCall = callData => {
   if (!callData?.roomId) return;
-  recentlyAcceptedRooms.add(callData.roomId);
+
+  launchCallHandled = false;
+
+  // Drop room-scoped leftovers from a previous call in the same chat.
+  recentlyAcceptedKeys.delete(`room:${callData.roomId}`);
+  recentlyRejectedKeys.delete(`room:${callData.roomId}`);
+
+  const existing = getPendingCallSync();
+  if (
+    existing?.roomId === callData.roomId &&
+    callData.callId &&
+    existing.callId &&
+    existing.callId !== callData.callId
+  ) {
+    // Different call session for same room — replace pending.
+  }
+
+  persistPendingCallSync(callData, {});
+};
+
+export const markCallAcceptedSync = callData => {
+  const key = callGuardKey(callData);
+  if (!key) return;
+  recentlyAcceptedKeys.add(key);
   persistPendingCallSync(callData, { accepted: true, apiDone: false });
 };
 
 export const markCallRejectedSync = callData => {
-  if (!callData?.roomId) return;
-  recentlyRejectedRooms.add(callData.roomId);
+  const key = callGuardKey(callData);
+  if (!key) return;
+  recentlyRejectedKeys.add(key);
   persistPendingCallSync(callData, { rejected: true, apiDone: false });
 };
 
-export const wasRecentlyAccepted = roomId => !!roomId && recentlyAcceptedRooms.has(roomId);
-export const wasRecentlyRejected = roomId => !!roomId && recentlyRejectedRooms.has(roomId);
+export const wasRecentlyAccepted = callData => {
+  const key = callGuardKey(typeof callData === 'string' ? { roomId: callData } : callData);
+  return !!key && recentlyAcceptedKeys.has(key);
+};
+
+export const wasRecentlyRejected = callData => {
+  const key = callGuardKey(typeof callData === 'string' ? { roomId: callData } : callData);
+  return !!key && recentlyRejectedKeys.has(key);
+};
 
 export const claimLaunchCallHandling = () => {
   if (launchCallHandled) return false;
@@ -198,33 +298,98 @@ export const claimLaunchCallHandling = () => {
   return true;
 };
 
+export const resetLaunchCallHandling = () => {
+  launchCallHandled = false;
+};
+
 export const openActiveCallScreen = callData => {
   const callType = callData.callType || 'audio';
-  navigate(callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+  const screen = callType === 'video' ? 'videoCallScreen' : 'callScreen';
+  const params = {
     roomId: callData.roomId,
     name: callData.displayName || callData.callerName || 'Call',
     callType,
     callerId: callData.senderId || callData.callerId,
     profileImageUrl: callData.profileImage || callData.profileImageUrl,
     callAccepted: true,
-  });
+    callId: callData.callId,
+  };
+
+  if (navigationRef.isReady()) {
+    try {
+      navigationRef.dispatch(StackActions.push(screen, params));
+      return;
+    } catch (e) {
+      console.warn('[openActiveCallScreen] push failed, falling back to navigate:', e?.message || e);
+    }
+  }
+  navigate(screen, params);
+};
+
+export const openIncomingCallScreen = callData => {
+  const params = {
+    name: callData?.name || callData?.displayName || callData?.callerName || 'Call',
+    profileImageUrl:
+      callData?.profileImageurl ||
+      callData?.profileImage ||
+      callData?.profile_image ||
+      callData?.profileImageUrl,
+    roomId: callData?.roomId,
+    callType: callData?.callType || 'audio',
+    callerId: callData?.callerId || callData?.senderId,
+    callId: callData?.callId,
+  };
+
+  if (navigationRef.isReady()) {
+    try {
+      const current = navigationRef.getCurrentRoute()?.name;
+      if (current === 'incomingCall') {
+        navigationRef.dispatch(StackActions.replace('incomingCall', params));
+        return true;
+      }
+      navigationRef.dispatch(StackActions.push('incomingCall', params));
+      return true;
+    } catch (e) {
+      console.warn('[openIncomingCallScreen] push failed, falling back to navigate:', e?.message || e);
+    }
+  }
+
+  navigate('incomingCall', params);
+  return true;
+};
+
+export const dismissIncomingCallScreen = () => {
+  if (!navigationRef.isReady()) {
+    navigate('home');
+    return;
+  }
+  try {
+    const current = navigationRef.getCurrentRoute()?.name;
+    if (current === 'incomingCall' || current === 'callScreen' || current === 'videoCallScreen') {
+      if (navigationRef.canGoBack()) {
+        navigationRef.goBack();
+        return;
+      }
+    }
+  } catch (_) {}
+  navigate('home');
 };
 
 /**
  * Accept from notification action: hit API once, then open the active call screen.
- * Avoids routing through IncomingCall (which forced a second Accept).
  */
 export const acceptCallFromNotification = async (callData, { navigateNow = true } = {}) => {
   if (!callData?.roomId) {
     return { success: false, error: 'No roomId' };
   }
 
-  // Stamp ACCEPTED sync first so startup never opens IncomingCall over Accept.
+  const key = callGuardKey(callData);
   markCallAcceptedSync(callData);
 
   const pending = getPendingCallSync();
   if (
     pending?.roomId === callData.roomId &&
+    (!callData.callId || !pending.callId || pending.callId === callData.callId) &&
     (pending.status === 'ACCEPTED' || pending.callAccepted) &&
     pending.apiDone
   ) {
@@ -236,24 +401,23 @@ export const acceptCallFromNotification = async (callData, { navigateNow = true 
     return { success: true, data: { alreadyAccepted: true } };
   }
 
-  if (acceptInFlightRooms.has(callData.roomId)) {
+  if (key && acceptInFlightKeys.has(key)) {
     console.log('📱 [acceptCallFromNotification] Accept already in-flight, skipping duplicate API');
     if (navigateNow) openActiveCallScreen(callData);
     return { success: true, data: { inFlight: true } };
   }
 
-  acceptInFlightRooms.add(callData.roomId);
+  if (key) acceptInFlightKeys.add(key);
   let result;
   try {
     result = await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
   } finally {
-    acceptInFlightRooms.delete(callData.roomId);
+    if (key) acceptInFlightKeys.delete(key);
   }
 
   if (result.success) {
     persistPendingCallSync(callData, { accepted: true, apiDone: true });
   } else {
-    // Keep ACCEPTED intent; Main will retry API once token/nav is ready.
     console.log('⚠️ [acceptCallFromNotification] API failed, intent persisted for retry:', result.error);
   }
 
@@ -268,29 +432,88 @@ export const acceptCallFromNotification = async (callData, { navigateNow = true 
 };
 
 /**
- * Decline from notification action: hit API once and clear pending state.
- * Prefer calling with no launchActivity so the app stays closed.
+ * Decline from notification action: MUST hit reject API so caller side cuts.
+ * Do not skip API just because markCallRejectedSync already ran (that only stamps intent).
  */
-export const declineCallFromNotification = async callData => {
+export const declineCallFromNotification = async (callData, { dismissUi = true } = {}) => {
   if (!callData?.roomId) {
     return { success: false, error: 'No roomId' };
   }
 
-  if (recentlyRejectedRooms.has(callData.roomId)) {
+  const key = callGuardKey(callData);
+
+  // Only skip when REJECT API already succeeded for this call session.
+  if (key && rejectedApiDoneKeys.has(key)) {
+    console.log('📱 [declineCallFromNotification] Reject API already done, skipping');
     await clearPendingCall();
+    if (dismissUi) dismissIncomingCallScreen();
     return { success: true, data: { alreadyRejected: true } };
   }
 
-  // Stamp REJECTED sync first so startup never opens IncomingCall.
-  markCallRejectedSync(callData);
-
-  const result = await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
-  if (!result.success) {
-    console.log('⚠️ [declineCallFromNotification] API failed:', result.error);
+  const pending = getPendingCallSync();
+  if (
+    pending?.status === 'REJECTED' &&
+    pending?.apiDone &&
+    pending?.roomId === callData.roomId &&
+    (!callData.callId || !pending.callId || pending.callId === callData.callId)
+  ) {
+    if (key) rejectedApiDoneKeys.add(key);
+    await clearPendingCall();
+    if (dismissUi) dismissIncomingCallScreen();
+    return { success: true, data: { alreadyRejected: true } };
   }
 
-  await clearPendingCall();
-  return result.success ? result : { success: true, data: { deferred: true, error: result.error } };
+  if (key && rejectInFlightKeys.has(key)) {
+    console.log('📱 [declineCallFromNotification] Reject already in-flight');
+    if (dismissUi) dismissIncomingCallScreen();
+    return { success: true, data: { inFlight: true } };
+  }
+
+  // Stamp REJECTED intent for startup UI (does NOT mean API finished).
+  markCallRejectedSync(callData);
+
+  if (key) rejectInFlightKeys.add(key);
+
+  let result = { success: false, error: 'not attempted' };
+  try {
+    // Primary path — same as IncomingCall screen Reject button (notifies caller via socket).
+    result = await callAcceptAPI(callData.roomId, callData.callType, 'REJECTED');
+
+    // Fallback — CallScreen hangup path, if accept/manual failed (e.g. token race).
+    if (!result.success) {
+      console.log('⚠️ [declineCallFromNotification] accept/manual failed, trying reject-call:', result.error);
+      result = await callRejectAPI(callData);
+    }
+  } finally {
+    if (key) rejectInFlightKeys.delete(key);
+  }
+
+  if (result.success) {
+    if (key) rejectedApiDoneKeys.add(key);
+    persistPendingCallSync(callData, { rejected: true, apiDone: true });
+    await clearPendingCall();
+    console.log('✅ [declineCallFromNotification] Call rejected — caller should cut');
+  } else {
+    // Keep REJECTED pending without apiDone so cold-start/bootstrap can retry.
+    persistPendingCallSync(callData, { rejected: true, apiDone: false });
+    console.log('❌ [declineCallFromNotification] Reject API failed, pending kept for retry:', result.error);
+  }
+
+  try {
+    RingtoneManager.stopAll();
+  } catch (_) {}
+
+  try {
+    if (callData.roomId) {
+      await notifee.cancelNotification('incoming_call_' + callData.roomId);
+    }
+  } catch (_) {}
+
+  if (dismissUi) dismissIncomingCallScreen();
+
+  return result.success
+    ? result
+    : { success: false, error: result.error, data: { deferred: true } };
 };
 
 /**
@@ -299,14 +522,15 @@ export const declineCallFromNotification = async callData => {
 export const ensureAcceptedCallReady = async callData => {
   if (!callData?.roomId) return { success: false, error: 'No roomId' };
 
+  const key = callGuardKey(callData);
   if (callData.apiDone) {
-    recentlyAcceptedRooms.add(callData.roomId);
+    if (key) recentlyAcceptedKeys.add(key);
     return { success: true, data: { alreadyAccepted: true } };
   }
 
   const result = await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
   if (result.success) {
-    recentlyAcceptedRooms.add(callData.roomId);
+    if (key) recentlyAcceptedKeys.add(key);
     persistPendingCallSync(callData, { accepted: true, apiDone: true });
   }
   return result;

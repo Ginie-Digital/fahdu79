@@ -40,6 +40,7 @@ import {
   wasRecentlyRejected,
   clearPendingCall,
   acceptCallFromNotification,
+  markCallRejectedSync,
 } from '../../Utils/callAcceptFlow';
 
 const { width, height } = Dimensions.get('window');
@@ -221,18 +222,22 @@ const IncomingCallScreen = ({ route, navigation }) => {
     );
   }, []);
 
-  // Safety net: if Accept already happened from notification, skip second Accept UI.
+  // Safety net: only for THIS callId (roomId alone is reused across chats).
   useEffect(() => {
     if (!roomId || hasActedRef.current) return;
 
+    const callRef = { roomId, callId };
     const pending = getPendingCallSync();
+    const samePendingCall =
+      pending?.roomId === roomId &&
+      (!callId || !pending.callId || pending.callId === callId);
+
     const accepted =
-      wasRecentlyAccepted(roomId) ||
-      (pending?.roomId === roomId &&
-        (pending.status === 'ACCEPTED' || pending.callAccepted));
+      wasRecentlyAccepted(callRef) ||
+      (samePendingCall && (pending.status === 'ACCEPTED' || pending.callAccepted));
     const rejected =
-      wasRecentlyRejected(roomId) ||
-      (pending?.roomId === roomId && pending.status === 'REJECTED');
+      wasRecentlyRejected(callRef) ||
+      (samePendingCall && pending.status === 'REJECTED');
 
     if (rejected) {
       hasActedRef.current = true;
@@ -244,7 +249,6 @@ const IncomingCallScreen = ({ route, navigation }) => {
     if (accepted) {
       hasActedRef.current = true;
       RingtoneManager.stopAll();
-      // Ensure accept API ran, then land on active call (no second Accept).
       acceptCallFromNotification(
         {
           roomId,
@@ -265,6 +269,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
           callerId,
           profileImageUrl,
           callAccepted: true,
+          callId,
         });
       });
     }
@@ -489,6 +494,15 @@ const IncomingCallScreen = ({ route, navigation }) => {
     // caller isn't silently blocked by the processedRoomIds check in Main.js
     if (callId) dispatch(clearProcessedRoomId(callId));
 
+    markCallRejectedSync({
+      roomId,
+      callId,
+      callType: callType || 'audio',
+      displayName: name,
+      senderId: callerId,
+      profileImage: profileImageUrl,
+    });
+
     // Fire decline API in background (fire-and-forget) to keep UI responsive
     callAcceptManual({
       token,
@@ -497,13 +511,17 @@ const IncomingCallScreen = ({ route, navigation }) => {
         callType: callType || 'audio',
         status: 'REJECTED',
       },
-    }).catch(error => {
-      console.error('Background decline API call error:', error);
-    });
+    })
+      .catch(error => {
+        console.error('Background decline API call error:', error);
+      })
+      .finally(() => {
+        clearPendingCall();
+      });
 
     // Go back instantly
     navigation.goBack();
-  }, [token, roomId, callType, callId, dispatch, navigation]);
+  }, [token, roomId, callType, callId, name, callerId, profileImageUrl, dispatch, navigation, stopRingtone, clearSafetyTimer]);
 
   // ─── Pan gesture (vertical) ───
   const panGesture = Gesture.Pan()

@@ -97,7 +97,11 @@ const CallScreen = ({ route }) => {
   const [rejectCall] = useRejectCallMutation();
   const [callAcceptManual] = useCallAcceptManualMutation();
 
-  const IS_STARTING = currentUserId === route?.params?.callerId;
+  // Require both ids — missing callerId must NOT treat receiver as caller (sends false UNAVAILABLE).
+  const IS_STARTING =
+    !!currentUserId &&
+    !!route?.params?.callerId &&
+    String(currentUserId) === String(route.params.callerId);
 
   const { logs, clearLogs } = useCallStatusPolling({
     roomId: route?.params?.roomId,

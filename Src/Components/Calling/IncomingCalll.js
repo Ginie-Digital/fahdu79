@@ -40,8 +40,11 @@ import {
   wasRecentlyRejected,
   clearPendingCall,
   acceptCallFromNotification,
+  markCallAcceptedSync,
   markCallRejectedSync,
+  subscribeCallIntent,
 } from '../../Utils/callAcceptFlow';
+import { cancelIncomingCallNotification } from '../../../Notificaton';
 
 const { width, height } = Dimensions.get('window');
 const ACCEPT_THRESHOLD = 100;
@@ -155,47 +158,91 @@ const IncomingCallScreen = ({ route, navigation }) => {
   const safetyTimerRef = useRef(null);
   const hasActedRef = useRef(false);
   const ringtoneRef = useRef(null);
+  // State (not only ref) so polling `enabled` actually turns off after Accept/Reject.
+  const [hasActed, setHasActed] = useState(false);
+
+  const markActed = useCallback(() => {
+    hasActedRef.current = true;
+    setHasActed(true);
+  }, []);
 
   const { logs, clearLogs } = useCallStatusPolling({
     roomId,
     token,
-    enabled: !hasActedRef.current,
+    enabled: !hasActed,
     callAccepted: false,
     onCallAccepted: () => {
-      // Receiver side never expects call to transition to ACCEPTED through polling
-      // because receiver is the one who initiates acceptance.
+      // Receiver is the one who accepts — ignore ACCEPTED polls here.
     },
     onCallRejected: () => {
+      // Only REJECTED means caller actually cancelled while we were ringing.
       if (hasActedRef.current) return;
-      hasActedRef.current = true;
+      markActed();
       console.log('🔄 [Polling] Call rejected/cancelled by caller, exiting...');
-      stopRingtone();
-      clearSafetyTimer();
+      RingtoneManager.stopAll();
       if (callId) dispatch(clearProcessedRoomId(callId));
       LoginPageErrors('Caller cancelled the call');
       navigation.goBack();
     },
     onCallUnavailable: () => {
-      if (hasActedRef.current) return;
-      hasActedRef.current = true;
-      console.log('🔄 [Polling] Call unavailable, exiting...');
-      stopRingtone();
-      clearSafetyTimer();
-      if (callId) dispatch(clearProcessedRoomId(callId));
-      LoginPageErrors('Caller is no longer available');
-      navigation.goBack();
+      // IMPORTANT: While ringing, other-participant status often returns UNAVAILABLE /
+      // DISCONNECTED even though the creator is still on the outgoing call screen.
+      // Treating that as terminal caused false "Creator is no longer available" on Accept.
+      // 60s safety timer still sends UNAVAILABLE if the user never answers.
+      if (hasActedRef.current || wasRecentlyAccepted({ roomId, callId })) return;
+      console.log(
+        '🔄 [Polling] Ignoring UNAVAILABLE on IncomingCall (creator may still be ringing)',
+      );
     },
     onCallEnded: (status) => {
-      if (hasActedRef.current) return;
-      hasActedRef.current = true;
-      console.log(`🔄 [Polling] Call ended with status: ${status}, exiting...`);
-      stopRingtone();
-      clearSafetyTimer();
-      if (callId) dispatch(clearProcessedRoomId(callId));
-      LoginPageErrors('Caller is no longer available');
-      navigation.goBack();
+      if (hasActedRef.current || wasRecentlyAccepted({ roomId, callId })) return;
+      console.log(
+        `🔄 [Polling] Ignoring ${status} on IncomingCall (not a confirmed caller cancel)`,
+      );
     },
   });
+
+  // Notification Accept/Reject while this screen is open — stop polling/ringtone immediately.
+  useEffect(() => {
+    return subscribeCallIntent(({ type, callData }) => {
+      const sameRoom =
+        callData?.roomId != null &&
+        roomId != null &&
+        String(callData.roomId) === String(roomId);
+      if (!sameRoom) return;
+
+      const sameCall =
+        !callId ||
+        !callData.callId ||
+        String(callData.callId) === String(callId);
+      if (!sameCall) return;
+
+      if (type === 'ACCEPTED') {
+        console.log('📱 [IncomingCall] Accept intent from notification — stopping local UI/polling');
+        markActed();
+        RingtoneManager.stopAll();
+        if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
+        if (safetyTimerRef.current) {
+          clearTimeout(safetyTimerRef.current);
+          safetyTimerRef.current = null;
+        }
+        // Do not goBack here — acceptCallFromNotification replaces this screen.
+        return;
+      }
+
+      if (type === 'REJECTED') {
+        console.log('📱 [IncomingCall] Reject intent from notification — dismissing');
+        markActed();
+        RingtoneManager.stopAll();
+        if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
+        if (safetyTimerRef.current) {
+          clearTimeout(safetyTimerRef.current);
+          safetyTimerRef.current = null;
+        }
+        if (navigation.canGoBack()) navigation.goBack();
+      }
+    });
+  }, [roomId, callId, markActed, navigation]);
   
   // State for showing loader
   const [showLoader, setShowLoader] = useState(false);
@@ -240,15 +287,19 @@ const IncomingCallScreen = ({ route, navigation }) => {
       (samePendingCall && pending.status === 'REJECTED');
 
     if (rejected) {
-      hasActedRef.current = true;
+      markActed();
       clearPendingCall();
       navigation.goBack();
       return;
     }
 
     if (accepted) {
-      hasActedRef.current = true;
+      // Notification/bootstrap already owns accept API + navigation — only stop local UI.
+      markActed();
       RingtoneManager.stopAll();
+      if (pending?.apiDone) {
+        return;
+      }
       acceptCallFromNotification(
         {
           roomId,
@@ -273,7 +324,11 @@ const IncomingCallScreen = ({ route, navigation }) => {
         });
       });
     }
-  }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation]);
+  }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
+
+  // Keep the Accept/Decline heads-up notification visible in foreground.
+  // Duplicate Accept is safe: subscribeCallIntent + accept idempotency + replace nav.
+  // Cancel notification only after user Accept/Reject (handleAccept / handleDecline / intent).
 
   // ─── Incoming call ringtone (plays FIRST, before permission checks) ───
   useEffect(() => {
@@ -345,7 +400,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
   const finalizeIncomingCallAction = useCallback(async (status, reason) => {
     if (hasActedRef.current) return;
-    hasActedRef.current = true;
+    markActed();
     stopRingtone();
     clearSafetyTimer();
 
@@ -364,7 +419,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
     } catch (error) {
       console.warn('[IncomingCall] finalizeIncomingCallAction failed:', error?.message || error);
     }
-  }, [callAcceptManual, callId, clearSafetyTimer, callType, dispatch, roomId, stopRingtone, token]);
+  }, [callAcceptManual, callId, clearSafetyTimer, callType, dispatch, roomId, stopRingtone, token, markActed]);
 
   // ─── Safety timeout (60s) ───
   useEffect(() => {
@@ -418,9 +473,19 @@ const IncomingCallScreen = ({ route, navigation }) => {
   // ─── Accept call (JS Thread) ───
   const handleAccept = useCallback(async () => {
     if (hasActedRef.current) return;
-    hasActedRef.current = true;
+    markActed();
     stopRingtone();
     clearSafetyTimer();
+    if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
+
+    markCallAcceptedSync({
+      roomId,
+      callId,
+      callType: callType || 'audio',
+      displayName: name,
+      senderId: callerId,
+      profileImage: profileImageUrl,
+    });
     
     // Clear dedup guard so future calls to same room aren't blocked
     if (callId) dispatch(clearProcessedRoomId(callId));
@@ -443,21 +508,24 @@ const IncomingCallScreen = ({ route, navigation }) => {
         },
       });
 
-      // Check if the caller went offline before we could connect
-      if (response?.data?.message === 'USER_OFFLINE') {
-        console.log('⚠️ Accept API: Caller is offline');
-        LoginPageErrors('Caller is no longer available');
-        navigation.goBack();
-        return;
-      }
+      const offlineMessage =
+        response?.data?.message ||
+        response?.error?.data?.message ||
+        response?.error?.error;
 
-      if (response?.error) {
-        console.log('⚠️ Accept API returned error:', response.error);
+      // USER_OFFLINE from accept/manual is frequently a false positive while the
+      // creator is still ringing. Still join; active call screen will exit if needed.
+      if (offlineMessage === 'USER_OFFLINE') {
+        console.log(
+          '⚠️ Accept API returned USER_OFFLINE — joining anyway (creator may still be ringing)',
+          response,
+        );
+      } else if (response?.error) {
+        console.log('⚠️ Accept API returned error (still joining):', response.error);
       } else {
         console.log('✅ Accept API succeeded');
       }
 
-      // Navigate to call screen only if caller is online
       navigation.replace(callType === 'video' ? 'videoCallScreen' : 'callScreen', {
         roomId: roomId,
         name: name,
@@ -465,13 +533,14 @@ const IncomingCallScreen = ({ route, navigation }) => {
         callerId: callerId,
         profileImageUrl: profileImageUrl,
         callAccepted: true,
+        callId,
       });
     } catch (err) {
       console.error('❌ Accept API exception:', err);
       LoginPageErrors('Something went wrong');
       navigation.goBack();
     }
-  }, [token, roomId, name, callerId, profileImageUrl, callType, callId]);
+  }, [token, roomId, name, callerId, profileImageUrl, callType, callId, markActed, stopRingtone, clearSafetyTimer, dispatch, triggerSuccessSequence, navigation]);
 
   const triggerAcceptJS = useCallback(() => {
     handleAccept();
@@ -482,7 +551,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
   const handleDecline = useCallback(() => {
     if (hasActedRef.current) return;
     if (shouldRejectIncomingCall({ isCallActive: true, hasActed: hasActedRef.current })) {
-      hasActedRef.current = true;
+      markActed();
     } else {
       return;
     }
@@ -502,6 +571,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
       senderId: callerId,
       profileImage: profileImageUrl,
     });
+    if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
 
     // Fire decline API in background (fire-and-forget) to keep UI responsive
     callAcceptManual({

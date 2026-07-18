@@ -18,6 +18,24 @@ const rejectedApiDoneKeys = new Set();
 /** Prevent double navigation from bootstrap + pendingCall startup. */
 let launchCallHandled = false;
 
+/** IncomingCall screen listens so notification-Accept can stop ringtone/polling. */
+const callIntentListeners = new Set();
+
+export const subscribeCallIntent = listener => {
+  callIntentListeners.add(listener);
+  return () => callIntentListeners.delete(listener);
+};
+
+const emitCallIntent = (type, callData) => {
+  callIntentListeners.forEach(listener => {
+    try {
+      listener({ type, callData });
+    } catch (e) {
+      console.warn('[emitCallIntent] listener error:', e?.message || e);
+    }
+  });
+};
+
 const mmkv = createMMKV({ id: 'default' });
 
 /** Prefer callId — roomId is reused across calls in the same chat. */
@@ -273,6 +291,7 @@ export const markCallAcceptedSync = callData => {
   if (!key) return;
   recentlyAcceptedKeys.add(key);
   persistPendingCallSync(callData, { accepted: true, apiDone: false });
+  emitCallIntent('ACCEPTED', callData);
 };
 
 export const markCallRejectedSync = callData => {
@@ -280,6 +299,7 @@ export const markCallRejectedSync = callData => {
   if (!key) return;
   recentlyRejectedKeys.add(key);
   persistPendingCallSync(callData, { rejected: true, apiDone: false });
+  emitCallIntent('REJECTED', callData);
 };
 
 export const wasRecentlyAccepted = callData => {
@@ -317,6 +337,16 @@ export const openActiveCallScreen = callData => {
 
   if (navigationRef.isReady()) {
     try {
+      const current = navigationRef.getCurrentRoute()?.name;
+      // Replace IncomingCall — do NOT push on top (zombie polling + goBack kills CallScreen).
+      if (current === 'incomingCall') {
+        navigationRef.dispatch(StackActions.replace(screen, params));
+        return;
+      }
+      if (current === screen) {
+        navigationRef.dispatch(StackActions.replace(screen, params));
+        return;
+      }
       navigationRef.dispatch(StackActions.push(screen, params));
       return;
     } catch (e) {
@@ -327,6 +357,11 @@ export const openActiveCallScreen = callData => {
 };
 
 export const openIncomingCallScreen = callData => {
+  if (!callData?.roomId) {
+    console.warn('[openIncomingCallScreen] Missing roomId, skip');
+    return false;
+  }
+
   const params = {
     name: callData?.name || callData?.displayName || callData?.callerName || 'Call',
     profileImageUrl:
@@ -340,7 +375,8 @@ export const openIncomingCallScreen = callData => {
     callId: callData?.callId,
   };
 
-  if (navigationRef.isReady()) {
+  const tryOpen = () => {
+    if (!navigationRef.isReady()) return false;
     try {
       const current = navigationRef.getCurrentRoute()?.name;
       if (current === 'incomingCall') {
@@ -350,11 +386,31 @@ export const openIncomingCallScreen = callData => {
       navigationRef.dispatch(StackActions.push('incomingCall', params));
       return true;
     } catch (e) {
-      console.warn('[openIncomingCallScreen] push failed, falling back to navigate:', e?.message || e);
+      console.warn('[openIncomingCallScreen] push failed:', e?.message || e);
+      return false;
     }
+  };
+
+  if (tryOpen()) {
+    return true;
   }
 
-  navigate('incomingCall', params);
+  // Cold start: nav stack often not ready yet — retry, then fall back to navigate().
+  console.log('⏳ [openIncomingCallScreen] Nav not ready, retrying...');
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts += 1;
+    if (tryOpen()) {
+      clearInterval(interval);
+      return;
+    }
+    if (attempts >= 80) {
+      clearInterval(interval);
+      console.log('⚠️ [openIncomingCallScreen] Retry exhausted, using navigate()');
+      navigate('incomingCall', params);
+    }
+  }, 100);
+
   return true;
 };
 
@@ -418,7 +474,15 @@ export const acceptCallFromNotification = async (callData, { navigateNow = true 
   if (result.success) {
     persistPendingCallSync(callData, { accepted: true, apiDone: true });
   } else {
-    console.log('⚠️ [acceptCallFromNotification] API failed, intent persisted for retry:', result.error);
+    // Do NOT treat USER_OFFLINE as hard-fail here: backend presence is often wrong
+    // while the creator is still on the outgoing ringing screen. Join locally anyway;
+    // CallScreen/VideoCallScreen + polling will end the call if the creator is truly gone.
+    console.log(
+      '⚠️ [acceptCallFromNotification] API failed, still joining call screen:',
+      result.error,
+      result.data,
+    );
+    persistPendingCallSync(callData, { accepted: true, apiDone: false });
   }
 
   if (navigateNow) {

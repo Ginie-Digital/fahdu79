@@ -16,7 +16,21 @@ const PACK_COLORS = [
   { bg: '#FEE2E2', circle: '#FDC4C4', badgeBorder: '#FDBFBF' }, // Fanatix - Rose
 ];
 
-const BADGE_IMAGES = [
+// Badge mapping by pack cost/amount
+const BADGE_BY_COST = {
+  118: require('../../Assets/Images/Badges/StarWallet.png'),   // Fahdu (Fuski)
+  354: require('../../Assets/Images/Badges/Bronze.png'),        // Faltu
+  1180: require('../../Assets/Images/Badges/Silver.png'),       // Farzi
+  2360: require('../../Assets/Images/Badges/Gold.png'),         // Fukrey
+  5900: require('../../Assets/Images/Badges/Platinum.png'),     // Funtoosh
+  11800: require('../../Assets/Images/Badges/Diamond.png'),     // Fahdu
+  23600: require('../../Assets/Images/Badges/Elite.png'),       // Fantom
+  59000: require('../../Assets/Images/Badges/Royal.png'),       // Fataaka
+  118000: require('../../Assets/Images/Badges/Legend.png'),     // Fanatix
+};
+
+// Fallback array for unknown costs
+const BADGE_IMAGES_FALLBACK = [
   require('../../Assets/Images/Badges/Bronze.png'),
   require('../../Assets/Images/Badges/Silver.png'),
   require('../../Assets/Images/Badges/Gold.png'),
@@ -26,6 +40,11 @@ const BADGE_IMAGES = [
   require('../../Assets/Images/Badges/Royal.png'),
   require('../../Assets/Images/Badges/Legend.png'),
 ];
+
+const getBadgeImage = (item, index) => {
+  const cost = Number(item?.cost || item?.amount || 0);
+  return BADGE_BY_COST[cost] || BADGE_IMAGES_FALLBACK[index % BADGE_IMAGES_FALLBACK.length];
+};
 
 const CircleDecoration = ({ color }) => (
   <View style={styles.circleContainer} pointerEvents="none">
@@ -72,7 +91,7 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
         { borderColor: colorConfig.badgeBorder }
       ]}>
         <Image
-          source={BADGE_IMAGES[index % BADGE_IMAGES.length]}
+          source={getBadgeImage(item, index)}
           style={styles.badgeIcon}
         />
       </View>

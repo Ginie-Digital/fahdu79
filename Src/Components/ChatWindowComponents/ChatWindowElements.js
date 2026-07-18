@@ -194,7 +194,7 @@ export const LeftChatBubble = ({ displayThread, setFullVideoModalUri, token, cha
             <View style={{ height: 255, width: '100%', position: 'relative' }}>
               {displayThread.attachment.preview && displayThread.attachment.preview !== 'assets/icons/pdf.png' ? (
                 <>
-                  <Image source={{ uri: displayThread.attachment.preview }} resizeMode={'cover'} resizeMethod={'resize'} style={{ width: '100%', height: '100%', position: 'absolute' }} blurRadius={4} />
+                  <Image source={{ uri: displayThread.attachment.preview }} resizeMode={'cover'} resizeMethod={'resize'} style={{ width: '100%', height: '100%', position: 'absolute' }} blurRadius={30} />
 
                   <View
                     style={{

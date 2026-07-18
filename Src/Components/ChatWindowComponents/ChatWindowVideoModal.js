@@ -1,9 +1,11 @@
-import {StyleSheet, Text, View, StatusBar, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, StatusBar, TouchableOpacity, Platform} from 'react-native';
 import React from 'react';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useDispatch, useSelector } from 'react-redux';
 import Modal from 'react-native-modal';
 import { toggleChatWindowVideoModal } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import DIcon from '../../../DesiginData/DIcons';
+import { responsiveWidth } from 'react-native-responsive-dimensions';
 
 const ChatWindowVideoModal = ({ fullVideoModalUri }) => {
   const dispatch = useDispatch();
@@ -49,10 +51,10 @@ const ChatWindowVideoModal = ({ fullVideoModalUri }) => {
             allowsPictureInPicture
           />
           <TouchableOpacity 
-            style={{ position: 'absolute', top: 20, left: 20, padding: 10 }} 
+            style={{ position: 'absolute', top: Platform.OS === 'ios' ? 50 : 20, left: 16, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 }} 
             onPress={() => dispatch(toggleChatWindowVideoModal())}
           >
-             <Text style={{ color: 'white', fontSize: 18 }}>Back</Text>
+             <DIcon name={'arrowleft'} provider={'AntDesign'} color="#fff" size={responsiveWidth(5.5)} />
           </TouchableOpacity>
         </View>
       </Modal>

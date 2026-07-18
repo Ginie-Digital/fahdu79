@@ -25,91 +25,21 @@ import { navigate, navigationRef } from './Navigation/RootNavigation';
 import { updateApnToken } from './Redux/Slices/NormalSlices/AuthSlice';
 import { setCallRejected } from './Redux/Slices/NormalSlices/Call/CallSlice';
 import { AppLog } from './Src/Utils/Logger';
-import { BASE_URL } from './Src/Configs/ApiConfig';
+import {
+  acceptCallFromNotification,
+  declineCallFromNotification,
+  markCallAcceptedSync,
+  markCallRejectedSync,
+  getPendingCallSync,
+  persistPendingCallSync,
+  clearPendingCall,
+} from './Src/Utils/callAcceptFlow';
 
 
 let tempRemoteNotificationData = undefined;
 let tempCallData = Object.assign({});
 let callCutFromCaller = false;
 let isProcessingAndroidCall = false;
-
-// 🔥 Helper function to wait for Redux store rehydration and get token
-const getAuthToken = async (maxAttempts = 20) => {
-  console.log('🔑 [getAuthToken] Attempting to get auth token...');
-
-  for (let i = 0; i < maxAttempts; i++) {
-    // Check if store is rehydrated
-    const state = store.getState();
-    const isRehydrated = state?._persist?.rehydrated;
-    const token = state?.auth?.user?.token;
-
-    console.log(`🔑 [getAuthToken] Attempt ${i + 1}/${maxAttempts}`);
-    console.log(`   - Store rehydrated: ${isRehydrated}`);
-    console.log(`   - Token exists: ${!!token}`);
-
-    if (isRehydrated && token) {
-      console.log('✅ [getAuthToken] Token found!');
-      return token;
-    }
-
-    // Wait 200ms before next attempt
-    await new Promise(resolve => setTimeout(resolve, 200));
-  }
-
-  console.log('❌ [getAuthToken] Failed to get token after all attempts');
-  return null;
-};
-
-// 🔥 Helper function to call the accept API with retry logic
-const callAcceptAPI = async (roomId, callType, status) => {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📡 [callAcceptAPI] Starting API call');
-  console.log(`   - roomId: ${roomId}`);
-  console.log(`   - callType: ${callType}`);
-  console.log(`   - status: ${status}`);
-
-  if (!roomId) {
-    console.log('❌ [callAcceptAPI] No roomId provided');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    return { success: false, error: 'No roomId' };
-  }
-
-  // Get token with retry
-  const token = await getAuthToken();
-
-  if (!token) {
-    console.log('❌ [callAcceptAPI] Could not get auth token');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    return { success: false, error: 'No token' };
-  }
-
-  console.log('✅ [callAcceptAPI] Token obtained, making API request...');
-
-  try {
-    const response = await fetch(`${BASE_URL}/api/stream/call/accept/manual`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        roomId,
-        callType: callType || 'audio',
-        status,
-      }),
-    });
-
-    const result = await response.json();
-    console.log('✅ [callAcceptAPI] API Response:', result);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('❌ [callAcceptAPI] API Error:', error);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    return { success: false, error: error.message };
-  }
-};
 
 setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
   if (remoteMessage?.data?.payload) {
@@ -158,18 +88,31 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
       console.log(`📱 [index:FCM:Background] Saving to AsyncStorage - callId: ${callDetails?.callId}, roomId: ${callDetails?.roomId}`);
       AppLog('INCOMING_CALL_FCM_BG', 'Received full call notification in background', remoteNotificationData);
 
-      await AsyncStorage.setItem(
-        'pendingCall',
-        JSON.stringify({
-          roomId: callDetails?.roomId,
-          callerName: callDetails?.displayName,
-          callType: callDetails?.callType || 'audio',
-          senderId: callDetails?.senderId,
-          profileImage: callDetails?.profileImage,
-          callId: callDetails?.callId,
-          status: 'PENDING',
-        }),
-      );
+      // Never overwrite Accept/Reject intent with PENDING (race with action press).
+      const existingPending = getPendingCallSync();
+      const sameRoom = existingPending?.roomId && existingPending.roomId === callDetails?.roomId;
+      const alreadyResolved =
+        sameRoom &&
+        (existingPending.status === 'ACCEPTED' ||
+          existingPending.status === 'REJECTED' ||
+          existingPending.callAccepted);
+
+      if (!alreadyResolved) {
+        persistPendingCallSync(
+          {
+            roomId: callDetails?.roomId,
+            callerName: callDetails?.displayName,
+            displayName: callDetails?.displayName,
+            callType: callDetails?.callType || 'audio',
+            senderId: callDetails?.senderId,
+            profileImage: callDetails?.profileImage,
+            callId: callDetails?.callId,
+          },
+          {},
+        );
+      } else {
+        console.log('📱 [index:FCM:Background] Skipping PENDING write — call already', existingPending.status);
+      }
 
       await showIncomingCallNotification(callDetails);
 
@@ -184,7 +127,7 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
         
         const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
         await cancelIncomingCallNotification(roomId);
-        await AsyncStorage.removeItem('pendingCall');
+        await clearPendingCall();
       }
     } else if (remoteNotificationData?.type === 'call_accepted') {
       console.log('Call Accepted Background Event');
@@ -197,14 +140,14 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
       if (Platform.OS === 'android') {
         const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
         await cancelIncomingCallNotification(roomId);
-        await AsyncStorage.removeItem('pendingCall');
+        await clearPendingCall();
       }
     } else if (remoteNotificationData?.type === 'missed_call') {
       console.log(remoteNotificationData, ':::::');
       if (Platform.OS === 'android') {
         const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
         await cancelIncomingCallNotification(roomId);
-        await AsyncStorage.removeItem('pendingCall');
+        await clearPendingCall();
       }
     } else if (remoteNotificationData?.type === '10_reminder' || remoteNotificationData?.type === '5_reminder' || remoteNotificationData?.type === '1_reminder') {
       if (!osAlreadyDisplayed) {
@@ -246,28 +189,35 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
   if (type === EventType.ACTION_PRESS) {
     const pressActionId = detail?.pressAction?.id;
     const callData = detail?.notification?.data;
+    const notificationId = detail?.notification?.id;
     console.log(`📌 [index:onBackgroundEvent] ACTION_PRESS - actionId: ${pressActionId}`, callData);
 
     if (pressActionId === 'accept_call' && callData?.roomId) {
-      console.log('📱 [index:onBackgroundEvent] Notification accept pressed; routing to incoming call UI');
-      await AsyncStorage.setItem(
-        'pendingCall',
-        JSON.stringify({
-          roomId: callData.roomId,
-          callerName: callData.displayName,
-          callType: callData.callType,
-          senderId: callData.senderId,
-          profileImage: callData.profileImage,
-          callId: callData.callId,
-          callAccepted: false,
-          status: 'PENDING',
-        }),
-      );
-      await notifee.cancelNotification(detail.notification.id);
+      // Sync stamp FIRST — Android may launch Main before this async work finishes.
+      markCallAcceptedSync(callData);
+      console.log('📱 [index:onBackgroundEvent] ACCEPT — joining call');
+      try {
+        await acceptCallFromNotification(callData, { navigateNow: false });
+      } catch (e) {
+        console.log('❌ [index:onBackgroundEvent] Accept failed:', e?.message || e);
+      }
+      if (notificationId) await notifee.cancelNotification(notificationId);
+      try {
+        await notifee.cancelNotification('incoming_call_' + callData.roomId);
+      } catch (_) {}
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
-      console.log('📱 [index:onBackgroundEvent] Notification decline pressed; clearing pending call');
-      await AsyncStorage.removeItem('pendingCall');
-      await notifee.cancelNotification(detail.notification.id);
+      // Sync stamp FIRST. No launchActivity — reject in background, keep app closed.
+      markCallRejectedSync(callData);
+      console.log('📱 [index:onBackgroundEvent] REJECT — declining call');
+      try {
+        await declineCallFromNotification(callData);
+      } catch (e) {
+        console.log('❌ [index:onBackgroundEvent] Decline failed:', e?.message || e);
+      }
+      if (notificationId) await notifee.cancelNotification(notificationId);
+      try {
+        await notifee.cancelNotification('incoming_call_' + callData.roomId);
+      } catch (_) {}
     }
   }
 
@@ -304,37 +254,30 @@ notifee.onForegroundEvent(async ({ type, detail }) => {
     }
   }
 
+  // Mirror Accept/Decline in index so it works even before Main mounts.
+  // acceptCallFromNotification / declineCallFromNotification are idempotent.
   if (type === EventType.ACTION_PRESS) {
     const pressActionId = detail?.pressAction?.id;
     const callData = detail?.notification?.data;
+    const notificationId = detail?.notification?.id;
     console.log(`📌 [index:onForegroundEvent] ACTION_PRESS - actionId: ${pressActionId}`, callData);
-    
+
     if (pressActionId === 'accept_call' && callData?.roomId) {
-      await AsyncStorage.setItem(
-        'pendingCall',
-        JSON.stringify({
-          roomId: callData.roomId,
-          callerName: callData.displayName,
-          callType: callData.callType,
-          senderId: callData.senderId,
-          profileImage: callData.profileImage,
-          callId: callData.callId,
-          callAccepted: false,
-          status: 'PENDING',
-        }),
-      );
-      await notifee.cancelNotification(detail.notification.id);
-      navigate('incomingCall', {
-        name: callData.displayName || callData.callerName || 'Call',
-        profileImageUrl: callData.profileImage,
-        roomId: callData.roomId,
-        callType: callData.callType,
-        callerId: callData.senderId,
-        callId: callData.callId,
-      });
+      markCallAcceptedSync(callData);
+      try {
+        await acceptCallFromNotification(callData, { navigateNow: true });
+      } catch (e) {
+        console.log('❌ [index:onForegroundEvent] Accept failed:', e?.message || e);
+      }
+      if (notificationId) await notifee.cancelNotification(notificationId);
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
-      await AsyncStorage.removeItem('pendingCall');
-      await notifee.cancelNotification(detail.notification.id);
+      markCallRejectedSync(callData);
+      try {
+        await declineCallFromNotification(callData);
+      } catch (e) {
+        console.log('❌ [index:onForegroundEvent] Decline failed:', e?.message || e);
+      }
+      if (notificationId) await notifee.cancelNotification(notificationId);
     }
   }
 

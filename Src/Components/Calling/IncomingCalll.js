@@ -34,6 +34,13 @@ import MicPermissionModal from './MicPermissionModal';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
 import { getLocalCallTerminationStatus, shouldRejectIncomingCall } from './callFlow';
+import {
+  getPendingCallSync,
+  wasRecentlyAccepted,
+  wasRecentlyRejected,
+  clearPendingCall,
+  acceptCallFromNotification,
+} from '../../Utils/callAcceptFlow';
 
 const { width, height } = Dimensions.get('window');
 const ACCEPT_THRESHOLD = 100;
@@ -213,6 +220,55 @@ const IncomingCallScreen = ({ route, navigation }) => {
       false,
     );
   }, []);
+
+  // Safety net: if Accept already happened from notification, skip second Accept UI.
+  useEffect(() => {
+    if (!roomId || hasActedRef.current) return;
+
+    const pending = getPendingCallSync();
+    const accepted =
+      wasRecentlyAccepted(roomId) ||
+      (pending?.roomId === roomId &&
+        (pending.status === 'ACCEPTED' || pending.callAccepted));
+    const rejected =
+      wasRecentlyRejected(roomId) ||
+      (pending?.roomId === roomId && pending.status === 'REJECTED');
+
+    if (rejected) {
+      hasActedRef.current = true;
+      clearPendingCall();
+      navigation.goBack();
+      return;
+    }
+
+    if (accepted) {
+      hasActedRef.current = true;
+      RingtoneManager.stopAll();
+      // Ensure accept API ran, then land on active call (no second Accept).
+      acceptCallFromNotification(
+        {
+          roomId,
+          displayName: name,
+          callerName: name,
+          callType: callType || 'audio',
+          senderId: callerId,
+          profileImage: profileImageUrl,
+          callId,
+        },
+        { navigateNow: true },
+      ).catch(err => {
+        console.warn('[IncomingCall] auto-join after notification accept failed:', err?.message || err);
+        navigation.replace(callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+          roomId,
+          name,
+          callType: callType || 'audio',
+          callerId,
+          profileImageUrl,
+          callAccepted: true,
+        });
+      });
+    }
+  }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation]);
 
   // ─── Incoming call ringtone (plays FIRST, before permission checks) ───
   useEffect(() => {

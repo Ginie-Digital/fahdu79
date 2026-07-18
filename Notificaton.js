@@ -579,15 +579,19 @@ export async function showIncomingCallNotification(callDetails) {
       vibrationPattern: [300, 500, 300, 500],
     });
 
+    const callerName = callDetails.displayName || callDetails.name || 'Incoming Call';
+    const callTypeLabel = callDetails.callType === 'video' ? 'Video' : 'Audio';
+
     await notifee.displayNotification({
       id: 'incoming_call_' + callDetails.roomId,
-      title: callDetails.displayName || callDetails.name || 'Incoming Call',
-      body: `${callDetails.callType === 'video' ? 'Video' : 'Audio'} call in progress...`,
+      title: callerName,
+      body: `Incoming ${callTypeLabel} call`,
       data: {
         roomId: String(callDetails.roomId || ''),
-        callType: String(callDetails.callType || ''),
+        callType: String(callDetails.callType || 'audio'),
         senderId: String(callDetails.senderId || callDetails.callerId || ''),
-        displayName: String(callDetails.displayName || callDetails.name || ''),
+        displayName: String(callerName),
+        callerName: String(callerName),
         profileImage: String(callDetails.profileImage || callDetails.profileImageUrl || ''),
         callId: String(callDetails.callId || ''),
         type: 'incoming_call',
@@ -601,7 +605,7 @@ export async function showIncomingCallNotification(callDetails) {
         category: AndroidCategory.CALL,
         ongoing: true,
         autoCancel: false,
-        color: '#E8210C',
+        color: '#10B981',
         fullScreenAction: {
           id: 'default',
           launchActivity: 'default',
@@ -612,13 +616,14 @@ export async function showIncomingCallNotification(callDetails) {
         },
         actions: [
           {
-            title: 'Decline',
+            // No launchActivity — reject in background, keep app closed
+            title: 'Reject',
             pressAction: {
               id: 'decline_call',
-              launchActivity: 'default',
             },
           },
           {
+            // Opens app and joins the call directly
             title: 'Accept',
             pressAction: {
               id: 'accept_call',

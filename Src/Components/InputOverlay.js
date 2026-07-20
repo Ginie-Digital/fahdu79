@@ -5,10 +5,10 @@ import {nTwins} from '../../DesiginData/Utility';
 import { useAppTheme } from '../Hook/useAppTheme';
 
 const InputOverlay = ({isVisible, style}) => {
-  const { isDark } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
   if (!isVisible) return null; // Render nothing if overlay is not visible
 
-  return <View style={[styles.overlay, !isDark && { backgroundColor: 'transparent' }, style]}></View>;
+  return <View style={[styles.overlay, { backgroundColor: colors.overlayBg }, style]}></View>;
 };
 
 export default InputOverlay;

@@ -59,7 +59,7 @@ const VerificationStepOne = ({route}) => {
     setDate(maxDate);
   }, []);
 
-  const toggleSelection = item => {
+  const toggleSelection = useCallback(item => {
     let updatedSelection = [...selectedItems];
 
     if (updatedSelection.includes(item)) {
@@ -71,31 +71,14 @@ const VerificationStepOne = ({route}) => {
     }
 
     setSelectedItems(updatedSelection);
-  };
+    dispatch(setConfirmedNiches(updatedSelection));
+  }, [selectedItems, dispatch]);
 
   const handleDropdownPress = () => {
     dispatch(toggleNicheSelectorModal({show: true}));
   };
 
-  // Separate Component for Bubble View
-  const BubbleView = ({selectedItems, setSelectedItems}) => {
-    return (
-      <View style={styles.bubbleContainer}>
-        {selectedItems.map(item => (
-          <View key={item} style={styles.bubble}>
-            <Text style={styles.bubbleText}>{item}</Text>
-            <Pressable onPress={() => {
-                const updated = selectedItems.filter(i => i !== item);
-                setSelectedItems(updated);
-                dispatch(setConfirmedNiches(updated));
-            }}>
-              <Text style={styles.close}>×</Text>
-            </Pressable>
-          </View>
-        ))}
-      </View>
-    );
-  };
+  // BubbleView component removed in favor of inline niche chips
 
   const [virified, setVerified] = useState(false);
 
@@ -360,7 +343,7 @@ const VerificationStepOne = ({route}) => {
           </View>
           <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'fullName' && (
-              <InputOverlay isVisible={isKeyboardVisible} style={isDark ? {backgroundColor: colors.overlayBg, borderRadius: responsiveWidth(3.73)} : undefined} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: colors.overlayBg, borderRadius: responsiveWidth(3.73)}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
               <TextInput
@@ -382,7 +365,7 @@ const VerificationStepOne = ({route}) => {
 
           <View style={{position: 'relative', marginTop: responsiveWidth(2.67), overflow: 'visible'}} collapsable={false}>
             {focusedInput === 'fahduUserName' && (
-              <InputOverlay isVisible={isKeyboardVisible} style={isDark ? {backgroundColor: colors.overlayBg, borderRadius: responsiveWidth(3.73)} : undefined} />
+              <InputOverlay isVisible={isKeyboardVisible} style={{backgroundColor: colors.overlayBg, borderRadius: responsiveWidth(3.73)}} />
             )}
             <View style={[styles.textInputContainer, {marginTop: 0}, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
               <TextInput
@@ -438,43 +421,88 @@ const VerificationStepOne = ({route}) => {
           </View>
         </Pressable>
 
-        <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
-          <Text style={[styles.titles, isDark && {color: colors.text}]}>Select Creator's Niche</Text>
-        </View>
-
-        <Pressable
-          style={{
-            borderColor: '#282828',
-            borderRadius: responsiveWidth(3),
-            width: responsiveWidth(91),
-            alignSelf: 'center',
-          }}
-          onPress={() => handleDropdownPress()}>
-          <View style={[styles.textInputContainer, isDark && {backgroundColor: colors.inputBg, borderColor: colors.inputBorder}]}>
-            <TextInput
-              pointerEvents="none"
-              editable={false}
-              selectionColor={isDark ? colors.accent : '#1e1e1e'}
-              cursorColor={isDark ? colors.accent : '#1e1e1e'}
-              placeholderTextColor={isDark ? colors.textSecondary : '#474747'}
-              placeholder="--Select Your Niche--"
-              spellCheck={false}
-              autoCorrect={false}
-              autoCapitalize={'sentences'}
-              style={[styles.textInputs, {fontSize: responsiveFontSize(2)}, isDark && {color: colors.text}]}
-            />
-            <TouchableOpacity style={styles.calenderContainer} onPress={() => handleDropdownPress()}>
-              {!dropdownVisible ? (
-                <Image source={require('../../Assets/Images/VerificationDown.png')} contentFit="contain" style={[{flex: 1}, isDark && {tintColor: colors.text}]} />
-              ) : (
-                <Image source={require('../../Assets/Images/verificationUp.png')} contentFit="contain" style={[{flex: 1}, isDark && {tintColor: colors.text}]} />
-              )}
-            </TouchableOpacity>
+        {/* SELECT YOUR NICHE */}
+        <View style={{width: responsiveWidth(91), alignSelf: 'center', marginTop: 24, marginBottom: 16}}>
+          {/* Header Row */}
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+            <Text style={{
+              fontFamily: 'Rubik-SemiBold', 
+              fontSize: 16, 
+              color: isDark ? colors.text : '#1E1E1E'
+            }}>Select Your Niche</Text>
+            <View style={{
+              width: 88,
+              height: 22,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: isDark ? '#262626' : '#FFF3EB',
+              borderWidth: 1,
+              borderColor: isDark ? '#262626' : '#FFE0CC',
+              borderRadius: 100,
+            }}>
+              <Text style={{
+                fontFamily: 'Rubik-Regular',
+                fontSize: 12,
+                lineHeight: 14,
+                color: isDark ? '#FFFFFF' : '#1E1E1E',
+                textAlign: 'center',
+                includeFontPadding: false,
+              }}>
+                {selectedItems.length}/3 Selected
+              </Text>
+            </View>
           </View>
-        </Pressable>
 
-        <View style={selectedItems.length > 0 ? [styles.nicheContainer, isDark && {backgroundColor: colors.background, borderColor: colors.border}] : { marginBottom: responsiveWidth(4) }}>
-          <BubbleView selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+          {/* Chips Grid */}
+          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: responsiveWidth(2)}}>
+            {options.map(option => {
+              const isSelected = selectedItems.includes(option);
+              return (
+                <TouchableOpacity
+                  key={option}
+                  activeOpacity={0.7}
+                  onPress={() => toggleSelection(option)}
+                  style={[
+                    {
+                      height: 36,
+                      paddingHorizontal: responsiveWidth(5.33),
+                      borderRadius: 99,
+                      borderWidth: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    isSelected
+                      ? {
+                          backgroundColor: '#FFA86B',
+                          borderColor: isDark ? '#FFA86B' : '#1E1E1E',
+                        }
+                      : {
+                          backgroundColor: isDark ? colors.card : '#FFFFFF',
+                          borderColor: isDark ? colors.border : '#1E1E1E',
+                        }
+                  ]}
+                >
+                  <Text 
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.85}
+                    style={{
+                      fontFamily: 'Rubik-Medium',
+                      fontSize: responsiveFontSize(1.65),
+                      lineHeight: responsiveFontSize(1.85),
+                      includeFontPadding: false,
+                      color: isSelected 
+                        ? '#1E1E1E' 
+                        : (isDark ? colors.text : '#1E1E1E'),
+                    }}
+                  >
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
@@ -529,45 +557,6 @@ const styles = StyleSheet.create({
     marginRight: responsiveWidth(4),
     height: 19,
     width: 19,
-  },
-  nicheContainer: {
-    borderColor: '#282828',
-    marginTop: 4,
-    borderRadius: responsiveWidth(4),
-    backgroundColor: '#fff',
-    width: responsiveWidth(91),
-    alignSelf: 'center',
-    overflow: 'hidden',
-  },
-  bubbleContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 8,
-    paddingLeft: 0,
-  },
-  bubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFA86B',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 30,
-    marginRight: 8,
-    marginVertical: 4,
-    borderWidth: 1.5,
-    borderColor: '#1e1e1e',
-  },
-  bubbleText: {
-    color: 'black',
-    fontSize: 14,
-    marginRight: 6,
-    fontFamily: 'Rubik-Medium',
-  },
-  close: {
-    color: '#1e1e1e',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8,
   },
   errorContainer: {
     flexDirection: 'row',

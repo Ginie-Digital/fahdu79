@@ -335,7 +335,7 @@ const VerificationStepOne = ({route}) => {
         showsVerticalScrollIndicator={false}
         alwaysBounceVertical={true}
       >
-        <MyProfilePicture isEditable={true} isDark={isDark} />
+        <MyProfilePicture isEditable={true} isDark={isDark} isVerification={true} />
 
         <View style={{width: responsiveWidth(91), alignSelf: 'center'}}>
           <View style={{marginTop: responsiveWidth(8)}}>
@@ -436,16 +436,16 @@ const VerificationStepOne = ({route}) => {
               flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
-              backgroundColor: isDark ? '#262626' : '#FFF3EB',
+              backgroundColor: isDark ? 'rgba(255, 168, 107, 0.15)' : '#FFF3EB',
               borderWidth: 1,
-              borderColor: isDark ? '#262626' : '#FFE0CC',
+              borderColor: isDark ? '#FF7819' : '#FFE0CC',
               borderRadius: 100,
             }}>
               <Text style={{
                 fontFamily: 'Rubik-Regular',
                 fontSize: 12,
                 lineHeight: 14,
-                color: isDark ? '#FFFFFF' : '#1E1E1E',
+                color: isDark ? '#FFA86B' : '#1E1E1E',
                 textAlign: 'center',
                 includeFontPadding: false,
               }}>
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   chatRoomContainer: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 24,
+    paddingTop: 8,
   },
   titles: {
     fontFamily: 'Rubik-SemiBold',

@@ -12,7 +12,7 @@ import {Image, ImageBackground} from 'expo-image';
 import {navigate} from '../../../Navigation/RootNavigation';
 import {LoginPageErrors} from '../ErrorSnacks';
 
-const MyProfilePicture = ({isEditable, isDark = false}) => {
+const MyProfilePicture = ({isEditable, isDark = false, isVerification = false}) => {
   const navigation = useNavigation();
   const userInformation = useSelector(state => state.auth.user);
   const [getUserProfileDetailsApi] = useLazyCreatorProfileQuery({refetchOnFocus: true});
@@ -38,6 +38,98 @@ const MyProfilePicture = ({isEditable, isDark = false}) => {
       console.log('User Canceled the selection');
     }
   }, []);
+
+  if (isVerification) {
+    return (
+      <View style={styles.vWrapper}>
+        {/* Cover Photo Container */}
+        <View style={[
+          styles.vCoverContainer, 
+          isDark 
+            ? {backgroundColor: '#1C1C1C', borderColor: '#212121'} 
+            : {backgroundColor: '#FFFFFF', borderColor: '#1E1E1E'}
+        ]}>
+          <ImageBackground
+            placeholder={require('../../../Assets/Images/CoverDefault.jpeg')}
+            source={userInfo?.currentUserCoverPicture ? {uri: userInfo?.currentUserCoverPicture} : require('../../../Assets/Images/light_gray.jpg')}
+            style={styles.vCoverImage}
+            contentFit="cover"
+          >
+            {/* Rectangle 38 semi-transparent overlay */}
+            <View style={styles.vCoverOverlay} />
+          </ImageBackground>
+
+          {/* Cover Edit Button */}
+          {isEditable && (
+            <Pressable
+              style={{
+                position: 'absolute',
+                right: 12,
+                bottom: 12,
+                width: 32,
+                height: 32,
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 3,
+              }}
+              onPress={() => handlePictureChange('Cover')}
+            >
+              <Image 
+                source={isDark ? require('../../../Assets/Images/ChangeProfileDark.png') : require('../../../Assets/Images/ChangeProfile.png')} 
+                style={{width: '100%', height: '100%', resizeMode: 'contain'}} 
+              />
+            </Pressable>
+          )}
+        </View>
+
+        {/* Profile Pic Shadow Offset Layer (Ellipse 13) */}
+        <View style={[
+          styles.vProfileShadow,
+          isDark 
+            ? {backgroundColor: '#1C1C1C', borderColor: '#212121'} 
+            : {backgroundColor: '#1E1E1E', borderColor: '#1E1E1E'}
+        ]} />
+
+        {/* Profile Pic Front Container (Ellipse 12) */}
+        <View style={[
+          styles.vProfileContainer,
+          isDark 
+            ? {backgroundColor: '#121212', borderColor: '#212121'} 
+            : {backgroundColor: '#FFFFFF', borderColor: '#1E1E1E'}
+        ]}>
+          <Image
+            placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
+            source={userInfo?.currentUserProfilePicture ? {uri: userInfo?.currentUserProfilePicture} : require('../../../Assets/Images/DefaultProfile.jpg')}
+            style={styles.vProfileImage}
+            resizeMethod="resize"
+            contentFit="cover"
+          />
+        </View>
+
+        {/* Profile Edit Button */}
+        {isEditable && (
+          <Pressable
+            style={{
+              position: 'absolute',
+              left: 70,
+              top: 189,
+              width: 32,
+              height: 32,
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 3,
+            }}
+            onPress={() => handlePictureChange('Profile')}
+          >
+            <Image 
+              source={isDark ? require('../../../Assets/Images/ChangeProfileDark.png') : require('../../../Assets/Images/ChangeProfile.png')} 
+              style={{width: '100%', height: '100%', resizeMode: 'contain'}} 
+            />
+          </Pressable>
+        )}
+      </View>
+    );
+  }
 
   return (
     <>
@@ -115,5 +207,59 @@ const styles = StyleSheet.create({
     position: 'absolute',
     marginLeft: responsiveWidth(6.6),
     marginTop: responsiveWidth(32.8),
+  },
+
+  vWrapper: {
+    width: responsiveWidth(91),
+    height: 224,
+    alignSelf: 'center',
+    marginTop: 0,
+    position: 'relative',
+    marginBottom: 16,
+  },
+  vCoverContainer: {
+    width: '100%',
+    height: 174,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  vCoverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  vCoverOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(30, 30, 30, 0.3)',
+  },
+  vProfileContainer: {
+    width: 97,
+    height: 97,
+    borderRadius: 48.5,
+    borderWidth: 1.5,
+    position: 'absolute',
+    left: 0,
+    top: 120,
+    overflow: 'hidden',
+    zIndex: 2,
+  },
+  vProfileShadow: {
+    width: 97,
+    height: 97,
+    borderRadius: 48.5,
+    borderWidth: 1.5,
+    position: 'absolute',
+    left: 3,
+    top: 123,
+    zIndex: 1,
+  },
+  vProfileImage: {
+    width: '100%',
+    height: '100%',
   },
 });

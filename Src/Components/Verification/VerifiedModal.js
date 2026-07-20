@@ -31,7 +31,7 @@ const VerifiedModal = ({visible, type = undefined, onClose}) => {
     visible && (
       <View style={styles.overlay}>
         <BlurView experimentalBlurMethod intensity={15} style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={[styles.dialog, isDark && {backgroundColor: colors.card, borderColor: colors.border}]} contentStyle={{padding: 0, paddingTop: 0}} onTouchOutside={handleClose}>
+        <Dialog visible={visible} dialogStyle={[styles.dialog, isDark && {backgroundColor: '#121212', borderColor: colors.border}]} contentStyle={{padding: 0, paddingTop: 0}} onTouchOutside={handleClose}>
           <View style={styles.content}>
             <View style={styles.iconContainer}>
               <Image source={require('../../../Assets/Images/fahduLogoNew.png')} contentFit="contain" style={{flex: 1}} />

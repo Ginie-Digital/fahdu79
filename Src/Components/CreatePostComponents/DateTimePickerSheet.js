@@ -9,10 +9,12 @@ import dayjs from 'dayjs';
 import {BlurView} from 'expo-blur';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const DateTimePickerSheet = () => {
+  const { colors, isDark } = useAppTheme();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
 
@@ -142,6 +144,7 @@ const DateTimePickerSheet = () => {
       <Animated.View
         style={[
           styles.dialog,
+          isDark && {backgroundColor: '#121212'},
           {
             transform: [{translateY: slideAnim}],
           },
@@ -151,38 +154,38 @@ const DateTimePickerSheet = () => {
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>
+              <Text style={[styles.title, isDark && {color: '#FFFFFF'}]}>
                 {type === 'dob' ? 'Date of Birth' : 'Schedule Post'}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.subtitle, isDark && {color: '#EBEBF5'}]}>
                 {type === 'dob' ? 'Verify your age to continue' : 'Pick a date & time to publish'}
               </Text>
             </View>
-            <View style={[styles.iconCircle, { backgroundColor: '#F5F2ED' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: isDark ? '#262626' : '#F5F2ED' }]}>
               <Ionicons 
                 name={type === 'dob' ? 'person-outline' : 'calendar'} 
                 size={24} 
-                color="#1e1e1e" 
+                color={isDark ? '#FFFFFF' : '#1e1e1e'} 
               />
             </View>
           </View>
         </View>
 
         {/* Selected date preview with Age/Context */}
-        <View style={styles.datePreview}>
-          <Text style={styles.datePreviewText}>
+        <View style={[styles.datePreview, isDark && {backgroundColor: '#262626'}]}>
+          <Text style={[styles.datePreviewText, isDark && {color: '#FFFFFF'}]}>
             {type === 'datetime' ? (
               <>
-                <Text style={styles.schedulingLabel}>Scheduling for: </Text>
-                <Text style={styles.highlightedValue}>{dayjs(tempDate).format('MMM D, YYYY')}</Text>
-                <Text style={styles.separatorText}>  •  </Text>
-                <Text style={styles.highlightedValue}>{dayjs(tempDate).format('h:mm A')}</Text>
+                <Text style={[styles.schedulingLabel, isDark && {color: '#EBEBF5'}]}>Scheduling for: </Text>
+                <Text style={[styles.highlightedValue, isDark && {color: '#FFA86B'}]}>{dayjs(tempDate).format('MMM D, YYYY')}</Text>
+                <Text style={[styles.separatorText, isDark && {color: '#EBEBF5'}]}>  •  </Text>
+                <Text style={[styles.highlightedValue, isDark && {color: '#FFA86B'}]}>{dayjs(tempDate).format('h:mm A')}</Text>
               </>
             ) : (
               <>
                 {dayjs(tempDate).format('MMM D, YYYY')}
                 {age && (
-                  <Text style={styles.ageText}>  •  {age} years old</Text>
+                  <Text style={[styles.ageText, isDark && {color: '#FFA86B'}]}>  •  {age} years old</Text>
                 )}
               </>
             )}
@@ -198,22 +201,23 @@ const DateTimePickerSheet = () => {
             onDateChange={handleDateChange}
             style={{alignSelf: 'center'}}
             mode={type === 'dob' ? 'date' : 'datetime'}
-            textColor="#282828"
-            theme="light"
+            textColor={isDark ? '#FFFFFF' : '#282828'}
+            theme={isDark ? 'dark' : 'light'}
             androidVariant="iosClone"
           />
         </View>
 
         {/* Footer Actions (matching chatroom modal style) */}
-        <View style={[styles.footer, {paddingBottom: (insets.bottom || 20) + 10}]}>
+        <View style={[styles.footer, isDark && {borderTopColor: colors.border}, {paddingBottom: (insets.bottom || 20) + 10}]}>
           <TouchableOpacity onPress={handleClose} style={styles.cancelButton}>
-             <Text style={styles.cancelText}>Cancel</Text>
+             <Text style={[styles.cancelText, isDark && {color: '#FFFFFF'}]}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={handleProceed} 
             disabled={isAgeInvalid}
             style={[
               styles.doneButton, 
+              isDark && {backgroundColor: '#FFA86B'},
               error && styles.errorButton,
               isAgeInvalid && { backgroundColor: '#CBCBCB' }
             ]}
@@ -221,6 +225,7 @@ const DateTimePickerSheet = () => {
           >
             <Text style={[
               styles.doneText,
+              isDark && {color: '#1E1E1E'},
               error && styles.errorText,
               isAgeInvalid && { color: '#8E8E8E' }
             ]}>

@@ -22,6 +22,7 @@ const AnimatedButton = ({
   textStyle,
   disableAnimation = false,
   isDark: isDarkProp, // Accept isDark from parent
+  children,
 }) => {
   const { colors, isDark: systemIsDark } = useAppTheme();
   const isDark = isDarkProp !== undefined ? isDarkProp : systemIsDark; // fallback to active theme from hook
@@ -103,7 +104,15 @@ const AnimatedButton = ({
           {/* Highlight overlay */}
           {highlightOnPress && <Animated.View style={[styles.highlightOverlay, {backgroundColor: highlightColor}, animatedOverlayStyle]} />}
 
-          <SmoothLoader loading={loading} title={title} textStyle={currentTextStyle} />
+          {children ? (
+            loading ? (
+              <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#1E1E1E'} />
+            ) : (
+              children
+            )
+          ) : (
+            <SmoothLoader loading={loading} title={title} textStyle={currentTextStyle} />
+          )}
         </View>
       </Animated.View>
     </Pressable>

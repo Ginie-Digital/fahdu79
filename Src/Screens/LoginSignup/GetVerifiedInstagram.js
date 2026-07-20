@@ -198,7 +198,7 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
       
       <Animated.View style={[
         styles.dialog, 
-        isDark && {backgroundColor: colors.card, borderColor: colors.border},
+        isDark && {backgroundColor: '#121212', borderColor: colors.border},
         {
           transform: [{translateY: slideAnim}],
           paddingBottom: isKeyboardVisible
@@ -268,7 +268,6 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
               >
                 <Text style={[styles.confirmButtonText, {color: '#1E1E1E'}]}>Yes, Correct</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={[
@@ -287,42 +286,53 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
 
         {showConfirmation === 'stepthree' && (
           <View style={styles.content}>
-            <Text style={[styles.titleText, {color: isDark ? '#FFFFFF' : '#000000'}]}>Verification Message</Text>
-            <Text style={[styles.subTitleText, {color: isDark ? '#EBEBF5' : '#1E1E1E'}]}>Tap the button below to copy this message and open Instagram DM for @fahduofficial</Text>
+            <Text style={[styles.titleText, {color: isDark ? '#FFFFFF' : '#000000'}]}>Verification</Text>
+            <Text style={[styles.subTitleText, {color: isDark ? '#EBEBF5' : '#1E1E1E'}]}>Tap the button below to copy this message and open Instagram DM for <Text style={{fontFamily: 'Rubik-Bold', color: isDark ? '#FFFFFF' : '#1E1E1E'}}>@fahduofficial</Text></Text>
             
-            <View style={[styles.copyBox, isDark && {backgroundColor: '#2C1D13', borderColor: '#5C381E'}]}>
-              <View style={{flex: 1}}>
-                <Text style={[styles.copyLabel, isDark && {color: colors.placeholder}]}>Message payload:</Text>
-                <Text style={[styles.copyContent, isDark && {color: colors.text}]}>
+            <TouchableOpacity 
+              activeOpacity={0.7}
+              onPress={() => copyToClipboard(stepOneVerifyObj?.dmMessage?.split('-')[1])}
+              style={[
+                styles.copyBox, 
+                isDark 
+                  ? {backgroundColor: '#1C1C1C', borderColor: '#212121'} 
+                  : {backgroundColor: '#FFFFFF', borderColor: '#1E1E1E'}
+              ]}
+            >
+              <View style={{flex: 1, paddingRight: 8}}>
+                <Text style={[styles.copyContent, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]}>
                   I applied for creator verification on FAHDU - 
                   <Text style={{fontFamily: 'Rubik-Bold'}}> {stepOneVerifyObj?.dmMessage?.split('-')[1]}</Text>
                 </Text>
               </View>
-            </View>
-
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              style={[
-                styles.mainButton, 
-                isDark && {
-                  borderColor: '#FF7819',
-                  shadowColor: '#FF7819',
-                }, 
-                {marginTop: 24}, 
-                loading && styles.disabledButton
-              ]} 
-              onPress={() => !loading && handleFinalSubmission(stepOneVerifyObj?.dmMessage?.split('-')[1])}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#1E1E1E'} />
-              ) : (
-                <View style={styles.row}>
-                  <Text style={[styles.buttonText, {color: '#1E1E1E'}]}>Send to Instagram </Text>
-                  <DIcon provider={'Entypo'} name={'instagram'} size={18} color={'#1E1E1E'} />
-                </View>
-              )}
+              <Feather 
+                name="copy" 
+                size={18} 
+                color={isDark ? '#FFFFFF' : '#1E1E1E'} 
+              />
             </TouchableOpacity>
+
+            <AnimatedButton
+              loading={loading}
+              isDark={isDark}
+              onPress={() => !loading && handleFinalSubmission(stepOneVerifyObj?.dmMessage?.split('-')[1])}
+              buttonMargin={10}
+              style={{
+                backgroundColor: '#FFA86B',
+                borderColor: isDark ? '#FF7819' : '#1E1E1E',
+                borderWidth: 1.5,
+              }}
+              overlayStyle={{
+                backgroundColor: isDark ? 'transparent' : '#1E1E1E',
+                borderColor: isDark ? '#FF7819' : '#1E1E1E',
+                borderWidth: isDark ? 1.5 : 0,
+              }}
+            >
+              <View style={styles.row}>
+                <Text style={[styles.buttonText, {color: '#1E1E1E', fontFamily: 'Rubik-SemiBold', fontSize: 16}]}>Paste on Instagram</Text>
+                <DIcon provider={'Entypo'} name={'instagram'} size={20} color={'#1E1E1E'} />
+              </View>
+            </AnimatedButton>
           </View>
         )}
       </Animated.View>
@@ -473,14 +483,13 @@ const styles = StyleSheet.create({
     color: '#1E1E1E',
   },
   copyBox: {
-    backgroundColor: '#FFF4ED',
-    borderWidth: 1,
-    borderColor: '#FFDBC2',
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: 12,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
   copyLabel: {
     fontFamily: 'Rubik-Medium',
@@ -491,8 +500,7 @@ const styles = StyleSheet.create({
   copyContent: {
     fontFamily: 'Rubik-Regular',
     fontSize: 14,
-    color: '#1e1e1e',
-    lineHeight: 20,
+    lineHeight: 19,
   },
   copyIconBtn: {
     width: 44,
@@ -511,6 +519,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
 });
 

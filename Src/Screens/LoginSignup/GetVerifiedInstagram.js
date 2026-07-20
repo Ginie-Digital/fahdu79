@@ -210,11 +210,16 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
         
         {showConfirmation === 'stepone' && (
           <View style={styles.content}>
-            <Text style={[styles.titleText, isDark && {color: '#FFFFFF', fontSize: 28, lineHeight: 28}]}>Enter Instagram ID</Text>
-            <Text style={[styles.subTitleText, isDark && {color: '#EBEBF5', fontSize: 14, lineHeight: 19}]}>Please provide your Instagram username for verification.</Text>
+            <Text style={[styles.titleText, {color: isDark ? '#FFFFFF' : '#000000'}]}>Instagram Id</Text>
+            <Text style={[styles.subTitleText, {color: isDark ? '#EBEBF5' : '#1E1E1E'}]}>Please provide your instagram username for verification</Text>
 
             <View style={styles.inputSection}>
-              <View style={[styles.textInputContainer, isDark && {backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, borderRadius: 14, height: 54}]}>
+              <View style={[
+                styles.textInputContainer, 
+                isDark 
+                  ? {backgroundColor: '#191919', borderColor: '#292929', borderWidth: 1.5, height: 54} 
+                  : {backgroundColor: '#FFFFFF', borderColor: '#1E1E1E', borderWidth: 1.5, height: 54}
+              ]}>
                 <TextInput
                   value={instagram}
                   onChangeText={setInstagram}
@@ -222,49 +227,59 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
                   selectionColor={isDark ? colors.accent : '#FFA86B'}
                   cursorColor={isDark ? colors.accent : '#FFA86B'}
                   placeholderTextColor={isDark ? '#EBEBF5' : '#B2B2B2'}
-                  placeholder="e.g. fahduIndia"
+                  placeholder="e.g. fahduindia"
                   spellCheck={false}
                   autoCorrect={false}
                   autoCapitalize={'none'}
-                  style={[styles.textInputs, isDark && {color: '#EBEBF5', fontSize: 14}]}
+                  style={[styles.textInputs, {color: isDark ? '#EBEBF5' : '#000000'}]}
                 />
               </View>
             </View>
 
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              style={[styles.mainButton, isDark && {backgroundColor: '#FFA86B', borderColor: '#FF7819', borderWidth: 1.5, borderRadius: 14, height: 54}, loading && styles.disabledButton]} 
-              onPress={() => !loading && handleVerify()}
-              disabled={loading}
-            >
-              {loading ? <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#fff'} /> : <Text style={[styles.buttonText, isDark && {color: '#1E1E1E', fontSize: 16, lineHeight: 21}]}>Submit</Text>}
-            </TouchableOpacity>
+            <View style={{width: '100%'}}>
+              <AnimatedButton
+                title="Submit"
+                isDark={isDark}
+                onPress={handleVerify}
+                loading={loading}
+                buttonMargin={0}
+              />
+            </View>
           </View>
         )}
 
         {showConfirmation === 'steptwo' && (
           <View style={styles.content}>
-            <Text style={[styles.titleText, isDark && {color: '#FFFFFF', fontSize: 28, lineHeight: 28}]}>Confirm Username</Text>
-            <Text style={[styles.subTitleText, isDark && {color: '#EBEBF5', fontSize: 14, lineHeight: 19}]}>
-              Is your Instagram Username{"\n"}
-              <Text style={styles.highLightText}>@{instagram}</Text> correct?
+            <Text style={[styles.titleText, {color: isDark ? '#FFFFFF' : '#000000'}]}>Confirm</Text>
+            <Text style={[styles.subTitleText, {color: isDark ? '#EBEBF5' : '#1E1E1E'}]}>
+              Is your Instagram Username <Text style={{fontFamily: 'Rubik-Bold', color: isDark ? '#FFFFFF' : '#1E1E1E'}}>@{instagram}</Text> correct?
             </Text>
 
             <View style={styles.confirmButtonRow}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.mainButton, isDark && {backgroundColor: '#FFA86B', borderColor: '#FF7819', borderWidth: 1.5, borderRadius: 14, height: 54}, {flex: 1, marginRight: 8}]}
+                style={[
+                  styles.confirmYesButton,
+                  isDark
+                    ? {backgroundColor: '#FFA86B', borderColor: '#FF7819', borderWidth: 1.5}
+                    : {backgroundColor: '#FFA86B', borderColor: '#1E1E1E', borderWidth: 1.5}
+                ]}
                 onPress={() => setShowConfirmation('stepthree')}
               >
-                <Text style={[styles.buttonText, isDark && {color: '#1E1E1E', fontSize: 16, lineHeight: 21}]}>Yes, Correct</Text>
+                <Text style={[styles.confirmButtonText, {color: '#1E1E1E'}]}>Yes, Correct</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.secondaryButton, isDark && {backgroundColor: colors.pressed, borderColor: colors.border, borderRadius: 14}, {flex: 1, marginLeft: 8}]}
+                style={[
+                  styles.confirmNoButton,
+                  isDark
+                    ? {backgroundColor: colors.pressed, borderColor: colors.border, borderWidth: 1.5}
+                    : {backgroundColor: '#FFFFFF', borderColor: '#1E1E1E', borderWidth: 1.5}
+                ]}
                 onPress={() => setShowConfirmation('stepone')}
               >
-                <Text style={[styles.secondaryButtonText, isDark && {color: colors.text}]}>No, Edit</Text>
+                <Text style={[styles.confirmButtonText, {color: isDark ? colors.text : '#1E1E1E'}]}>No, Edit</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -272,8 +287,8 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
 
         {showConfirmation === 'stepthree' && (
           <View style={styles.content}>
-            <Text style={[styles.titleText, isDark && {color: '#FFFFFF', fontSize: 28, lineHeight: 28}]}>Verification Message</Text>
-            <Text style={[styles.subTitleText, isDark && {color: '#EBEBF5', fontSize: 14, lineHeight: 19}]}>Tap the button below to copy this message and open Instagram DM for @fahduofficial</Text>
+            <Text style={[styles.titleText, {color: isDark ? '#FFFFFF' : '#000000'}]}>Verification Message</Text>
+            <Text style={[styles.subTitleText, {color: isDark ? '#EBEBF5' : '#1E1E1E'}]}>Tap the button below to copy this message and open Instagram DM for @fahduofficial</Text>
             
             <View style={[styles.copyBox, isDark && {backgroundColor: '#2C1D13', borderColor: '#5C381E'}]}>
               <View style={{flex: 1}}>
@@ -287,16 +302,24 @@ const GetVerifiedInstagram = ({transferObject, setShowVerifiedModal}) => {
 
             <TouchableOpacity 
               activeOpacity={0.8}
-              style={[styles.mainButton, isDark && {backgroundColor: '#FFA86B', borderColor: '#FF7819', borderWidth: 1.5, borderRadius: 14, height: 54}, {marginTop: 24}, loading && styles.disabledButton]} 
+              style={[
+                styles.mainButton, 
+                isDark && {
+                  borderColor: '#FF7819',
+                  shadowColor: '#FF7819',
+                }, 
+                {marginTop: 24}, 
+                loading && styles.disabledButton
+              ]} 
               onPress={() => !loading && handleFinalSubmission(stepOneVerifyObj?.dmMessage?.split('-')[1])}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#fff'} />
+                <ActivityIndicator size="small" color={isDark ? '#1E1E1E' : '#1E1E1E'} />
               ) : (
                 <View style={styles.row}>
-                  <Text style={[styles.buttonText, isDark && {color: '#1E1E1E', fontSize: 16, lineHeight: 21}]}>Send to Instagram </Text>
-                  <DIcon provider={'Entypo'} name={'instagram'} size={18} color={isDark ? '#1E1E1E' : '#fff'} />
+                  <Text style={[styles.buttonText, {color: '#1E1E1E'}]}>Send to Instagram </Text>
+                  <DIcon provider={'Entypo'} name={'instagram'} size={18} color={'#1E1E1E'} />
                 </View>
               )}
             </TouchableOpacity>
@@ -349,18 +372,19 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontFamily: 'Rubik-Bold',
-    fontSize: responsiveFontSize(2.4),
+    fontSize: 28,
+    lineHeight: 28,
     color: '#1e1e1e',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 8,
   },
   subTitleText: {
-    fontFamily: 'Rubik-Medium',
-    fontSize: responsiveFontSize(1.7),
+    fontFamily: 'Rubik-Regular',
+    fontSize: 14,
+    lineHeight: 19,
     color: '#666',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 24,
-    lineHeight: 22,
   },
   highLightText: {
     color: '#FF7043',
@@ -372,39 +396,48 @@ const styles = StyleSheet.create({
   textInputContainer: {
     borderWidth: 1.5,
     borderColor: '#1e1e1e',
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 16,
-    height: 56,
+    height: 54,
     justifyContent: 'center',
   },
   textInputs: {
-    fontSize: 16,
-    fontFamily: 'Rubik-Medium',
+    fontSize: 14,
+    fontFamily: 'Rubik-Regular',
     color: '#1e1e1e',
   },
   mainButton: {
-    backgroundColor: '#1e1e1e',
+    backgroundColor: '#FFA86B',
+    borderWidth: 1.5,
+    borderColor: '#1E1E1E',
+    borderRadius: 14,
     height: 54,
-    borderRadius: 100,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+    // Neo-Brutalism solid shadow
+    shadowColor: '#1E1E1E',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   disabledButton: {
     opacity: 0.7,
   },
   buttonText: {
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'Rubik-SemiBold',
     fontSize: 16,
-    color: '#FFFFFF',
+    lineHeight: 21,
+    color: '#1E1E1E',
   },
   secondaryButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#eee',
+    borderColor: '#1E1E1E',
     height: 54,
-    borderRadius: 100,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -417,6 +450,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     paddingBottom: 10,
+    gap: 8,
+  },
+  confirmYesButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmNoButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 14,
+    lineHeight: 14,
+    color: '#1E1E1E',
   },
   copyBox: {
     backgroundColor: '#FFF4ED',

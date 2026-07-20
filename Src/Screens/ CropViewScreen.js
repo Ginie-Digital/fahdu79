@@ -1,4 +1,4 @@
-import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable, ActivityIndicator, FlatList, Vibration, Platform, Alert} from 'react-native';
+import {Button, StyleSheet, Text, View, TouchableOpacity, Pressable, ActivityIndicator, FlatList, Vibration, Platform, Alert, ScrollView} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {CropView} from 'react-native-image-crop-tools';
 import {useNavigation} from '@react-navigation/native';
@@ -13,7 +13,7 @@ import AnimatedButton from '../Components/AnimatedButton';
 import RNFS from 'react-native-fs';
 import {Image} from 'expo-image';
 import {resizeImage, resizeCoverImage, convertPngToJpeg} from '../../FFMPeg/FFMPegModule';
-import {ScrollView} from 'react-native-gesture-handler';
+import { useAppTheme } from '../Hook/useAppTheme';
 
 const aspectImages = [
   {
@@ -31,6 +31,7 @@ const aspectImages = [
 ];
 
 const CropViewScreen = ({route}) => {
+  const { colors, isDark } = useAppTheme();
   console.log(route?.params, 'PPP');
 
   RNFS.stat(route?.params?.uri)
@@ -327,7 +328,11 @@ const CropViewScreen = ({route}) => {
   const shouldLockAspectRatio = route?.params?.type === 'Profile' || route?.params?.type === 'Cover' || route?.params?.type === 'massMessage';
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={[styles.container, isDark && {backgroundColor: colors.background}]} 
+      contentContainerStyle={{flexGrow: 1, backgroundColor: isDark ? colors.background : '#fff'}}
+      showsVerticalScrollIndicator={false}
+    >
       {uri ? (
         <>
           {console.log('🖼️ Rendering CropView with props:', {
@@ -342,7 +347,7 @@ const CropViewScreen = ({route}) => {
           <CropView
             key={cropViewKey}
             sourceUrl={uri}
-            style={[styles.cropView, route?.params?.type === undefined ? {height: 425} : {height: responsiveWidth(130)}]}
+            style={[styles.cropView, route?.params?.type === undefined ? {height: 425} : {height: responsiveWidth(130)}, isDark && {backgroundColor: colors.background}]}
             ref={cropViewRef}
             onImageCrop={res => {
               console.log('✂️ onImageCrop callback (BEFORE correction):', {
@@ -398,7 +403,7 @@ const CropViewScreen = ({route}) => {
               : {})}
           />
 
-          {route?.params?.type === undefined && <Text style={{textAlign: 'left', fontFamily: 'Rubik-Medium', color: '#282828', marginTop: 24, fontSize: responsiveFontSize(2.3), marginLeft: 26}}>Choose Aspect Ratio</Text>}
+          {route?.params?.type === undefined && <Text style={{textAlign: 'left', fontFamily: 'Rubik-Medium', color: isDark ? '#FFFFFF' : '#282828', marginTop: 24, fontSize: responsiveFontSize(2.3), marginLeft: 26}}>Choose Aspect Ratio</Text>}
 
           {shouldShowAspectSelector && (
             <FlatList
@@ -406,11 +411,19 @@ const CropViewScreen = ({route}) => {
               showsHorizontalScrollIndicator={false}
               horizontal
               renderItem={({item, index}) => (
-                <TouchableOpacity key={`AspectResizer${index}`} style={[styles.eachRatioBox, index === selected ? styles.selectedBox : {}]} onPress={() => handleSetAspectRatio(item.w, item.h, index)}>
+                <TouchableOpacity 
+                  key={`AspectResizer${index}`} 
+                  style={[
+                    styles.eachRatioBox, 
+                    isDark && {borderColor: '#292929', backgroundColor: '#1C1C1C'},
+                    index === selected ? (isDark ? {borderColor: '#FF7043', backgroundColor: 'rgba(255, 112, 67, 0.15)', borderWidth: 1.5} : styles.selectedBox) : {}
+                  ]} 
+                  onPress={() => handleSetAspectRatio(item.w, item.h, index)}
+                >
                   <View style={{height: aspectImages[index].height, width: aspectImages[index].width}}>
                     <Image source={aspectImages[index]?.uri} contentFit="contain" style={{flex: 1}} />
                   </View>
-                  <Text style={styles.aspectRatioNumber}>{`${item.h}:${item.w}`}</Text>
+                  <Text style={[styles.aspectRatioNumber, isDark && {color: '#FFFFFF'}]}>{`${item.h}:${item.w}`}</Text>
                 </TouchableOpacity>
               )}
               style={{alignSelf: 'center', marginHorizontal: 18, marginTop: 12, maxHeight: 119}}
@@ -421,18 +434,18 @@ const CropViewScreen = ({route}) => {
 
           {statusText !== '' && (
             <View style={{ marginTop: 20, alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Rubik-Medium', color: '#FF7043', fontSize: responsiveFontSize(1.8) }}>
+              <Text style={{ fontFamily: 'Rubik-Medium', color: isDark ? '#FFA86B' : '#FF7043', fontSize: responsiveFontSize(1.8) }}>
                 {statusText}
               </Text>
             </View>
           )}
 
           <View style={{position: 'relative', alignSelf: 'center', width: responsiveWidth(90), marginBottom: responsiveWidth(8)}}>
-            <AnimatedButton title={route?.params?.type === undefined ? 'Next' : 'Update'} loading={uploading} onPress={() => cropViewRef.current.saveImage()} buttonMargin={route?.params?.type === undefined ? 6 : 30} />
+            <AnimatedButton title={route?.params?.type === undefined ? 'Next' : 'Update'} loading={uploading} onPress={() => cropViewRef.current.saveImage()} buttonMargin={route?.params?.type === undefined ? 6 : 30} isDark={isDark} />
           </View>
         </>
       ) : (
-        <Text>Uri Not Present</Text>
+        <Text style={isDark && {color: '#FFFFFF'}}>Uri Not Present</Text>
       )}
     </ScrollView>
   );

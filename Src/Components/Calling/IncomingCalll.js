@@ -43,6 +43,7 @@ import {
   markCallAcceptedSync,
   markCallRejectedSync,
   subscribeCallIntent,
+  invalidateIncomingCall,
 } from '../../Utils/callAcceptFlow';
 import { cancelIncomingCallNotification } from '../../../Notificaton';
 
@@ -181,6 +182,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
       console.log('🔄 [Polling] Call rejected/cancelled by caller, exiting...');
       RingtoneManager.stopAll();
       if (callId) dispatch(clearProcessedRoomId(callId));
+      invalidateIncomingCall({ roomId, callId, callType }, 'REJECTED');
       LoginPageErrors('Caller cancelled the call');
       navigation.goBack();
     },

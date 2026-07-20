@@ -191,6 +191,11 @@ const VideoCallScreen = ({route}) => {
       handleLogout(true);
     },
     onCallUnavailable: () => {
+      // Callee just accepted — ignore flaky UNAVAILABLE while creator still waits.
+      if (!IS_STARTING) {
+        console.log('🔄 [Polling] Ignoring UNAVAILABLE for callee (creator may still be ringing)');
+        return;
+      }
       console.log('🔄 [Polling] Call unavailable, exiting...');
       setEndTriggerSource('POLLING');
       stopAndUnloadRingtone();

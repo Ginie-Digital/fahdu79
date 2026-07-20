@@ -27,6 +27,7 @@
 		6C15B980C060491BB7A23CAA /* MabryPro-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8B5D3EBC908347A78EBF67A0 /* MabryPro-LightItalic.ttf */; };
 		70D0398A807A4D2BA9C6921A /* Rubik-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EB40D4ECC8A7444293E9F664 /* Rubik-VariableFont_wght.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* VoipPushBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5B /* VoipPushBridge.m */; };
 		77CD5E5B209345F5B8C3F2FC /* MabryPro-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DB1C6D54506A4455BFE4CF7B /* MabryPro-Medium.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8A28FF0B259C49BE8B861D45 /* SIL Open Font License.txt in Resources */ = {isa = PBXBuildFile; fileRef = 367D1E2A3C5043FB8687C332 /* SIL Open Font License.txt */; };
@@ -75,6 +76,9 @@
 		7221E345A3244BFE96FD9EE7 /* Rubik-BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-BlackItalic.ttf"; path = "../Assets/fonts/Rubik-BlackItalic.ttf"; sourceTree = "<group>"; };
 		73211E23F0D9485BA74050E3 /* MabryPro-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "MabryPro-Regular.ttf"; path = "../Assets/fonts/MabryPro-Regular.ttf"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Fahdu/AppDelegate.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5A /* VoipPushBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VoipPushBridge.h; path = Fahdu/VoipPushBridge.h; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5B /* VoipPushBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = VoipPushBridge.m; path = Fahdu/VoipPushBridge.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5D /* Fahdu-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Fahdu-Bridging-Header.h"; path = "Fahdu/Fahdu-Bridging-Header.h"; sourceTree = "<group>"; };
 		7E21E5BBCDE748EBA237B0E8 /* Rubik-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Bold.ttf"; path = "../Assets/fonts/Rubik-Bold.ttf"; sourceTree = "<group>"; };
 		7E2E7967499366806BC0D1E8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Fahdu/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Fahdu/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -118,6 +122,9 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				C01085A2CA45674006654EE /* Colors.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				A1B2C3D4E5F60718293A4B5A /* VoipPushBridge.h */,
+				A1B2C3D4E5F60718293A4B5B /* VoipPushBridge.m */,
+				A1B2C3D4E5F60718293A4B5D /* Fahdu-Bridging-Header.h */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -466,6 +473,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* VoipPushBridge.m in Sources */,
 				0B89FCA16B25509B7DF40991 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -500,6 +508,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.giniedigital.fahdu;
 				PRODUCT_NAME = "Fahdu";
+				SWIFT_OBJC_BRIDGING_HEADER = "Fahdu/Fahdu-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1";
@@ -533,6 +542,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.giniedigital.fahdu;
 				PRODUCT_NAME = "Fahdu";
+				SWIFT_OBJC_BRIDGING_HEADER = "Fahdu/Fahdu-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1";
 				VERSIONING_SYSTEM = "apple-generic";

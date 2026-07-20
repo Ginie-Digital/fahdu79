@@ -11,7 +11,8 @@ console.log('DEBUG: FFmpegKitReactNativeModule exists:', !!NativeModules.FFmpegK
 import App from './App';
 import { name as appName } from './app.json';
 import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
-import { liveStreamNotification, onDisplayNotification, showCallReminderNotification, showCallRequestNotification, showOthersCategoryNotification, showPostInteractionNotification, showSubscriptionNotification, showIncomingCallNotification, cancelIncomingCallNotification } from './Notificaton';
+import { liveStreamNotification, onDisplayNotification, showCallReminderNotification, showCallRequestNotification, showOthersCategoryNotification, showPostInteractionNotification, showSubscriptionNotification, showIncomingCallNotification, cancelIncomingCallNotification, ensureIncomingCallNotificationCategory } from './Notificaton';
+import IncomingCallService from './Src/Services/IncomingCallService';
 
 import notifee, { EventType } from '@notifee/react-native';
 import store from './Redux/Store';
@@ -33,8 +34,29 @@ import {
   getPendingCallSync,
   prepareIncomingCall,
   clearPendingCall,
+  openIncomingCallScreenIfActive,
+  isIncomingCallStillActive,
+  wasRecentlyAccepted,
+  wasRecentlyRejected,
+  wasCallEndedRecently,
+  invalidateIncomingCall,
+  isTerminalCallStatus,
 } from './Src/Utils/callAcceptFlow';
+import {
+  registerIncomingCallStyleHeadlessTask,
+  wireIncomingCallStyleEvents,
+} from './Src/Services/IncomingCallStyle';
 
+// iOS: register Accept/Decline category as early as possible (before any call notification).
+if (Platform.OS === 'ios') {
+  ensureIncomingCallNotificationCategory().catch(() => {});
+}
+
+// Android: WhatsApp-style CallStyle Accept/Reject (kill / background headless + live events).
+if (Platform.OS === 'android') {
+  registerIncomingCallStyleHeadlessTask();
+  wireIncomingCallStyleEvents();
+}
 
 let tempRemoteNotificationData = undefined;
 let tempCallData = Object.assign({});
@@ -77,60 +99,83 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
         return;
       }
 
-      console.log('📱 [index:FCM:Background] --- INCOMING CALL SIGNAL RECEIVED ---');
-      console.log('📱 [index:FCM:Background] Full Payload:', JSON.stringify(remoteNotificationData, null, 2));
-
       if (Platform.OS === 'android') {
         isProcessingAndroidCall = true;
       }
 
-      const callDetails = remoteNotificationData?.content;
-      console.log(`📱 [index:FCM:Background] Saving to AsyncStorage - callId: ${callDetails?.callId}, roomId: ${callDetails?.roomId}`);
-      AppLog('INCOMING_CALL_FCM_BG', 'Received full call notification in background', remoteNotificationData);
+      try {
+        // content may be object OR JSON string — showIncomingCallNotification normalizes.
+        const callDetails = remoteNotificationData?.content || remoteNotificationData;
+        console.log(
+          '📱 [index:FCM:Background] Incoming call',
+          callDetails?.roomId || callDetails?.room_id,
+          callDetails?.callId,
+        );
 
-      // Never overwrite Accept/Reject intent with PENDING for the SAME call session.
-      const existingPending = getPendingCallSync();
-      const sameCallSession =
-        existingPending?.roomId &&
-        existingPending.roomId === callDetails?.roomId &&
-        (!callDetails?.callId ||
-          !existingPending.callId ||
-          existingPending.callId === callDetails?.callId);
-      const alreadyResolved =
-        sameCallSession &&
-        (existingPending.status === 'ACCEPTED' ||
-          existingPending.status === 'REJECTED' ||
-          existingPending.callAccepted);
+        // Always show Accept/Reject Notifee (FG/BG). First, before anything else.
+        if (Platform.OS === 'ios') {
+          await ensureIncomingCallNotificationCategory();
+          try {
+            await IncomingCallService.showIncomingCall(remoteNotificationData, { showNotifee: true });
+          } catch (e) {
+            console.warn('📱 [index:FCM:Background] iOS IncomingCallService failed, Notifee only:', e?.message || e);
+            await showIncomingCallNotification(callDetails);
+          }
+        } else {
+          const shown = await showIncomingCallNotification(callDetails);
+          console.log('📱 [index:FCM:Background] Accept/Reject notif shown=', shown);
+        }
 
-      if (!alreadyResolved) {
-        prepareIncomingCall({
-          roomId: callDetails?.roomId,
-          callerName: callDetails?.displayName,
-          displayName: callDetails?.displayName,
-          callType: callDetails?.callType || 'audio',
-          senderId: callDetails?.senderId,
-          profileImage: callDetails?.profileImage,
-          callId: callDetails?.callId,
-        });
-      } else {
-        console.log('📱 [index:FCM:Background] Skipping PENDING write — call already', existingPending.status);
+        // Persist PENDING after UI so Accept/Reject never waits on storage.
+        const existingPending = getPendingCallSync();
+        const sameCallSession =
+          existingPending?.roomId &&
+          existingPending.roomId === callDetails?.roomId &&
+          (!callDetails?.callId ||
+            !existingPending.callId ||
+            existingPending.callId === callDetails?.callId);
+        const alreadyResolved =
+          sameCallSession &&
+          (existingPending.status === 'ACCEPTED' ||
+            existingPending.status === 'REJECTED' ||
+            existingPending.callAccepted);
+
+        if (!alreadyResolved) {
+          prepareIncomingCall({
+            roomId: callDetails?.roomId || callDetails?.room_id,
+            callerName: callDetails?.displayName,
+            displayName: callDetails?.displayName,
+            callType: callDetails?.callType || 'audio',
+            senderId: callDetails?.senderId,
+            profileImage: callDetails?.profileImage,
+            callId: callDetails?.callId,
+          });
+        }
+      } finally {
+        if (Platform.OS === 'android') {
+          isProcessingAndroidCall = false;
+        }
       }
-
-      await showIncomingCallNotification(callDetails);
-
-      if (Platform.OS === 'android') {
-        isProcessingAndroidCall = false;
-      }
-    } else if (remoteNotificationData?.type === 'call_rejected') {
+    } else if (
+      remoteNotificationData?.type === 'call_rejected' ||
+      remoteNotificationData?.type === 'call_unavailable' ||
+      remoteNotificationData?.type === 'call_cancelled' ||
+      remoteNotificationData?.type === 'call_canceled'
+    ) {
+      // Creator ended / cancelled / unavailable — both platforms must clear pending + notif
+      // so a later notification tap does not open a dead IncomingCall screen.
       if (Platform.OS === 'android') {
         callCutFromCaller = true;
         isProcessingAndroidCall = false;
-        AppLog('FCM_CALL_BG', 'Received call_rejected background notification', remoteNotificationData);
-        
-        const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
-        await cancelIncomingCallNotification(roomId);
-        await clearPendingCall();
       }
+      AppLog('FCM_CALL_BG', `Received ${remoteNotificationData?.type} background notification`, remoteNotificationData);
+      const endedContent = remoteNotificationData?.content || remoteNotificationData;
+      const roomId = endedContent?.roomId || remoteNotificationData?.roomId;
+      // invalidate also dismisses iOS CallKit + Android CallStyle.
+      await invalidateIncomingCall(
+        { roomId, callId: endedContent?.callId, callType: endedContent?.callType },
+        remoteNotificationData?.type === 'call_unavailable' ? 'UNAVAILABLE' : 'REJECTED',
+      );
     } else if (remoteNotificationData?.type === 'call_accepted') {
       console.log('Call Accepted Background Event');
       AppLog('FCM_CALL_BG', 'Received call_accepted background notification', remoteNotificationData);
@@ -139,18 +184,18 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
       AppLog('FCM_CALL_BG', 'Received initiator_accepted background notification (Silent)', remoteNotificationData);
     } else if (remoteNotificationData?.type === 'call_completed' || remoteNotificationData?.type === 'call_disconnected' || remoteNotificationData?.type === 'fcm_disconnect_close_app') {
       console.log('Call Completed/Disconnected Background Event:', remoteNotificationData);
-      if (Platform.OS === 'android') {
-        const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
-        await cancelIncomingCallNotification(roomId);
-        await clearPendingCall();
-      }
+      const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
+      await invalidateIncomingCall(
+        { roomId, callId: remoteNotificationData?.content?.callId },
+        'ENDED',
+      );
     } else if (remoteNotificationData?.type === 'missed_call') {
       console.log(remoteNotificationData, ':::::');
-      if (Platform.OS === 'android') {
-        const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
-        await cancelIncomingCallNotification(roomId);
-        await clearPendingCall();
-      }
+      const roomId = remoteNotificationData?.content?.roomId || remoteNotificationData?.roomId;
+      await invalidateIncomingCall(
+        { roomId, callId: remoteNotificationData?.content?.callId },
+        'MISSED',
+      );
     } else if (remoteNotificationData?.type === '10_reminder' || remoteNotificationData?.type === '5_reminder' || remoteNotificationData?.type === '1_reminder') {
       if (!osAlreadyDisplayed) {
         await showCallReminderNotification(remoteNotificationData);
@@ -199,7 +244,8 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
       markCallAcceptedSync(callData);
       console.log('📱 [index:onBackgroundEvent] ACCEPT — joining call');
       try {
-        await acceptCallFromNotification(callData, { navigateNow: false });
+        // navigateNow true: Accept must open call screen (navigateNow:false looked like broken Accept).
+        await acceptCallFromNotification(callData, { navigateNow: true });
       } catch (e) {
         console.log('❌ [index:onBackgroundEvent] Accept failed:', e?.message || e);
       }
@@ -207,12 +253,21 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
       try {
         await notifee.cancelNotification('incoming_call_' + callData.roomId);
       } catch (_) {}
-    } else if (pressActionId === 'decline_call' && callData?.roomId) {
-      // Sync stamp FIRST — Reject now uses launchActivity for reliability.
-      markCallRejectedSync(callData);
-      console.log('📱 [index:onBackgroundEvent] REJECT — declining call');
       try {
-        await declineCallFromNotification(callData, { dismissUi: true });
+        const { cancelAndroidCallStyleNotification } = require('./Src/Services/IncomingCallStyle');
+        await cancelAndroidCallStyleNotification(callData.roomId);
+      } catch (_) {}
+    } else if (pressActionId === 'decline_call' && callData?.roomId) {
+      // No launchActivity on Reject — stay in background, decline API only (Android + iOS).
+      markCallRejectedSync(callData);
+      console.log('📱 [index:onBackgroundEvent] REJECT — declining without opening app');
+      try {
+        if (Platform.OS === 'ios') {
+          try {
+            await IncomingCallService.dismissCallKit();
+          } catch (_) {}
+        }
+        await declineCallFromNotification(callData, { dismissUi: false });
       } catch (e) {
         console.log('❌ [index:onBackgroundEvent] Decline failed:', e?.message || e);
       }
@@ -226,7 +281,30 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
   if (type === EventType.PRESS) {
     const link = detail?.notification?.data?.link;
     const notifType = detail?.notification?.data?.type;
+    const callData = detail?.notification?.data;
     console.log(`📌 [index:onBackgroundEvent] PRESS - type: ${notifType}, link: ${link}`);
+
+    // Body tap (iOS + Android): if call already ended, clear chrome so cold start
+    // cannot open IncomingCall.
+    if ((notifType === 'incoming_call' || notifType === 'call') && callData?.roomId) {
+      const pendingStatus = getPendingCallSync()?.status;
+      const pendingHardEnded =
+        pendingStatus &&
+        ['REJECTED', 'ENDED', 'CANCELLED', 'CANCELED', 'MISSED', 'COMPLETED'].includes(
+          String(pendingStatus).toUpperCase(),
+        );
+      if (wasRecentlyRejected(callData) || wasCallEndedRecently(callData) || pendingHardEnded) {
+        await invalidateIncomingCall(callData, 'ENDED');
+        return;
+      }
+      // Soft check — do not treat UNAVAILABLE as dead (blocks kill-mode tap).
+      const stillActive = await isIncomingCallStillActive(callData);
+      if (!stillActive) {
+        await invalidateIncomingCall(callData, 'ENDED');
+        return;
+      }
+    }
+
     if (link && link.length > 0) {
       await Linking.openURL(link);
     }
@@ -234,30 +312,61 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
 });
 
 notifee.onForegroundEvent(async ({ type, detail }) => {
-  if (Platform.OS === 'ios' && type === EventType.PRESS) {
-    if (detail?.notification?.data?.type === 'message') {
+  const notifData = detail?.notification?.data;
+  const notifType = notifData?.type;
+
+  // Body tap on call notification (iOS + Android, killed/background → open).
+  if (type === EventType.PRESS && (notifType === 'incoming_call' || notifType === 'call')) {
+    console.log('📌 [index:onForegroundEvent] call notification body tap', notifData);
+    const pendingStatus = getPendingCallSync()?.status;
+    const pendingHardEnded =
+      pendingStatus &&
+      ['REJECTED', 'ENDED', 'CANCELLED', 'CANCELED', 'MISSED', 'COMPLETED'].includes(
+        String(pendingStatus).toUpperCase(),
+      );
+    if (wasRecentlyRejected(notifData) || wasCallEndedRecently(notifData) || pendingHardEnded) {
+      await invalidateIncomingCall(notifData, 'ENDED');
+    } else if (wasRecentlyAccepted(notifData) || pendingStatus === 'ACCEPTED') {
       try {
-        navigate('Chats', { chatRoomId: detail?.notification?.data?.roomId, name: detail?.notification?.data?.userName, profileImageUrl: detail?.notification?.data?.profile_image });
+        await acceptCallFromNotification(notifData, { navigateNow: true });
+      } catch (e) {
+        console.log('❌ [index:onForegroundEvent] Accept from body tap failed:', e?.message || e);
+      }
+    } else {
+      // Soft remote check — UNAVAILABLE must not block IncomingCall.
+      await openIncomingCallScreenIfActive(notifData);
+    }
+  } else if (Platform.OS === 'ios' && type === EventType.PRESS) {
+    if (notifType === 'message') {
+      try {
+        navigate('Chats', {
+          chatRoomId: notifData?.roomId,
+          name: notifData?.userName,
+          profileImageUrl: notifData?.profile_image,
+        });
       } catch (e) {
         console.log('Error navigation to Chats on iOS PRESS', e?.message);
       }
-    } else if (detail?.notification?.data?.type === 'call_reminder') {
-        try {
-            navigate('Chats', { chatRoomId: detail?.notification?.data?.roomId, name: detail?.notification?.data?.userName, profileImageUrl: detail?.notification?.data?.profile_image });
-          } catch (e) {
-            console.log('Error navigation to Chats on iOS PRESS', e?.message);
-          }
-    } else if (detail?.notification?.data?.type === 'call_accepted') {
-        try {
-            navigate('CallRequests', {activeTab: 'scheduled'});
-          } catch (e) {
-            console.log('Error navigation to CallRequests on iOS PRESS', e?.message);
-          }
+    } else if (notifType === 'call_reminder') {
+      try {
+        navigate('Chats', {
+          chatRoomId: notifData?.roomId,
+          name: notifData?.userName,
+          profileImageUrl: notifData?.profile_image,
+        });
+      } catch (e) {
+        console.log('Error navigation to Chats on iOS PRESS', e?.message);
+      }
+    } else if (notifType === 'call_accepted') {
+      try {
+        navigate('CallRequests', { activeTab: 'scheduled' });
+      } catch (e) {
+        console.log('Error navigation to CallRequests on iOS PRESS', e?.message);
+      }
     }
   }
 
   // Mirror Accept/Decline in index so it works even before Main mounts.
-  // acceptCallFromNotification / declineCallFromNotification are idempotent.
   if (type === EventType.ACTION_PRESS) {
     const pressActionId = detail?.pressAction?.id;
     const callData = detail?.notification?.data;
@@ -267,15 +376,30 @@ notifee.onForegroundEvent(async ({ type, detail }) => {
     if (pressActionId === 'accept_call' && callData?.roomId) {
       markCallAcceptedSync(callData);
       try {
+        // Dismiss CallKit chrome only — keep pending until accept flow finishes.
+        if (Platform.OS === 'ios') {
+          try {
+            await IncomingCallService.dismissCallKit();
+          } catch (_) {}
+        }
         await acceptCallFromNotification(callData, { navigateNow: true });
       } catch (e) {
         console.log('❌ [index:onForegroundEvent] Accept failed:', e?.message || e);
       }
       if (notificationId) await notifee.cancelNotification(notificationId);
+      try {
+        await notifee.cancelNotification('incoming_call_' + callData.roomId);
+      } catch (_) {}
     } else if (pressActionId === 'decline_call' && callData?.roomId) {
       markCallRejectedSync(callData);
       try {
-        await declineCallFromNotification(callData, { dismissUi: true });
+        if (Platform.OS === 'ios') {
+          try {
+            await IncomingCallService.dismissCallKit();
+          } catch (_) {}
+        }
+        // Prefer not navigating away aggressively — reject API is enough.
+        await declineCallFromNotification(callData, { dismissUi: false });
       } catch (e) {
         console.log('❌ [index:onForegroundEvent] Decline failed:', e?.message || e);
       }

@@ -45,7 +45,7 @@ class AppDelegate: ExpoAppDelegate {
 
     // 4. Call super — subscribers run including dev-launcher's autoSetupStart.
     //    autoSetupPrepare was already called in step 2, so this will succeed.
-    super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    _ = super.application(application, didFinishLaunchingWithOptions: launchOptions)
 
     // 5. Initialize BootSplash (skip for dev-launcher's deferred root view)
     let className = String(describing: type(of: rootView))
@@ -56,25 +56,46 @@ class AppDelegate: ExpoAppDelegate {
     return true
   }
 
-  // MARK: - PushKit forwarding for react-native-voip-push-notification
-  @objc func pushRegistry(_ registry: PKPushRegistry, didUpdatePushCredentials credentials: PKPushCredentials, forType type: PKPushType) {
-    // Forward to RNVoipPushNotificationManager class method if available
-    let sel = NSSelectorFromString("didUpdatePushCredentials:forType:")
-    if let cls: AnyObject = NSClassFromString("RNVoipPushNotificationManager") as AnyObject? {
-      if cls.responds(to: sel) {
-        _ = cls.perform(sel, with: credentials, with: type.rawValue)
-      }
-    }
+  // MARK: - PushKit → react-native-voip-push-notification
+  //
+  // RNVoipPush sets AppDelegate as PKPushRegistry.delegate (ObjC).
+  // Method names MUST match classic PushKit selectors or launch crashes with
+  // unrecognized selector inside voipRegistrationSucceededWithDeviceToken.
+
+  @objc(
+    pushRegistry:didUpdatePushCredentials:forType:
+  )
+  func pushRegistry(
+    _ registry: PKPushRegistry,
+    didUpdatePushCredentials pushCredentials: PKPushCredentials,
+    forType type: PKPushType
+  ) {
+    VoipPushBridge.didUpdate(pushCredentials, forType: type.rawValue)
   }
 
-  @objc func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, forType type: PKPushType) {
-    // Forward incoming VoIP push to RNVoipPushNotificationManager
-    let sel = NSSelectorFromString("didReceiveIncomingPushWithPayload:forType:")
-    if let cls: AnyObject = NSClassFromString("RNVoipPushNotificationManager") as AnyObject? {
-      if cls.responds(to: sel) {
-        _ = cls.perform(sel, with: payload, with: type.rawValue)
-      }
-    }
+  /// iOS 13+: completion must run after CallKit/JS finishes (onVoipNotificationCompleted).
+  @objc(
+    pushRegistry:didReceiveIncomingPushWithPayload:forType:withCompletionHandler:
+  )
+  func pushRegistry(
+    _ registry: PKPushRegistry,
+    didReceiveIncomingPushWithPayload payload: PKPushPayload,
+    forType type: PKPushType,
+    withCompletionHandler completion: @escaping () -> Void
+  ) {
+    VoipPushBridge.didReceiveIncomingPush(payload, forType: type.rawValue, completion: completion)
+  }
+
+  /// Pre–iOS 13 signature.
+  @objc(
+    pushRegistry:didReceiveIncomingPushWithPayload:forType:
+  )
+  func pushRegistry(
+    _ registry: PKPushRegistry,
+    didReceiveIncomingPushWithPayload payload: PKPushPayload,
+    forType type: PKPushType
+  ) {
+    VoipPushBridge.didReceiveIncomingPush(payload, forType: type.rawValue, completion: nil)
   }
 
   override func application(

@@ -122,6 +122,12 @@ const CallScreen = ({ route }) => {
       handleLogout(true);
     },
     onCallUnavailable: () => {
+      // Callee just accepted — server often still returns UNAVAILABLE while creator waits.
+      // Only the creator (IS_STARTING) should treat UNAVAILABLE as "user not answering".
+      if (!IS_STARTING) {
+        console.log('🔄 [Polling] Ignoring UNAVAILABLE for callee (creator may still be ringing)');
+        return;
+      }
       console.log('🔄 [Polling] Call unavailable, exiting...');
       setEndTriggerSource('POLLING');
       stopAndUnloadRingtone();

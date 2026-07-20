@@ -141,7 +141,10 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-
+    // Needed so FahduFirebaseMessagingService can extend FirebaseMessagingService
+    // and show Accept/Reject CallStyle when the app process is killed.
+    implementation platform("com.google.firebase:firebase-bom:33.16.0")
+    implementation "com.google.firebase:firebase-messaging"
 
         // The library module
         implementation project(':ffmpeg-kit-react-native')

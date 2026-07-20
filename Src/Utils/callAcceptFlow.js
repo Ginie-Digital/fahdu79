@@ -8,6 +8,10 @@ import { navigate, navigationRef } from '../../Navigation/RootNavigation';
 import RingtoneManager from '../Components/Calling/RingtoneManager';
 
 const PENDING_CALL_KEY = 'pendingCall';
+/** Survives process death — blocks stale notification taps after creator/user ended the call. */
+const ENDED_CALLS_KEY = 'endedIncomingCalls';
+const mmkv = createMMKV({ id: 'default' });
+
 /** In-memory guards keyed by callId (fallback roomId). Never block the next call. */
 const recentlyAcceptedKeys = new Set();
 const recentlyRejectedKeys = new Set();
@@ -17,6 +21,81 @@ const rejectInFlightKeys = new Set();
 const rejectedApiDoneKeys = new Set();
 /** Prevent double navigation from bootstrap + pendingCall startup. */
 let launchCallHandled = false;
+
+/** Prefer callId — roomId is reused across calls in the same chat. */
+export const callGuardKey = callData => {
+  if (!callData) return null;
+  if (callData.callId) return `call:${callData.callId}`;
+  if (callData.roomId) return `room:${callData.roomId}`;
+  return null;
+};
+
+/** callId stamp TTL — blocks only that exact ended session. */
+const ENDED_CALL_ID_TTL_MS = 60 * 60 * 1000;
+/** room stamp TTL — must stay short or next call in same chat loses Accept/Reject notif. */
+const ENDED_ROOM_TTL_MS = 8 * 1000;
+
+const rememberEndedCall = callData => {
+  const key = callGuardKey(callData);
+  if (!key && !callData?.roomId) return;
+  try {
+    const raw = mmkv.getString(ENDED_CALLS_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    const now = Date.now();
+    if (callData?.callId) map[`call:${callData.callId}`] = now;
+    if (callData?.roomId) map[`room:${callData.roomId}`] = now;
+    const cutoff = now - ENDED_CALL_ID_TTL_MS;
+    Object.keys(map).forEach(k => {
+      if (!map[k] || map[k] < cutoff) delete map[k];
+    });
+    mmkv.set(ENDED_CALLS_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.warn('[rememberEndedCall] failed:', e?.message || e);
+  }
+};
+
+/**
+ * True only if THIS call session already ended.
+ * Prefer callId. Room stamp is short-lived so a new ring in the same chat
+ * can still show Accept/Reject (was blocking for 60 minutes before).
+ */
+export const wasCallEndedRecently = callData => {
+  if (!callData?.roomId && !callData?.callId) return false;
+  try {
+    const raw = mmkv.getString(ENDED_CALLS_KEY);
+    if (!raw) return false;
+    const map = JSON.parse(raw);
+    const now = Date.now();
+
+    if (callData?.callId) {
+      const callTs = map[`call:${callData.callId}`];
+      if (callTs && now - callTs < ENDED_CALL_ID_TTL_MS) return true;
+      // New callId in same room → not ended.
+      return false;
+    }
+
+    // No callId: fall back to short room TTL only.
+    const roomTs = callData?.roomId ? map[`room:${callData.roomId}`] : null;
+    if (roomTs && now - roomTs < ENDED_ROOM_TTL_MS) return true;
+    return false;
+  } catch (_) {
+    return false;
+  }
+};
+
+/** Clear ended stamps so a fresh invite can show Accept/Reject. */
+export const clearEndedCallStampForIncoming = callData => {
+  if (!callData?.roomId && !callData?.callId) return;
+  try {
+    const raw = mmkv.getString(ENDED_CALLS_KEY);
+    if (!raw) return;
+    const map = JSON.parse(raw);
+    if (callData.roomId) delete map[`room:${callData.roomId}`];
+    // Never clear other callIds; only clear this callId if re-ringing same id.
+    if (callData.callId) delete map[`call:${callData.callId}`];
+    mmkv.set(ENDED_CALLS_KEY, JSON.stringify(map));
+  } catch (_) {}
+};
 
 /** IncomingCall screen listens so notification-Accept can stop ringtone/polling. */
 const callIntentListeners = new Set();
@@ -34,16 +113,6 @@ const emitCallIntent = (type, callData) => {
       console.warn('[emitCallIntent] listener error:', e?.message || e);
     }
   });
-};
-
-const mmkv = createMMKV({ id: 'default' });
-
-/** Prefer callId — roomId is reused across calls in the same chat. */
-export const callGuardKey = callData => {
-  if (!callData) return null;
-  if (callData.callId) return `call:${callData.callId}`;
-  if (callData.roomId) return `room:${callData.roomId}`;
-  return null;
 };
 
 const readTokenFromMmkv = () => {
@@ -198,7 +267,44 @@ export const callRejectAPI = async callData => {
   }
 };
 
-export const buildPendingCallPayload = (callData, { accepted, rejected, apiDone } = {}) => ({
+const ENDED_CALL_STATUSES = new Set([
+  'REJECTED',
+  'UNAVAILABLE',
+  'DISCONNECTED',
+  'FORCE_CLOSED',
+  'CANCELLED',
+  'CANCELED',
+  'COMPLETED',
+  'ENDED',
+  'LEAVE',
+  'MISSED',
+  'IDLE',
+  'NONE',
+  'TIMEOUT',
+  'EXPIRED',
+  'FAILED',
+  'NO_ANSWER',
+  'BUSY',
+  'DECLINED',
+]);
+
+/** Statuses that mean the creator is still ringing — only then open IncomingCall from a notif tap. */
+const ACTIVE_RINGING_STATUSES = new Set([
+  'RINGING',
+  'CALLING',
+  'PENDING',
+  'INCOMING',
+  'WAITING',
+  'IS_STARTING',
+  'CONNECTING',
+  'INITIATED',
+  'OUTGOING',
+]);
+
+export const buildPendingCallPayload = (
+  callData,
+  { accepted, rejected, ended, apiDone, statusOverride } = {},
+) => ({
   roomId: callData.roomId,
   callerName: callData.displayName || callData.callerName || 'Call',
   displayName: callData.displayName || callData.callerName || 'Call',
@@ -207,9 +313,234 @@ export const buildPendingCallPayload = (callData, { accepted, rejected, apiDone 
   profileImage: callData.profileImage || callData.profileImageUrl,
   callId: callData.callId,
   callAccepted: !!accepted,
-  status: rejected ? 'REJECTED' : accepted ? 'ACCEPTED' : 'PENDING',
+  status:
+    statusOverride ||
+    (ended ? 'ENDED' : rejected ? 'REJECTED' : accepted ? 'ACCEPTED' : 'PENDING'),
   apiDone: !!apiDone,
 });
+
+export const isTerminalCallStatus = status =>
+  !!status && ENDED_CALL_STATUSES.has(String(status).toUpperCase());
+
+/** Creator cancelled / timed out / missed — clear ringing UI if user taps later. */
+export const markIncomingCallEndedSync = (callData, reason = 'ENDED') => {
+  if (!callData?.roomId) return;
+  const key = callGuardKey(callData);
+  if (key) recentlyRejectedKeys.add(key);
+  rememberEndedCall(callData);
+  persistPendingCallSync(callData, {
+    ended: true,
+    statusOverride: reason,
+    apiDone: true,
+  });
+  emitCallIntent('REJECTED', callData);
+};
+
+export const fetchOtherParticipantStatus = async roomId => {
+  if (!roomId) return null;
+  // Cold start after kill needs more time for MMKV/AsyncStorage token rehydrate.
+  const token = await getAuthToken(30);
+  if (!token) return null;
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/api/stream/other/participant/status?roomId=${encodeURIComponent(String(roomId))}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    const result = await response.json().catch(() => ({}));
+    // Match polling shape: body.data.status (and a few fallbacks).
+    const status =
+      result?.data?.status ||
+      result?.data?.data?.status ||
+      result?.status ||
+      null;
+    console.log('📡 [fetchOtherParticipantStatus]', roomId, status);
+    return status ? String(status).toUpperCase() : null;
+  } catch (e) {
+    console.warn('[fetchOtherParticipantStatus] failed:', e?.message || e);
+    return null;
+  }
+};
+
+/** Hard end states from creator cancel / hangup (safe to trust for stale notif taps). */
+const HARD_ENDED_REMOTE_STATUSES = new Set([
+  'REJECTED',
+  'DISCONNECTED',
+  'FORCE_CLOSED',
+  'CANCELLED',
+  'CANCELED',
+  'COMPLETED',
+  'ENDED',
+  'LEAVE',
+  'MISSED',
+]);
+
+/**
+ * Soft flaky statuses — server often returns these while creator is still
+ * on the outgoing call screen. Must NOT block IncomingCall / Accept.
+ */
+const FLAKY_REMOTE_STATUSES = new Set([
+  'UNAVAILABLE',
+  'IDLE',
+  'NONE',
+  'DISCONNECTED', // often false while still ringing
+]);
+
+/**
+ * Returns false only when the call is confidently ended.
+ * Used before opening IncomingCall from a notification / cold-start tap.
+ *
+ * Soft rules (kill + FG tap):
+ * - Hard-ended remote / local stamps → false
+ * - Explicit ringing OR local PENDING → true
+ * - Flaky UNAVAILABLE/IDLE/NONE → treat as still ringing if not hard-ended
+ * - Unknown/null remote → true when local PENDING (notif tap implies live invite)
+ */
+export const isIncomingCallStillActive = async callData => {
+  if (!callData?.roomId) return false;
+
+  if (wasCallEndedRecently(callData) || wasRecentlyRejected(callData)) {
+    console.log('📱 [isIncomingCallStillActive] call remembered as ended');
+    return false;
+  }
+
+  const pending = getPendingCallSync();
+  const samePending =
+    !!pending?.roomId && String(pending.roomId) === String(callData.roomId);
+
+  if (samePending && isTerminalCallStatus(pending.status)) {
+    const pendingUpper = String(pending.status).toUpperCase();
+    // Local PENDING stamp may have been wrongly marked UNAVAILABLE — ignore flaky.
+    if (!FLAKY_REMOTE_STATUSES.has(pendingUpper) && HARD_ENDED_REMOTE_STATUSES.has(pendingUpper)) {
+      console.log('📱 [isIncomingCallStillActive] pending already terminal:', pending.status);
+      return false;
+    }
+    if (pendingUpper === 'REJECTED' || pendingUpper === 'ENDED' || pendingUpper === 'CANCELLED' || pendingUpper === 'CANCELED' || pendingUpper === 'MISSED' || pendingUpper === 'COMPLETED') {
+      console.log('📱 [isIncomingCallStillActive] pending hard-ended:', pending.status);
+      return false;
+    }
+  }
+
+  let remoteStatus = await fetchOtherParticipantStatus(callData.roomId);
+  // One retry — token/network often lag right after kill-mode cold start.
+  if (!remoteStatus) {
+    await new Promise(resolve => setTimeout(resolve, 600));
+    remoteStatus = await fetchOtherParticipantStatus(callData.roomId);
+  }
+  const remoteUpper = remoteStatus ? String(remoteStatus).toUpperCase() : null;
+
+  // Only trust hard creator-end statuses (never UNAVAILABLE/IDLE as dead).
+  if (remoteUpper && HARD_ENDED_REMOTE_STATUSES.has(remoteUpper) && !FLAKY_REMOTE_STATUSES.has(remoteUpper)) {
+    console.log('📱 [isIncomingCallStillActive] remote hard-ended:', remoteStatus);
+    markIncomingCallEndedSync(callData, remoteStatus);
+    return false;
+  }
+
+  if (remoteUpper && ACTIVE_RINGING_STATUSES.has(remoteUpper)) {
+    return true;
+  }
+
+  // ACCEPTED → join active call, not IncomingCall ringing UI.
+  if (remoteUpper === 'ACCEPTED') {
+    console.log('📱 [isIncomingCallStillActive] remote ACCEPTED — not opening IncomingCall');
+    return false;
+  }
+
+  const localPendingAlive =
+    samePending &&
+    (!pending.status ||
+      pending.status === 'PENDING' ||
+      pending.status === 'ACCEPTED' ||
+      FLAKY_REMOTE_STATUSES.has(String(pending.status || '').toUpperCase()));
+
+  // Flaky remote while creator still waiting — open IncomingCall.
+  if (remoteUpper && FLAKY_REMOTE_STATUSES.has(remoteUpper)) {
+    console.log('📱 [isIncomingCallStillActive] soft-open flaky remote:', remoteUpper);
+    return true;
+  }
+
+  // Null/unknown remote: open when local PENDING or notif payload looks like a live invite.
+  if (!remoteUpper) {
+    if (localPendingAlive || callData.callId || callData.senderId || callData.callerId) {
+      console.log('📱 [isIncomingCallStillActive] soft-open null remote + pending/notif payload');
+      return true;
+    }
+    console.log('📱 [isIncomingCallStillActive] null remote, no pending — stale-safe');
+    return false;
+  }
+
+  // Unknown non-terminal status — prefer open (notif tap) over false-negative.
+  if (localPendingAlive) {
+    console.log('📱 [isIncomingCallStillActive] soft-open unknown remote + pending:', remoteUpper);
+    return true;
+  }
+
+  console.log('📱 [isIncomingCallStillActive] soft-open unknown remote from notif tap:', remoteUpper);
+  return true;
+};
+
+/**
+ * Mark call ended + cancel notification chrome on BOTH platforms.
+ * Keeps ENDED pending in MMKV so a later notification tap cannot reopen IncomingCall.
+ */
+export const invalidateIncomingCall = async (callData, reason = 'ENDED') => {
+  const roomId = callData?.roomId || callData;
+  const payload =
+    typeof callData === 'object' && callData
+      ? callData
+      : { roomId };
+  markIncomingCallEndedSync(payload, reason);
+
+  // Notifee (iOS + Android fallback)
+  try {
+    const notifee = require('@notifee/react-native').default;
+    if (roomId) {
+      await notifee.cancelNotification('incoming_call_' + roomId);
+      await notifee.cancelNotification(String(roomId));
+    }
+  } catch (_) {}
+
+  // Android WhatsApp-style CallStyle notification
+  try {
+    if (roomId) {
+      const { cancelAndroidCallStyleNotification } = require('../Services/IncomingCallStyle');
+      await cancelAndroidCallStyleNotification(roomId);
+    }
+  } catch (_) {}
+
+  // iOS CallKit banner
+  try {
+    const { Platform } = require('react-native');
+    if (Platform.OS === 'ios') {
+      const IncomingCallService = require('../Services/IncomingCallService').default;
+      await IncomingCallService.endSystemCall();
+    }
+  } catch (_) {}
+
+  try {
+    RingtoneManager.stopAll();
+  } catch (_) {}
+
+  // Only dismiss if IncomingCall is currently showing (do not force-navigate home).
+  try {
+    if (navigationRef.isReady()) {
+      const current = navigationRef.getCurrentRoute()?.name;
+      if (current === 'incomingCall') {
+        if (navigationRef.canGoBack()) {
+          navigationRef.goBack();
+        } else {
+          navigate('home');
+        }
+      }
+    }
+  } catch (_) {}
+};
 
 /** Sync write so cold-start cannot race Accept → PENDING IncomingCall. */
 export const persistPendingCallSync = (callData, options) => {
@@ -262,25 +593,49 @@ export const getPendingCall = async () => {
 
 /**
  * New ringing call arrived — clear stale Accept/Reject guards for this chat room
- * so the next call always shows IncomingCall.
+ * so the next call always shows IncomingCall + Accept/Reject notification.
  */
 export const prepareIncomingCall = callData => {
   if (!callData?.roomId) return;
 
-  launchCallHandled = false;
-
-  // Drop room-scoped leftovers from a previous call in the same chat.
-  recentlyAcceptedKeys.delete(`room:${callData.roomId}`);
-  recentlyRejectedKeys.delete(`room:${callData.roomId}`);
-
   const existing = getPendingCallSync();
-  if (
-    existing?.roomId === callData.roomId &&
+  const sameEndedSession =
+    existing?.roomId &&
+    String(existing.roomId) === String(callData.roomId) &&
     callData.callId &&
     existing.callId &&
-    existing.callId !== callData.callId
-  ) {
-    // Different call session for same room — replace pending.
+    String(existing.callId) === String(callData.callId) &&
+    (isTerminalCallStatus(existing.status) || wasCallEndedRecently(callData));
+
+  // Only skip the exact same ended callId — never block a new ring in the room.
+  if (sameEndedSession || (wasCallEndedRecently(callData) && callData.callId && wasRecentlyRejected(callData))) {
+    console.log('📱 [prepareIncomingCall] skip — same call session already ended');
+    return;
+  }
+
+  launchCallHandled = false;
+
+  // Always clear room-level guards so Accept/Reject notif is not cancelled by AppState.
+  recentlyAcceptedKeys.delete(`room:${callData.roomId}`);
+  recentlyRejectedKeys.delete(`room:${callData.roomId}`);
+  clearEndedCallStampForIncoming(callData);
+
+  // Clear ended history for a *new* callId (not the same ended session).
+  const isNewCallSession =
+    !!callData.callId &&
+    (!existing?.callId || String(existing.callId) !== String(callData.callId));
+  if (isNewCallSession || !callData.callId) {
+    try {
+      const raw = mmkv.getString(ENDED_CALLS_KEY);
+      if (raw) {
+        const map = JSON.parse(raw);
+        // Keep stamp for this exact callId; clear room key only when new session.
+        if (isNewCallSession) {
+          delete map[`room:${callData.roomId}`];
+        }
+        mmkv.set(ENDED_CALLS_KEY, JSON.stringify(map));
+      }
+    } catch (_) {}
   }
 
   persistPendingCallSync(callData, {});
@@ -354,6 +709,28 @@ export const openActiveCallScreen = callData => {
     }
   }
   navigate(screen, params);
+};
+
+/**
+ * Open IncomingCall only if the call is still ringing.
+ * Use this for EVERY notification / cold-start / CallKit body path on iOS + Android.
+ * Prevents stale taps after creator cancel / unavailable while app was killed.
+ */
+export const openIncomingCallScreenIfActive = async callData => {
+  if (!callData?.roomId) return false;
+
+  const stillActive = await isIncomingCallStillActive(callData);
+  if (!stillActive) {
+    console.log(
+      '📱 [openIncomingCallScreenIfActive] Call already ended — clearing notif/CallKit, not opening UI',
+    );
+    await invalidateIncomingCall(callData, 'ENDED');
+    return false;
+  }
+
+  // Stamp PENDING only AFTER remote confirms the call is still live.
+  prepareIncomingCall(callData);
+  return openIncomingCallScreen(callData);
 };
 
 export const openIncomingCallScreen = callData => {
@@ -509,7 +886,7 @@ export const declineCallFromNotification = async (callData, { dismissUi = true }
   // Only skip when REJECT API already succeeded for this call session.
   if (key && rejectedApiDoneKeys.has(key)) {
     console.log('📱 [declineCallFromNotification] Reject API already done, skipping');
-    await clearPendingCall();
+    markIncomingCallEndedSync(callData, 'REJECTED');
     if (dismissUi) dismissIncomingCallScreen();
     return { success: true, data: { alreadyRejected: true } };
   }
@@ -522,7 +899,7 @@ export const declineCallFromNotification = async (callData, { dismissUi = true }
     (!callData.callId || !pending.callId || pending.callId === callData.callId)
   ) {
     if (key) rejectedApiDoneKeys.add(key);
-    await clearPendingCall();
+    markIncomingCallEndedSync(callData, 'REJECTED');
     if (dismissUi) dismissIncomingCallScreen();
     return { success: true, data: { alreadyRejected: true } };
   }
@@ -554,8 +931,8 @@ export const declineCallFromNotification = async (callData, { dismissUi = true }
 
   if (result.success) {
     if (key) rejectedApiDoneKeys.add(key);
-    persistPendingCallSync(callData, { rejected: true, apiDone: true });
-    await clearPendingCall();
+    // Keep ENDED stamp (do not clear) so a later body-tap cannot reopen IncomingCall.
+    markIncomingCallEndedSync(callData, 'REJECTED');
     console.log('✅ [declineCallFromNotification] Call rejected — caller should cut');
   } else {
     // Keep REJECTED pending without apiDone so cold-start/bootstrap can retry.

@@ -36,7 +36,41 @@
     <meta-data android:name="expo.modules.updates.EXPO_UPDATE_URL" android:value="https://u.expo.dev/657fd6e2-6582-4d14-8253-bd915417c996"/>
     <service android:name="im.zego.internal.screencapture.ZegoScreenCaptureService" tools:node="remove"/>
     <activity android:name="im.zego.internal.screencapture.ZegoScreenCaptureManager$ZegoScreenCaptureAssistantActivity" tools:node="remove"/>
-    <activity android:name=".MainActivity" android:label="@string/app_name" android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustPan" android:exported="true" android:theme="@style/BootTheme" android:showWhenLocked="true" android:turnScreenOn="true" android:supportsPictureInPicture="true">
+    <receiver
+      android:name=".IncomingCallActionReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.fahdu.ACTION_CALL_DECLINE"/>
+        <action android:name="com.fahdu.ACTION_CALL_ACCEPT"/>
+      </intent-filter>
+    </receiver>
+    <!-- Kill/background: show Accept/Reject before JS boots. -->
+    <receiver
+      android:name=".IncomingCallFcmReceiver"
+      android:exported="true"
+      android:permission="com.google.android.c2dm.permission.SEND">
+      <intent-filter android:priority="999">
+        <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
+      </intent-filter>
+    </receiver>
+    <!-- Replace RN Firebase MessagingService so we can show CallStyle onMessageReceived when killed. -->
+    <service
+      android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
+      tools:node="remove"/>
+    <service
+      android:name=".FahduFirebaseMessagingService"
+      android:exported="false"
+      android:directBootAware="true">
+      <intent-filter android:priority="1000">
+        <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+      </intent-filter>
+    </service>
+    <service
+      android:name=".IncomingCallHeadlessService"
+      android:exported="false" />
+    <!-- showWhenLocked/turnScreenOn removed: they caused the app to appear on unlock/wake
+         when a call notification was ringing. Accept enables them dynamically in MainActivity. -->
+    <activity android:name=".MainActivity" android:label="@string/app_name" android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustPan" android:exported="true" android:theme="@style/BootTheme" android:supportsPictureInPicture="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>

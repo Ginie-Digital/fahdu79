@@ -1,10 +1,18 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { NativeModules, Platform } from 'react-native';
 
 let activePlayer = null;
 
+function stopNativeAndroidRingtone() {
+  if (Platform.OS !== 'android') return;
+  try {
+    NativeModules.IncomingCallStyle?.stopRingtoneJs?.();
+  } catch (_) {}
+}
+
 const RingtoneManager = {
   /**
-   * Play the incoming call ringtone.
+   * Play the incoming call ringtone (JS). Stops any native Android loop first.
    */
   async playIncoming() {
     try {
@@ -14,6 +22,8 @@ const RingtoneManager = {
         playsInSilentMode: true,
         allowsRecording: false,
         shouldPlayInBackground: true,
+        interruptionMode: 'doNotMix',
+        interruptionModeAndroid: 'doNotMix',
       });
 
       console.log('🔔 [RingtoneManager] Loading incoming call ringtone...');
@@ -38,6 +48,8 @@ const RingtoneManager = {
         playsInSilentMode: true,
         allowsRecording: false,
         shouldPlayInBackground: true,
+        interruptionMode: 'doNotMix',
+        interruptionModeAndroid: 'doNotMix',
       });
 
       console.log('🔔 [RingtoneManager] Loading outgoing call ringtone...');
@@ -52,9 +64,10 @@ const RingtoneManager = {
   },
 
   /**
-   * Stop and release any active ringtone player.
+   * Stop JS player + native Android CallStyle ringtone loop.
    */
   stopAll() {
+    stopNativeAndroidRingtone();
     if (activePlayer) {
       try {
         console.log('🔇 [RingtoneManager] Stopping and releasing active player...');
@@ -66,7 +79,7 @@ const RingtoneManager = {
         activePlayer = null;
       }
     }
-  }
+  },
 };
 
 export default RingtoneManager;

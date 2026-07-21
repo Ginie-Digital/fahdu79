@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import socketServcies from './SocketServices';
 import { getMessaging, onMessage, getToken, onTokenRefresh, requestPermission, onNotificationOpenedApp, getInitialNotification as getFirebaseInitialNotification } from '@react-native-firebase/messaging';
-import {dismissProgressNotification, displayNotificationProgressIndicator, showMentionNotification, showOthersCategoryNotification, showSubscriptionNotification, showCallRelatedNotification, showCallReminderNotification, liveStreamNotification, onDisplayNotification, showPostInteractionNotification, showIncomingCallNotification, ensureIncomingCallNotificationCategory} from './Notificaton';
+import {dismissProgressNotification, displayNotificationProgressIndicator, showMentionNotification, showOthersCategoryNotification, showSubscriptionNotification, showCallRelatedNotification, showCallReminderNotification, liveStreamNotification, onDisplayNotification, showPostInteractionNotification, showIncomingCallNotification, cancelIncomingCallNotification, ensureIncomingCallNotificationCategory} from './Notificaton';
 import { enableNotificationModal, resetAllModal, setLatestTip, setUnReadChatIcon, toggleCallAccepted, toggleEmailVerificationModal, toggleNewMessageRecieved } from './Redux/Slices/NormalSlices/HideShowSlice';
 import { authLogout, currentUserInformation, token as memoizedToken, updateApnToken } from './Redux/Slices/NormalSlices/AuthSlice';
 import { markRoomAsProcessed, markRoomAsAccepted, clearProcessedRoomId } from './Redux/Slices/NormalSlices/Call/CallSlice';
@@ -587,8 +587,15 @@ const Main = () => {
     // Android
     const isFg = AppState.currentState === 'active';
     if (isFg) {
-      // BUG_11 / BUG_03: FG → IncomingCall screen + ringtone only (no Accept/Reject shade).
-      console.log('📱 [Main:IncomingCall] Android FG → IncomingCall screen only');
+      // BUG_11: FG → IncomingCall screen + ringtone only. Never shade/CallStyle while in-app.
+      console.log('📱 [Main:IncomingCall] Android FG → IncomingCall screen only (no notif)');
+      try {
+        cancelIncomingCallNotification(roomId).catch(() => {});
+      } catch (_) {}
+      try {
+        const { cancelAndroidCallStyleNotification } = require('./Src/Services/IncomingCallStyle');
+        cancelAndroidCallStyleNotification(roomId).catch(() => {});
+      } catch (_) {}
       try {
         const RingtoneManager = require('./Src/Components/Calling/RingtoneManager').default;
         RingtoneManager.playIncoming().catch(() => {});
@@ -744,8 +751,7 @@ const Main = () => {
 
       const onIncomingCaller = data => {
         AppLog('INCOMING_SOCKET_CALL', 'Received incoming_caller via socket (Detailed)', data);
-        // Socket FG path: show Accept/Reject immediately (don't wait on nav/dedup).
-        showIncomingCallNotification(data?.content || data).catch(() => {});
+        // FG/BG split is inside handleIncomingCall — do not force Notifee here.
         handleIncomingCall(data?.content || data, 'SOCKET');
       };
 
@@ -1567,8 +1573,8 @@ const Main = () => {
       } else if (remoteNotificationData?.type === 'call') {
         const callContent = remoteNotificationData?.content || remoteNotificationData;
         console.log('📱 [Main:FCM] Incoming call', callContent?.roomId || callContent?.room_id, callContent?.callId);
-        // Ensure Accept/Reject notification even if handleIncomingCall dedupes later.
-        showIncomingCallNotification(callContent).catch(() => {});
+        // FG/BG split is inside handleIncomingCall — do NOT also force Notifee here
+        // (that duplicated shade + IncomingCall when user is already in the app).
         handleIncomingCall(callContent, 'FCM');
       } else if (remoteNotificationData?.type === 'call_request') {
         await showCallRelatedNotification(remoteNotificationData);

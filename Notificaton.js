@@ -667,9 +667,9 @@ function normalizeIncomingCallDetails(raw) {
 }
 
 /**
- * Always show Accept/Reject notification in FG + BG + kill.
- * Notifee with text actions is the primary, reliable surface.
- * Android CallStyle is best-effort for ringtone only (never blocks Notifee).
+ * Show Accept/Reject notification for BG / kill.
+ * When the user is already in the app (AppState active), skip — FG uses IncomingCall screen only.
+ * Pass options.force = true to override (tests / rare cases).
  */
 export async function showIncomingCallNotification(callDetails, options = {}) {
   const details = normalizeIncomingCallDetails(callDetails);
@@ -678,6 +678,15 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
       '[showIncomingCallNotification] missing roomId — skip',
       typeof callDetails,
       callDetails && Object.keys(callDetails),
+    );
+    return false;
+  }
+
+  // BUG_11: never post shade/CallStyle while user is inside the app.
+  if (!options.force && AppState.currentState === 'active') {
+    console.log(
+      '📱 [showIncomingCallNotification] skip — app foreground (IncomingCall screen handles it)',
+      details.roomId,
     );
     return false;
   }

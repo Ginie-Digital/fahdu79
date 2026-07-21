@@ -327,9 +327,15 @@ const IncomingCallScreen = ({ route, navigation }) => {
     }
   }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
 
-  // Keep the Accept/Decline heads-up notification visible in foreground.
-  // Duplicate Accept is safe: subscribeCallIntent + accept idempotency + replace nav.
-  // Cancel notification only after user Accept/Reject (handleAccept / handleDecline / intent).
+  // BUG_11: while this in-app screen is open, never keep a shade/CallStyle duplicate.
+  useEffect(() => {
+    if (!roomId) return;
+    cancelIncomingCallNotification(roomId).catch(() => {});
+    try {
+      const { cancelAndroidCallStyleNotification } = require('../../Services/IncomingCallStyle');
+      cancelAndroidCallStyleNotification(roomId).catch(() => {});
+    } catch (_) {}
+  }, [roomId]);
 
   // ─── Incoming call ringtone (plays FIRST, before permission checks) ───
   useEffect(() => {

@@ -294,6 +294,25 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         }
 
         /**
+         * True when our MainActivity is visibly in the foreground.
+         * Used to skip CallStyle while the in-app IncomingCall screen owns the UX.
+         */
+        @JvmStatic
+        fun isAppInForeground(context: Context): Boolean {
+            return try {
+                val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+                val processes = am.runningAppProcesses ?: return false
+                val pkg = context.packageName
+                processes.any {
+                    it.processName == pkg &&
+                        it.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        /**
          * Show CallStyle notification from any Context (FCM receiver or RN module).
          * Returns true if posted.
          */
@@ -311,6 +330,13 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             val appContext = context.applicationContext
 
             try {
+                // BUG_11: app already open → JS IncomingCall screen handles Accept/Decline.
+                // Do not also post CallStyle shade over the in-app UI.
+                if (isAppInForeground(appContext)) {
+                    android.util.Log.i(NAME, "Skip CallStyle — app foreground room=$roomId")
+                    return false
+                }
+
                 // New callId → clear room-ended stamp BEFORE the skip check,
                 // otherwise a prior cancel blocks the next call for ENDED_TTL_ROOM_MS.
                 if (callId.isNotEmpty()) {
@@ -433,7 +459,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     .addPerson(caller)
                     .setSound(
                         Uri.parse("android.resource://${appContext.packageName}/${R.raw.call}"),
-                        ringtoneAudioAttributes(),
+                        AudioManager.STREAM_RING,
                     )
                     // Post immediately — do not wait for large icon download / JS.
                     .setOnlyAlertOnce(alreadyRinging)

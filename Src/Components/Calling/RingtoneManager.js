@@ -173,7 +173,7 @@ const RingtoneManager = {
    */
   stopAndSuppress(roomId) {
     playGeneration += 1;
-    incomingSuppressedUntil = Date.now() + 60_000;
+    incomingSuppressedUntil = Date.now() + 5_000;
     setInAppIncomingUi(false);
     killJsPlayer();
     stopAndSuppressNativeAndroidRingtone(roomId);

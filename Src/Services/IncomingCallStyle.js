@@ -39,25 +39,29 @@ export async function isAndroidCallStyleSupported() {
 }
 
 /**
- * WhatsApp-style CallStyle heads-up (circular Accept / Reject) on Android 12+.
- * Returns true if native notification was shown.
+ * WhatsApp-style CallStyle (circular Decline / Answer).
+ * EVERY incoming call must show this — including 2nd/3rd call after Reject.
  */
 export async function displayAndroidCallStyleNotification(callDetails, options = {}) {
   if (Platform.OS !== 'android' || !Native?.displayIncomingCall) return false;
   try {
     const {
-      wasRecentlyAccepted,
-      wasRecentlyRejected,
-      wasCallEndedRecently,
+      clearEndedCallStampForIncoming,
+      prepareIncomingCall,
     } = require('../Utils/callAcceptFlow');
-    if (
-      wasRecentlyAccepted(callDetails) ||
-      wasRecentlyRejected(callDetails) ||
-      wasCallEndedRecently(callDetails)
-    ) {
-      console.log('📱 [IncomingCallStyle] skip display — call already accepted/ended');
-      return false;
-    }
+
+    // Unlock previous Accept/Reject locks for this chat so next call always rings.
+    clearEndedCallStampForIncoming(callDetails);
+    prepareIncomingCall(callDetails);
+
+    try {
+      const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
+      RingtoneManager.clearIncomingSuppress();
+    } catch (_) {}
+
+    // Do NOT skip based on wasRecentlyRejected/Accepted — that blocked the 2nd call
+    // when callId was reused or missing. Native force=true always posts CallStyle.
+
     await Native.displayIncomingCall({
       roomId: String(callDetails.roomId || ''),
       callId: String(callDetails.callId || ''),
@@ -67,9 +71,15 @@ export async function displayAndroidCallStyleNotification(callDetails, options =
       ),
       senderId: String(callDetails.senderId || callDetails.callerId || ''),
       profileImage: String(callDetails.profileImage || callDetails.profileImageUrl || ''),
-      force: options.force !== false,
+      force: true,
       playRingtone: options.playRingtone !== false,
     });
+    console.log(
+      '✅ [IncomingCallStyle] CallStyle posted (every call)',
+      callDetails.roomId,
+      callDetails.callId,
+      callDetails.callType || 'audio',
+    );
     return true;
   } catch (e) {
     console.warn('[IncomingCallStyle] display failed, will use Notifee fallback:', e?.message || e);

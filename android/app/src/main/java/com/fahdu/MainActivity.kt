@@ -77,7 +77,7 @@ class MainActivity : ReactActivity() {
       if (roomId.isNotEmpty()) {
         IncomingCallStyleModule.stopAndSuppressRingtone(this, roomId, callId)
       } else {
-        IncomingCallStyleModule.suppressRingtone(60_000L, roomId, callId)
+        IncomingCallStyleModule.suppressRingtone(5_000L, roomId, callId)
         IncomingCallStyleModule.stopRingtone(this)
       }
     }

@@ -707,9 +707,9 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
   try {
     await ensureNotificationPermission();
 
-    // ─── Android: single CallStyle only ───
+    // ─── Android: CallStyle ONLY (circular Decline + Answer). Never Notifee. ───
     if (Platform.OS === 'android') {
-      // Drop any leftover Notifee duplicate from older builds / races.
+      // Kill leftover text Reject/Accept Notifee shade (wrong UI).
       try {
         await notifee.cancelNotification('incoming_call_' + details.roomId);
       } catch (_) {}
@@ -723,27 +723,33 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
           playRingtone: options.playRingtone !== false,
         });
         if (shown) {
+          try {
+            await notifee.cancelNotification('incoming_call_' + details.roomId);
+          } catch (_) {}
           console.log(
-            '✅ [showIncomingCallNotification] CallStyle only (no Notifee duplicate)',
+            '✅ [showIncomingCallNotification] CallStyle only',
             details.roomId,
-            'state=',
-            AppState.currentState,
+            details.callType,
           );
           return true;
         }
-        console.warn(
-          '📱 [showIncomingCallNotification] CallStyle failed — Notifee fallback',
+        const retry = await displayAndroidCallStyleNotification(details, {
+          force: true,
+          playRingtone: options.playRingtone !== false,
+        });
+        console.log(
+          '📱 [showIncomingCallNotification] CallStyle retry=',
+          retry,
           details.roomId,
         );
+        return !!retry;
       } catch (e) {
         console.warn(
-          '📱 [showIncomingCallNotification] CallStyle error — Notifee fallback:',
+          '📱 [showIncomingCallNotification] CallStyle error (no Notifee fallback):',
           e?.message || e,
         );
+        return false;
       }
-
-      // Fallback only when CallStyle could not post.
-      return await displayNotifeeIncomingCallFallback(details);
     }
 
     // ─── iOS: Notifee / CallKit category ───
@@ -751,6 +757,10 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
     return await displayNotifeeIncomingCallFallback(details, { withSound: true });
   } catch (error) {
     console.log('❌ Error displaying incoming call notification:', error?.message || error);
+    if (Platform.OS === 'android') {
+      // Android: never show Notifee text Reject/Accept as fallback.
+      return false;
+    }
     try {
       return await displayNotifeeIncomingCallFallback(
         normalizeIncomingCallDetails(callDetails),

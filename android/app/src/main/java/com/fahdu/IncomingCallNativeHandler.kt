@@ -86,10 +86,11 @@ object IncomingCallNativeHandler {
                     Log.i(TAG, "SKIP CallStyle — MainActivity resumed, defer to JS room=${info.roomId}")
                     return false
                 }
-                // BG / killed / Home — show Accept/Reject + RING immediately.
+                // BG / killed / Home — ALWAYS CallStyle. Never fall through to FCM
+                // system tray (blue Reject/Accept text) — that was the wrong shade.
                 IncomingCallStyleModule.setInAppIncomingUi(false)
                 IncomingCallStyleModule.clearRingtoneSuppress()
-                Log.i(TAG, "SHOW Accept/Reject + RING for room=${info.roomId} callId=${info.callId}")
+                Log.i(TAG, "SHOW CallStyle Decline/Answer + RING room=${info.roomId} callId=${info.callId}")
                 val ok = IncomingCallStyleModule.displayFromContext(
                     app,
                     roomId = info.roomId,
@@ -102,8 +103,23 @@ object IncomingCallNativeHandler {
                     playRingtone = true,
                 )
                 Log.i(TAG, "displayFromContext result=$ok")
-                // If native post failed, return false so FCM/JS can still fall back.
-                return ok
+                // Return true even if notify failed — calling super shows the WRONG
+                // FCM/Notifee-style banner (text Reject/Accept). Retry once.
+                if (!ok) {
+                    Log.w(TAG, "CallStyle failed — retry once")
+                    IncomingCallStyleModule.displayFromContext(
+                        app,
+                        roomId = info.roomId,
+                        callId = info.callId,
+                        callType = info.callType,
+                        displayName = info.displayName,
+                        senderId = info.senderId,
+                        profileImage = info.profileImage,
+                        force = true,
+                        playRingtone = true,
+                    )
+                }
+                return true
             }
 
             "call_rejected",

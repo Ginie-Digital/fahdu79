@@ -134,7 +134,7 @@ export const clearEndedCallStampForIncoming = callData => {
     if (!raw) return;
     const map = JSON.parse(raw);
     if (callData.roomId) delete map[`room:${callData.roomId}`];
-    // Never clear other callIds; only clear this callId if re-ringing same id.
+    // Clear this callId too — caller may reuse it on the next dial.
     if (callData.callId) delete map[`call:${callData.callId}`];
     mmkv.set(ENDED_CALLS_KEY, JSON.stringify(map));
   } catch (_) {}
@@ -669,6 +669,11 @@ export const prepareIncomingCall = callData => {
   // Always clear room-level guards so Accept/Reject notif is not cancelled by AppState.
   recentlyAcceptedKeys.delete(`room:${callData.roomId}`);
   recentlyRejectedKeys.delete(`room:${callData.roomId}`);
+  // Reused callId after Reject must still show CallStyle on next dial.
+  if (callData.callId) {
+    recentlyAcceptedKeys.delete(`call:${callData.callId}`);
+    recentlyRejectedKeys.delete(`call:${callData.callId}`);
+  }
   clearEndedCallStampForIncoming(callData);
 
   // Clear ended history for a *new* callId (not the same ended session).
@@ -693,29 +698,31 @@ export const prepareIncomingCall = callData => {
 };
 
 export const markCallAcceptedSync = callData => {
-  const key = callGuardKey(callData);
-  if (!key) return;
-  recentlyAcceptedKeys.add(key);
+  if (callData?.callId) {
+    recentlyAcceptedKeys.add(`call:${callData.callId}`);
+  }
   persistPendingCallSync(callData, { accepted: true, apiDone: false });
   emitCallIntent('ACCEPTED', callData);
 };
 
 export const markCallRejectedSync = callData => {
-  const key = callGuardKey(callData);
-  if (!key) return;
-  recentlyRejectedKeys.add(key);
+  // Prefer callId only — room keys blocked the NEXT call in the same chat.
+  if (callData?.callId) {
+    recentlyRejectedKeys.add(`call:${callData.callId}`);
+  }
   persistPendingCallSync(callData, { rejected: true, apiDone: false });
   emitCallIntent('REJECTED', callData);
 };
 
 export const wasRecentlyAccepted = callData => {
-  const key = callGuardKey(typeof callData === 'string' ? { roomId: callData } : callData);
-  return !!key && recentlyAcceptedKeys.has(key);
+  if (!callData?.callId) return false;
+  return recentlyAcceptedKeys.has(`call:${callData.callId}`);
 };
 
 export const wasRecentlyRejected = callData => {
-  const key = callGuardKey(typeof callData === 'string' ? { roomId: callData } : callData);
-  return !!key && recentlyRejectedKeys.has(key);
+  // Room-only keys must NOT block a new incoming call.
+  if (!callData?.callId) return false;
+  return recentlyRejectedKeys.has(`call:${callData.callId}`);
 };
 
 export const claimLaunchCallHandling = () => {

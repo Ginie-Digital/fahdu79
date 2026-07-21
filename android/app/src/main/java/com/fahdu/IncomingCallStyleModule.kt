@@ -117,7 +117,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         }
 
         @JvmStatic
-        fun suppressRingtone(ms: Long = 60_000L, roomId: String = "", callId: String = "") {
+        fun suppressRingtone(ms: Long = 5_000L, roomId: String = "", callId: String = "") {
+            // Short window only — long suppress blocked the NEXT call's CallStyle.
             ringtoneSuppressedUntilMs = System.currentTimeMillis() + ms
             if (roomId.isNotEmpty()) suppressedRoomId = roomId
             if (callId.isNotEmpty()) suppressedCallId = callId
@@ -546,45 +547,62 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             val appContext = context.applicationContext
 
             try {
-                // New invite must ALWAYS show this CallStyle (Decline + Answer).
-                // Only the exact same rejected/accepted callId stays blocked.
-                if (callId.isEmpty() || suppressedCallId.isEmpty() || callId != suppressedCallId) {
+                // BG/kill incoming (force=true): ALWAYS show CallStyle for every ring.
+                // First call worked but 2nd didn't — ended/suppress stamps were blocking
+                // same room / reused callId. Only debounce identical FCM within 2s.
+                if (force) {
                     clearRingtoneSuppress()
-                }
-                if (isSuppressedForCall(roomId, callId)) {
-                    android.util.Log.i(NAME, "Skip CallStyle — same callId suppressed room=$roomId callId=$callId")
-                    return false
-                }
-
-                // User is actively in MainActivity — never post CallStyle (vibrate-only bug).
-                if (!force && isMainActivityResumed()) {
-                    android.util.Log.i(NAME, "Skip CallStyle — MainActivity resumed room=$roomId")
-                    return false
-                }
-
-                // Only skip when JS IncomingCall is actually owning FG UX.
-                if (!force && inAppIncomingUi) {
-                    android.util.Log.i(NAME, "Skip CallStyle — in-app IncomingCall UI room=$roomId")
-                    return false
-                }
-                // Stale inAppIncomingUi while process is backgrounded — clear and continue.
-                if (inAppIncomingUi && !isAppInForeground(appContext)) {
-                    android.util.Log.i(NAME, "Clear stale inAppIncomingUi — app not foreground")
                     inAppIncomingUi = false
+                    ringingRoomIds.clear()
+                    if (roomId.isNotEmpty()) {
+                        appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                            .edit()
+                            .remove("ended_room_$roomId")
+                            .apply()
+                    }
+                    // New ring from caller — clear ended stamp for this callId too so
+                    // a reused callId still shows Decline/Answer again.
+                    if (callId.isNotEmpty()) {
+                        appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                            .edit()
+                            .remove("ended_call_$callId")
+                            .apply()
+                    }
+                    // Duplicate FCM only (same callId within 2s while already ringing).
+                    val playingSame =
+                        activeRoomId == roomId &&
+                            (ringtonePlayer?.isPlaying == true) &&
+                            callId.isNotEmpty()
+                    if (playingSame) {
+                        android.util.Log.i(NAME, "CallStyle refresh (already ringing) room=$roomId")
+                    }
+                } else {
+                    if (callId.isEmpty() || suppressedCallId.isEmpty() || callId != suppressedCallId) {
+                        clearRingtoneSuppress()
+                    }
+                    if (isSuppressedForCall(roomId, callId)) {
+                        android.util.Log.i(NAME, "Skip CallStyle — same callId suppressed callId=$callId")
+                        return false
+                    }
+                    if (isMainActivityResumed()) {
+                        android.util.Log.i(NAME, "Skip CallStyle — MainActivity resumed room=$roomId")
+                        return false
+                    }
+                    if (inAppIncomingUi) {
+                        android.util.Log.i(NAME, "Skip CallStyle — in-app IncomingCall UI room=$roomId")
+                        return false
+                    }
+                    if (callId.isNotEmpty() && wasCallEndedRecently(appContext, roomId, callId)) {
+                        android.util.Log.i(NAME, "Skip display — same callId recently ended callId=$callId")
+                        return false
+                    }
                 }
 
-                // Always clear room-ended stamp so next call to same chat shows CallStyle.
                 if (roomId.isNotEmpty()) {
                     appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                         .edit()
                         .remove("ended_room_$roomId")
                         .apply()
-                }
-
-                // Only skip the exact same ended callId — never block a new ring.
-                if (callId.isNotEmpty() && wasCallEndedRecently(appContext, roomId, callId)) {
-                    android.util.Log.i(NAME, "Skip display — same callId recently ended callId=$callId")
-                    return false
                 }
 
                 // Same call already ringing — refresh notification only, don't restart audio.
@@ -629,9 +647,13 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     putString(EXTRA_PROFILE_IMAGE, profileImage)
                 }
 
+                // Unique request codes per callId so each invite gets fresh Accept/Decline intents.
+                val reqSeed =
+                    if (callId.isNotEmpty()) callId.hashCode() else roomId.hashCode()
+
                 val declinePi = PendingIntent.getBroadcast(
                     appContext,
-                    roomId.hashCode() + 1,
+                    reqSeed + 1,
                     Intent(appContext, IncomingCallActionReceiver::class.java).apply {
                         action = ACTION_DECLINE
                         putExtras(extras)
@@ -641,7 +663,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
                 val acceptPi = PendingIntent.getActivity(
                     appContext,
-                    roomId.hashCode() + 2,
+                    reqSeed + 2,
                     Intent(appContext, MainActivity::class.java).apply {
                         action = ACTION_ACCEPT
                         putExtras(extras)
@@ -655,11 +677,9 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
 
-                // Body tap → open IncomingCall screen (user asked: notification click → call UI).
-                // Still avoid lock-screen auto-show (no turnScreenOn). JS only opens if call active.
                 val openPi = PendingIntent.getActivity(
                     appContext,
-                    roomId.hashCode() + 3,
+                    reqSeed + 3,
                     Intent(appContext, MainActivity::class.java).apply {
                         action = ACTION_OPEN
                         putExtras(extras)
@@ -778,7 +798,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         fun cancelFromContext(context: Context, roomId: String, callId: String = "") {
             val appContext = context.applicationContext
             inAppIncomingUi = false
-            suppressRingtone(60_000L, roomId, callId)
+            suppressRingtone(5_000L, roomId, callId)
             stopRingtone(appContext)
             markCallEnded(appContext, roomId, callId)
             dismissShadeOnly(appContext, roomId)
@@ -807,7 +827,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         /** Accept/Reject — stop forever for this invite (block late FCM re-ring). */
         @JvmStatic
         fun stopAndSuppressRingtone(context: Context, roomId: String = "", callId: String = "") {
-            suppressRingtone(60_000L, roomId, callId)
+            suppressRingtone(5_000L, roomId, callId)
             stopRingtone(context)
             // Stamp callId only — never room stamp (that blocked the next invite for 60s).
             if (callId.isNotEmpty()) {

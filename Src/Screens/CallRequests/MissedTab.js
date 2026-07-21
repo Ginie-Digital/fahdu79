@@ -45,7 +45,7 @@ const MissedTab = ({ data = [], refreshControl, onLoadMore, loadingMore }) => {
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontFamily: 'Rubik-Medium', color: '#1e1e1e' }}>No missed calls</Text>
+            <Text style={{ fontFamily: 'Rubik-Medium', color: '#FFFFFF' }}>No missed calls</Text>
           </View>
         }
       />
@@ -58,7 +58,7 @@ export default MissedTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
   },
   list: {
     paddingHorizontal: 0,
@@ -70,11 +70,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
   },
   separator: {
     height: 1.5,
-    backgroundColor: '#E9E9E9',
+    backgroundColor: '#1E1E1E',
     marginHorizontal: 0,
   },
   leftContent: {
@@ -93,18 +93,18 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 16,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   detailsText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#1E1E1E',
+    color: 'rgba(235, 235, 245, 0.3)',
   },
   coinText: {
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#FF8080', // Red for missed
+    color: '#FFA86B',
     textTransform: 'uppercase',
   },
 });

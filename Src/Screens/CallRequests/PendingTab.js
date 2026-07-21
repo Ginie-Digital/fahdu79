@@ -30,7 +30,7 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
               </View>
               <View style={styles.scheduleRow}>
                 <Image source={TimeIcon} style={styles.infoIcon} />
-                <Text style={[styles.scheduleText, isInitiator && { fontFamily: 'Rubik-Medium', color: '#1E1E1E' }]}>{item.requestedDuration} mins</Text>
+                <Text style={[styles.scheduleText, isInitiator && { fontFamily: 'Rubik-Medium', color: '#FFFFFF' }]}>{item.requestedDuration} mins</Text>
                 <Image source={CoinIcon} style={[styles.infoIcon, { marginLeft: 12 }]} />
                 <Text style={styles.coinText}>{item.requestedCoins} Coins</Text>
               </View>
@@ -59,7 +59,7 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
                 showOverlay={false}
                 buttonMargin={0}
                 style={styles.denyButtonStyle}
-                textStyle={styles.buttonText}
+                textStyle={styles.denyButtonText}
                 disableAnimation={true}
               />
             </View>
@@ -71,7 +71,7 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
                 showOverlay={false}
                 buttonMargin={0}
                 style={styles.acceptButtonStyle}
-                textStyle={styles.buttonText}
+                textStyle={styles.acceptButtonText}
                 disableAnimation={true}
               />
             </View>
@@ -101,7 +101,7 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
         }
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontFamily: 'Rubik-Medium', color: '#1e1e1e' }}>No pending requests</Text>
+            <Text style={{ fontFamily: 'Rubik-Medium', color: '#FFFFFF' }}>No pending requests</Text>
           </View>
         }
       />
@@ -114,16 +114,16 @@ export default PendingTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
   },
   list: {
     padding: responsiveWidth(4),
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: '#191919',
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#292929',
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 24,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#292929',
     marginRight: 12,
   },
   details: {
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   scheduleRow: {
     flexDirection: 'row',
@@ -173,21 +173,22 @@ const styles = StyleSheet.create({
     height: 14,
     marginRight: 4,
     resizeMode: 'contain',
+    tintColor: '#FFFFFF',
   },
   scheduleText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   coinText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 12,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   requestTime: {
     fontFamily: 'Rubik-Medium',
     fontSize: 12,
-    color: '#1E1E1E61',
+    color: '#FFFFFF',
     textTransform: 'uppercase',
   },
   actions: {
@@ -210,8 +211,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#292929',
+    backgroundColor: '#121212',
     justifyContent: 'center',
   },
   redDot: {
@@ -220,41 +221,45 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#FF5353',
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#292929',
   },
   pendingText: {
     fontFamily: 'Rubik-Bold',
     fontSize: 12,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textTransform: 'capitalize',
-    // Removed lineHeight to prevent clipping
   },
   bottomRequestTime: {
     fontFamily: 'Rubik-Medium',
     fontSize: 12,
-    color: '#1E1E1E61',
+    color: '#FFFFFF',
     textTransform: 'uppercase',
   },
   buttonWrapper: {
     flex: 1,
   },
   denyButtonStyle: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#191919',
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#292929',
     height: 46,
     borderRadius: 14,
   },
   acceptButtonStyle: {
     backgroundColor: '#FFA86B',
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
     height: 46,
     borderRadius: 14,
   },
-  buttonText: {
+  denyButtonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 13,
-    color: '#000000',
+    color: '#FFFFFF',
+  },
+  acceptButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 13,
+    color: '#1E1E1E',
   },
 });

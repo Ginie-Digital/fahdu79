@@ -174,7 +174,7 @@ const LoginHome = () => {
             )}
           </View>
 
-          <Seprator isDark={isDark} />
+          <Seprator />
           <Pressable
             testID="login-button"
             accessibilityLabel="login-button"

@@ -385,7 +385,7 @@ const CallRequestsScreen = ({ route }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Back />
+          <Back color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Call Requests</Text>
         <View style={styles.backButton} />
@@ -422,9 +422,14 @@ const CallRequestsScreen = ({ route }) => {
               {tab.badge > 0 && (
                 <View style={[
                   styles.badge,
-                  activeTab !== tab.id && { backgroundColor: '#FFA86B' }
+                  activeTab === tab.id ? styles.activeBadge : styles.inactiveBadge
                 ]}>
-                  <Text style={styles.badgeText}>{tab.badge}</Text>
+                  <Text style={[
+                    styles.badgeText,
+                    activeTab === tab.id ? styles.activeBadgeText : styles.inactiveBadgeText
+                  ]}>
+                    {tab.badge}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -513,7 +518,7 @@ export default CallRequestsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
   },
   header: {
     flexDirection: 'row',
@@ -531,10 +536,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.2),
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   tabsWrapper: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
     paddingVertical: responsiveWidth(3),
   },
   tabsContainer: {
@@ -549,42 +554,53 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#292929',
+    backgroundColor: '#191919',
   },
   tabSpacing: {
     marginRight: 12,
   },
   activeTab: {
     backgroundColor: '#FFA86B',
+    borderColor: '#FF7819',
   },
   tabText: {
     fontFamily: 'Rubik-Medium',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   activeTabText: {
-    color: '#1e1e1e',
+    color: '#1E1E1E',
   },
   badge: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#1e1e1e',
-    minWidth: 20,
-    height: 20,
+    minWidth: 22,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 6,
     paddingHorizontal: 4,
   },
+  activeBadge: {
+    backgroundColor: '#121212',
+    borderWidth: 1.5,
+    borderColor: '#FF7819',
+  },
+  inactiveBadge: {
+    backgroundColor: '#FFA86B',
+  },
   badgeText: {
     fontFamily: 'Rubik-Medium',
-    fontSize: 11, // Slightly smaller for better fit
-    color: '#1e1e1e',
+    fontSize: 12,
     includeFontPadding: false,
     textAlign: 'center',
     textAlignVertical: 'center',
+  },
+  activeBadgeText: {
+    color: '#FFFFFF',
+  },
+  inactiveBadgeText: {
+    color: '#1E1E1E',
   },
   pagerView: {
     flex: 1,

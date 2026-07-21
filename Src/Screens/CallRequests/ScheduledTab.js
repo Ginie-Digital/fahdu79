@@ -71,8 +71,8 @@ const ScheduledTab = ({ data = [], onStartCall, refreshControl, currentUserId, a
               buttonMargin={0}
               style={styles.startButtonStyle}
               disabled={!isWithinWindow}
-              disabledStyle={{ backgroundColor: '#ffdcc4' }}
-              textStyle={!isWithinWindow ? { color: '#999999' } : {}}
+              disabledStyle={styles.disabledStartButton}
+              textStyle={!isWithinWindow ? { color: '#555555' } : styles.startButtonText}
             />
           </View>
         )}
@@ -100,7 +100,7 @@ const ScheduledTab = ({ data = [], onStartCall, refreshControl, currentUserId, a
         }
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontFamily: 'Rubik-Medium', color: '#1e1e1e' }}>No scheduled calls</Text>
+            <Text style={{ fontFamily: 'Rubik-Medium', color: '#FFFFFF' }}>No scheduled calls</Text>
           </View>
         }
       />
@@ -113,24 +113,25 @@ export default ScheduledTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0D0D0D',
   },
   list: {
     padding: responsiveWidth(4),
   },
   card: {
     height: 245,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#191919',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#292929',
     padding: 24,
     marginBottom: 12,
     justifyContent: 'space-between',
   },
   initiatorCard: {
     height: 196,
-    borderWidth: 2,
+    borderWidth: 1.5,
+    borderColor: '#292929',
   },
   topRow: {
     flexDirection: 'row',
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#292929',
     marginRight: 12,
   },
   details: {
@@ -161,21 +162,21 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   attemptText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   initiatorSubText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
     lineHeight: 12,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
   startingSoonBadge: {
-    backgroundColor: '#FFF3EB',
+    backgroundColor: '#FFA86B15',
     paddingHorizontal: 7.6,
     paddingTop: 4,
     paddingBottom: 5,
@@ -198,11 +199,12 @@ const styles = StyleSheet.create({
     height: 16,
     marginRight: 6,
     resizeMode: 'contain',
+    tintColor: '#FFFFFF',
   },
   timingText: {
     fontFamily: 'Rubik-Medium',
     fontSize: 14,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
     marginRight: 16,
   },
   timeIcon: {
@@ -210,15 +212,16 @@ const styles = StyleSheet.create({
     height: 14,
     marginRight: 4,
     resizeMode: 'contain',
+    tintColor: '#FFFFFF',
   },
   durationText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   divider: {
     height: 1,
-    backgroundColor: '#1E1E1E30',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   earningsRow: {
     flexDirection: 'row',
@@ -228,12 +231,12 @@ const styles = StyleSheet.create({
   earningsLabel: {
     fontFamily: 'Rubik-Medium',
     fontSize: 12,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   coinsValue: {
     fontFamily: 'Rubik-Bold',
     fontSize: 16,
-    color: '#1e1e1e',
+    color: '#FFFFFF',
   },
   buttonWrapper: {
     width: '100%',
@@ -241,8 +244,19 @@ const styles = StyleSheet.create({
   startButtonStyle: {
     backgroundColor: '#FFA86B',
     borderWidth: 1.5,
-    borderColor: '#1e1e1e',
+    borderColor: '#FF7819',
     height: 46,
     borderRadius: 14,
+  },
+  disabledStartButton: {
+    backgroundColor: '#1E1E1E',
+    borderWidth: 1.5,
+    borderColor: '#292929',
+    opacity: 0.6,
+  },
+  startButtonText: {
+    fontFamily: 'Rubik-SemiBold',
+    fontSize: 14,
+    color: '#1E1E1E',
   },
 });

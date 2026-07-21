@@ -81,7 +81,7 @@ export default DenyConfirmationModal;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -93,8 +93,8 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(5.33), // ~20px
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#1e1e1e',
-    backgroundColor: '#fff',
+    borderColor: '#292929',
+    backgroundColor: '#191919',
     width: responsiveWidth(88),
     paddingVertical: 32, 
     paddingHorizontal: 20,
@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     resizeMode: 'contain',
+    tintColor: '#FFFFFF',
   },
   content: {
     alignItems: 'center',
@@ -117,14 +118,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 22,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
     fontFamily: 'Rubik-Regular',
     fontSize: 14,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 24,
     paddingHorizontal: 10,
@@ -137,14 +138,14 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 48,
-    borderRadius: 14, // Requested Radius
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   denyButton: {
     backgroundColor: '#FFA86B',
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#FF7819',
   },
   denyText: {
     fontFamily: 'Rubik-SemiBold',
@@ -152,13 +153,13 @@ const styles = StyleSheet.create({
     color: '#1E1E1E',
   },
   keepButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#191919',
     borderWidth: 1.5,
-    borderColor: '#1E1E1E',
+    borderColor: '#292929',
   },
   keepText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 16,
-    color: '#1E1E1E',
+    color: '#FFFFFF',
   },
 });

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Audio } from 'expo-av';
 import RingtoneManager from './RingtoneManager';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, Platform, Linking, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -179,7 +179,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
       if (hasActedRef.current) return;
       markActed();
       console.log('🔄 [Polling] Call rejected/cancelled by caller, exiting...');
-      RingtoneManager.stopAll();
+      RingtoneManager.stopAndSuppress(roomId);
       if (callId) dispatch(clearProcessedRoomId(callId));
       invalidateIncomingCall({ roomId, callId, callType }, 'REJECTED');
       LoginPageErrors('Caller cancelled the call');
@@ -221,7 +221,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
       if (type === 'ACCEPTED') {
         console.log('📱 [IncomingCall] Accept intent from notification — stopping local UI/polling');
         markActed();
-        RingtoneManager.stopAll();
+        RingtoneManager.stopAndSuppress(roomId);
         if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
         if (safetyTimerRef.current) {
           clearTimeout(safetyTimerRef.current);
@@ -234,7 +234,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
       if (type === 'REJECTED') {
         console.log('📱 [IncomingCall] Reject intent from notification — dismissing');
         markActed();
-        RingtoneManager.stopAll();
+        RingtoneManager.stopAndSuppress(roomId);
         if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
         if (safetyTimerRef.current) {
           clearTimeout(safetyTimerRef.current);
@@ -276,16 +276,23 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
     const callRef = { roomId, callId };
     const pending = getPendingCallSync();
+    // Same session only — roomId is reused; don't dismiss next call after prior REJECTED.
     const samePendingCall =
-      pending?.roomId === roomId &&
-      (!callId || !pending.callId || pending.callId === callId);
+      pending?.roomId != null &&
+      String(pending.roomId) === String(roomId) &&
+      !!callId &&
+      !!pending.callId &&
+      String(pending.callId) === String(callId);
 
     const accepted =
       wasRecentlyAccepted(callRef) ||
       (samePendingCall && (pending.status === 'ACCEPTED' || pending.callAccepted));
     const rejected =
-      wasRecentlyRejected(callRef) ||
-      (samePendingCall && pending.status === 'REJECTED');
+      (callId && wasRecentlyRejected(callRef)) ||
+      (samePendingCall &&
+        (pending.status === 'REJECTED' ||
+          pending.status === 'ENDED' ||
+          pending.status === 'CANCELLED'));
 
     if (rejected) {
       markActed();
@@ -297,7 +304,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
     if (accepted) {
       // Notification/bootstrap already owns accept API + navigation — only stop local UI.
       markActed();
-      RingtoneManager.stopAll();
+      RingtoneManager.stopAndSuppress(roomId);
       if (pending?.apiDone) {
         return;
       }
@@ -327,41 +334,117 @@ const IncomingCallScreen = ({ route, navigation }) => {
     }
   }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
 
-  // BUG_11: while this in-app screen is open, never keep a shade/CallStyle duplicate.
+  // BUG_11: while IncomingCall is open in FG, drop shade (do NOT stopAll — that races FG ring).
   useEffect(() => {
     if (!roomId) return;
-    cancelIncomingCallNotification(roomId).catch(() => {});
+    cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
     try {
-      const { cancelAndroidCallStyleNotification } = require('../../Services/IncomingCallStyle');
-      cancelAndroidCallStyleNotification(roomId).catch(() => {});
+      const { setAndroidInAppIncomingUi } = require('../../Services/IncomingCallStyle');
+      setAndroidInAppIncomingUi(true);
     } catch (_) {}
+    return () => {
+      try {
+        const { setAndroidInAppIncomingUi } = require('../../Services/IncomingCallStyle');
+        setAndroidInAppIncomingUi(false);
+      } catch (_) {}
+    };
   }, [roomId]);
 
-  // ─── Incoming call ringtone (plays FIRST, before permission checks) ───
+  // ─── One ringtone at a time:
+  // FG → JS only. Background → native MediaPlayer only. Accept/Reject → stopAndSuppress.
   useEffect(() => {
     console.log('🔔 [IncomingCall] Setting up ringtone...');
     let isCancelled = false;
+    let handedOff = false;
+    let appStateTimer = null;
 
-    const playRingtone = async () => {
+    const playFgRingtone = async () => {
       try {
-        if (isCancelled || hasActedRef.current) {
-          console.log('🔔 [IncomingCall] Cancelled before playing');
+        if (isCancelled || hasActedRef.current) return;
+        if (wasRecentlyAccepted({ roomId, callId }) || wasRecentlyRejected({ roomId, callId })) {
+          RingtoneManager.stopAndSuppress(roomId);
           return;
         }
-
+        // active + inactive both count as in-app (shade pull is inactive).
+        if (AppState.currentState === 'background') return;
+        handedOff = false;
+        if (roomId) {
+          cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
+        }
         await RingtoneManager.playIncoming();
       } catch (error) {
         console.log('❌ Failed to play incoming call ringtone:', error);
       }
     };
 
-    playRingtone();
+    const startBackgroundRingtone = () => {
+      if (isCancelled || hasActedRef.current || !roomId) return;
+      if (wasRecentlyAccepted({ roomId, callId }) || wasRecentlyRejected({ roomId, callId })) {
+        RingtoneManager.stopAndSuppress(roomId);
+        return;
+      }
+      if (handedOff) return;
+      handedOff = true;
+
+      if (Platform.OS !== 'android') return;
+
+      console.log('🔔 [IncomingCall] Background → native ring NOW');
+      RingtoneManager.handOffToBackgroundRing({
+        roomId,
+        callId,
+        callType,
+        displayName: name,
+        name,
+        senderId: callerId,
+        callerId,
+        profileImage: profileImageUrl,
+        profileImageUrl,
+      });
+    };
+
+    const onAppState = next => {
+      if (isCancelled || hasActedRef.current) return;
+      if (wasRecentlyAccepted({ roomId, callId }) || wasRecentlyRejected({ roomId, callId })) {
+        RingtoneManager.stopAndSuppress(roomId);
+        return;
+      }
+      // Ignore inactive flicker; only react to active ↔ background.
+      if (next !== 'active' && next !== 'background') return;
+      if (appStateTimer) clearTimeout(appStateTimer);
+      appStateTimer = setTimeout(() => {
+        if (isCancelled || hasActedRef.current) return;
+        if (AppState.currentState === 'active' || AppState.currentState === 'inactive') {
+          playFgRingtone();
+        } else if (AppState.currentState === 'background') {
+          startBackgroundRingtone();
+        }
+      }, 300);
+    };
+
+    // Mount: ring in FG even if briefly inactive (notification shade).
+    if (AppState.currentState !== 'background') {
+      playFgRingtone();
+    } else {
+      startBackgroundRingtone();
+    }
+
+    const sub = AppState.addEventListener('change', onAppState);
 
     return () => {
       isCancelled = true;
-      RingtoneManager.stopAll();
+      if (appStateTimer) clearTimeout(appStateTimer);
+      sub.remove();
+      // Accept/Reject already suppressed. Soft-stop only if still ringing.
+      if (hasActedRef.current) {
+        RingtoneManager.stopAndSuppress(roomId);
+      } else if (handedOff) {
+        // Keep native BG ring alive after unmount.
+        RingtoneManager.stopJsOnly();
+      } else {
+        RingtoneManager.stopAll(roomId);
+      }
     };
-  }, []);
+  }, [roomId, callId, callType, name, callerId, profileImageUrl]);
 
   // ─── Initial Permissions Check ───
   // Delayed to avoid iOS system permission dialog stealing audio focus from the ringtone
@@ -400,10 +483,10 @@ const IncomingCallScreen = ({ route, navigation }) => {
     return () => clearTimeout(timer);
   }, [callType]);
 
-  // Helper to stop ringtone
+  // Helper to stop ringtone — Accept/Reject must suppress late re-ring.
   const stopRingtone = useCallback(() => {
-    RingtoneManager.stopAll();
-  }, []);
+    RingtoneManager.stopAndSuppress(roomId);
+  }, [roomId]);
 
   const finalizeIncomingCallAction = useCallback(async (status, reason) => {
     if (hasActedRef.current) return;
@@ -513,7 +596,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
       );
 
       if (!result?.success) {
-        if (navigation.canGoBack()) navigation.goBack();
+        // failCreatorGone already dismisses CallScreen/IncomingCall — do not goBack here
+        // (optimistic openActiveCallScreen may have already replaced this screen).
       }
     } catch (err) {
       console.error('❌ Accept API exception:', err);

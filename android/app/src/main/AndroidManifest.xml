@@ -42,6 +42,7 @@
       <intent-filter>
         <action android:name="com.fahdu.ACTION_CALL_DECLINE"/>
         <action android:name="com.fahdu.ACTION_CALL_ACCEPT"/>
+        <action android:name="com.fahdu.ACTION_CALL_OPEN"/>
       </intent-filter>
     </receiver>
     <!-- Kill/background: show Accept/Reject before JS boots. -->

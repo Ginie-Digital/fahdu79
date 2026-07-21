@@ -27,6 +27,7 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * WhatsApp-style Android CallStyle incoming-call notification
@@ -41,8 +42,11 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     companion object {
         const val NAME = "IncomingCallStyle"
         /** Bump when channel sound/attrs change — Android never updates existing channels. */
-        const val CHANNEL_ID = "fahdu_incoming_calls_v3"
-        const val NOTIFICATION_ID_BASE = 71001
+        /** v7: channel WITH call sound — Android system plays BG/kill ring reliably. */
+        // v10 = ringtone ON, vibration OFF (BG must ring, not just vibrate).
+        // v11 = CallStyle-only actions (no stacked Reject text button).
+        const val CHANNEL_ID = "fahdu_incoming_calls_v11"
+        const val NOTIFICATION_ID_BASE = 71011
         const val ACTION_ACCEPT = "com.fahdu.ACTION_CALL_ACCEPT"
         const val ACTION_DECLINE = "com.fahdu.ACTION_CALL_DECLINE"
         const val ACTION_OPEN = "com.fahdu.ACTION_CALL_OPEN"
@@ -56,11 +60,20 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         const val PREFS = "fahdu_incoming_call_style"
         const val PREF_PENDING_ACTION = "pending_call_action_json"
         private const val ENDED_TTL_CALL_MS = 5 * 60 * 1000L
-        /** Short room TTL — longer values blocked the next call to the same chat. */
-        private const val ENDED_TTL_ROOM_MS = 5 * 1000L
+        /**
+         * Room-level stamp is only for tiny duplicate-FCM window.
+         * Never block the next invite to the same chat (same roomId, new callId).
+         */
+        private const val ENDED_TTL_ROOM_MS = 3_000L
+        /** Hard cap — looping MediaPlayer must not ring forever in background. */
+        private const val RINGTONE_MAX_MS = 45_000L
 
         private val ringtoneExecutor = Executors.newSingleThreadExecutor()
         private val mainHandler = Handler(Looper.getMainLooper())
+        /** Invalidates in-flight prepare() so Accept cannot lose to a late start. */
+        private val ringtoneGeneration = AtomicInteger(0)
+        private val ringtoneLock = Any()
+        private var ringtoneAutoStop: Runnable? = null
 
         @Volatile
         private var reactAppContext: ReactApplicationContext? = null
@@ -80,11 +93,78 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         @Volatile
         private var obsoleteChannelsCleaned = false
 
+        /** True while JS IncomingCall screen owns UX — never start MediaPlayer. */
+        @Volatile
+        private var inAppIncomingUi = false
+
+        /** After Accept/Reject — block any late FCM/handoff from re-starting ring. */
+        @Volatile
+        private var ringtoneSuppressedUntilMs: Long = 0L
+        /** Call that Accept/Reject silenced — only this callId is blocked. */
+        private var suppressedCallId: String = ""
+        private var suppressedRoomId: String = ""
+
+        /** Rooms currently starting/playing — prevents FCM+JS double start. */
+        private val ringingRoomIds = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
+        @JvmStatic
+        fun setInAppIncomingUi(active: Boolean) {
+            inAppIncomingUi = active
+            if (active) {
+                // Kill any FCM-started MediaPlayer the moment in-app UI takes over.
+                stopRingtone(reactAppContext)
+            }
+        }
+
+        @JvmStatic
+        fun suppressRingtone(ms: Long = 60_000L, roomId: String = "", callId: String = "") {
+            ringtoneSuppressedUntilMs = System.currentTimeMillis() + ms
+            if (roomId.isNotEmpty()) suppressedRoomId = roomId
+            if (callId.isNotEmpty()) suppressedCallId = callId
+            android.util.Log.i(NAME, "Ringtone suppressed for ${ms}ms room=$roomId callId=$callId")
+        }
+
+        @JvmStatic
+        fun clearRingtoneSuppress() {
+            ringtoneSuppressedUntilMs = 0L
+            suppressedCallId = ""
+            suppressedRoomId = ""
+            android.util.Log.i(NAME, "Ringtone suppress cleared")
+        }
+
+        private fun isRingtoneSuppressed(): Boolean =
+            System.currentTimeMillis() < ringtoneSuppressedUntilMs
+
+        /** True when THIS invite was Accepted/Rejected — never re-ring the same callId. */
+        private fun isSuppressedForCall(roomId: String, callId: String): Boolean {
+            if (!isRingtoneSuppressed()) return false
+            // Only the exact same callId is blocked. Same room + new call → always allow.
+            if (callId.isNotEmpty() && suppressedCallId.isNotEmpty()) {
+                return callId == suppressedCallId
+            }
+            return false
+        }
+
         private fun ringtoneAudioAttributes(): AudioAttributes =
+            // RINGTONE usage → plays on ringer stream in BG/kill (CallStyle shade).
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
+
+        /** Prefer call.mp3; fall back to bundled IncomingCall wav. */
+        private fun ringtoneUri(context: Context): Uri {
+            val pkg = context.packageName
+            val callId = context.resources.getIdentifier("call", "raw", pkg)
+            if (callId != 0) {
+                return Uri.parse("android.resource://$pkg/$callId")
+            }
+            val wavId = context.resources.getIdentifier("assets_incomingcall", "raw", pkg)
+            if (wavId != 0) {
+                return Uri.parse("android.resource://$pkg/$wavId")
+            }
+            return Uri.parse("android.resource://$pkg/${R.raw.call}")
+        }
 
         private fun acquireRingtoneWakeLock(context: Context) {
             try {
@@ -99,7 +179,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     "fahdu:incoming_call_ringtone",
                 )
                 wl.setReferenceCounted(false)
-                wl.acquire(90_000L)
+                wl.acquire(RINGTONE_MAX_MS + 5_000L)
                 ringtoneWakeLock = wl
             } catch (e: Exception) {
                 android.util.Log.w(NAME, "wakeLock failed: ${e.message}")
@@ -114,11 +194,49 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             ringtoneWakeLock = null
         }
 
-        fun startRingtone(context: Context) {
+        private fun cancelRingtoneAutoStop() {
+            ringtoneAutoStop?.let { mainHandler.removeCallbacks(it) }
+            ringtoneAutoStop = null
+        }
+
+        private fun scheduleRingtoneAutoStop(context: Context, gen: Int) {
+            cancelRingtoneAutoStop()
             val appContext = context.applicationContext
-            // Never block notification display / FCM receiver on MediaPlayer.prepare().
-            ringtoneExecutor.execute {
-                stopRingtoneSync(appContext)
+            val stop = Runnable {
+                if (ringtoneGeneration.get() != gen) return@Runnable
+                android.util.Log.i(NAME, "Auto-stopping ringtone after ${RINGTONE_MAX_MS}ms")
+                stopRingtone(appContext)
+            }
+            ringtoneAutoStop = stop
+            mainHandler.postDelayed(stop, RINGTONE_MAX_MS)
+        }
+
+        fun startRingtone(context: Context, ignoreInAppUi: Boolean = false) {
+            // In-app IncomingCall owns FG audio — unless BG handoff forces native ring.
+            if (inAppIncomingUi && !ignoreInAppUi) {
+                android.util.Log.i(NAME, "startRingtone skipped — in-app IncomingCall UI active")
+                return
+            }
+            if (isRingtoneSuppressed()) {
+                android.util.Log.i(NAME, "startRingtone skipped — suppressed after Accept/Reject")
+                return
+            }
+            if (ignoreInAppUi) {
+                inAppIncomingUi = false
+            }
+            val appContext = context.applicationContext
+            val gen = ringtoneGeneration.incrementAndGet()
+            cancelRingtoneAutoStop()
+
+            val runStart = Runnable {
+                synchronized(ringtoneLock) {
+                    stopRingtoneSync(appContext)
+                }
+                if (ringtoneGeneration.get() != gen) {
+                    android.util.Log.i(NAME, "startRingtone aborted — generation stale before prepare")
+                    return@Runnable
+                }
+                var player: MediaPlayer? = null
                 try {
                     acquireRingtoneWakeLock(appContext)
 
@@ -139,27 +257,73 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                         )
                     }
 
-                    val player = MediaPlayer()
+                    val uri = ringtoneUri(appContext)
+                    android.util.Log.i(NAME, "startRingtone prepare uri=$uri gen=$gen sync=$ignoreInAppUi")
+                    player = MediaPlayer()
                     player.setAudioAttributes(ringtoneAudioAttributes())
                     player.setWakeMode(appContext, PowerManager.PARTIAL_WAKE_LOCK)
-                    player.setDataSource(
-                        appContext,
-                        Uri.parse("android.resource://${appContext.packageName}/${R.raw.call}"),
-                    )
+                    player.setDataSource(appContext, uri)
                     player.isLooping = true
+                    player.setVolume(1f, 1f)
                     player.prepare()
-                    player.start()
-                    ringtonePlayer = player
+
+                    synchronized(ringtoneLock) {
+                        if (ringtoneGeneration.get() != gen) {
+                            android.util.Log.i(NAME, "startRingtone aborted — stopped during prepare")
+                            try {
+                                player.release()
+                            } catch (_: Exception) {
+                            }
+                            releaseRingtoneWakeLock()
+                            return@Runnable
+                        }
+                        player.start()
+                        if (ringtoneGeneration.get() != gen) {
+                            android.util.Log.i(NAME, "startRingtone aborted — stopped right after start")
+                            try {
+                                if (player.isPlaying) player.stop()
+                            } catch (_: Exception) {
+                            }
+                            try {
+                                player.release()
+                            } catch (_: Exception) {
+                            }
+                            releaseRingtoneWakeLock()
+                            return@Runnable
+                        }
+                        ringtonePlayer = player
+                        android.util.Log.i(NAME, "startRingtone PLAYING gen=$gen")
+                    }
+                    scheduleRingtoneAutoStop(appContext, gen)
                 } catch (e: Exception) {
-                    android.util.Log.w(NAME, "startRingtone failed: ${e.message}")
-                    stopRingtoneSync(appContext)
+                    android.util.Log.e(NAME, "startRingtone failed: ${e.message}", e)
+                    try {
+                        player?.release()
+                    } catch (_: Exception) {
+                    }
+                    synchronized(ringtoneLock) {
+                        stopRingtoneSync(appContext)
+                    }
                 }
+            }
+
+            // BG/kill/Home: start INLINE so audio begins before FCM/JS returns.
+            // Async executor was losing the race — process restricted before prepare().
+            if (ignoreInAppUi) {
+                runStart.run()
+            } else {
+                ringtoneExecutor.execute(runStart)
             }
         }
 
         fun stopRingtone(context: Context? = null) {
+            // Invalidate any in-flight prepare/start so it cannot resume after Accept.
+            ringtoneGeneration.incrementAndGet()
+            cancelRingtoneAutoStop()
+            ringingRoomIds.clear()
             val appContext = context?.applicationContext ?: reactAppContext
-            ringtoneExecutor.execute {
+            // IMMEDIATE sync kill — do not wait for executor (Accept must silence NOW).
+            synchronized(ringtoneLock) {
                 stopRingtoneSync(appContext)
             }
         }
@@ -198,20 +362,49 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         }
 
         fun emitAction(action: String, extras: Bundle?) {
-            val ctx = reactAppContext ?: return
-            if (!ctx.hasActiveReactInstance()) return
-            try {
-                val map = Arguments.createMap()
-                map.putString("action", action)
-                extras?.keySet()?.forEach { key ->
-                    val value = extras.get(key)
-                    if (value is String) map.putString(key, value)
+            val emitOnce = {
+                val ctx = reactAppContext
+                if (ctx == null || !ctx.hasActiveReactInstance()) {
+                    false
+                } else {
+                    try {
+                        val map = Arguments.createMap()
+                        map.putString("action", action)
+                        extras?.keySet()?.forEach { key ->
+                            val value = extras.get(key)
+                            when (value) {
+                                is String -> map.putString(key, value)
+                                is Int -> map.putString(key, value.toString())
+                                is Long -> map.putString(key, value.toString())
+                                is Boolean -> map.putString(key, value.toString())
+                                else -> if (value != null) map.putString(key, value.toString())
+                            }
+                        }
+                        ctx
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                            .emit("IncomingCallStyleAction", map)
+                        android.util.Log.i(NAME, "emitAction ok action=$action room=${extras?.getString(EXTRA_ROOM_ID)}")
+                        true
+                    } catch (e: Exception) {
+                        android.util.Log.e(NAME, "emitAction failed: ${e.message}", e)
+                        false
+                    }
                 }
-                ctx
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                    .emit("IncomingCallStyleAction", map)
-            } catch (_: Exception) {
             }
+
+            if (emitOnce()) return
+
+            // React not ready yet (BG→FG tap) — retry a few times; pending JSON is also saved.
+            android.util.Log.w(NAME, "emitAction deferred — React not ready, will retry")
+            var tries = 0
+            val retry = object : Runnable {
+                override fun run() {
+                    tries += 1
+                    if (emitOnce() || tries >= 20) return
+                    mainHandler.postDelayed(this, 250)
+                }
+            }
+            mainHandler.postDelayed(retry, 250)
         }
 
         fun savePendingAction(context: Context, action: String, extras: Bundle?) {
@@ -236,11 +429,9 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val now = System.currentTimeMillis()
             val edit = prefs.edit().remove(PREF_PENDING_ACTION)
+            // Stamp callId only — room stamp blocked the NEXT call to same chat.
             if (callId.isNotEmpty()) {
                 edit.putLong("ended_call_$callId", now)
-            }
-            if (roomId.isNotEmpty()) {
-                edit.putLong("ended_room_$roomId", now)
             }
             edit.apply()
             if (activeRoomId == roomId) activeRoomId = null
@@ -249,14 +440,10 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         fun wasCallEndedRecently(context: Context, roomId: String, callId: String = ""): Boolean {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val now = System.currentTimeMillis()
-            // Prefer callId: room stamps must not block a new invite to the same room.
+            // Only callId blocks — room stamps must never hide the next CallStyle invite.
             if (callId.isNotEmpty()) {
                 val t = prefs.getLong("ended_call_$callId", 0L)
                 return t > 0 && now - t < ENDED_TTL_CALL_MS
-            }
-            if (roomId.isNotEmpty()) {
-                val t = prefs.getLong("ended_room_$roomId", 0L)
-                if (t > 0 && now - t < ENDED_TTL_ROOM_MS) return true
             }
             return false
         }
@@ -268,6 +455,14 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             if (!obsoleteChannelsCleaned) {
                 obsoleteChannelsCleaned = true
                 try {
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v10")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v9")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v8")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v7")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v6")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v5")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v4")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v3")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v2")
                     nm.deleteNotificationChannel("incoming_calls")
                 } catch (_: Exception) {
@@ -276,40 +471,58 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
             if (nm.getNotificationChannel(CHANNEL_ID) != null) return
 
+            val soundUri = ringtoneUri(context)
+            val attrs = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Incoming Calls",
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Incoming voice and video calls"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 300, 200, 300, 200, 300)
+                // Ringtone only — no vibration (user request).
+                enableVibration(false)
+                vibrationPattern = null
                 setBypassDnd(true)
                 enableLights(true)
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                val soundUri = Uri.parse("android.resource://${context.packageName}/${R.raw.call}")
-                setSound(soundUri, ringtoneAudioAttributes())
+                // BG/kill: system plays ringtone with Accept/Reject shade.
+                setSound(soundUri, attrs)
             }
             nm.createNotificationChannel(channel)
         }
 
+        /** True while MainActivity is resumed (user visibly using the app). */
+        @Volatile
+        private var mainActivityResumed = false
+
+        @JvmStatic
+        fun setMainActivityResumed(resumed: Boolean) {
+            mainActivityResumed = resumed
+            android.util.Log.i(NAME, "mainActivityResumed=$resumed")
+            // Do NOT set inAppIncomingUi=true on resume — that blocked native ring
+            // whenever the app was open (vibrate-only bug). JS IncomingCall /
+            // RingtoneManager owns that flag.
+            if (!resumed) {
+                // User left the app — allow native CallStyle + ringtone for BG invites.
+                inAppIncomingUi = false
+            }
+        }
+
+        @JvmStatic
+        fun isMainActivityResumed(): Boolean = mainActivityResumed
+
         /**
-         * True when our MainActivity is visibly in the foreground.
-         * Used to skip CallStyle while the in-app IncomingCall screen owns the UX.
+         * True only when MainActivity is resumed (user can see the app).
+         * Never use process importance — FCM / BroadcastReceiver wake a killed
+         * process as IMPORTANCE_FOREGROUND even with no Activity on screen.
          */
         @JvmStatic
         fun isAppInForeground(context: Context): Boolean {
-            return try {
-                val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-                val processes = am.runningAppProcesses ?: return false
-                val pkg = context.packageName
-                processes.any {
-                    it.processName == pkg &&
-                        it.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-                }
-            } catch (_: Exception) {
-                false
-            }
+            return mainActivityResumed
         }
 
         /**
@@ -325,28 +538,50 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             displayName: String = "Incoming Call",
             senderId: String = "",
             profileImage: String = "",
+            force: Boolean = false,
+            /** Default TRUE for kill/BG FCM — MediaPlayer is the BG ringtone. */
+            playRingtone: Boolean = true,
         ): Boolean {
             if (roomId.isEmpty()) return false
             val appContext = context.applicationContext
 
             try {
-                // BUG_11: app already open → JS IncomingCall screen handles Accept/Decline.
-                // Do not also post CallStyle shade over the in-app UI.
-                if (isAppInForeground(appContext)) {
-                    android.util.Log.i(NAME, "Skip CallStyle — app foreground room=$roomId")
+                // New invite must ALWAYS show this CallStyle (Decline + Answer).
+                // Only the exact same rejected/accepted callId stays blocked.
+                if (callId.isEmpty() || suppressedCallId.isEmpty() || callId != suppressedCallId) {
+                    clearRingtoneSuppress()
+                }
+                if (isSuppressedForCall(roomId, callId)) {
+                    android.util.Log.i(NAME, "Skip CallStyle — same callId suppressed room=$roomId callId=$callId")
                     return false
                 }
 
-                // New callId → clear room-ended stamp BEFORE the skip check,
-                // otherwise a prior cancel blocks the next call for ENDED_TTL_ROOM_MS.
-                if (callId.isNotEmpty()) {
+                // User is actively in MainActivity — never post CallStyle (vibrate-only bug).
+                if (!force && isMainActivityResumed()) {
+                    android.util.Log.i(NAME, "Skip CallStyle — MainActivity resumed room=$roomId")
+                    return false
+                }
+
+                // Only skip when JS IncomingCall is actually owning FG UX.
+                if (!force && inAppIncomingUi) {
+                    android.util.Log.i(NAME, "Skip CallStyle — in-app IncomingCall UI room=$roomId")
+                    return false
+                }
+                // Stale inAppIncomingUi while process is backgrounded — clear and continue.
+                if (inAppIncomingUi && !isAppInForeground(appContext)) {
+                    android.util.Log.i(NAME, "Clear stale inAppIncomingUi — app not foreground")
+                    inAppIncomingUi = false
+                }
+
+                // Always clear room-ended stamp so next call to same chat shows CallStyle.
+                if (roomId.isNotEmpty()) {
                     appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                         .edit()
                         .remove("ended_room_$roomId")
                         .apply()
                 }
 
-                // Only skip the exact same ended callId — never block a new ring when killed.
+                // Only skip the exact same ended callId — never block a new ring.
                 if (callId.isNotEmpty() && wasCallEndedRecently(appContext, roomId, callId)) {
                     android.util.Log.i(NAME, "Skip display — same callId recently ended callId=$callId")
                     return false
@@ -420,13 +655,15 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
 
+                // Body tap → open IncomingCall screen (user asked: notification click → call UI).
+                // Still avoid lock-screen auto-show (no turnScreenOn). JS only opens if call active.
                 val openPi = PendingIntent.getActivity(
                     appContext,
                     roomId.hashCode() + 3,
                     Intent(appContext, MainActivity::class.java).apply {
                         action = ACTION_OPEN
                         putExtras(extras)
-                        putExtra(EXTRA_ACTION, "default")
+                        putExtra(EXTRA_ACTION, "open_incoming_call")
                         addFlags(
                             Intent.FLAG_ACTIVITY_NEW_TASK or
                                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
@@ -441,8 +678,9 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     .setImportant(true)
                     .build()
 
+                val isVideo = callType.equals("video", ignoreCase = true)
                 val callTypeLabel =
-                    if (callType == "video") "Incoming video call" else "Incoming voice call"
+                    if (isVideo) "Incoming video call" else "Incoming voice call"
                 val notifId = notificationIdFor(roomId)
 
                 val builder = NotificationCompat.Builder(appContext, CHANNEL_ID)
@@ -455,50 +693,80 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     .setOngoing(true)
                     .setAutoCancel(false)
                     .setContentIntent(openPi)
+                    // Locked / killed: full-screen IncomingCall (same Accept/Reject flow).
+                    .setFullScreenIntent(openPi, true)
                     .setColor(0xFF10B981.toInt())
                     .addPerson(caller)
-                    .setSound(
-                        Uri.parse("android.resource://${appContext.packageName}/${R.raw.call}"),
-                        AudioManager.STREAM_RING,
-                    )
-                    // Post immediately — do not wait for large icon download / JS.
+                    .setVibrate(longArrayOf(0L))
+                    // BG ring: channel sound on. Shade-only (playRingtone=false) stays silent.
+                    .setSilent(!playRingtone)
                     .setOnlyAlertOnce(alreadyRinging)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    // WhatsApp-like CallStyle (circular). Some OEMs demote CallStyle
-                    // without Telecom — always add classic actions as a fallback too.
-                    builder.setStyle(
-                        NotificationCompat.CallStyle.forIncomingCall(caller, declinePi, acceptPi),
-                    )
+                    // WhatsApp-like: ONLY circular Decline + Answer.
+                    // Never addAction() here — that adds the extra "Reject" text chip.
+                    val style = NotificationCompat.CallStyle
+                        .forIncomingCall(caller, declinePi, acceptPi)
+                        .setIsVideo(isVideo)
+                    builder.setStyle(style)
+                } else {
+                    // Pre-12: exactly two actions (no CallStyle API).
+                    builder
+                        .addAction(
+                            NotificationCompat.Action.Builder(
+                                IconCompat.createWithResource(appContext, R.drawable.ic_call_reject),
+                                "Decline",
+                                declinePi,
+                            ).build(),
+                        )
+                        .addAction(
+                            NotificationCompat.Action.Builder(
+                                IconCompat.createWithResource(appContext, R.drawable.ic_call_accept),
+                                "Answer",
+                                acceptPi,
+                            ).build(),
+                        )
                 }
-                // Always attach Accept/Reject actions so buttons remain visible even
-                // when CallStyle is demoted to a plain heads-up notification.
-                builder
-                    .addAction(
-                        NotificationCompat.Action.Builder(
-                            IconCompat.createWithResource(appContext, R.drawable.ic_call_reject),
-                            "Reject",
-                            declinePi,
-                        ).build(),
-                    )
-                    .addAction(
-                        NotificationCompat.Action.Builder(
-                            IconCompat.createWithResource(appContext, R.drawable.ic_call_accept),
-                            "Accept",
-                            acceptPi,
-                        ).build(),
-                    )
 
-                // MUST notify on the current thread. mainHandler.post + FCM
-                // goAsync().finish() races and drops Accept/Reject when killed.
                 val nm =
                     appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                // Drop any prior post (old build had Reject text action) so OEMs
+                // do not keep a stale 3-button CallStyle chip.
+                try {
+                    nm.cancel(notifId)
+                    // Legacy v10 id so old 3-button posts are cleared.
+                    nm.cancel(71001 + (roomId.hashCode() and 0x0FFF))
+                } catch (_: Exception) {
+                }
                 nm.notify(notifId, builder.build())
                 activeRoomId = roomId
-                if (!alreadyRinging) {
-                    startRingtone(appContext)
+
+                // BG/kill MUST ring: channel sound (once) + looping MediaPlayer.
+                if (playRingtone) {
+                    inAppIncomingUi = false
+                    clearRingtoneSuppress()
+                    val playing = try {
+                        ringtonePlayer?.isPlaying == true
+                    } catch (_: Exception) {
+                        false
+                    }
+                    if (!playing) {
+                        ringingRoomIds.add(roomId)
+                        startRingtone(appContext, ignoreInAppUi = true)
+                        android.util.Log.i(
+                            NAME,
+                            "BG ringtone STARTED room=$roomId video=$isVideo",
+                        )
+                    } else {
+                        android.util.Log.i(NAME, "BG ringtone already playing room=$roomId")
+                    }
+                } else {
+                    android.util.Log.i(NAME, "CallStyle shade only playRingtone=false")
                 }
-                android.util.Log.i(NAME, "Posted CallStyle Accept/Reject id=$notifId room=$roomId")
+                android.util.Log.i(
+                    NAME,
+                    "Posted CallStyle id=$notifId room=$roomId video=$isVideo playRingtone=$playRingtone",
+                )
                 return true
             } catch (e: Exception) {
                 android.util.Log.e(NAME, "displayFromContext failed: ${e.message}", e)
@@ -509,9 +777,12 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         @JvmStatic
         fun cancelFromContext(context: Context, roomId: String, callId: String = "") {
             val appContext = context.applicationContext
+            inAppIncomingUi = false
+            suppressRingtone(60_000L, roomId, callId)
             stopRingtone(appContext)
             markCallEnded(appContext, roomId, callId)
             dismissShadeOnly(appContext, roomId)
+            stopRingtone(appContext)
         }
 
         /** Remove CallStyle shade only — keep ringtone / do not stamp ended. */
@@ -523,6 +794,35 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                 appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.cancel(notificationIdFor(roomId))
             if (activeRoomId == roomId) activeRoomId = null
+        }
+
+        /** Stop ringtone + dismiss shade without stamping ENDED (next ring can still show). */
+        @JvmStatic
+        fun stopRingtoneAndDismiss(context: Context, roomId: String) {
+            // Do NOT suppress here — FG IncomingCall uses this then may hand off to BG ring.
+            stopRingtone(context)
+            dismissShadeOnly(context, roomId)
+        }
+
+        /** Accept/Reject — stop forever for this invite (block late FCM re-ring). */
+        @JvmStatic
+        fun stopAndSuppressRingtone(context: Context, roomId: String = "", callId: String = "") {
+            suppressRingtone(60_000L, roomId, callId)
+            stopRingtone(context)
+            // Stamp callId only — never room stamp (that blocked the next invite for 60s).
+            if (callId.isNotEmpty()) {
+                try {
+                    context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                        .edit()
+                        .putLong("ended_call_$callId", System.currentTimeMillis())
+                        .apply()
+                } catch (_: Exception) {
+                }
+            }
+            if (roomId.isNotEmpty()) {
+                dismissShadeOnly(context, roomId)
+            }
+            stopRingtone(context)
         }
     }
 
@@ -548,6 +848,27 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     }
 
     @ReactMethod
+    fun setInAppIncomingUi(active: Boolean, promise: Promise) {
+        try {
+            Companion.setInAppIncomingUi(active)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("SET_INAPP_FAILED", e.message, e)
+        }
+    }
+
+    /** Sync — safe while Activity is pausing on Home (async bridge can drop). */
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun setInAppIncomingUiSync(active: Boolean): Boolean {
+        return try {
+            Companion.setInAppIncomingUi(active)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    @ReactMethod
     fun displayIncomingCall(details: ReadableMap, promise: Promise) {
         try {
             val roomId = details.getString("roomId") ?: ""
@@ -570,10 +891,52 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                 profileImage = details.getString("profileImage")
                     ?: details.getString("profileImageUrl")
                     ?: "",
+                force = details.hasKey("force") && details.getBoolean("force"),
+                // Default true when key missing — BG/kill must ring.
+                playRingtone = !details.hasKey("playRingtone") || details.getBoolean("playRingtone"),
             )
             if (ok) promise.resolve(true) else promise.reject("DISPLAY_FAILED", "notify failed")
         } catch (e: Exception) {
             promise.reject("DISPLAY_FAILED", e.message, e)
+        }
+    }
+
+    /**
+     * Sync Home/BG handoff: start MediaPlayer + CallStyle WITH channel sound.
+     * BG ring must be audible immediately.
+     */
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun handoffBackgroundRingSync(details: ReadableMap): Boolean {
+        return try {
+            if (isRingtoneSuppressed()) {
+                android.util.Log.i(NAME, "handoff skipped — ringtone suppressed")
+                return false
+            }
+            val roomId = details.getString("roomId") ?: ""
+            if (roomId.isEmpty()) return false
+            // Sync Home/BG handoff: ONE MediaPlayer ring (channel is silent).
+            Companion.setInAppIncomingUi(false)
+            // Force + playRingtone: MediaPlayer only (no channel double-ring).
+            displayFromContext(
+                reactContext,
+                roomId = roomId,
+                callId = details.getString("callId") ?: "",
+                callType = details.getString("callType") ?: "audio",
+                displayName = details.getString("displayName")
+                    ?: details.getString("name")
+                    ?: "Incoming Call",
+                senderId = details.getString("senderId")
+                    ?: details.getString("callerId")
+                    ?: "",
+                profileImage = details.getString("profileImage")
+                    ?: details.getString("profileImageUrl")
+                    ?: "",
+                force = true,
+                playRingtone = true,
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(NAME, "handoffBackgroundRingSync failed: ${e.message}", e)
+            false
         }
     }
 
@@ -598,12 +961,68 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     }
 
     @ReactMethod
+    fun stopRingtoneAndDismissJs(roomId: String, promise: Promise) {
+        try {
+            Companion.stopRingtoneAndDismiss(reactContext, roomId)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("STOP_DISMISS_FAILED", e.message, e)
+        }
+    }
+
+    /** Accept/Reject — stop + suppress late re-ring. */
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun stopAndSuppressRingtoneSync(roomId: String): Boolean {
+        return try {
+            Companion.stopAndSuppressRingtone(reactContext, roomId)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    @ReactMethod
     fun stopRingtoneJs(promise: Promise) {
         try {
             stopRingtone(reactContext)
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("STOP_RING_FAILED", e.message, e)
+        }
+    }
+
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun stopRingtoneSyncJs(): Boolean {
+        return try {
+            stopRingtone(reactContext)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** Start native BG ringtone (Home handoff / kill). */
+    @ReactMethod
+    fun startRingtoneJs(promise: Promise) {
+        try {
+            Companion.setInAppIncomingUi(false)
+            startRingtone(reactContext, ignoreInAppUi = true)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("START_RING_FAILED", e.message, e)
+        }
+    }
+
+    /** Sync start — must run before Activity pause drops async bridge calls. */
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun startRingtoneSync(): Boolean {
+        return try {
+            Companion.setInAppIncomingUi(false)
+            startRingtone(reactContext, ignoreInAppUi = true)
+            true
+        } catch (e: Exception) {
+            android.util.Log.e(NAME, "startRingtoneSync failed: ${e.message}", e)
+            false
         }
     }
 

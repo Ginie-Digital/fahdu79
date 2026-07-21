@@ -1,84 +1,231 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import { NativeModules, Platform } from 'react-native';
+import { AppState, NativeModules, Platform } from 'react-native';
 
 let activePlayer = null;
+let playGeneration = 0;
+/** After Accept/Reject, block any late playIncoming until cleared. */
+let incomingSuppressedUntil = 0;
 
-function stopNativeAndroidRingtone() {
-  if (Platform.OS !== 'android') return;
+const Native = () =>
+  Platform.OS === 'android' ? NativeModules.IncomingCallStyle : null;
+
+function setInAppIncomingUi(active) {
+  const mod = Native();
+  if (!mod) return;
   try {
-    NativeModules.IncomingCallStyle?.stopRingtoneJs?.();
+    if (typeof mod.setInAppIncomingUiSync === 'function') {
+      mod.setInAppIncomingUiSync(!!active);
+    } else {
+      mod.setInAppIncomingUi?.(!!active);
+    }
   } catch (_) {}
 }
 
+function stopNativeAndroidRingtone() {
+  const mod = Native();
+  if (!mod) return;
+  try {
+    if (typeof mod.stopRingtoneSyncJs === 'function') {
+      mod.stopRingtoneSyncJs();
+    } else {
+      mod.stopRingtoneJs?.();
+    }
+  } catch (_) {}
+}
+
+function stopAndSuppressNativeAndroidRingtone(roomId) {
+  const mod = Native();
+  if (!mod) return;
+  try {
+    if (typeof mod.stopAndSuppressRingtoneSync === 'function') {
+      mod.stopAndSuppressRingtoneSync(String(roomId || ''));
+      return;
+    }
+  } catch (_) {}
+  stopNativeAndroidRingtone();
+}
+
+function killJsPlayer() {
+  if (activePlayer) {
+    try {
+      activePlayer.pause?.();
+      activePlayer.release();
+    } catch (_) {
+    } finally {
+      activePlayer = null;
+    }
+  }
+}
+
 const RingtoneManager = {
-  /**
-   * Play the incoming call ringtone (JS). Stops any native Android loop first.
-   */
+  /** Foreground IncomingCall — JS only (never native). */
   async playIncoming() {
-    try {
-      this.stopAll();
-      console.log('🔔 [RingtoneManager] Configuring audio mode for incoming call...');
-      await setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: false,
-        shouldPlayInBackground: true,
-        interruptionMode: 'doNotMix',
-        interruptionModeAndroid: 'doNotMix',
-      });
-
-      console.log('🔔 [RingtoneManager] Loading incoming call ringtone...');
-      const source = require('../../../Assets/IncomingCall.wav');
-      activePlayer = createAudioPlayer(source);
-      activePlayer.loop = true;
-      activePlayer.play();
-      console.log('🔔 [RingtoneManager] Playing incoming call ringtone');
-    } catch (err) {
-      console.log('❌ [RingtoneManager] Failed to play incoming call ringtone:', err?.message);
+    if (Date.now() < incomingSuppressedUntil) {
+      console.log('🔔 [RingtoneManager] skip playIncoming — suppressed after Accept/Reject');
+      return;
     }
-  },
 
-  /**
-   * Play the outgoing call ringtone.
-   */
-  async playOutgoing() {
+    const gen = ++playGeneration;
     try {
-      this.stopAll();
-      console.log('🔔 [RingtoneManager] Configuring audio mode for outgoing call...');
-      await setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: false,
-        shouldPlayInBackground: true,
-        interruptionMode: 'doNotMix',
-        interruptionModeAndroid: 'doNotMix',
-      });
+      this.stopJsOnly();
+      stopNativeAndroidRingtone();
+      setInAppIncomingUi(true);
+      playGeneration = gen;
 
-      console.log('🔔 [RingtoneManager] Loading outgoing call ringtone...');
-      const source = require('../../Assets/Audio/ringfahdu.wav');
-      activePlayer = createAudioPlayer(source);
-      activePlayer.loop = true;
-      activePlayer.play();
-      console.log('🔔 [RingtoneManager] Playing outgoing call ringtone');
-    } catch (err) {
-      console.log('❌ [RingtoneManager] Failed to play outgoing call ringtone:', err?.message);
-    }
-  },
-
-  /**
-   * Stop JS player + native Android CallStyle ringtone loop.
-   */
-  stopAll() {
-    stopNativeAndroidRingtone();
-    if (activePlayer) {
-      try {
-        console.log('🔇 [RingtoneManager] Stopping and releasing active player...');
-        activePlayer.release();
-        console.log('🔇 [RingtoneManager] Active player released successfully');
-      } catch (err) {
-        console.log('⚠️ [RingtoneManager] Error releasing player:', err?.message);
-      } finally {
-        activePlayer = null;
+      // active + inactive (notification shade / brief transition) — both FG.
+      // Only skip when truly backgrounded (native handoff owns that path).
+      const canPlayJs =
+        AppState.currentState === 'active' || AppState.currentState === 'inactive';
+      if (!canPlayJs) {
+        setInAppIncomingUi(false);
+        console.log('🔔 [RingtoneManager] skip playIncoming — AppState=', AppState.currentState);
+        return;
       }
+
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        shouldPlayInBackground: false,
+        interruptionMode: 'doNotMix',
+        interruptionModeAndroid: 'doNotMix',
+      });
+
+      if (gen !== playGeneration || Date.now() < incomingSuppressedUntil) {
+        return;
+      }
+      if (AppState.currentState === 'background') {
+        setInAppIncomingUi(false);
+        return;
+      }
+
+      const source = require('../../../Assets/IncomingCall.wav');
+      const player = createAudioPlayer(source);
+      player.loop = true;
+      if (gen !== playGeneration || Date.now() < incomingSuppressedUntil) {
+        try {
+          player.release();
+        } catch (_) {}
+        return;
+      }
+      if (AppState.currentState === 'background') {
+        try {
+          player.release();
+        } catch (_) {}
+        setInAppIncomingUi(false);
+        return;
+      }
+      activePlayer = player;
+      activePlayer.play();
+      console.log('🔔 [RingtoneManager] FG ringtone playing (single)');
+    } catch (err) {
+      console.log('❌ [RingtoneManager] playIncoming failed:', err?.message);
     }
+  },
+
+  async playOutgoing() {
+    const gen = ++playGeneration;
+    try {
+      this.stopAll();
+      playGeneration = gen;
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+        shouldPlayInBackground: true,
+        interruptionMode: 'doNotMix',
+        interruptionModeAndroid: 'doNotMix',
+      });
+      if (gen !== playGeneration) return;
+      const source = require('../../Assets/Audio/ringfahdu.wav');
+      const player = createAudioPlayer(source);
+      player.loop = true;
+      if (gen !== playGeneration) {
+        try {
+          player.release();
+        } catch (_) {}
+        return;
+      }
+      activePlayer = player;
+      activePlayer.play();
+    } catch (err) {
+      console.log('❌ [RingtoneManager] playOutgoing failed:', err?.message);
+    }
+  },
+
+  /** Stop JS player only — keeps native BG MediaPlayer running. */
+  stopJsOnly() {
+    playGeneration += 1;
+    killJsPlayer();
+  },
+
+  /**
+   * Soft stop (effect cleanup / screen change) — silence now, allow future ring.
+   * Does NOT suppress — Accept/Reject must call stopAndSuppress.
+   */
+  stopAll(roomId) {
+    playGeneration += 1;
+    setInAppIncomingUi(false);
+    killJsPlayer();
+    stopNativeAndroidRingtone();
+  },
+
+  /**
+   * Accept / Reject / hard end — silence immediately + block late FCM/JS re-ring.
+   */
+  stopAndSuppress(roomId) {
+    playGeneration += 1;
+    incomingSuppressedUntil = Date.now() + 60_000;
+    setInAppIncomingUi(false);
+    killJsPlayer();
+    stopAndSuppressNativeAndroidRingtone(roomId);
+    killJsPlayer();
+    stopNativeAndroidRingtone();
+    console.log('🔕 [RingtoneManager] stopAndSuppress — silenced');
+  },
+
+  /** New incoming invite — allow ringing again after a prior Accept/Reject. */
+  clearIncomingSuppress() {
+    incomingSuppressedUntil = 0;
+  },
+
+  /**
+   * Home / background: stop JS, start ONE native MediaPlayer (sync).
+   * Channel is silent — MediaPlayer is the only ring.
+   */
+  handOffToBackgroundRing(callDetails) {
+    if (Date.now() < incomingSuppressedUntil) {
+      console.log('🔔 [RingtoneManager] skip handoff — suppressed');
+      return;
+    }
+    console.log('🔔 [RingtoneManager] Handoff → native BG ringtone (sync)');
+    this.stopJsOnly();
+    const mod = Native();
+    if (!mod) return;
+
+    try {
+      if (callDetails?.roomId && typeof mod.handoffBackgroundRingSync === 'function') {
+        const ok = mod.handoffBackgroundRingSync({
+          roomId: String(callDetails.roomId || ''),
+          callId: String(callDetails.callId || ''),
+          callType: String(callDetails.callType || 'audio'),
+          displayName: String(
+            callDetails.displayName || callDetails.name || 'Incoming Call',
+          ),
+          senderId: String(callDetails.senderId || callDetails.callerId || ''),
+          profileImage: String(
+            callDetails.profileImage || callDetails.profileImageUrl || '',
+          ),
+        });
+        console.log('🔔 [RingtoneManager] handoffBackgroundRingSync=', ok);
+        return;
+      }
+    } catch (e) {
+      console.warn('🔔 [RingtoneManager] sync handoff failed:', e?.message || e);
+    }
+
+    try {
+      setInAppIncomingUi(false);
+      mod.startRingtoneSync?.() || mod.startRingtoneJs?.();
+    } catch (_) {}
   },
 };
 

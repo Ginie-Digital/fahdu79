@@ -65,13 +65,27 @@ const CallScreen = ({ route }) => {
   const hasNavigatedAwayRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
 
+  const { token, currentUserId, currentUserDisplayName } = useSelector(state => state.auth.user);
+  const callAccepted = useSelector(state => state.hideShow.visibility.callAccepted);
+
   const stopAndUnloadRingtone = useCallback(async () => {
     RingtoneManager.stopAll();
+  }, []);
+
+  // Receiver Accept path — kill leftover incoming ring hard.
+  // Caller path — soft stop only (outgoing ring starts next).
+  useEffect(() => {
+    if (route?.params?.callAccepted) {
+      RingtoneManager.stopAndSuppress(route?.params?.roomId);
+    } else {
+      RingtoneManager.stopAll();
+    }
   }, []);
 
   useEffect(() => {
     if (callAccepted) {
       callAcceptedRef.current = true;
+      RingtoneManager.stopAll();
     }
   }, [callAccepted]);
   const isEngineActive = useRef(false);
@@ -85,9 +99,6 @@ const CallScreen = ({ route }) => {
   const [isOtherUserInRoom, setIsOtherUserInRoom] = useState(false);
   const [networkQuality, setNetworkQuality] = useState(0);
   const [isEndingCall, setIsEndingCall] = useState(false);
-
-  const { token, currentUserId, currentUserDisplayName } = useSelector(state => state.auth.user);
-  const callAccepted = useSelector(state => state.hideShow.visibility.callAccepted);
 
   const dispatch = useDispatch();
 

@@ -79,9 +79,19 @@ const VideoCallScreen = ({route}) => {
     RingtoneManager.stopAll();
   }, []);
 
+  // Receiver Accept path — kill leftover incoming ring hard.
+  useEffect(() => {
+    if (route?.params?.callAccepted) {
+      RingtoneManager.stopAndSuppress(route?.params?.roomId);
+    } else {
+      RingtoneManager.stopAll();
+    }
+  }, []);
+
   useEffect(() => {
     if (callAccepted) {
       callAcceptedRef.current = true;
+      RingtoneManager.stopAll();
     }
   }, [callAccepted]);
 

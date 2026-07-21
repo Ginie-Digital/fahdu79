@@ -30,6 +30,49 @@ export const callGuardKey = callData => {
   return null;
 };
 
+/**
+ * Normalize socket/FCM call payloads (room_id vs roomId, nested/string content, etc.).
+ */
+export const normalizeIncomingCallPayload = raw => {
+  if (!raw || typeof raw !== 'object') return null;
+
+  let nested = null;
+  if (typeof raw.content === 'string' && raw.content.trim().startsWith('{')) {
+    try {
+      nested = JSON.parse(raw.content);
+    } catch (_) {
+      nested = null;
+    }
+  } else if (raw.content && typeof raw.content === 'object' && !Array.isArray(raw.content)) {
+    nested = raw.content;
+  }
+
+  const src = nested ? { ...raw, ...nested } : raw;
+  const roomId = src.roomId || src.room_id || src.chatRoomId || null;
+  const callId = src.callId || src.call_id || null;
+  if (!roomId) return null;
+  return {
+    ...src,
+    roomId: String(roomId),
+    callId: callId != null && callId !== '' ? String(callId) : undefined,
+    callType: src.callType || src.call_type || 'audio',
+    callerId: src.callerId || src.senderId || src.sender_id || src.caller_id,
+    senderId: src.senderId || src.callerId || src.sender_id || src.caller_id,
+    name: src.name || src.displayName || src.callerName || 'Call',
+    displayName: src.displayName || src.name || src.callerName || 'Call',
+    profileImage:
+      src.profileImage ||
+      src.profileImageurl ||
+      src.profileImageUrl ||
+      src.profile_image,
+    profileImageurl:
+      src.profileImageurl ||
+      src.profileImage ||
+      src.profileImageUrl ||
+      src.profile_image,
+  };
+};
+
 /** callId stamp TTL — blocks only that exact ended session. */
 const ENDED_CALL_ID_TTL_MS = 60 * 60 * 1000;
 /** room stamp TTL — must stay short or next call in same chat loses Accept/Reject notif. */
@@ -340,7 +383,10 @@ export const fetchOtherParticipantStatus = async roomId => {
   if (!roomId) return null;
   // Cold start after kill needs more time for MMKV/AsyncStorage token rehydrate.
   const token = await getAuthToken(30);
-  if (!token) return null;
+  if (!token) {
+    console.warn('[fetchOtherParticipantStatus] no auth token yet — skip');
+    return null;
+  }
 
   try {
     const response = await fetch(
@@ -354,6 +400,14 @@ export const fetchOtherParticipantStatus = async roomId => {
       },
     );
     const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.warn(
+        '[fetchOtherParticipantStatus] HTTP',
+        response.status,
+        result?.message || result?.error || '',
+      );
+      return null;
+    }
     // Match polling shape: body.data.status (and a few fallbacks).
     const status =
       result?.data?.status ||
@@ -459,34 +513,22 @@ export const isIncomingCallStillActive = async callData => {
       pending.status === 'ACCEPTED' ||
       FLAKY_REMOTE_STATUSES.has(String(pending.status || '').toUpperCase()));
 
-  // Flaky remote: only open when we still have a live PENDING invite (BUG_05).
+  // Flaky remote: creator often still ringing — open UI (notif tap / kill recovery).
   if (remoteUpper && FLAKY_REMOTE_STATUSES.has(remoteUpper)) {
-    if (localPendingAlive) {
-      console.log('📱 [isIncomingCallStillActive] soft-open flaky remote + pending:', remoteUpper);
-      return true;
-    }
-    console.log('📱 [isIncomingCallStillActive] flaky remote, no pending — stale');
-    return false;
-  }
-
-  // Null remote: open only with live pending (notif tap after kill still has PENDING stamp).
-  if (!remoteUpper) {
-    if (localPendingAlive) {
-      console.log('📱 [isIncomingCallStillActive] soft-open null remote + pending');
-      return true;
-    }
-    console.log('📱 [isIncomingCallStillActive] null remote, no pending — stale-safe');
-    return false;
-  }
-
-  // Unknown non-terminal status — open only with live pending (BUG_05).
-  if (localPendingAlive) {
-    console.log('📱 [isIncomingCallStillActive] soft-open unknown remote + pending:', remoteUpper);
+    console.log('📱 [isIncomingCallStillActive] soft-open flaky remote:', remoteUpper);
     return true;
   }
 
-  console.log('📱 [isIncomingCallStillActive] unknown remote, no pending — not opening:', remoteUpper);
-  return false;
+  // Null remote (token not ready / API error) — NEVER treat as ended.
+  // Blocking here made push-notification taps silently fail.
+  if (!remoteUpper) {
+    console.log('📱 [isIncomingCallStillActive] soft-open null remote (token/API lag)');
+    return true;
+  }
+
+  // Unknown non-terminal status — open IncomingCall; screen polling will dismiss if dead.
+  console.log('📱 [isIncomingCallStillActive] soft-open unknown remote:', remoteUpper);
+  return true;
 };
 
 /**
@@ -528,7 +570,7 @@ export const invalidateIncomingCall = async (callData, reason = 'ENDED') => {
   } catch (_) {}
 
   try {
-    RingtoneManager.stopAll();
+    RingtoneManager.stopAndSuppress(roomId);
   } catch (_) {}
 
   // Only dismiss if IncomingCall is currently showing (do not force-navigate home).
@@ -619,6 +661,11 @@ export const prepareIncomingCall = callData => {
 
   launchCallHandled = false;
 
+  // New invite may ring — clear JS Accept/Reject audio suppress.
+  try {
+    RingtoneManager.clearIncomingSuppress();
+  } catch (_) {}
+
   // Always clear room-level guards so Accept/Reject notif is not cancelled by AppState.
   recentlyAcceptedKeys.delete(`room:${callData.roomId}`);
   recentlyRejectedKeys.delete(`room:${callData.roomId}`);
@@ -681,43 +728,26 @@ export const resetLaunchCallHandling = () => {
   launchCallHandled = false;
 };
 
-export const openActiveCallScreen = callData => {
-  const callType = callData.callType || 'audio';
-  const screen = callType === 'video' ? 'videoCallScreen' : 'callScreen';
-  const params = {
-    roomId: callData.roomId,
-    name: callData.displayName || callData.callerName || 'Call',
-    callType,
-    callerId: callData.senderId || callData.callerId,
-    profileImageUrl: callData.profileImage || callData.profileImageUrl,
-    callAccepted: true,
-    callId: callData.callId,
-  };
+/** Dedupe the same notif action within a short window (index.js + Main.js both fire). */
+const recentNotifActions = new Map();
+export const claimNotificationAction = (action, callData, ttlMs = 4000) => {
+  const room = callData?.roomId || '';
+  const call = callData?.callId || '';
+  if (!room && !call) return true;
+  const key = `${action}:${call || room}`;
+  const now = Date.now();
+  const prev = recentNotifActions.get(key);
+  if (prev && now - prev < ttlMs) {
+    console.log('📱 [claimNotificationAction] skip duplicate', key);
+    return false;
+  }
+  recentNotifActions.set(key, now);
+  return true;
+};
 
-  const tryOpen = () => {
-    if (!navigationRef.isReady()) return false;
-    try {
-      const current = navigationRef.getCurrentRoute()?.name;
-      // Replace IncomingCall — do NOT push on top (zombie polling + goBack kills CallScreen).
-      if (current === 'incomingCall') {
-        navigationRef.dispatch(StackActions.replace(screen, params));
-        return true;
-      }
-      if (current === screen) {
-        navigationRef.dispatch(StackActions.replace(screen, params));
-        return true;
-      }
-      navigationRef.dispatch(StackActions.push(screen, params));
-      return true;
-    } catch (e) {
-      console.warn('[openActiveCallScreen] push failed:', e?.message || e);
-      return false;
-    }
-  };
-
-  if (tryOpen()) return;
-
-  // Cold start / Accept from killed app: nav often not ready yet — retry then navigate().
+const scheduleNavRetry = (tryOpen, fallback, label, maxAttempts = 100) => {
+  if (tryOpen()) return true;
+  console.log(`⏳ [${label}] Nav not ready, retrying...`);
   let attempts = 0;
   const interval = setInterval(() => {
     attempts += 1;
@@ -725,39 +755,218 @@ export const openActiveCallScreen = callData => {
       clearInterval(interval);
       return;
     }
-    if (attempts >= 50) {
+    if (attempts >= maxAttempts) {
       clearInterval(interval);
-      console.log('⚠️ [openActiveCallScreen] Retry exhausted, using navigate()');
-      navigate(screen, params);
+      console.log(`⚠️ [${label}] Retry exhausted, using navigate() fallback`);
+      try {
+        fallback();
+      } catch (e) {
+        console.warn(`[${label}] fallback failed:`, e?.message || e);
+      }
     }
   }, 100);
+  return true;
+};
+
+export const openActiveCallScreen = callData => {
+  const normalized =
+    normalizeIncomingCallPayload(callData) ||
+    normalizeIncomingCallPayload(callData?.content) ||
+    callData;
+  if (!normalized?.roomId) {
+    console.warn('[openActiveCallScreen] Missing roomId, skip');
+    return false;
+  }
+
+  const callType = normalized.callType || 'audio';
+  const screen = callType === 'video' ? 'videoCallScreen' : 'callScreen';
+  const params = {
+    roomId: String(normalized.roomId),
+    name: normalized.displayName || normalized.callerName || normalized.name || 'Call',
+    callType,
+    callerId: normalized.senderId || normalized.callerId,
+    profileImageUrl: normalized.profileImage || normalized.profileImageUrl,
+    callAccepted: true,
+    callId: normalized.callId,
+  };
+
+  console.log('📱 [openActiveCallScreen] →', screen, params.roomId);
+
+  const tryOpen = () => {
+    if (!navigationRef.isReady()) return false;
+    try {
+      const current = navigationRef.getCurrentRoute()?.name;
+      if (
+        (current === 'callScreen' || current === 'videoCallScreen') &&
+        String(navigationRef.getCurrentRoute()?.params?.roomId || '') === String(params.roomId)
+      ) {
+        return true;
+      }
+      if (current === 'incomingCall' || current === screen) {
+        navigationRef.dispatch(StackActions.replace(screen, params));
+        return true;
+      }
+      // Use RootNavigation.navigate — waits for ready + allows call screens without token race.
+      navigate(screen, params);
+      return true;
+    } catch (e) {
+      console.warn('[openActiveCallScreen] navigate failed:', e?.message || e);
+      return false;
+    }
+  };
+
+  const ok = scheduleNavRetry(tryOpen, () => navigate(screen, params), 'openActiveCallScreen', 150);
+  // Extra nudges for BG Accept cold start (stack may mount after token rehydrate).
+  setTimeout(() => tryOpen(), 500);
+  setTimeout(() => tryOpen(), 1500);
+  setTimeout(() => navigate(screen, params), 2500);
+  return ok;
 };
 
 /**
  * Open IncomingCall only if the call is still ringing.
- * Use this for EVERY notification / cold-start / CallKit body path on iOS + Android.
- * Prevents stale taps after creator cancel / unavailable while app was killed.
+ * Does NOT invalidate on API/token failure — that blocked notification taps.
  */
 export const openIncomingCallScreenIfActive = async callData => {
-  if (!callData?.roomId) return false;
+  const data =
+    normalizeIncomingCallPayload(callData) ||
+    normalizeIncomingCallPayload(callData?.content) ||
+    callData;
+  if (!data?.roomId) return false;
 
-  const stillActive = await isIncomingCallStillActive(callData);
+  // Already accepted → active call UI, not ringing UI.
+  if (wasRecentlyAccepted(data) || getPendingCallSync()?.status === 'ACCEPTED') {
+    prepareIncomingCall(data);
+    return openActiveCallScreen(data);
+  }
+
+  const stillActive = await isIncomingCallStillActive(data);
   if (!stillActive) {
+    // Only clear chrome when we are confident the invite is dead (not flaky UNAVAILABLE/IDLE).
+    const pendingStatus = String(getPendingCallSync()?.status || '').toUpperCase();
+    const confidentEnded =
+      wasRecentlyRejected(data) ||
+      wasCallEndedRecently(data) ||
+      ['REJECTED', 'ENDED', 'CANCELLED', 'CANCELED', 'MISSED', 'COMPLETED'].includes(pendingStatus);
+    if (confidentEnded) {
+      console.log(
+        '📱 [openIncomingCallScreenIfActive] Call ended — clearing notif, not opening UI',
+      );
+      await invalidateIncomingCall(data, 'ENDED');
+      return false;
+    }
+    // Token/API flaky — still open IncomingCall (polling will dismiss if dead).
     console.log(
-      '📱 [openIncomingCallScreenIfActive] Call already ended — clearing notif/CallKit, not opening UI',
+      '📱 [openIncomingCallScreenIfActive] status unknown — opening IncomingCall optimistically',
     );
-    await invalidateIncomingCall(callData, 'ENDED');
+  }
+
+  prepareIncomingCall(data);
+  return openIncomingCallScreen(data);
+};
+
+/**
+ * User tapped the push / CallStyle body — always open UI.
+ * Never block on participant-status API (cold start token races).
+ */
+export const openIncomingCallFromNotificationTap = callData => {
+  const data =
+    normalizeIncomingCallPayload(callData) ||
+    normalizeIncomingCallPayload(callData?.content) ||
+    callData;
+  if (!data?.roomId) {
+    console.warn('[openIncomingCallFromNotificationTap] Missing roomId', callData);
     return false;
   }
 
-  // Stamp PENDING only AFTER remote confirms the call is still live.
-  prepareIncomingCall(callData);
-  return openIncomingCallScreen(callData);
+  // Reset launch guard so cold-start tap can always navigate.
+  try {
+    resetLaunchCallHandling();
+  } catch (_) {}
+
+  const pending = getPendingCallSync();
+  const sameRoom =
+    pending?.roomId != null && String(pending.roomId) === String(data.roomId);
+
+  if (
+    wasRecentlyAccepted(data) ||
+    (sameRoom && (pending.status === 'ACCEPTED' || pending.callAccepted))
+  ) {
+    console.log('📱 [notif tap] already accepted → CallScreen');
+    acceptCallFromNotification(data, { navigateNow: true }).catch(() => {
+      openActiveCallScreen(data);
+    });
+    return true;
+  }
+
+  const hardEnded =
+    (data.callId && wasRecentlyRejected(data)) ||
+    (data.callId && wasCallEndedRecently(data)) ||
+    (sameRoom &&
+      ['REJECTED', 'ENDED', 'CANCELLED', 'CANCELED', 'MISSED', 'COMPLETED'].includes(
+        String(pending?.status || '').toUpperCase(),
+      ));
+
+  if (hardEnded) {
+    console.log('📱 [notif tap] call already ended — skip UI');
+    invalidateIncomingCall(data, pending?.status || 'ENDED').catch(() => {});
+    return false;
+  }
+
+  console.log('📱 [notif tap] → IncomingCall NOW', data.roomId, data.callId);
+  prepareIncomingCall(data);
+  const opened = openIncomingCallScreen(data);
+  // Extra delayed nudge — covers nav not ready + claim races.
+  setTimeout(() => {
+    try {
+      if (navigationRef.isReady()) {
+        const route = navigationRef.getCurrentRoute()?.name;
+        if (route !== 'incomingCall' && route !== 'callScreen' && route !== 'videoCallScreen') {
+          console.log('📱 [notif tap] retry open IncomingCall (screen still not visible)');
+          openIncomingCallScreen(data);
+        }
+      }
+    } catch (_) {}
+  }, 800);
+  setTimeout(() => {
+    try {
+      if (navigationRef.isReady()) {
+        const route = navigationRef.getCurrentRoute()?.name;
+        if (route !== 'incomingCall' && route !== 'callScreen' && route !== 'videoCallScreen') {
+          console.log('📱 [notif tap] final retry open IncomingCall');
+          navigate('incomingCall', {
+            name: data.name || data.displayName || 'Call',
+            profileImageUrl: data.profileImage || data.profileImageUrl,
+            roomId: String(data.roomId),
+            callType: data.callType || 'audio',
+            callerId: data.callerId || data.senderId,
+            callId: data.callId,
+          });
+        }
+      }
+    } catch (_) {}
+  }, 2000);
+  return opened;
 };
 
-export const openIncomingCallScreen = callData => {
+export const openIncomingCallScreen = rawCallData => {
+  const callData =
+    normalizeIncomingCallPayload(rawCallData) ||
+    normalizeIncomingCallPayload(rawCallData?.content) ||
+    rawCallData;
   if (!callData?.roomId) {
-    console.warn('[openIncomingCallScreen] Missing roomId, skip');
+    console.warn('[openIncomingCallScreen] Missing roomId, skip', rawCallData);
+    return false;
+  }
+
+  // Don't open ringing UI if user already accepted this call.
+  if (wasRecentlyAccepted(callData)) {
+    console.log('📱 [openIncomingCallScreen] already accepted → CallScreen');
+    return openActiveCallScreen(callData);
+  }
+  // Only skip reject for the same callId — never block next call in room.
+  if (callData.callId && wasRecentlyRejected(callData)) {
+    console.log('📱 [openIncomingCallScreen] already rejected — skip');
     return false;
   }
 
@@ -768,49 +977,54 @@ export const openIncomingCallScreen = callData => {
       callData?.profileImage ||
       callData?.profile_image ||
       callData?.profileImageUrl,
-    roomId: callData?.roomId,
+    roomId: String(callData.roomId),
     callType: callData?.callType || 'audio',
     callerId: callData?.callerId || callData?.senderId,
     callId: callData?.callId,
   };
 
+  console.log('📱 [openIncomingCallScreen] → incomingCall', params.roomId);
+
   const tryOpen = () => {
     if (!navigationRef.isReady()) return false;
     try {
       const current = navigationRef.getCurrentRoute()?.name;
-      if (current === 'incomingCall') {
-        navigationRef.dispatch(StackActions.replace('incomingCall', params));
+      const currentParams = navigationRef.getCurrentRoute()?.params;
+      // Already showing this call — success (avoid remount glitch).
+      if (
+        current === 'incomingCall' &&
+        String(currentParams?.roomId || '') === String(params.roomId)
+      ) {
         return true;
       }
-      navigationRef.dispatch(StackActions.push('incomingCall', params));
+      // If already on CallScreen for this room, don't go back to IncomingCall.
+      if (
+        (current === 'callScreen' || current === 'videoCallScreen') &&
+        String(currentParams?.roomId || '') === String(params.roomId)
+      ) {
+        return true;
+      }
+      // navigate via RootNavigation — handles ready wait + call-screen auth bypass.
+      if (current === 'incomingCall') {
+        navigationRef.dispatch(StackActions.replace('incomingCall', params));
+      } else {
+        navigate('incomingCall', params);
+      }
+      console.log('📱 [openIncomingCallScreen] navigated, route=', navigationRef.getCurrentRoute()?.name);
       return true;
     } catch (e) {
-      console.warn('[openIncomingCallScreen] push failed:', e?.message || e);
+      console.warn('[openIncomingCallScreen] navigate failed:', e?.message || e);
       return false;
     }
   };
 
-  if (tryOpen()) {
-    return true;
-  }
-
-  // Cold start: nav stack often not ready yet — retry, then fall back to navigate().
-  console.log('⏳ [openIncomingCallScreen] Nav not ready, retrying...');
-  let attempts = 0;
-  const interval = setInterval(() => {
-    attempts += 1;
-    if (tryOpen()) {
-      clearInterval(interval);
-      return;
-    }
-    if (attempts >= 80) {
-      clearInterval(interval);
-      console.log('⚠️ [openIncomingCallScreen] Retry exhausted, using navigate()');
-      navigate('incomingCall', params);
-    }
-  }, 100);
-
-  return true;
+  // Longer retry — cold start after notification tap often needs >10s for nav+auth.
+  return scheduleNavRetry(
+    tryOpen,
+    () => navigate('incomingCall', params),
+    'openIncomingCallScreen',
+    150,
+  );
 };
 
 export const dismissIncomingCallScreen = () => {
@@ -831,123 +1045,197 @@ export const dismissIncomingCallScreen = () => {
 };
 
 /**
- * Accept from notification action: hit API once, then open the active call screen.
- * BUG_04: do not fail solely on a single flaky UNAVAILABLE while creator still rings.
- * BUG_10: only abort when remote is a hard-end status (REJECTED/ENDED/…).
- *
- * Important: open CallScreen FIRST (optimistic). Waiting on accept API before navigate
- * made Accept feel dead — notif dismissed, app stayed on home (seen in 2.27 video).
+ * BUG_10: creator killed app after dialing — Accept must NOT connect.
+ * BUG_04: flaky USER_OFFLINE while creator still rings — still allow join if
+ * remote looks actively ringing, or a single accept retry succeeds.
+ */
+const CREATOR_GONE_ACCEPT_ERRORS = /user_offline|offline|unavailable|not\s*available|creator.*gone|force_closed|disconnected|left|ended|not\s*found/i;
+
+const isCreatorHardGoneStatus = remoteUpper => {
+  if (!remoteUpper) return false;
+  // DISCONNECTED is flaky while ringing — only trust clear hangup/cancel ends here.
+  return (
+    remoteUpper === 'FORCE_CLOSED' ||
+    remoteUpper === 'REJECTED' ||
+    remoteUpper === 'CANCELLED' ||
+    remoteUpper === 'CANCELED' ||
+    remoteUpper === 'COMPLETED' ||
+    remoteUpper === 'ENDED' ||
+    remoteUpper === 'MISSED' ||
+    remoteUpper === 'LEAVE'
+  );
+};
+
+const isCreatorActivelyRingingStatus = remoteUpper =>
+  !!remoteUpper && ACTIVE_RINGING_STATUSES.has(remoteUpper);
+
+/**
+ * Accept from notification / IncomingCall Accept button.
+ * - Stop ringtone/shade first (never stamp ENDED — that blocked CallScreen)
+ * - Open CallScreen immediately (optimistic) so Accept feels instant
+ * - Then hit accept API; only leave if creator is hard-gone
  */
 export const acceptCallFromNotification = async (callData, { navigateNow = true } = {}) => {
-  if (!callData?.roomId) {
+  const data =
+    normalizeIncomingCallPayload(callData) ||
+    normalizeIncomingCallPayload(callData?.content) ||
+    callData;
+  if (!data?.roomId) {
     return { success: false, error: 'No roomId' };
   }
 
   const { LoginPageErrors } = require('../Components/ErrorSnacks');
 
-  if (wasCallEndedRecently(callData) || wasRecentlyRejected(callData)) {
-    console.log('📱 [acceptCallFromNotification] Call already ended locally');
-    LoginPageErrors('Creator is no longer available');
-    await invalidateIncomingCall(callData, 'ENDED');
-    return { success: false, error: 'ENDED' };
+  // User explicitly tapped Accept — clear stale reject/ended guards for this invite.
+  clearEndedCallStampForIncoming(data);
+  try {
+    recentlyRejectedKeys.delete(callGuardKey(data));
+    recentlyRejectedKeys.delete(`room:${data.roomId}`);
+    if (data.callId) recentlyRejectedKeys.delete(`call:${data.callId}`);
+  } catch (_) {}
+
+  // Wait for auth so callScreen exists on the logged-in stack.
+  try {
+    await getAuthToken(40);
+  } catch (_) {}
+
+  // Stamp + open CallScreen FIRST (before stop/API) so Accept always lands on UI.
+  markCallAcceptedSync(data);
+  if (navigateNow) {
+    openActiveCallScreen(data);
   }
 
-  const HARD_END = new Set([
-    'REJECTED',
-    'CANCELLED',
-    'CANCELED',
-    'COMPLETED',
-    'ENDED',
-    'MISSED',
-    'FORCE_CLOSED',
-    'LEAVE',
-  ]);
+  try {
+    RingtoneManager.stopAndSuppress(data.roomId);
+  } catch (_) {}
+  try {
+    const { cancelIncomingCallNotification } = require('../../Notificaton');
+    await cancelIncomingCallNotification(data.roomId);
+  } catch (_) {}
+  try {
+    const Native = require('react-native').NativeModules.IncomingCallStyle;
+    if (Native?.stopAndSuppressRingtoneSync) {
+      Native.stopAndSuppressRingtoneSync(String(data.roomId || ''));
+    } else {
+      const { stopAndroidRingtoneAndDismiss } = require('../Services/IncomingCallStyle');
+      await stopAndroidRingtoneAndDismiss(data.roomId);
+    }
+  } catch (_) {}
 
-  const key = callGuardKey(callData);
-  markCallAcceptedSync(callData);
+  const failCreatorGone = async reason => {
+    console.log('📱 [acceptCallFromNotification] Creator unavailable:', reason);
+    LoginPageErrors('Creator is no longer available');
+    await invalidateIncomingCall(data, reason || 'UNAVAILABLE');
+    try {
+      dismissIncomingCallScreen();
+    } catch (_) {}
+    return { success: false, error: reason || 'CREATOR_GONE' };
+  };
+
+  const key = callGuardKey(data);
 
   const pending = getPendingCallSync();
   if (
-    pending?.roomId === callData.roomId &&
-    (!callData.callId || !pending.callId || pending.callId === callData.callId) &&
+    pending?.roomId === data.roomId &&
+    (!data.callId || !pending.callId || pending.callId === data.callId) &&
     (pending.status === 'ACCEPTED' || pending.callAccepted) &&
     pending.apiDone
   ) {
     console.log('📱 [acceptCallFromNotification] Already accepted, skipping duplicate API');
-    if (navigateNow) {
-      openActiveCallScreen(callData);
-      await clearPendingCall();
-    }
+    if (navigateNow) openActiveCallScreen(data);
     return { success: true, data: { alreadyAccepted: true } };
   }
 
   if (key && acceptInFlightKeys.has(key)) {
-    console.log('📱 [acceptCallFromNotification] Accept already in-flight, skipping duplicate API');
-    if (navigateNow) openActiveCallScreen(callData);
+    console.log('📱 [acceptCallFromNotification] Accept already in-flight');
+    if (navigateNow) openActiveCallScreen(data);
     return { success: true, data: { inFlight: true } };
   }
 
-  // Optimistic join FIRST — do not wait on remote status / accept API before UI.
-  // Video 2.27: Accept dismissed notif but never opened CallScreen while API waited.
-  persistPendingCallSync(callData, { accepted: true, apiDone: false });
-  if (navigateNow) {
-    openActiveCallScreen(callData);
-  }
-
-  // After UI is up, abort only on hard-ended remote (BUG_10). Never on UNAVAILABLE (BUG_04).
+  // Soft remote check — do not block UI; only abort after navigate if hard-gone.
   try {
-    const remote = await fetchOtherParticipantStatus(callData.roomId);
+    const remote = await fetchOtherParticipantStatus(data.roomId);
     const remoteUpper = remote ? String(remote).toUpperCase() : null;
-    if (remoteUpper && HARD_END.has(remoteUpper)) {
-      console.log('📱 [acceptCallFromNotification] Remote hard-ended after open:', remoteUpper);
-      LoginPageErrors('Creator is no longer available');
-      await invalidateIncomingCall(callData, remoteUpper);
-      return { success: false, error: remoteUpper };
+    if (isCreatorHardGoneStatus(remoteUpper)) {
+      return failCreatorGone(remoteUpper);
     }
   } catch (_) {}
 
   if (key) acceptInFlightKeys.add(key);
   let result;
   try {
-    result = await callAcceptAPI(callData.roomId, callData.callType, 'ACCEPTED');
+    result = await callAcceptAPI(data.roomId, data.callType, 'ACCEPTED');
   } finally {
     if (key) acceptInFlightKeys.delete(key);
   }
 
   if (result.success) {
-    persistPendingCallSync(callData, { accepted: true, apiDone: true });
-    if (navigateNow) {
-      await clearPendingCall();
-    }
+    persistPendingCallSync(data, { accepted: true, apiDone: true });
+    if (navigateNow) openActiveCallScreen(data);
+    setTimeout(() => {
+      clearPendingCall().catch(() => {});
+    }, 2500);
     return result;
   }
 
-  // BUG_04 soft path: flaky UNAVAILABLE / USER_OFFLINE must keep the joined screen.
-  // BUG_10: only leave if remote is hard-ended.
+  // Accept failed — distinguish BUG_10 (creator killed) vs BUG_04 (flaky presence).
+  const errText = String(result.error || result.data?.message || '');
   let remote2 = null;
   try {
-    await new Promise(r => setTimeout(r, 800));
-    remote2 = await fetchOtherParticipantStatus(callData.roomId);
+    await new Promise(r => setTimeout(r, 700));
+    remote2 = await fetchOtherParticipantStatus(data.roomId);
   } catch (_) {}
   const remote2Upper = remote2 ? String(remote2).toUpperCase() : null;
-  if (remote2Upper && HARD_END.has(remote2Upper)) {
+
+  if (isCreatorHardGoneStatus(remote2Upper)) {
+    return failCreatorGone(remote2Upper);
+  }
+
+  if (isCreatorActivelyRingingStatus(remote2Upper)) {
     console.log(
-      '📱 [acceptCallFromNotification] Creator hard-ended after failed accept',
+      '⚠️ [acceptCallFromNotification] API failed but creator still ringing — soft-join',
       result.error,
       remote2Upper,
     );
-    LoginPageErrors('Creator is no longer available');
-    await invalidateIncomingCall(callData, remote2Upper);
-    return { success: false, error: result.error || 'CREATOR_GONE' };
+    persistPendingCallSync(data, { accepted: true, apiDone: false });
+    if (navigateNow) openActiveCallScreen(data);
+    return { success: true, data: { deferred: true, error: result.error } };
   }
 
-  console.log(
-    '⚠️ [acceptCallFromNotification] API failed, keeping soft-join (creator may still be ringing):',
-    result.error,
-    remote2Upper,
-  );
-  persistPendingCallSync(callData, { accepted: true, apiDone: false });
-  return { success: true, data: { deferred: true, error: result.error } };
+  let retry = { success: false };
+  if (CREATOR_GONE_ACCEPT_ERRORS.test(errText) || !result.success) {
+    try {
+      await new Promise(r => setTimeout(r, 900));
+      retry = await callAcceptAPI(data.roomId, data.callType, 'ACCEPTED');
+    } catch (_) {}
+  }
+
+  if (retry.success) {
+    console.log('✅ [acceptCallFromNotification] Retry accept succeeded');
+    persistPendingCallSync(data, { accepted: true, apiDone: true });
+    if (navigateNow) openActiveCallScreen(data);
+    setTimeout(() => {
+      clearPendingCall().catch(() => {});
+    }, 2500);
+    return retry;
+  }
+
+  let remote3 = null;
+  try {
+    remote3 = await fetchOtherParticipantStatus(data.roomId);
+  } catch (_) {}
+  const remote3Upper = remote3 ? String(remote3).toUpperCase() : null;
+  if (isCreatorActivelyRingingStatus(remote3Upper)) {
+    console.log(
+      '⚠️ [acceptCallFromNotification] Retry failed but remote ringing — soft-join',
+      remote3Upper,
+    );
+    persistPendingCallSync(data, { accepted: true, apiDone: false });
+    if (navigateNow) openActiveCallScreen(data);
+    return { success: true, data: { deferred: true, error: result.error } };
+  }
+
+  return failCreatorGone(remote3Upper || remote2Upper || 'UNAVAILABLE');
 };
 
 /**
@@ -958,6 +1246,15 @@ export const declineCallFromNotification = async (callData, { dismissUi = true }
   if (!callData?.roomId) {
     return { success: false, error: 'No roomId' };
   }
+
+  // Silence JS + native immediately (before API).
+  try {
+    RingtoneManager.stopAndSuppress(callData.roomId);
+  } catch (_) {}
+  try {
+    const { cancelIncomingCallNotification } = require('../../Notificaton');
+    await cancelIncomingCallNotification(callData.roomId);
+  } catch (_) {}
 
   const key = callGuardKey(callData);
 
@@ -1019,12 +1316,15 @@ export const declineCallFromNotification = async (callData, { dismissUi = true }
   }
 
   try {
-    RingtoneManager.stopAll();
+    if (callData.roomId) {
+      await notifee.cancelNotification('incoming_call_' + callData.roomId);
+    }
   } catch (_) {}
 
   try {
     if (callData.roomId) {
-      await notifee.cancelNotification('incoming_call_' + callData.roomId);
+      const { cancelAndroidCallStyleNotification } = require('../Services/IncomingCallStyle');
+      await cancelAndroidCallStyleNotification(callData.roomId);
     }
   } catch (_) {}
 

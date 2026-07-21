@@ -24,16 +24,15 @@ object IncomingCallNativeHandler {
     )
 
     /**
-     * @return true if this FCM was an incoming-call related message and we
-     * handled UI (show or cancel). Caller should skip FCM's default system
-     * notification so Accept/Reject CallStyle is the only shade.
+     * @return true only when native actually showed/cancelled CallStyle UI.
+     * Foreground skip returns false so [FahduFirebaseMessagingService] still
+     * calls super and JS receives onMessage → IncomingCall + ringtone.
      */
     fun handleIfCall(context: Context, extras: Bundle?): Boolean {
         if (extras == null) return false
         val info = parseFromBundle(extras) ?: return false
         if (!isCallRelated(info.type)) return false
-        apply(context, info)
-        return true
+        return apply(context, info)
     }
 
     fun onRemoteMessage(context: Context, remoteMessage: RemoteMessage) {
@@ -67,15 +66,30 @@ object IncomingCallNativeHandler {
             type == "missed_call"
     }
 
-    private fun apply(context: Context, info: CallInfo) {
+    /**
+     * @return true if native owned the call UI (CallStyle shown or cancelled).
+     * false when FG skip — JS must open IncomingCall + play ringtone.
+     */
+    private fun apply(context: Context, info: CallInfo): Boolean {
         val app = context.applicationContext
         when (info.type) {
             "call", "incoming_call" -> {
                 if (info.roomId.isEmpty()) {
                     Log.w(TAG, "call missing roomId")
-                    return
+                    return false
                 }
-                Log.i(TAG, "SHOW Accept/Reject for room=${info.roomId} callId=${info.callId}")
+                // ONLY skip when MainActivity is actually visible.
+                // Do NOT use isAppInForeground() — FCM wakes a killed process as
+                // IMPORTANCE_FOREGROUND, which falsely skipped CallStyle and left
+                // no Accept/Reject UI when the user had closed the app.
+                if (IncomingCallStyleModule.isMainActivityResumed()) {
+                    Log.i(TAG, "SKIP CallStyle — MainActivity resumed, defer to JS room=${info.roomId}")
+                    return false
+                }
+                // BG / killed / Home — show Accept/Reject + RING immediately.
+                IncomingCallStyleModule.setInAppIncomingUi(false)
+                IncomingCallStyleModule.clearRingtoneSuppress()
+                Log.i(TAG, "SHOW Accept/Reject + RING for room=${info.roomId} callId=${info.callId}")
                 val ok = IncomingCallStyleModule.displayFromContext(
                     app,
                     roomId = info.roomId,
@@ -84,15 +98,18 @@ object IncomingCallNativeHandler {
                     displayName = info.displayName,
                     senderId = info.senderId,
                     profileImage = info.profileImage,
+                    force = true,
+                    playRingtone = true,
                 )
                 Log.i(TAG, "displayFromContext result=$ok")
+                // If native post failed, return false so FCM/JS can still fall back.
+                return ok
             }
 
             "call_rejected",
             "call_unavailable",
             "call_cancelled",
             "call_canceled",
-            "call_accepted",
             "call_ended",
             "call_completed",
             "call_disconnected",
@@ -101,9 +118,23 @@ object IncomingCallNativeHandler {
                 if (info.roomId.isNotEmpty()) {
                     Log.i(TAG, "CANCEL call UI room=${info.roomId} type=${info.type}")
                     IncomingCallStyleModule.cancelFromContext(app, info.roomId, info.callId)
+                    return true
                 }
+                return false
+            }
+
+            // Callee already accepted — only stop ring/shade. Do NOT stamp ENDED
+            // (that raced CallScreen navigation and made Accept look dead).
+            "call_accepted" -> {
+                if (info.roomId.isNotEmpty()) {
+                    Log.i(TAG, "ACCEPT ack — dismiss shade only room=${info.roomId}")
+                    IncomingCallStyleModule.stopRingtoneAndDismiss(app, info.roomId)
+                    return true
+                }
+                return false
             }
         }
+        return false
     }
 
     private fun parseFromDataMap(data: Map<String, String>): CallInfo? {

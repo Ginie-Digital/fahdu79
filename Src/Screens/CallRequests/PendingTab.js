@@ -4,12 +4,15 @@ import { responsiveWidth } from 'react-native-responsive-dimensions';
 import Verify from '../../../Assets/svg/vvv.svg';
 import AnimatedButton from '../../Components/AnimatedButton';
 import { getTimeAgo } from '../../../DesiginData/Utility';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 // Import icons from CallRequests folder
 const TimeIcon = require('../../../Assets/Images/CallRequests/Time.png');
 const CoinIcon = require('../../../Assets/Images/CallRequests/Coin.png');
 
 const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId, actionLoading, onLoadMore, loadingMore }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = getStyles(colors, isDark);
   const renderPendingItem = ({ item }) => {
     const isInitiator = item.initiator === currentUserId;
 
@@ -30,7 +33,7 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
               </View>
               <View style={styles.scheduleRow}>
                 <Image source={TimeIcon} style={styles.infoIcon} />
-                <Text style={[styles.scheduleText, isInitiator && { fontFamily: 'Rubik-Medium', color: '#FFFFFF' }]}>{item.requestedDuration} mins</Text>
+                <Text style={[styles.scheduleText, isInitiator && { fontFamily: 'Rubik-Medium', color: colors.text }]}>{item.requestedDuration} mins</Text>
                 <Image source={CoinIcon} style={[styles.infoIcon, { marginLeft: 12 }]} />
                 <Text style={styles.coinText}>{item.requestedCoins} Coins</Text>
               </View>
@@ -101,7 +104,7 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
         }
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontFamily: 'Rubik-Medium', color: '#FFFFFF' }}>No pending requests</Text>
+            <Text style={{ fontFamily: 'Rubik-Medium', color: colors.text }}>No pending requests</Text>
           </View>
         }
       />
@@ -111,19 +114,19 @@ const PendingTab = ({ data = [], onAccept, onDeny, refreshControl, currentUserId
 
 export default PendingTab;
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: colors.background,
   },
   list: {
     padding: responsiveWidth(4),
   },
   card: {
-    backgroundColor: '#191919',
+    backgroundColor: isDark ? '#191919' : '#FFFFFF',
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 24,
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
     marginRight: 12,
   },
   details: {
@@ -162,7 +165,7 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   scheduleRow: {
     flexDirection: 'row',
@@ -173,22 +176,22 @@ const styles = StyleSheet.create({
     height: 14,
     marginRight: 4,
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: colors.text,
   },
   scheduleText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   coinText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   requestTime: {
     fontFamily: 'Rubik-Medium',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: isDark ? '#FFFFFF' : '#1E1E1E61',
     textTransform: 'uppercase',
   },
   actions: {
@@ -211,8 +214,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#292929',
-    backgroundColor: '#121212',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
+    backgroundColor: isDark ? '#121212' : '#FFFFFF',
     justifyContent: 'center',
   },
   redDot: {
@@ -221,45 +224,45 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#FF5353',
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
   },
   pendingText: {
     fontFamily: 'Rubik-Bold',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: isDark ? '#FFFFFF' : '#1E1E1E',
     textTransform: 'capitalize',
   },
   bottomRequestTime: {
     fontFamily: 'Rubik-Medium',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: isDark ? '#FFFFFF' : '#1E1E1E61',
     textTransform: 'uppercase',
   },
   buttonWrapper: {
     flex: 1,
   },
   denyButtonStyle: {
-    backgroundColor: '#191919',
+    backgroundColor: isDark ? '#191919' : '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
     height: 46,
     borderRadius: 14,
   },
   acceptButtonStyle: {
-    backgroundColor: '#FFA86B',
+    backgroundColor: colors.accent,
     borderWidth: 1.5,
-    borderColor: '#FF7819',
+    borderColor: isDark ? colors.accentBorder : '#1E1E1E',
     height: 46,
     borderRadius: 14,
   },
   denyButtonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 13,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   acceptButtonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 13,
-    color: '#1E1E1E',
+    color: isDark ? '#1E1E1E' : '#000000',
   },
 });

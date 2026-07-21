@@ -19,6 +19,8 @@ import { AppLog } from '../../../Src/Utils/Logger';
 import socketServcies from '../../../SocketServices';
 import Back from '../../../Assets/svg/back.svg';
 import MicPermissionModal from '../../Components/Calling/MicPermissionModal';
+import { useAppTheme } from '../../Hook/useAppTheme';
+import { BASE_URL } from '../../Configs/ApiConfig';
 
 const TABS = [
   { id: 'pending', label: 'Pending', badge: 0 },
@@ -32,6 +34,8 @@ const CallRequestsScreen = ({ route }) => {
   const navigation = useNavigation();
   const token = useSelector(state => state.auth.user.token);
   const currentUserId = useSelector(state => state.auth.user.currentUserId);
+  const { colors, isDark } = useAppTheme();
+  const styles = getStyles(colors, isDark);
 
   const [activeTab, setActiveTab] = useState('pending');
   const [denyModalVisible, setDenyModalVisible] = useState(false);
@@ -70,10 +74,10 @@ const CallRequestsScreen = ({ route }) => {
     else setLoading(true);
 
     const endpoints = [
-      { key: 'scheduled', url: 'https://api.fahdu.com/api/stream/scheduled/calls' },
-      { key: 'pending', url: 'https://api.fahdu.com/api/stream/pending/calls' },
-      { key: 'completed', url: 'https://api.fahdu.com/api/stream/completed/calls' },
-      { key: 'missed', url: 'https://api.fahdu.com/api/stream/missed/calls' },
+      { key: 'scheduled', url: `${BASE_URL}/api/stream/scheduled/calls` },
+      { key: 'pending', url: `${BASE_URL}/api/stream/pending/calls` },
+      { key: 'completed', url: `${BASE_URL}/api/stream/completed/calls` },
+      { key: 'missed', url: `${BASE_URL}/api/stream/missed/calls` },
     ];
 
     try {
@@ -129,10 +133,10 @@ const CallRequestsScreen = ({ route }) => {
     setLoadingMore(prev => ({ ...prev, [tabKey]: true }));
 
     const urlMap = {
-      scheduled: 'https://api.fahdu.com/api/stream/scheduled/calls',
-      pending: 'https://api.fahdu.com/api/stream/pending/calls',
-      completed: 'https://api.fahdu.com/api/stream/completed/calls',
-      missed: 'https://api.fahdu.com/api/stream/missed/calls',
+      scheduled: `${BASE_URL}/api/stream/scheduled/calls`,
+      pending: `${BASE_URL}/api/stream/pending/calls`,
+      completed: `${BASE_URL}/api/stream/completed/calls`,
+      missed: `${BASE_URL}/api/stream/missed/calls`,
     };
 
     try {
@@ -385,7 +389,7 @@ const CallRequestsScreen = ({ route }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Back color="#FFFFFF" />
+          <Back color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Call Requests</Text>
         <View style={styles.backButton} />
@@ -515,10 +519,10 @@ const CallRequestsScreen = ({ route }) => {
 
 export default CallRequestsScreen;
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -536,10 +540,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: responsiveFontSize(2.2),
-    color: '#FFFFFF',
+    color: colors.text,
   },
   tabsWrapper: {
-    backgroundColor: '#0D0D0D',
+    backgroundColor: colors.background,
     paddingVertical: responsiveWidth(3),
   },
   tabsContainer: {
@@ -554,20 +558,20 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#292929',
-    backgroundColor: '#191919',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
+    backgroundColor: isDark ? '#191919' : '#FFFFFF',
   },
   tabSpacing: {
     marginRight: 12,
   },
   activeTab: {
-    backgroundColor: '#FFA86B',
-    borderColor: '#FF7819',
+    backgroundColor: colors.accent,
+    borderColor: isDark ? colors.accentBorder : '#1E1E1E',
   },
   tabText: {
     fontFamily: 'Rubik-Medium',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   activeTabText: {
     color: '#1E1E1E',
@@ -582,12 +586,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   activeBadge: {
-    backgroundColor: '#121212',
+    backgroundColor: isDark ? '#121212' : '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#FF7819',
+    borderColor: isDark ? '#FF7819' : '#1E1E1E',
   },
   inactiveBadge: {
-    backgroundColor: '#FFA86B',
+    backgroundColor: colors.accent,
+    borderWidth: isDark ? 0 : 1.5,
+    borderColor: '#1E1E1E',
   },
   badgeText: {
     fontFamily: 'Rubik-Medium',
@@ -597,7 +603,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   activeBadgeText: {
-    color: '#FFFFFF',
+    color: isDark ? '#FFFFFF' : '#1E1E1E',
   },
   inactiveBadgeText: {
     color: '#1E1E1E',

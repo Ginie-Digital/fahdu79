@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator } from 'react-native';
 import moment from 'moment';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 const CompletedTab = ({ data = [], refreshControl, onLoadMore, loadingMore }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = getStyles(colors, isDark);
   const renderCompletedItem = ({ item, index }) => (
     <View>
       <View style={styles.itemContainer}>
@@ -45,7 +48,7 @@ const CompletedTab = ({ data = [], refreshControl, onLoadMore, loadingMore }) =>
         ListFooterComponent={renderFooter}
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontFamily: 'Rubik-Medium', color: '#FFFFFF' }}>No completed calls</Text>
+            <Text style={{ fontFamily: 'Rubik-Medium', color: colors.text }}>No completed calls</Text>
           </View>
         }
       />
@@ -55,10 +58,10 @@ const CompletedTab = ({ data = [], refreshControl, onLoadMore, loadingMore }) =>
 
 export default CompletedTab;
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: colors.background,
   },
   list: {
     paddingHorizontal: 0,
@@ -70,11 +73,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: colors.background,
   },
   separator: {
     height: 1.5,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: colors.border,
     marginHorizontal: 0,
   },
   leftContent: {
@@ -93,18 +96,18 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 4,
   },
   detailsText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: 'rgba(235, 235, 245, 0.3)',
+    color: isDark ? 'rgba(235, 235, 245, 0.3)' : colors.textSecondary,
   },
   coinText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#FFA86B',
+    color: isDark ? '#FFA86B' : '#10A832',
     textTransform: 'uppercase',
   },
 });

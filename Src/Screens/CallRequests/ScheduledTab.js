@@ -4,12 +4,15 @@ import { responsiveWidth } from 'react-native-responsive-dimensions';
 import Verify from '../../../Assets/svg/vvv.svg';
 import AnimatedButton from '../../Components/AnimatedButton';
 import moment from 'moment';
+import { useAppTheme } from '../../Hook/useAppTheme';
 
 // Import icons from CallRequests folder
 const CalendarIcon = require('../../../Assets/Images/CallRequests/Calendar.png');
 const TimeIcon = require('../../../Assets/Images/CallRequests/Time.png');
 
 const ScheduledTab = ({ data = [], onStartCall, refreshControl, currentUserId, actionLoading, onLoadMore, loadingMore }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = getStyles(colors, isDark);
   const renderScheduledItem = ({ item }) => {
     const isInitiator = item.initiator === currentUserId;
     const scheduledTime = moment(item.scheduledAt);
@@ -100,7 +103,7 @@ const ScheduledTab = ({ data = [], onStartCall, refreshControl, currentUserId, a
         }
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontFamily: 'Rubik-Medium', color: '#FFFFFF' }}>No scheduled calls</Text>
+            <Text style={{ fontFamily: 'Rubik-Medium', color: colors.text }}>No scheduled calls</Text>
           </View>
         }
       />
@@ -110,20 +113,20 @@ const ScheduledTab = ({ data = [], onStartCall, refreshControl, currentUserId, a
 
 export default ScheduledTab;
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: colors.background,
   },
   list: {
     padding: responsiveWidth(4),
   },
   card: {
     height: 245,
-    backgroundColor: '#191919',
+    backgroundColor: isDark ? '#191919' : '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
     padding: 24,
     marginBottom: 12,
     justifyContent: 'space-between',
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
   initiatorCard: {
     height: 196,
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
   },
   topRow: {
     flexDirection: 'row',
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
     marginRight: 12,
   },
   details: {
@@ -162,21 +165,21 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   attemptText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   initiatorSubText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
     lineHeight: 12,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   startingSoonBadge: {
-    backgroundColor: '#FFA86B15',
+    backgroundColor: isDark ? '#FFA86B15' : '#FFF3EB',
     paddingHorizontal: 7.6,
     paddingTop: 4,
     paddingBottom: 5,
@@ -188,7 +191,7 @@ const styles = StyleSheet.create({
   startingSoonText: {
     fontFamily: 'Rubik-Bold',
     fontSize: 10,
-    color: '#FFA86B',
+    color: colors.accent,
   },
   timingRow: {
     flexDirection: 'row',
@@ -199,12 +202,12 @@ const styles = StyleSheet.create({
     height: 16,
     marginRight: 6,
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: colors.text,
   },
   timingText: {
     fontFamily: 'Rubik-Medium',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     marginRight: 16,
   },
   timeIcon: {
@@ -212,16 +215,16 @@ const styles = StyleSheet.create({
     height: 14,
     marginRight: 4,
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: colors.text,
   },
   durationText: {
     fontFamily: 'Rubik-Regular',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#1E1E1E30',
   },
   earningsRow: {
     flexDirection: 'row',
@@ -231,32 +234,32 @@ const styles = StyleSheet.create({
   earningsLabel: {
     fontFamily: 'Rubik-Medium',
     fontSize: 12,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   coinsValue: {
     fontFamily: 'Rubik-Bold',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   buttonWrapper: {
     width: '100%',
   },
   startButtonStyle: {
-    backgroundColor: '#FFA86B',
+    backgroundColor: colors.accent,
     borderWidth: 1.5,
-    borderColor: '#FF7819',
+    borderColor: isDark ? colors.accentBorder : '#1E1E1E',
     height: 46,
     borderRadius: 14,
   },
   disabledStartButton: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: isDark ? '#1E1E1E' : '#ffdcc4',
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
     opacity: 0.6,
   },
   startButtonText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,
-    color: '#1E1E1E',
+    color: isDark ? '#1E1E1E' : '#000000',
   },
 });

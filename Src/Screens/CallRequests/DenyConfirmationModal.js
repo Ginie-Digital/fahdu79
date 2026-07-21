@@ -9,11 +9,14 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { useAppTheme } from '../../Hook/useAppTheme';
 import { responsiveWidth } from 'react-native-responsive-dimensions';
 import { BlurView } from 'expo-blur';
 import Cross from '../../../Assets/Images/cross.png';
 
 const DenyConfirmationModal = ({ visible, onClose, onConfirm, loading }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = getStyles(colors, isDark);
   return (
     <Modal
       visible={visible}
@@ -78,10 +81,10 @@ const DenyConfirmationModal = ({ visible, onClose, onConfirm, loading }) => {
 
 export default DenyConfirmationModal;
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDark) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : (isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)'),
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -93,8 +96,8 @@ const styles = StyleSheet.create({
     borderRadius: responsiveWidth(5.33), // ~20px
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#292929',
-    backgroundColor: '#191919',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
+    backgroundColor: isDark ? '#191919' : '#FFFFFF',
     width: responsiveWidth(88),
     paddingVertical: 32, 
     paddingHorizontal: 20,
@@ -109,7 +112,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     resizeMode: 'contain',
-    tintColor: '#FFFFFF',
+    tintColor: colors.text,
   },
   content: {
     alignItems: 'center',
@@ -118,14 +121,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 22,
-    color: '#FFFFFF',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 12,
   },
   message: {
     fontFamily: 'Rubik-Regular',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 24,
     paddingHorizontal: 10,
@@ -143,9 +146,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   denyButton: {
-    backgroundColor: '#FFA86B',
+    backgroundColor: colors.accent,
     borderWidth: 1.5,
-    borderColor: '#FF7819',
+    borderColor: colors.accentBorder,
   },
   denyText: {
     fontFamily: 'Rubik-SemiBold',
@@ -153,13 +156,13 @@ const styles = StyleSheet.create({
     color: '#1E1E1E',
   },
   keepButton: {
-    backgroundColor: '#191919',
+    backgroundColor: isDark ? '#191919' : '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#292929',
+    borderColor: isDark ? '#292929' : '#1E1E1E',
   },
   keepText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
   },
 });

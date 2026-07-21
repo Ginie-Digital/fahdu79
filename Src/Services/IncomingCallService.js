@@ -64,19 +64,48 @@ const makeUuid = () => {
   });
 };
 
+/** Unwrap FCM/PushKit nested payload JSON so roomId is never missed. */
+const unwrapIncomingPayload = raw => {
+  if (!raw) return {};
+  let data = raw;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (_) {
+      return {};
+    }
+  }
+  if (typeof data?.payload === 'string') {
+    try {
+      const inner = JSON.parse(data.payload);
+      data = { ...data, ...inner, content: inner?.content || data.content };
+    } catch (_) {}
+  } else if (data?.payload && typeof data.payload === 'object') {
+    data = { ...data, ...data.payload, content: data.payload.content || data.content };
+  }
+  if (typeof data?.content === 'string') {
+    try {
+      data = { ...data, content: JSON.parse(data.content) };
+    } catch (_) {}
+  }
+  return data;
+};
+
 const normalizeCall = payload => {
-  const content = payload?.content || payload?.data?.content || payload || {};
+  const data = unwrapIncomingPayload(payload);
+  const content = data?.content || data?.data?.content || data || {};
   return {
     // Prefer PushKit / payload uuid so onVoipNotificationCompleted matches AppDelegate handler.
     callUUID:
-      payload?.uuid ||
-      payload?.callUUID ||
+      data?.uuid ||
+      data?.callUUID ||
       content.callUUID ||
       content.callUuid ||
+      content.uuid ||
       makeUuid(),
-    callId: content.callId || content.call_id || '',
-    roomId: content.roomId || content.room_id || '',
-    callType: content.callType === 'video' ? 'video' : 'audio',
+    callId: content.callId || content.call_id || data.callId || '',
+    roomId: content.roomId || content.room_id || data.roomId || data.room_id || '',
+    callType: (content.callType || data.callType) === 'video' ? 'video' : 'audio',
     name: content.name || content.displayName || content.username || content.callerName || 'Incoming call',
     displayName: content.displayName || content.name || content.username || content.callerName || 'Incoming call',
     callerName: content.callerName || content.displayName || content.name || 'Incoming call',
@@ -357,14 +386,14 @@ const configure = async () => {
 /**
  * Show incoming call on iOS:
  * - Foreground: in-app IncomingCall + Notifee Accept/Decline
- * - Background/killed: CallKit + Notifee category (Decline foreground:false)
+ * - Background/killed: CallKit (native PushKit path) + Notifee if JS alive
  */
-const showIncomingCall = async (payload, { showNotifee = true } = {}) => {
+const showIncomingCall = async (payload, { showNotifee = true, skipCallKit = false } = {}) => {
   if (Platform.OS !== 'ios') return null;
 
   const call = normalizeCall(payload);
   if (!call.roomId) {
-    console.warn('[IncomingCallService] Ignoring incoming call without roomId');
+    console.warn('[IncomingCallService] Ignoring incoming call without roomId', payload);
     return null;
   }
 
@@ -393,7 +422,7 @@ const showIncomingCall = async (payload, { showNotifee = true } = {}) => {
     if (isActive) {
       console.log('📱 [IncomingCallService] Foreground — IncomingCall screen + Notifee actions');
       openIncomingCallScreen(flowPayload);
-    } else {
+    } else if (!skipCallKit) {
       console.log('📱 [IncomingCallService] Background — CallKit UI');
       await RNCallKeep.displayIncomingCall(
         call.callUUID,
@@ -402,6 +431,8 @@ const showIncomingCall = async (payload, { showNotifee = true } = {}) => {
         'generic',
         call.callType === 'video',
       );
+    } else {
+      console.log('📱 [IncomingCallService] CallKit already reported from native PushKit');
     }
   } catch (err) {
     console.warn('[IncomingCallService] showIncomingCall UI failed:', err?.message || err);
@@ -420,7 +451,13 @@ const registerVoipPushes = onToken => {
   const onNotification = async notification => {
     let call = null;
     try {
-      call = await showIncomingCall(notification, { showNotifee: true });
+      // Native VoipPushBridge already reported CallKit for PushKit wakes.
+      // Skip a second displayIncomingCall (same uuid) — just persist + Notifee.
+      const fromPushKit = !!(notification?.uuid || notification?.callUUID);
+      call = await showIncomingCall(notification, {
+        showNotifee: true,
+        skipCallKit: fromPushKit,
+      });
     } finally {
       try {
         const uuid =

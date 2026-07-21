@@ -433,6 +433,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     .addPerson(caller)
                     .setSound(
                         Uri.parse("android.resource://${appContext.packageName}/${R.raw.call}"),
+                        ringtoneAudioAttributes(),
                     )
                     // Post immediately — do not wait for large icon download / JS.
                     .setOnlyAlertOnce(alreadyRinging)

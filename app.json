@@ -24,8 +24,10 @@
       "softwareKeyboardLayoutMode": "pan"
     },
     "ios": {
-      "bundleIdentifier": "com.giniedigital.fahdu"
+      "bundleIdentifier": "com.giniedigital.fahdu",
+      "buildNumber": "83"
     },
+    "version": "23.16.0",
     "runtimeVersion": "1.0.0",
     "updates": {
       "enabled": true,

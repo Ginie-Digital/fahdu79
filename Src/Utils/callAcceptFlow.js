@@ -459,30 +459,34 @@ export const isIncomingCallStillActive = async callData => {
       pending.status === 'ACCEPTED' ||
       FLAKY_REMOTE_STATUSES.has(String(pending.status || '').toUpperCase()));
 
-  // Flaky remote while creator still waiting — open IncomingCall.
+  // Flaky remote: only open when we still have a live PENDING invite (BUG_05).
   if (remoteUpper && FLAKY_REMOTE_STATUSES.has(remoteUpper)) {
-    console.log('📱 [isIncomingCallStillActive] soft-open flaky remote:', remoteUpper);
-    return true;
+    if (localPendingAlive) {
+      console.log('📱 [isIncomingCallStillActive] soft-open flaky remote + pending:', remoteUpper);
+      return true;
+    }
+    console.log('📱 [isIncomingCallStillActive] flaky remote, no pending — stale');
+    return false;
   }
 
-  // Null/unknown remote: open when local PENDING or notif payload looks like a live invite.
+  // Null remote: open only with live pending (notif tap after kill still has PENDING stamp).
   if (!remoteUpper) {
-    if (localPendingAlive || callData.callId || callData.senderId || callData.callerId) {
-      console.log('📱 [isIncomingCallStillActive] soft-open null remote + pending/notif payload');
+    if (localPendingAlive) {
+      console.log('📱 [isIncomingCallStillActive] soft-open null remote + pending');
       return true;
     }
     console.log('📱 [isIncomingCallStillActive] null remote, no pending — stale-safe');
     return false;
   }
 
-  // Unknown non-terminal status — prefer open (notif tap) over false-negative.
+  // Unknown non-terminal status — open only with live pending (BUG_05).
   if (localPendingAlive) {
     console.log('📱 [isIncomingCallStillActive] soft-open unknown remote + pending:', remoteUpper);
     return true;
   }
 
-  console.log('📱 [isIncomingCallStillActive] soft-open unknown remote from notif tap:', remoteUpper);
-  return true;
+  console.log('📱 [isIncomingCallStillActive] unknown remote, no pending — not opening:', remoteUpper);
+  return false;
 };
 
 /**
@@ -690,25 +694,43 @@ export const openActiveCallScreen = callData => {
     callId: callData.callId,
   };
 
-  if (navigationRef.isReady()) {
+  const tryOpen = () => {
+    if (!navigationRef.isReady()) return false;
     try {
       const current = navigationRef.getCurrentRoute()?.name;
       // Replace IncomingCall — do NOT push on top (zombie polling + goBack kills CallScreen).
       if (current === 'incomingCall') {
         navigationRef.dispatch(StackActions.replace(screen, params));
-        return;
+        return true;
       }
       if (current === screen) {
         navigationRef.dispatch(StackActions.replace(screen, params));
-        return;
+        return true;
       }
       navigationRef.dispatch(StackActions.push(screen, params));
-      return;
+      return true;
     } catch (e) {
-      console.warn('[openActiveCallScreen] push failed, falling back to navigate:', e?.message || e);
+      console.warn('[openActiveCallScreen] push failed:', e?.message || e);
+      return false;
     }
-  }
-  navigate(screen, params);
+  };
+
+  if (tryOpen()) return;
+
+  // Cold start / Accept from killed app: nav often not ready yet — retry then navigate().
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts += 1;
+    if (tryOpen()) {
+      clearInterval(interval);
+      return;
+    }
+    if (attempts >= 50) {
+      clearInterval(interval);
+      console.log('⚠️ [openActiveCallScreen] Retry exhausted, using navigate()');
+      navigate(screen, params);
+    }
+  }, 100);
 };
 
 /**
@@ -810,11 +832,36 @@ export const dismissIncomingCallScreen = () => {
 
 /**
  * Accept from notification action: hit API once, then open the active call screen.
+ * BUG_04: do not fail solely on a single flaky UNAVAILABLE while creator still rings.
+ * BUG_10: only abort when remote is a hard-end status (REJECTED/ENDED/…).
+ *
+ * Important: open CallScreen FIRST (optimistic). Waiting on accept API before navigate
+ * made Accept feel dead — notif dismissed, app stayed on home (seen in 2.27 video).
  */
 export const acceptCallFromNotification = async (callData, { navigateNow = true } = {}) => {
   if (!callData?.roomId) {
     return { success: false, error: 'No roomId' };
   }
+
+  const { LoginPageErrors } = require('../Components/ErrorSnacks');
+
+  if (wasCallEndedRecently(callData) || wasRecentlyRejected(callData)) {
+    console.log('📱 [acceptCallFromNotification] Call already ended locally');
+    LoginPageErrors('Creator is no longer available');
+    await invalidateIncomingCall(callData, 'ENDED');
+    return { success: false, error: 'ENDED' };
+  }
+
+  const HARD_END = new Set([
+    'REJECTED',
+    'CANCELLED',
+    'CANCELED',
+    'COMPLETED',
+    'ENDED',
+    'MISSED',
+    'FORCE_CLOSED',
+    'LEAVE',
+  ]);
 
   const key = callGuardKey(callData);
   markCallAcceptedSync(callData);
@@ -840,6 +887,25 @@ export const acceptCallFromNotification = async (callData, { navigateNow = true 
     return { success: true, data: { inFlight: true } };
   }
 
+  // Optimistic join FIRST — do not wait on remote status / accept API before UI.
+  // Video 2.27: Accept dismissed notif but never opened CallScreen while API waited.
+  persistPendingCallSync(callData, { accepted: true, apiDone: false });
+  if (navigateNow) {
+    openActiveCallScreen(callData);
+  }
+
+  // After UI is up, abort only on hard-ended remote (BUG_10). Never on UNAVAILABLE (BUG_04).
+  try {
+    const remote = await fetchOtherParticipantStatus(callData.roomId);
+    const remoteUpper = remote ? String(remote).toUpperCase() : null;
+    if (remoteUpper && HARD_END.has(remoteUpper)) {
+      console.log('📱 [acceptCallFromNotification] Remote hard-ended after open:', remoteUpper);
+      LoginPageErrors('Creator is no longer available');
+      await invalidateIncomingCall(callData, remoteUpper);
+      return { success: false, error: remoteUpper };
+    }
+  } catch (_) {}
+
   if (key) acceptInFlightKeys.add(key);
   let result;
   try {
@@ -850,26 +916,38 @@ export const acceptCallFromNotification = async (callData, { navigateNow = true 
 
   if (result.success) {
     persistPendingCallSync(callData, { accepted: true, apiDone: true });
-  } else {
-    // Do NOT treat USER_OFFLINE as hard-fail here: backend presence is often wrong
-    // while the creator is still on the outgoing ringing screen. Join locally anyway;
-    // CallScreen/VideoCallScreen + polling will end the call if the creator is truly gone.
-    console.log(
-      '⚠️ [acceptCallFromNotification] API failed, still joining call screen:',
-      result.error,
-      result.data,
-    );
-    persistPendingCallSync(callData, { accepted: true, apiDone: false });
-  }
-
-  if (navigateNow) {
-    openActiveCallScreen(callData);
-    if (result.success) {
+    if (navigateNow) {
       await clearPendingCall();
     }
+    return result;
   }
 
-  return result.success ? result : { success: true, data: { deferred: true, error: result.error } };
+  // BUG_04 soft path: flaky UNAVAILABLE / USER_OFFLINE must keep the joined screen.
+  // BUG_10: only leave if remote is hard-ended.
+  let remote2 = null;
+  try {
+    await new Promise(r => setTimeout(r, 800));
+    remote2 = await fetchOtherParticipantStatus(callData.roomId);
+  } catch (_) {}
+  const remote2Upper = remote2 ? String(remote2).toUpperCase() : null;
+  if (remote2Upper && HARD_END.has(remote2Upper)) {
+    console.log(
+      '📱 [acceptCallFromNotification] Creator hard-ended after failed accept',
+      result.error,
+      remote2Upper,
+    );
+    LoginPageErrors('Creator is no longer available');
+    await invalidateIncomingCall(callData, remote2Upper);
+    return { success: false, error: result.error || 'CREATOR_GONE' };
+  }
+
+  console.log(
+    '⚠️ [acceptCallFromNotification] API failed, keeping soft-join (creator may still be ringing):',
+    result.error,
+    remote2Upper,
+  );
+  persistPendingCallSync(callData, { accepted: true, apiDone: false });
+  return { success: true, data: { deferred: true, error: result.error } };
 };
 
 /**

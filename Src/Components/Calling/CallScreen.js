@@ -17,7 +17,7 @@ import axios from 'axios';
 import { navigate } from '../../../Navigation/RootNavigation';
 import { setCallRejected, clearAcceptedRoomId, clearProcessedRoomId } from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
 import StreamEndedUserModal from '../../Screens/Stream/StreamEndedUserModal';
-import { toggleCallAccepted } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { toggleCallAccepted, toggleNewMessageRecieved } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import { LoginPageErrors } from '../ErrorSnacks';
 import NetworkQualityBadge from './NetworkQualityBadge';
 import { useKeepAwake } from '@sayem314/react-native-keep-awake';
@@ -357,6 +357,8 @@ const CallScreen = ({ route }) => {
 
     // Reset callAccepted to false BEFORE navigation
     dispatch(toggleCallAccepted({ status: false }));
+    // BUG_13: nudge ChatWindow to refetch completion status / attempt counts
+    dispatch(toggleNewMessageRecieved());
 
     if (!fromSocket) {
       const terminationStatus = getLocalCallTerminationStatus({callAccepted: callAcceptedRef.current});

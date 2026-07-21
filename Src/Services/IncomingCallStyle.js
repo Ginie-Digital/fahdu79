@@ -2,11 +2,9 @@ import { NativeModules, NativeEventEmitter, Platform, AppRegistry } from 'react-
 import {
   acceptCallFromNotification,
   declineCallFromNotification,
-  markCallAcceptedSync,
   markCallRejectedSync,
   openIncomingCallScreenIfActive,
   wasRecentlyRejected,
-  fetchOtherParticipantStatus,
   invalidateIncomingCall,
 } from '../Utils/callAcceptFlow';
 
@@ -102,28 +100,7 @@ async function handleStyleAction(payload) {
       await cancelAndroidCallStyleNotification(callData.roomId);
       return;
     }
-    // Soft remote check: never block on UNAVAILABLE / IDLE / DISCONNECTED.
-    const HARD_END = new Set([
-      'REJECTED',
-      'CANCELLED',
-      'CANCELED',
-      'COMPLETED',
-      'ENDED',
-      'MISSED',
-      'FORCE_CLOSED',
-      'LEAVE',
-    ]);
-    try {
-      const remote = await fetchOtherParticipantStatus(callData.roomId);
-      const remoteUpper = remote ? String(remote).toUpperCase() : null;
-      if (remoteUpper && HARD_END.has(remoteUpper)) {
-        await invalidateIncomingCall(callData, remoteUpper);
-        await cancelAndroidCallStyleNotification(callData.roomId);
-        return;
-      }
-    } catch (_) {}
-    // Do not block on wasCallEndedRecently alone — room TTL false-positives broke Accept.
-    markCallAcceptedSync(callData);
+    // acceptCallFromNotification handles BUG_04 soft path + BUG_10 creator-gone.
     await acceptCallFromNotification(callData, { navigateNow: true });
     await cancelAndroidCallStyleNotification(callData.roomId);
     return;

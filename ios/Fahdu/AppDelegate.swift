@@ -53,6 +53,9 @@ class AppDelegate: ExpoAppDelegate {
       RNBootSplash.initWithStoryboard("BootSplash", rootView: rootView)
     }
 
+    // 6. PushKit + CallKit ASAP — required so kill-mode VoIP shows Accept/Decline.
+    VoipPushBridge.setupEarly()
+
     return true
   }
 
@@ -70,6 +73,7 @@ class AppDelegate: ExpoAppDelegate {
     didUpdatePushCredentials pushCredentials: PKPushCredentials,
     forType type: PKPushType
   ) {
+    // Swift imports ObjC didUpdateCredentials:forType: as didUpdate(_:forType:)
     VoipPushBridge.didUpdate(pushCredentials, forType: type.rawValue)
   }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, AppState, Button, FlatList, Keyboard, KeyboardAvoidingView, Platform, StatusBar, StyleSheet, ToastAndroid, View } from 'react-native';
 import { useFocusEffect as useFocusEffectNav } from '@react-navigation/native';
 
 import { useGetInitialChatsQuery, useGetLatestChatQuery, useLazyGetInitialChatsQuery, useLazyGetLatestChatQuery, useLazyGetOldChatsQuery, useSetSeenToServerMutation } from '../../Redux/Slices/QuerySlices/roomListSliceApi';
@@ -207,40 +207,48 @@ const ChatWindow = ({ route, navigation }) => {
 
   console.log('RoooooomId', chatRoomId);
 
-  useEffect(() => {
-    async function fetchCallStatus() {
-      const { data, error } = await callTriesStatus({ token, roomId: chatRoomId });
-
+  // BUG_13: refresh call attempts + completion messages when returning to chat
+  // (focus after CallScreen, or AppState resume after backgrounding mid-call).
+  const refreshCallAndMessages = useCallback(async () => {
+    if (!token || !chatRoomId) return;
+    try {
+      const { data } = await callTriesStatus({ token, roomId: chatRoomId });
       console.log(data, '::OPPO');
-
       if (data?.success) {
-        const { hasCallRequest, callTries, availability, type, initiator } = data?.data;
-
+        const { hasCallRequest, callTries, availability, type, initiator } = data?.data || {};
         setDoRaisedRequest({ hasCallRequest, callTries, availability, type, initiator });
-
-        dispatch(toggleCallRequestModal({ show: true }));
+        if (hasCallRequest) {
+          dispatch(toggleCallRequestModal({ show: true }));
+        }
       }
-
-      // console.log(data, error, 'opopop');
-
-      // if (data) {
-      //   console.log('Data', data?.data?.initiator, currentUserId);
-
-      //   // LOG  Data {"data": {"callTries": 1, "initiatedAt": "2025-06-02T10:31:49.607Z", "initiator": "67fde0e702f40aeb67610439", "type": "VIDEO"}, "message": "Call request found", "statusCode": 200}
-      //   setCallTriesData(data?.data);
-
-      //   if (data?.data?.callTries > -1 && data?.data?.callTries < 3 && data?.data?.initiator !== currentUserId) {
-      //     dispatch(toggleCallRequestModal({show: true}));
-      //   }
-      // }
-
-      // if (error) {
-      //   console.log('Error', error);
-      // }
+    } catch (e) {
+      console.log('[ChatWindow] callTries refresh failed', e?.message || e);
     }
+    try {
+      fetchFreshLatestChats(token, chatRoomId);
+    } catch (e) {
+      console.log('[ChatWindow] messages refresh failed', e?.message || e);
+    }
+  }, [token, chatRoomId, callTriesStatus, dispatch]);
 
-    fetchCallStatus();
+  useEffect(() => {
+    refreshCallAndMessages();
   }, [token, chatRoomId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshCallAndMessages();
+    }, [refreshCallAndMessages]),
+  );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', next => {
+      if (next === 'active') {
+        refreshCallAndMessages();
+      }
+    });
+    return () => sub.remove();
+  }, [refreshCallAndMessages]);
 
 
   useFocusEffect(

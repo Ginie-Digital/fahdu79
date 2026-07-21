@@ -40,7 +40,6 @@ import {
   wasRecentlyRejected,
   clearPendingCall,
   acceptCallFromNotification,
-  markCallAcceptedSync,
   markCallRejectedSync,
   subscribeCallIntent,
   invalidateIncomingCall,
@@ -480,15 +479,6 @@ const IncomingCallScreen = ({ route, navigation }) => {
     clearSafetyTimer();
     if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
 
-    markCallAcceptedSync({
-      roomId,
-      callId,
-      callType: callType || 'audio',
-      displayName: name,
-      senderId: callerId,
-      profileImage: profileImageUrl,
-    });
-    
     // Clear dedup guard so future calls to same room aren't blocked
     if (callId) dispatch(clearProcessedRoomId(callId));
 
@@ -497,52 +487,34 @@ const IncomingCallScreen = ({ route, navigation }) => {
       ignoreAndroidSystemSettings: false,
     });
 
-    // Start fade out sequence from JS (redundant safeguard)
     triggerSuccessSequence();
 
     try {
-      const response = await callAcceptManual({
-        token,
-        data: {
-          roomId: roomId,
+      // Shared accept path: BUG_04 soft-join + BUG_10 creator-gone toast.
+      const result = await acceptCallFromNotification(
+        {
+          roomId,
+          callId,
           callType: callType || 'audio',
-          status: 'ACCEPTED',
+          displayName: name,
+          name,
+          senderId: callerId,
+          callerId,
+          profileImage: profileImageUrl,
+          profileImageUrl,
         },
-      });
+        { navigateNow: true },
+      );
 
-      const offlineMessage =
-        response?.data?.message ||
-        response?.error?.data?.message ||
-        response?.error?.error;
-
-      // USER_OFFLINE from accept/manual is frequently a false positive while the
-      // creator is still ringing. Still join; active call screen will exit if needed.
-      if (offlineMessage === 'USER_OFFLINE') {
-        console.log(
-          '⚠️ Accept API returned USER_OFFLINE — joining anyway (creator may still be ringing)',
-          response,
-        );
-      } else if (response?.error) {
-        console.log('⚠️ Accept API returned error (still joining):', response.error);
-      } else {
-        console.log('✅ Accept API succeeded');
+      if (!result?.success) {
+        if (navigation.canGoBack()) navigation.goBack();
       }
-
-      navigation.replace(callType === 'video' ? 'videoCallScreen' : 'callScreen', {
-        roomId: roomId,
-        name: name,
-        callType: callType || 'audio',
-        callerId: callerId,
-        profileImageUrl: profileImageUrl,
-        callAccepted: true,
-        callId,
-      });
     } catch (err) {
       console.error('❌ Accept API exception:', err);
       LoginPageErrors('Something went wrong');
       navigation.goBack();
     }
-  }, [token, roomId, name, callerId, profileImageUrl, callType, callId, markActed, stopRingtone, clearSafetyTimer, dispatch, triggerSuccessSequence, navigation]);
+  }, [roomId, name, callerId, profileImageUrl, callType, callId, markActed, stopRingtone, clearSafetyTimer, dispatch, triggerSuccessSequence, navigation]);
 
   const triggerAcceptJS = useCallback(() => {
     handleAccept();

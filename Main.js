@@ -28,8 +28,8 @@ import { chatRoomSuccess, LoginPageErrors, OnlineSnack } from './Src/Components/
 import { deleteCachedMessages } from './Redux/Slices/NormalSlices/MessageSlices/ThreadSlices';
 
 import { AppLog } from './Src/Utils/Logger';
-import RingtoneManager from './Src/Components/Calling/RingtoneManager';
 import { BASE_URL } from './Src/Configs/ApiConfig';
+import RingtoneManager from './Src/Components/Calling/RingtoneManager';
 import {
   acceptCallFromNotification,
   declineCallFromNotification,
@@ -139,11 +139,43 @@ const Main = () => {
     let cleanup;
     try {
       IncomingCallService.configure();
-      // Persist VoIP token for login (apnToken) so backend can send PushKit wakes.
-      cleanup = IncomingCallService.registerVoipPushes(voipToken => {
+      // Persist VoIP token + upload so backend can send PushKit wakes (not only FCM).
+      cleanup = IncomingCallService.registerVoipPushes(async voipToken => {
         if (!voipToken) return;
         console.log('[IncomingCallService] VoIP token registered', String(voipToken).slice(0, 12) + '...');
         dispatch(updateApnToken({ token: voipToken }));
+        try {
+          await AsyncStorage.setItem('fahdu_voip_token', String(voipToken));
+        } catch (_) {}
+
+        const authToken = tokenRef.current;
+        if (!authToken) {
+          console.log('[IncomingCallService] VoIP token saved locally — will upload after auth ready');
+          return;
+        }
+        try {
+          await axios.post(
+            `${BASE_URL}/api/notification/preserve/token`,
+            {
+              token: voipToken,
+              apnToken: voipToken,
+              type: 'voip',
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${authToken}`,
+              },
+              timeout: 10000,
+            },
+          );
+          console.log('✅ [IncomingCallService] VoIP/APNs token uploaded to backend');
+        } catch (err) {
+          console.warn(
+            '[IncomingCallService] VoIP token upload failed:',
+            err?.response?.data || err?.message || err,
+          );
+        }
       });
       ensureIncomingCallNotificationCategory().catch(() => {});
       console.log('[IncomingCallService] iOS incoming call service initialized');
@@ -155,6 +187,40 @@ const Main = () => {
       if (cleanup) cleanup();
     };
   }, [dispatch]);
+
+  // Re-upload VoIP token once user auth token is available (register may fire before login).
+  useEffect(() => {
+    if (Platform.OS !== 'ios' || !token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const voipToken =
+          (await AsyncStorage.getItem('fahdu_voip_token')) || undefined;
+        if (!voipToken || cancelled) return;
+        await axios.post(
+          `${BASE_URL}/api/notification/preserve/token`,
+          {
+            token: voipToken,
+            apnToken: voipToken,
+            type: 'voip',
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            timeout: 10000,
+          },
+        );
+        console.log('✅ [IncomingCallService] VoIP token re-uploaded after auth');
+      } catch (err) {
+        console.warn('[IncomingCallService] VoIP re-upload skipped:', err?.message || err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // Settle any stuck calls on cold start (handles force-quit scenarios)
   const hasSettledRef = useRef(false);
@@ -502,29 +568,47 @@ const Main = () => {
     };
 
     if (Platform.OS === 'ios') {
-      console.log('📱 [Main:IncomingCall] iOS via IncomingCallService (CallKit + Notifee actions)');
-      IncomingCallService.showIncomingCall(callData, { showNotifee: true }).catch(err => {
+      const isFg = AppState.currentState === 'active';
+      console.log(
+        '📱 [Main:IncomingCall] iOS',
+        isFg ? 'FG → IncomingCall only' : 'BG → CallKit/Notifee',
+      );
+      // BUG_11: foreground = in-app screen only (no duplicate notification).
+      IncomingCallService.showIncomingCall(callData, { showNotifee: !isFg }).catch(err => {
         console.warn('[Main:IncomingCall] IncomingCallService failed:', err?.message || err);
         openIncomingCallScreen(callData);
-        showIncomingCallNotification(notifPayload).catch(() => {});
+        if (!isFg) {
+          showIncomingCallNotification(notifPayload).catch(() => {});
+        }
       });
       return;
     }
 
-    // Android: wait for Accept/Reject notification first, then open IncomingCall UI.
+    // Android
+    const isFg = AppState.currentState === 'active';
+    if (isFg) {
+      // BUG_11 / BUG_03: FG → IncomingCall screen + ringtone only (no Accept/Reject shade).
+      console.log('📱 [Main:IncomingCall] Android FG → IncomingCall screen only');
+      try {
+        const RingtoneManager = require('./Src/Components/Calling/RingtoneManager').default;
+        RingtoneManager.playIncoming().catch(() => {});
+      } catch (_) {}
+      try {
+        openIncomingCallScreen(callData);
+      } catch (e) {
+        console.error(`❌ [Main:IncomingCall] Navigation error from ${source}:`, e);
+      }
+      return;
+    }
+
+    // BG / kill: Accept/Reject notification only — do NOT auto-open IncomingCall (opens on tap).
+    console.log('📱 [Main:IncomingCall] Android BG → Accept/Reject notification only');
     showIncomingCallNotification(notifPayload)
       .then(shown => {
         console.log(`🚀 [Main:IncomingCall] Accept/Reject notif shown=${shown} from ${source}`);
       })
       .catch(err => {
         console.warn('[Main:IncomingCall] showIncomingCallNotification failed:', err?.message || err);
-      })
-      .finally(() => {
-        try {
-          openIncomingCallScreen(callData);
-        } catch (e) {
-          console.error(`❌ [Main:IncomingCall] Navigation error from ${source}:`, e);
-        }
       });
   }, [dispatch]);
 

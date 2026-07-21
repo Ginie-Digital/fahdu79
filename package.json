@@ -1,6 +1,6 @@
 {
   "name": "Fahdu",
-  "version": "0.0.1",
+  "version": "23.16.0",
   "private": true,
   "scripts": {
     "android": "expo run:android",

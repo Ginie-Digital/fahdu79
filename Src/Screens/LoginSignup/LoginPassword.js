@@ -170,7 +170,7 @@ const LoginPassword = ({ route }) => {
             { 
               email: route?.params?.email?.trim(), 
               password: password.trim(), 
-              apnToken: getApnToken?.apnToken 
+              apnToken: getApnToken?.apnToken || (await AsyncStorage.getItem('fahdu_voip_token')) || undefined, 
             },
             {
               headers: {

@@ -733,6 +733,7 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
       ios: {
         categoryId: INCOMING_CALL_CATEGORY_ID,
         sound: 'default',
+        interruptionLevel: 'timeSensitive',
         foregroundPresentationOptions: {
           badge: true,
           sound: true,

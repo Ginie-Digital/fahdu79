@@ -22,7 +22,7 @@ import StreamEndedUserModal from '../../Screens/Stream/StreamEndedUserModal';
 import CallingStatusText from './CallingStatusText';
 import CallingTip from './CallingTip';
 import {updateWallet} from '../../../Redux/Slices/NormalSlices/Wallet/WalletSlice';
-import {setLatestTip, toggleCallAccepted, toggleCallTipModal} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import {setLatestTip, toggleCallAccepted, toggleCallTipModal, toggleNewMessageRecieved} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {clearAcceptedRoomId, clearProcessedRoomId} from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
 import {LoginPageErrors} from '../ErrorSnacks';
 import Feather from 'react-native-vector-icons/Feather';
@@ -438,6 +438,8 @@ const VideoCallScreen = ({route}) => {
 
     // Reset callAccepted to false BEFORE navigation
     dispatch(toggleCallAccepted({status: false}));
+    // BUG_13: nudge ChatWindow to refetch completion status / attempt counts
+    dispatch(toggleNewMessageRecieved());
 
     if (!fromSocket) {
       const terminationStatus = getLocalCallTerminationStatus({callAccepted: callAcceptedRef.current});

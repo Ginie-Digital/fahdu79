@@ -4,10 +4,13 @@ import { responsiveWidth, responsiveHeight } from "react-native-responsive-dimen
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
 import OtherProfilePostCard from "../NewOtherProfileComponents/OtherProfilePostCard";
+import { useAppTheme } from "../../Hook/useAppTheme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SinglePost = ({ route }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = getStyles(colors, isDark);
   const allPosts = useSelector((state) => state.profileFeedCache.data.content);
   const token = useSelector(state => state.auth.user.token);
   const targetIndex = route?.params?.scrollIndex || 0;
@@ -117,19 +120,19 @@ const SinglePost = ({ route }) => {
 
 export default memo(SinglePost);
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   separator: {
     height: responsiveWidth(1),
-    backgroundColor: '#EEEEEE',
+    backgroundColor: isDark ? colors.separator : '#EEEEEE',
   },
 });

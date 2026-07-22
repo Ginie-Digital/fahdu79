@@ -231,24 +231,32 @@ const ChatWindow = ({ route, navigation }) => {
     }
   }, [token, chatRoomId, callTriesStatus, dispatch]);
 
+  // Backend may write CALL_DETAILS a beat after /leave — refresh again shortly.
+  const refreshCallAndMessagesWithRetry = useCallback(() => {
+    refreshCallAndMessages();
+    setTimeout(() => {
+      refreshCallAndMessages();
+    }, 1500);
+  }, [refreshCallAndMessages]);
+
   useEffect(() => {
     refreshCallAndMessages();
   }, [token, chatRoomId]);
 
   useFocusEffect(
     useCallback(() => {
-      refreshCallAndMessages();
-    }, [refreshCallAndMessages]),
+      refreshCallAndMessagesWithRetry();
+    }, [refreshCallAndMessagesWithRetry]),
   );
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', next => {
       if (next === 'active') {
-        refreshCallAndMessages();
+        refreshCallAndMessagesWithRetry();
       }
     });
     return () => sub.remove();
-  }, [refreshCallAndMessages]);
+  }, [refreshCallAndMessagesWithRetry]);
 
 
   useFocusEffect(

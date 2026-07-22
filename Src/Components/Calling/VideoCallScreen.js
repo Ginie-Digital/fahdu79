@@ -415,25 +415,35 @@ const VideoCallScreen = ({route}) => {
     // 🔒 Use ref for SYNCHRONOUS guard - state is async/batched and allows double calls
     if (isCallEndedRef.current) {
       console.log(`⛔ [VideoCallScreen] handleLogout BLOCKED - call already ended (ref guard) [room=${route?.params?.roomId}, fromSocket=${fromSocket}]`);
+      // Still try to leave UI if stuck
+      if (isMounted.current && !hasNavigatedAwayRef.current) {
+        hasNavigatedAwayRef.current = true;
+        if (navigation.canGoBack()) navigation.goBack();
+        else navigate('home');
+      }
       return;
     }
     setEndTriggerSource(prev => {
       if (prev && prev !== 'LOCAL') return prev;
       return fromSocket ? 'SOCKET/FCM' : 'USER';
     });
-    console.log(`🔴 [VideoCallScreen:handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
-    console.log(`🔴 [VideoCallScreen:handleLogout] timeoutIdRef.current = ${timeoutIdRef.current}`);
+    // Snapshot BEFORE Redux reset — BG resume can leave callAccepted false while
+    // ZEGO is still connected; End must still POST /leave for CALL_DETAILS + attempts.
+    const wasCallAccepted =
+      !!callAcceptedRef.current ||
+      !!callAccepted ||
+      !!route?.params?.callAccepted ||
+      !!isOtherUserInRoom;
+    console.log(
+      `🔴 [VideoCallScreen:handleLogout] ENTERED room=${route?.params?.roomId} fromSocket=${fromSocket} wasAccepted=${wasCallAccepted}`,
+    );
     isCallEndedRef.current = true;
     setIsEndingCall(true);
     stopAndUnloadRingtone();
     if (timeoutIdRef.current) {
-      console.log(`🔴 [VideoCallScreen:handleLogout] CLEARING timeout ID ${timeoutIdRef.current}`);
       clearTimeout(timeoutIdRef.current);
       timeoutIdRef.current = null;
-    } else {
-      console.log(`🔴 [VideoCallScreen:handleLogout] ⚠️ NO timeout to clear!`);
     }
-    console.log(`Logging out from call_${route?.params?.roomId}`);
     isEngineActive.current = false;
 
     try {
@@ -446,23 +456,28 @@ const VideoCallScreen = ({route}) => {
       console.log('⚠️ ZEGO cleanup failed or engine already destroyed:', error.message);
     }
 
-    // Reset callAccepted to false BEFORE navigation
-    dispatch(toggleCallAccepted({status: false}));
-    // BUG_13: nudge ChatWindow to refetch completion status / attempt counts
-    dispatch(toggleNewMessageRecieved());
-
+    // BUG_13: complete hangup API before navigate so chat gets Call Completed + attempts.
     if (!fromSocket) {
-      const terminationStatus = getLocalCallTerminationStatus({callAccepted: callAcceptedRef.current});
-      if (terminationStatus === 'LEAVE') {
-        await leaveCallHandler();
-        console.log('Leaving call (call was accepted)...');
-      } else {
-        await rejectCallHandler();
-        console.log('Rejecting call (not accepted yet)...');
+      const terminationStatus = getLocalCallTerminationStatus({callAccepted: wasCallAccepted});
+      try {
+        await Promise.race([
+          terminationStatus === 'LEAVE' ? leaveCallHandler() : rejectCallHandler(),
+          new Promise(resolve => setTimeout(resolve, 5000)),
+        ]);
+        console.log(`✅ [VideoCallScreen:handleLogout] hangup API done status=${terminationStatus}`);
+      } catch (err) {
+        console.log('⚠️ hangup API timed out/failed:', err?.message || err);
       }
     }
 
-    // 🔒 Only navigate once
+    dispatch(toggleCallAccepted({status: false}));
+    dispatch(toggleNewMessageRecieved());
+    setTimeout(() => {
+      try {
+        dispatch(toggleNewMessageRecieved());
+      } catch (_) {}
+    }, 1200);
+
     if (isMounted.current && !hasNavigatedAwayRef.current) {
       hasNavigatedAwayRef.current = true;
       if (navigation.canGoBack()) {

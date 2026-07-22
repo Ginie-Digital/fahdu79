@@ -373,12 +373,18 @@ const CallScreen = ({ route }) => {
       if (prev && prev !== 'LOCAL') return prev;
       return fromSocket ? 'SOCKET/FCM' : 'USER';
     });
-    console.log(`🔴 [handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
+    // Snapshot BEFORE any Redux reset / navigate — after BG resume callAccepted
+    // can flicker false; we must still POST /leave so chat gets CALL_DETAILS + attempts.
+    const wasCallAccepted =
+      !!callAcceptedRef.current ||
+      !!callAccepted ||
+      !!route?.params?.callAccepted ||
+      !!isOtherUserInRoom;
+    console.log(
+      `🔴 [handleLogout] ENTERED room=${route?.params?.roomId} fromSocket=${fromSocket} wasAccepted=${wasCallAccepted}`,
+    );
     isCallEndedRef.current = true;
     setIsEndingCall(true);
-
-    // Leave UI first — never wait on network/ZEGO.
-    leaveCallUi();
 
     stopAndUnloadRingtone();
     if (timeoutIdRef.current) {
@@ -399,25 +405,33 @@ const CallScreen = ({ route }) => {
       console.log('⚠️ ZEGO already destroyed or instance failed:', error.message);
     }
 
-    dispatch(toggleCallAccepted({ status: false }));
-    dispatch(toggleNewMessageRecieved());
-
+    // BUG_13: hangup API MUST complete before unmount — navigating first cancelled
+    // /leave and left chat without Call Completed + callTries stuck at 0.
     if (!fromSocket) {
-      const runApi = async () => {
-        const terminationStatus = getLocalCallTerminationStatus({
-          callAccepted: callAcceptedRef.current,
-        });
-        if (terminationStatus === 'LEAVE') {
-          await leaveCallHandler();
-        } else {
-          await rejectCallHandler();
-        }
-      };
-      Promise.race([
-        runApi(),
-        new Promise(resolve => setTimeout(resolve, 5000)),
-      ]).catch(err => console.log('⚠️ hangup API timed out/failed:', err?.message || err));
+      const terminationStatus = getLocalCallTerminationStatus({
+        callAccepted: wasCallAccepted,
+      });
+      try {
+        await Promise.race([
+          terminationStatus === 'LEAVE' ? leaveCallHandler() : rejectCallHandler(),
+          new Promise(resolve => setTimeout(resolve, 5000)),
+        ]);
+        console.log(`✅ [handleLogout] hangup API done status=${terminationStatus}`);
+      } catch (err) {
+        console.log('⚠️ hangup API timed out/failed:', err?.message || err);
+      }
     }
+
+    dispatch(toggleCallAccepted({ status: false }));
+    // Nudge ChatWindow now + shortly after so CALL_DETAILS / callTries land.
+    dispatch(toggleNewMessageRecieved());
+    setTimeout(() => {
+      try {
+        dispatch(toggleNewMessageRecieved());
+      } catch (_) {}
+    }, 1200);
+
+    leaveCallUi();
   };
 
   // 🔥 Keep callAcceptedRef in sync with Redux state

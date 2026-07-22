@@ -127,22 +127,27 @@ object IncomingCallNativeHandler {
                     Log.i(TAG, "displayFromContext retry=$ok")
                 }
 
-                // If user is truly in-app, also nudge JS to open IncomingCall (does NOT cancel shade here).
-                if (IncomingCallStyleModule.isMainActivityResumed()) {
-                    Log.i(TAG, "Activity resumed — also emit FG IncomingCall open room=${info.roomId}")
-                    val extras =
-                        Bundle().apply {
-                            putString(IncomingCallStyleModule.EXTRA_ROOM_ID, info.roomId)
-                            putString(IncomingCallStyleModule.EXTRA_CALL_ID, info.callId)
-                            putString(IncomingCallStyleModule.EXTRA_CALL_TYPE, info.callType)
-                            putString(IncomingCallStyleModule.EXTRA_DISPLAY_NAME, info.displayName)
-                            putString(IncomingCallStyleModule.EXTRA_SENDER_ID, info.senderId)
-                            putString(IncomingCallStyleModule.EXTRA_PROFILE_IMAGE, info.profileImage)
-                            putString(IncomingCallStyleModule.EXTRA_ACTION, "foreground_incoming_call")
-                            putString("action", "foreground_incoming_call")
-                        }
-                    IncomingCallStyleModule.emitAction("foreground_incoming_call", extras)
-                }
+                // Always nudge JS to open IncomingCall (FG + minimized process).
+                // Does NOT cancel CallStyle — screen and notification must both stay.
+                Log.i(TAG, "Emit IncomingCall open room=${info.roomId} resumed=${IncomingCallStyleModule.isMainActivityResumed()}")
+                val extras =
+                    Bundle().apply {
+                        putString(IncomingCallStyleModule.EXTRA_ROOM_ID, info.roomId)
+                        putString(IncomingCallStyleModule.EXTRA_CALL_ID, info.callId)
+                        putString(IncomingCallStyleModule.EXTRA_CALL_TYPE, info.callType)
+                        putString(IncomingCallStyleModule.EXTRA_DISPLAY_NAME, info.displayName)
+                        putString(IncomingCallStyleModule.EXTRA_SENDER_ID, info.senderId)
+                        putString(IncomingCallStyleModule.EXTRA_PROFILE_IMAGE, info.profileImage)
+                        putString(IncomingCallStyleModule.EXTRA_ACTION, "foreground_incoming_call")
+                        putString("action", "foreground_incoming_call")
+                    }
+                // Persist so cold-start / React-not-ready still opens IncomingCall on resume.
+                IncomingCallStyleModule.savePendingAction(
+                    app,
+                    "foreground_incoming_call",
+                    extras,
+                )
+                IncomingCallStyleModule.emitAction("foreground_incoming_call", extras)
 
                 // false → FahduFCM calls super so JS can still show a fallback.
                 return ok

@@ -5,6 +5,7 @@ import {
   markCallRejectedSync,
   wasRecentlyRejected,
   wasRecentlyAccepted,
+  wasCallEndedRecently,
   invalidateIncomingCall,
   claimNotificationAction,
 } from '../Utils/callAcceptFlow';
@@ -188,30 +189,33 @@ async function handleStyleAction(payload) {
     return;
   }
 
-  // Phone in use: full IncomingCall screen — do NOT kill CallStyle/ring before screen opens.
+  // Phone in use: IncomingCall screen + keep CallStyle notification visible.
   if (action === 'foreground_incoming_call') {
-    console.log('📱 [IncomingCallStyle] FG in-use → IncomingCall screen (keep ring)', callData.roomId);
-    if (callData.callId && wasRecentlyRejected(callData)) {
-      return;
-    }
+    console.log('📱 [IncomingCallStyle] FG in-use → IncomingCall + keep CallStyle', callData.roomId);
+    const {
+      prepareIncomingCall,
+      openIncomingCallScreen,
+      clearEndedCallStampForIncoming,
+    } = require('../Utils/callAcceptFlow');
+    // Clear stale reject/ended stamps BEFORE gating — otherwise a prior end blocked UI.
+    clearEndedCallStampForIncoming(callData);
+    prepareIncomingCall(callData);
     if (wasRecentlyAccepted(callData)) {
       await acceptCallFromNotification(callData, { navigateNow: true });
       return;
     }
+    // Only skip if still rejected+ended AFTER prepare (true dead same callId).
+    if (callData.callId && wasRecentlyRejected(callData) && wasCallEndedRecently(callData)) {
+      return;
+    }
     try {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
-      // Keep existing native ring; only drop shade (IncomingCall owns UI).
+      // Keep existing native ring; do NOT dismiss CallStyle shade.
       if (RingtoneManager.isNativePlaying()) {
         RingtoneManager.adoptNativeIncoming();
       }
-      await dismissAndroidCallStyleShade(callData.roomId);
     } catch (_) {}
-    const {
-      prepareIncomingCall,
-      openIncomingCallScreen,
-    } = require('../Utils/callAcceptFlow');
     const { navigationRef } = require('../../Navigation/RootNavigation');
-    prepareIncomingCall(callData);
     openIncomingCallScreen(callData);
     try {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;

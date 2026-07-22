@@ -575,27 +575,33 @@ const Main = () => {
     console.log(`📞 [Main:IncomingCall] AppState: ${AppState.currentState}`);
     console.log(`📞 [Main:IncomingCall] Current Processed IDs: ${JSON.stringify(processedRoomIdsRef.current)}`);
 
-    // Only block the SAME call session (callId). Never block the next call in the same room.
-    if (callId && (wasRecentlyAccepted(callData) || wasRecentlyRejected(callData))) {
-      console.log(`🚨 [Main:IncomingCall] BLOCKED: already accepted/rejected callId ${callId}`);
+    // MUST prepare first — clears stale reject/ended stamps that otherwise blocked
+    // ALL CallStyle + IncomingCall UI for a reused/new ring.
+    prepareIncomingCall(callData);
+
+    // After prepare: only skip if THIS invite was already accepted (join CallScreen).
+    if (callId && wasRecentlyAccepted(callData)) {
+      console.log(`🚨 [Main:IncomingCall] already accepted callId ${callId} → CallScreen`);
       console.log(`==========================================\n`);
+      openActiveCallScreen(callData);
       return;
     }
 
+    // Truly dead same session (prepare did not clear) — do not re-ring.
     const pendingNow = getPendingCallSync();
-    const sameCallSession =
+    const sameDeadSession =
+      !!callId &&
+      wasRecentlyRejected(callData) &&
+      wasCallEndedRecently(callData) &&
       !!pendingNow?.roomId &&
       String(pendingNow.roomId) === String(roomId) &&
-      !!callId &&
       !!pendingNow.callId &&
-      String(pendingNow.callId) === String(callId);
-    if (
-      sameCallSession &&
-      (pendingNow.status === 'ACCEPTED' ||
-        pendingNow.callAccepted ||
-        pendingNow.status === 'REJECTED')
-    ) {
-      console.log(`🚨 [Main:IncomingCall] BLOCKED: pending already ${pendingNow.status} for same callId`);
+      String(pendingNow.callId) === String(callId) &&
+      ['REJECTED', 'ENDED', 'CANCELLED', 'CANCELED', 'MISSED', 'COMPLETED'].includes(
+        String(pendingNow.status || '').toUpperCase(),
+      );
+    if (sameDeadSession) {
+      console.log(`🚨 [Main:IncomingCall] BLOCKED: same callId already ended`);
       console.log(`==========================================\n`);
       return;
     }
@@ -615,7 +621,27 @@ const Main = () => {
 
     // Dedup: if we already handled this callId for BG notif, still upgrade to IncomingCall when FG.
     if (alreadyProcessed && !isFg) {
-      console.log(`🚨 [Main:IncomingCall] BLOCKED: Duplicate BG event from ${source} for callId ${callId}`);
+      // Still refresh CallStyle — never leave user with zero UI after a race.
+      console.log(`⚠️ [Main:IncomingCall] Duplicate BG event — refresh CallStyle only (${source})`);
+      try {
+        RingtoneManager.clearIncomingSuppress();
+      } catch (_) {}
+      showIncomingCallNotification(
+        {
+          roomId,
+          callType: callData?.callType || 'audio',
+          senderId: callData?.callerId || callData?.senderId,
+          callerId: callData?.callerId || callData?.senderId,
+          displayName: callData?.name || callData?.displayName,
+          name: callData?.name || callData?.displayName,
+          profileImage:
+            callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
+          profileImageUrl:
+            callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
+          callId,
+        },
+        { force: true, playRingtone: true },
+      ).catch(() => {});
       console.log(`==========================================\n`);
       return;
     }
@@ -643,9 +669,6 @@ const Main = () => {
     }
 
     console.log(`✅ [Main:IncomingCall] ALLOWED: Processing incoming call from ${source}`);
-
-    // Reset stale Accept/Reject guards for this chat so IncomingCall always shows.
-    prepareIncomingCall(callData);
 
     const notifPayload = {
       roomId,
@@ -695,85 +718,78 @@ const Main = () => {
       Platform.OS === 'android'
         ? isAndroidActivityResumed()
         : AppState.currentState === 'active';
-    if (appVisible) {
-      console.log(
-        '📱 [Main:IncomingCall] Android FG → IncomingCall screen (keep CallStyle until screen opens)',
-        source,
-        notifPayload.callType,
-      );
-      try {
-        RingtoneManager.clearIncomingSuppress();
-      } catch (_) {}
 
-      // NEVER stopRingtoneAndDismiss here — FCM often posts CallStyle first; killing it
-      // caused intermittent "no notification / no ring" when Activity looked resumed.
-      try {
-        RingtoneManager.adoptNativeIncoming();
-      } catch (_) {}
-      try {
-        // Drop shade only after we own the ring; do not silence audio.
-        cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
-      } catch (_) {}
-
-      prepareIncomingCall(callData);
-      openIncomingCallScreen(callData);
-      setTimeout(() => {
-        RingtoneManager.ensureIncoming().catch(() => {});
-      }, 300);
-
-      const ensureIncomingVisible = () => {
-        try {
-          if (!navigationRef.isReady()) return false;
-          const route = navigationRef.getCurrentRoute()?.name;
-          return (
-            route === 'incomingCall' ||
-            route === 'callScreen' ||
-            route === 'videoCallScreen'
-          );
-        } catch (_) {
-          return false;
-        }
-      };
-
-      setTimeout(() => {
-        if (!ensureIncomingVisible()) {
-          console.log('📱 [Main:IncomingCall] FG retry IncomingCall screen');
-          openIncomingCallScreen(callData);
-          RingtoneManager.ensureIncoming().catch(() => {});
-        }
-      }, 500);
-      setTimeout(() => {
-        if (!ensureIncomingVisible()) {
-          console.log('📱 [Main:IncomingCall] FG retry #2 IncomingCall screen');
-          openIncomingCallScreen(callData);
-          RingtoneManager.ensureIncoming().catch(() => {});
-        }
-      }, 1200);
-      setTimeout(() => {
-        if (!ensureIncomingVisible()) {
-          console.log('📱 [Main:IncomingCall] FG final retry IncomingCall screen');
-          openIncomingCallScreen(callData);
-          RingtoneManager.ensureIncoming().catch(() => {});
-        }
-      }, 2500);
-      return;
-    }
-
-    // Android BG/kill: ONE CallStyle (Decline + Answer only) + ring — audio & video.
-    console.log(
-      '📱 [Main:IncomingCall] Android BG → CallStyle notification',
-      notifPayload.callType,
-    );
+    // Android FG + BG: ALWAYS show CallStyle (Decline/Answer). Never cancel it when
+    // opening IncomingCall — previous cancel race left users with neither UI.
     try {
       RingtoneManager.clearIncomingSuppress();
     } catch (_) {}
-    showIncomingCallNotification(notifPayload, { force: true, playRingtone: true })
+    showIncomingCallNotification(notifPayload, {
+      force: true,
+      playRingtone: true,
+    })
       .then(shown => {
-        console.log(`🚀 [Main:IncomingCall] CallStyle shown=${shown} type=${notifPayload.callType} from ${source}`);
+        console.log(
+          `🚀 [Main:IncomingCall] CallStyle shown=${shown} type=${notifPayload.callType} fg=${appVisible} from ${source}`,
+        );
       })
       .catch(err => {
         console.warn('[Main:IncomingCall] showIncomingCallNotification failed:', err?.message || err);
       });
+
+    // Always open IncomingCall when JS is alive (FG or minimized).
+    // BG/kill full-screen intent / body tap also open it; stacking is deduped by route.
+    console.log(
+      '📱 [Main:IncomingCall] Android → IncomingCall screen + CallStyle',
+      appVisible ? 'FG' : 'BG/minimized',
+      source,
+      notifPayload.callType,
+    );
+    try {
+      RingtoneManager.adoptNativeIncoming();
+    } catch (_) {}
+
+    prepareIncomingCall(callData);
+    openIncomingCallScreen(callData);
+    setTimeout(() => {
+      RingtoneManager.ensureIncoming().catch(() => {});
+    }, 300);
+
+    const ensureIncomingVisible = () => {
+      try {
+        if (!navigationRef.isReady()) return false;
+        const route = navigationRef.getCurrentRoute()?.name;
+        return (
+          route === 'incomingCall' ||
+          route === 'callScreen' ||
+          route === 'videoCallScreen'
+        );
+      } catch (_) {
+        return false;
+      }
+    };
+
+    setTimeout(() => {
+      if (!ensureIncomingVisible()) {
+        console.log('📱 [Main:IncomingCall] retry IncomingCall screen');
+        openIncomingCallScreen(callData);
+        RingtoneManager.ensureIncoming().catch(() => {});
+      }
+    }, 500);
+    setTimeout(() => {
+      if (!ensureIncomingVisible()) {
+        console.log('📱 [Main:IncomingCall] retry #2 IncomingCall screen');
+        openIncomingCallScreen(callData);
+        RingtoneManager.ensureIncoming().catch(() => {});
+      }
+    }, 1200);
+    setTimeout(() => {
+      if (!ensureIncomingVisible()) {
+        console.log('📱 [Main:IncomingCall] final retry IncomingCall screen');
+        openIncomingCallScreen(callData);
+        RingtoneManager.ensureIncoming().catch(() => {});
+      }
+    }, 2500);
   }, [dispatch]);
 
   const handleIncomingCallRef = useRef(handleIncomingCall);
@@ -1780,7 +1796,10 @@ const Main = () => {
         await showMentionNotification(remoteNotificationData);
       } else if (remoteNotificationData?.type === 'subscription') {
         await showSubscriptionNotification(remoteNotificationData);
-      } else if (remoteNotificationData?.type === 'call') {
+      } else if (
+        remoteNotificationData?.type === 'call' ||
+        remoteNotificationData?.type === 'incoming_call'
+      ) {
         const callContent = remoteNotificationData?.content || remoteNotificationData;
         console.log('📱 [Main:FCM] Incoming call', callContent?.roomId || callContent?.room_id, callContent?.callId);
         // Pass full FCM payload so string/nested content normalizes correctly.

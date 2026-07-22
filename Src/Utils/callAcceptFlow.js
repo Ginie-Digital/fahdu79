@@ -674,18 +674,30 @@ export const prepareIncomingCall = callData => {
   if (!callData?.roomId) return;
 
   const existing = getPendingCallSync();
-  const sameEndedSession =
-    existing?.roomId &&
-    String(existing.roomId) === String(callData.roomId) &&
-    callData.callId &&
-    existing.callId &&
+  const sameCallId =
+    !!callData.callId &&
+    !!existing?.callId &&
     String(existing.callId) === String(callData.callId) &&
-    (isTerminalCallStatus(existing.status) || wasCallEndedRecently(callData));
+    !!existing?.roomId &&
+    String(existing.roomId) === String(callData.roomId);
 
-  // Only skip the exact same ended callId — never block a new ring in the room.
-  if (sameEndedSession || (wasCallEndedRecently(callData) && callData.callId && wasRecentlyRejected(callData))) {
-    console.log('📱 [prepareIncomingCall] skip — same call session already ended');
-    return;
+  // Tiny debounce only — duplicate FCM within 2s of a hard end. Never block a real
+  // re-dial that reuses callId (that used to leave users with zero UI forever).
+  const endedVeryRecently =
+    sameCallId &&
+    wasCallEndedRecently(callData) &&
+    wasRecentlyRejected(callData) &&
+    isTerminalCallStatus(existing?.status);
+  if (endedVeryRecently) {
+    try {
+      const raw = mmkv.getString(ENDED_CALLS_KEY);
+      const map = raw ? JSON.parse(raw) : {};
+      const ts = map[`call:${callData.callId}`] || map[`room:${callData.roomId}`] || 0;
+      if (ts && Date.now() - ts < 2000) {
+        console.log('📱 [prepareIncomingCall] skip — duplicate end within 2s');
+        return;
+      }
+    } catch (_) {}
   }
 
   launchCallHandled = false;
@@ -705,24 +717,19 @@ export const prepareIncomingCall = callData => {
   }
   clearEndedCallStampForIncoming(callData);
 
-  // Clear ended history for a *new* callId (not the same ended session).
-  const isNewCallSession =
-    !!callData.callId &&
-    (!existing?.callId || String(existing.callId) !== String(callData.callId));
-  if (isNewCallSession || !callData.callId) {
-    try {
-      const raw = mmkv.getString(ENDED_CALLS_KEY);
-      if (raw) {
-        const map = JSON.parse(raw);
-        // Keep stamp for this exact callId; clear room key only when new session.
-        if (isNewCallSession) {
-          delete map[`room:${callData.roomId}`];
-        }
-        mmkv.set(ENDED_CALLS_KEY, JSON.stringify(map));
-      }
-    } catch (_) {}
-  }
+  // Clear ended history for this room / call so CallStyle always posts.
+  try {
+    const raw = mmkv.getString(ENDED_CALLS_KEY);
+    if (raw) {
+      const map = JSON.parse(raw);
+      delete map[`room:${callData.roomId}`];
+      if (callData.callId) delete map[`call:${callData.callId}`];
+      mmkv.set(ENDED_CALLS_KEY, JSON.stringify(map));
+    }
+  } catch (_) {}
 
+  // Reset pending to PENDING so Accept/Reject gates and AppState resume don't treat
+  // a fresh ring as already REJECTED/ENDED.
   persistPendingCallSync(callData, {});
 };
 

@@ -33,17 +33,14 @@ class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
                     return
                 }
                 // Incoming CallStyle posted — skip FCM text tray (wrong Accept/Reject UI).
-                // If Activity is resumed, still deliver to JS so IncomingCall opens.
-                if (IncomingCallStyleModule.isMainActivityResumed()) {
-                    Log.i(TAG, "CallStyle posted + Activity resumed — also deliver to JS")
-                    try {
-                        super.handleIntent(intent)
-                    } catch (e: Exception) {
-                        Log.w(TAG, "super.handleIntent FG after CallStyle failed: ${e.message}")
-                    }
-                    return
+                // ALWAYS deliver to JS when process can receive it (FG + BG/minimized).
+                // JS must open IncomingCall and must NOT cancel CallStyle.
+                Log.i(TAG, "CallStyle posted — deliver to JS for IncomingCall (skip FCM tray)")
+                try {
+                    super.handleIntent(intent)
+                } catch (e: Exception) {
+                    Log.w(TAG, "super.handleIntent after CallStyle failed: ${e.message}")
                 }
-                Log.i(TAG, "Call FCM → CallStyle only — skip FCM system tray")
                 return
             }
             // Not handled: parse miss, display failed, or non-call.

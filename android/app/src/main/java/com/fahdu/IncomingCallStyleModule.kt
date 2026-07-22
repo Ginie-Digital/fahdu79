@@ -614,14 +614,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                         android.util.Log.i(NAME, "Skip CallStyle — same callId suppressed callId=$callId")
                         return false
                     }
-                    if (isMainActivityResumed()) {
-                        android.util.Log.i(NAME, "Skip CallStyle — MainActivity resumed room=$roomId")
-                        return false
-                    }
-                    if (inAppIncomingUi) {
-                        android.util.Log.i(NAME, "Skip CallStyle — in-app IncomingCall UI room=$roomId")
-                        return false
-                    }
+                    // Never skip CallStyle just because Activity is resumed or IncomingCall
+                    // is open — FG must keep the Declined/Answer shade visible too.
                     if (callId.isNotEmpty() && wasCallEndedRecently(appContext, roomId, callId)) {
                         android.util.Log.i(NAME, "Skip display — same callId recently ended callId=$callId")
                         return false
@@ -639,12 +633,21 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                 val alreadyRinging =
                     activeRoomId == roomId && isRingtonePlaying()
 
-                // Do NOT wipe pending Accept/Decline when refreshing an already-showing call.
+                // Keep pending Accept / body-tap / foreground_open for THIS room.
+                // Only drop pending when a different room's invite arrives.
                 if (!alreadyRinging) {
-                    appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                        .edit()
-                        .remove(PREF_PENDING_ACTION)
-                        .apply()
+                    try {
+                        val prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                        val raw = prefs.getString(PREF_PENDING_ACTION, null)
+                        if (raw != null) {
+                            val pendingRoom =
+                                org.json.JSONObject(raw).optString(EXTRA_ROOM_ID, "")
+                            if (pendingRoom.isNotEmpty() && pendingRoom != roomId) {
+                                prefs.edit().remove(PREF_PENDING_ACTION).apply()
+                            }
+                        }
+                    } catch (_: Exception) {
+                    }
                 }
 
                 // Persist ringing call so cold-start JS can recover after kill-mode Accept.
@@ -666,6 +669,15 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                 }
 
                 ensureChannel(appContext)
+
+                val nm =
+                    appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !nm.areNotificationsEnabled()) {
+                    android.util.Log.e(
+                        NAME,
+                        "Notifications DISABLED at app level — CallStyle may be invisible room=$roomId",
+                    )
+                }
 
                 // Bake auth into PendingIntent — Decline/Answer must hit API without JS.
                 val authForExtras = IncomingCallApi.readAuthToken(appContext)
@@ -790,8 +802,6 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                         )
                 }
 
-                val nm =
-                    appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 // Never cancel+re-post the same id on first show — OEMs drop heads-up.
                 // Only clear legacy 3-button ids; refresh uses notify() + setOnlyAlertOnce.
                 try {

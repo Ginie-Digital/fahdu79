@@ -358,11 +358,10 @@ const IncomingCallScreen = ({ route, navigation }) => {
     }
   }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
 
-  // BUG_11: while IncomingCall is open in FG, drop shade (do NOT stop ringtone —
-  // notif tap must keep the same MediaPlayer continuous).
+  // Keep CallStyle notification while IncomingCall is open (FG + BG full-screen).
+  // Only mark in-app UI so Accept/Reject from either surface stay in sync.
   useEffect(() => {
     if (!roomId) return;
-    cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
     try {
       const { setAndroidInAppIncomingUi } = require('../../Services/IncomingCallStyle');
       setAndroidInAppIncomingUi(true);
@@ -394,9 +393,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
         // active + inactive both count as in-app (shade pull is inactive).
         if (AppState.currentState === 'background') return;
         handedOff = false;
-        if (roomId) {
-          cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
-        }
+        // Keep CallStyle notification visible while ringing in FG.
         // ensureIncoming: adopt native if already playing (notif tap) — never start a 2nd tone.
         await RingtoneManager.ensureIncoming();
       } catch (error) {

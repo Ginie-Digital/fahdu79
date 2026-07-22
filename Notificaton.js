@@ -667,12 +667,11 @@ function normalizeIncomingCallDetails(raw) {
 }
 
 /**
- * Incoming call shade for BG / kill (audio + video).
+ * Incoming call shade for BG / kill / foreground (audio + video).
  *
  * Android:
- *   BG → ONE CallStyle notification (circular Decline + Answer only).
- *   FG → skipped (IncomingCall screen owns Accept/Reject).
- *   Notifee only if CallStyle fails.
+ *   ALWAYS show CallStyle (circular Decline + Answer) — FG and BG.
+ *   IncomingCall full screen opens separately when the app is visible.
  * iOS: Notifee / CallKit category.
  */
 export async function showIncomingCallNotification(callDetails, options = {}) {
@@ -686,24 +685,15 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
     return false;
   }
 
-  // FG: only skip shade when Activity is truly resumed (not FCM wake AppState=active).
-  if (!options.force) {
-    let isFg = AppState.currentState === 'active';
-    if (Platform.OS === 'android') {
-      try {
-        const { NativeModules } = require('react-native');
-        if (typeof NativeModules.IncomingCallStyle?.isMainActivityResumedSync === 'function') {
-          isFg = !!NativeModules.IncomingCallStyle.isMainActivityResumedSync();
-        }
-      } catch (_) {}
-    }
-    if (isFg) {
-      console.log(
-        '📱 [showIncomingCallNotification] skip — app foreground (IncomingCall screen handles it)',
-        details.roomId,
-      );
-      return false;
-    }
+  // Android: always allow CallStyle (FG + BG). IncomingCall screen and notification
+  // must both be visible — never skip shade just because the Activity is resumed.
+  // iOS still skips duplicate Notifee when app is active unless force=true.
+  if (!options.force && Platform.OS === 'ios' && AppState.currentState === 'active') {
+    console.log(
+      '📱 [showIncomingCallNotification] skip — iOS foreground (IncomingCall screen handles it)',
+      details.roomId,
+    );
+    return false;
   }
 
   try {

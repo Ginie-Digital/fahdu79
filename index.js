@@ -94,7 +94,10 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
       if (!osAlreadyDisplayed) {
         await showSubscriptionNotification(remoteNotificationData);
       }
-    } else if (remoteNotificationData?.type === 'call') {
+    } else if (
+      remoteNotificationData?.type === 'call' ||
+      remoteNotificationData?.type === 'incoming_call'
+    ) {
       if (isProcessingAndroidCall && Platform.OS === 'android') {
         console.log('⚠️ [index:FCM:Background] Already processing Android call, skipping duplicate');
         return;
@@ -109,6 +112,7 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
         const callDetails = remoteNotificationData?.content || remoteNotificationData;
         console.log(
           '📱 [index:FCM:Background] Incoming call',
+          remoteNotificationData?.type,
           callDetails?.roomId || callDetails?.room_id,
           callDetails?.callId,
         );
@@ -132,29 +136,34 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
         }
 
         // Persist PENDING after UI so Accept/Reject never waits on storage.
-        const existingPending = getPendingCallSync();
-        const sameCallSession =
-          existingPending?.roomId &&
-          existingPending.roomId === callDetails?.roomId &&
-          (!callDetails?.callId ||
-            !existingPending.callId ||
-            existingPending.callId === callDetails?.callId);
-        const alreadyResolved =
-          sameCallSession &&
-          (existingPending.status === 'ACCEPTED' ||
-            existingPending.status === 'REJECTED' ||
-            existingPending.callAccepted);
+        // Always prepare — clears stale REJECTED/ENDED so tap/open is not blocked.
+        prepareIncomingCall({
+          roomId: callDetails?.roomId || callDetails?.room_id,
+          callerName: callDetails?.displayName || callDetails?.name,
+          displayName: callDetails?.displayName || callDetails?.name,
+          callType: callDetails?.callType || 'audio',
+          senderId: callDetails?.senderId || callDetails?.callerId,
+          profileImage: callDetails?.profileImage || callDetails?.profileImageUrl,
+          callId: callDetails?.callId,
+        });
 
-        if (!alreadyResolved) {
-          prepareIncomingCall({
-            roomId: callDetails?.roomId || callDetails?.room_id,
-            callerName: callDetails?.displayName,
-            displayName: callDetails?.displayName,
-            callType: callDetails?.callType || 'audio',
-            senderId: callDetails?.senderId,
-            profileImage: callDetails?.profileImage,
-            callId: callDetails?.callId,
-          });
+        // Minimized process: also open IncomingCall when navigation can run.
+        if (Platform.OS === 'android') {
+          try {
+            const { openIncomingCallScreen } = require('./Src/Utils/callAcceptFlow');
+            openIncomingCallScreen({
+              roomId: callDetails?.roomId || callDetails?.room_id,
+              callId: callDetails?.callId,
+              callType: callDetails?.callType || 'audio',
+              displayName: callDetails?.displayName || callDetails?.name,
+              name: callDetails?.displayName || callDetails?.name,
+              senderId: callDetails?.senderId || callDetails?.callerId,
+              callerId: callDetails?.senderId || callDetails?.callerId,
+              profileImage: callDetails?.profileImage || callDetails?.profileImageUrl,
+            });
+          } catch (e) {
+            console.warn('📱 [index:FCM:Background] openIncomingCallScreen failed:', e?.message || e);
+          }
         }
       } finally {
         if (Platform.OS === 'android') {

@@ -1003,7 +1003,7 @@ export const openIncomingCallScreen = rawCallData => {
     callId: callData?.callId,
   };
 
-  console.log('📱 [openIncomingCallScreen] → incomingCall', params.roomId);
+  console.log('📱 [openIncomingCallScreen] → incomingCall (any screen)', params.roomId);
 
   const tryOpen = () => {
     if (!navigationRef.isReady()) return false;
@@ -1024,24 +1024,46 @@ export const openIncomingCallScreen = rawCallData => {
       ) {
         return true;
       }
-      // navigate via RootNavigation — handles ready wait + call-screen auth bypass.
+      // FORCE on top of ANY screen (home / chat / profile / discover / etc.).
+      // push > navigate — nested tabs sometimes swallow plain navigate().
       if (current === 'incomingCall') {
         navigationRef.dispatch(StackActions.replace('incomingCall', params));
       } else {
-        navigate('incomingCall', params);
+        navigationRef.dispatch(StackActions.push('incomingCall', params));
       }
-      console.log('📱 [openIncomingCallScreen] navigated, route=', navigationRef.getCurrentRoute()?.name);
+      console.log(
+        '📱 [openIncomingCallScreen] pushed over',
+        current,
+        '→',
+        navigationRef.getCurrentRoute()?.name,
+      );
       return true;
     } catch (e) {
-      console.warn('[openIncomingCallScreen] navigate failed:', e?.message || e);
-      return false;
+      console.warn('[openIncomingCallScreen] push failed, fallback navigate:', e?.message || e);
+      try {
+        navigate('incomingCall', params);
+        return true;
+      } catch (e2) {
+        console.warn('[openIncomingCallScreen] navigate failed:', e2?.message || e2);
+        return false;
+      }
     }
   };
 
   // Longer retry — cold start after notification tap often needs >10s for nav+auth.
   return scheduleNavRetry(
     tryOpen,
-    () => navigate('incomingCall', params),
+    () => {
+      try {
+        if (navigationRef.isReady()) {
+          navigationRef.dispatch(StackActions.push('incomingCall', params));
+        } else {
+          navigate('incomingCall', params);
+        }
+      } catch (_) {
+        navigate('incomingCall', params);
+      }
+    },
     'openIncomingCallScreen',
     150,
   );

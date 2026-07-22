@@ -78,19 +78,38 @@ object IncomingCallNativeHandler {
                     Log.w(TAG, "call missing roomId")
                     return false
                 }
-                // ONLY skip when MainActivity is actually visible.
-                // Do NOT use isAppInForeground() — FCM wakes a killed process as
-                // IMPORTANCE_FOREGROUND, which falsely skipped CallStyle and left
-                // no Accept/Reject UI when the user had closed the app.
+                // Phone IN USE (MainActivity visible): NO CallStyle Accept/Reject banner.
+                // Open full-screen IncomingCall via JS only.
                 if (IncomingCallStyleModule.isMainActivityResumed()) {
-                    Log.i(TAG, "SKIP CallStyle — MainActivity resumed, defer to JS room=${info.roomId}")
+                    Log.i(
+                        TAG,
+                        "FG in-use — skip CallStyle, open IncomingCall screen room=${info.roomId}",
+                    )
+                    // Kill any stale shade from a prior BG ring.
+                    IncomingCallStyleModule.stopRingtoneAndDismiss(app, info.roomId)
+                    IncomingCallStyleModule.setInAppIncomingUi(true)
+                    val extras =
+                        Bundle().apply {
+                            putString(IncomingCallStyleModule.EXTRA_ROOM_ID, info.roomId)
+                            putString(IncomingCallStyleModule.EXTRA_CALL_ID, info.callId)
+                            putString(IncomingCallStyleModule.EXTRA_CALL_TYPE, info.callType)
+                            putString(IncomingCallStyleModule.EXTRA_DISPLAY_NAME, info.displayName)
+                            putString(IncomingCallStyleModule.EXTRA_SENDER_ID, info.senderId)
+                            putString(IncomingCallStyleModule.EXTRA_PROFILE_IMAGE, info.profileImage)
+                            putString(IncomingCallStyleModule.EXTRA_ACTION, "foreground_incoming_call")
+                            putString("action", "foreground_incoming_call")
+                        }
+                    IncomingCallStyleModule.emitAction("foreground_incoming_call", extras)
+                    // false → FahduFCM calls super so JS onMessage also opens IncomingCall.
                     return false
                 }
-                // BG / killed / Home — ALWAYS CallStyle. Never fall through to FCM
-                // system tray (blue Reject/Accept text) — that was the wrong shade.
+                // BG / killed / Home — CallStyle circular Decline/Answer + ring.
                 IncomingCallStyleModule.setInAppIncomingUi(false)
                 IncomingCallStyleModule.clearRingtoneSuppress()
-                Log.i(TAG, "SHOW CallStyle Decline/Answer + RING room=${info.roomId} callId=${info.callId}")
+                Log.i(
+                    TAG,
+                    "SHOW CallStyle Decline/Answer + RING room=${info.roomId} callId=${info.callId}",
+                )
                 val ok = IncomingCallStyleModule.displayFromContext(
                     app,
                     roomId = info.roomId,
@@ -103,8 +122,6 @@ object IncomingCallNativeHandler {
                     playRingtone = true,
                 )
                 Log.i(TAG, "displayFromContext result=$ok")
-                // Return true even if notify failed — calling super shows the WRONG
-                // FCM/Notifee-style banner (text Reject/Accept). Retry once.
                 if (!ok) {
                     Log.w(TAG, "CallStyle failed — retry once")
                     IncomingCallStyleModule.displayFromContext(

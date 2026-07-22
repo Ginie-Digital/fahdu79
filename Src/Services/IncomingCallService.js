@@ -416,11 +416,12 @@ const showIncomingCall = async (payload, { showNotifee = true, skipCallKit = fal
   await configure();
   persistLocal(call);
 
-  const isActive = AppState.currentState === 'active';
+  const isActive =
+    AppState.currentState === 'active' || AppState.currentState === 'inactive';
 
   try {
     if (isActive) {
-      console.log('📱 [IncomingCallService] Foreground — IncomingCall screen + Notifee actions');
+      console.log('📱 [IncomingCallService] Foreground (any screen) — IncomingCall screen');
       openIncomingCallScreen(flowPayload);
     } else if (!skipCallKit) {
       console.log('📱 [IncomingCallService] Background — CallKit UI');

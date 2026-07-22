@@ -655,6 +655,11 @@ const Main = () => {
         '📱 [Main:IncomingCall] iOS',
         isFg ? 'FG → IncomingCall only' : 'BG → CallKit/Notifee',
       );
+      // App open on ANY screen → IncomingCall must open immediately.
+      if (isFg) {
+        prepareIncomingCall(callData);
+        openIncomingCallScreen(callData);
+      }
       // BUG_11: foreground = in-app screen only (no duplicate notification).
       IncomingCallService.showIncomingCall(callData, { showNotifee: !isFg }).catch(err => {
         console.warn('[Main:IncomingCall] IncomingCallService failed:', err?.message || err);
@@ -666,22 +671,23 @@ const Main = () => {
       return;
     }
 
-    // Android FG: in-app IncomingCall (Accept/Reject) + ringtone — audio & video.
-    // No CallStyle shade while using the app (avoids double UI).
-    const appVisible = AppState.currentState === 'active' || AppState.currentState === 'inactive';
-    const openInAppUi = source === 'SOCKET' || source === 'FCM' || appVisible;
-
-    if (openInAppUi && AppState.currentState !== 'background') {
+    // Android phone-in-use (any screen): FULL IncomingCall only — NO Accept/Reject notification.
+    const appVisible = AppState.currentState !== 'background';
+    if (appVisible) {
       console.log(
-        '📱 [Main:IncomingCall] Android FG → IncomingCall + ringtone',
+        '📱 [Main:IncomingCall] Android FG in-use → IncomingCall screen ONLY (no CallStyle)',
         source,
         notifPayload.callType,
       );
       try {
         RingtoneManager.clearIncomingSuppress();
       } catch (_) {}
+      // Immediately kill any CallStyle/heads-up — user wants full screen, not banner.
       try {
-        const { setAndroidInAppIncomingUi, stopAndroidRingtoneAndDismiss } = require('./Src/Services/IncomingCallStyle');
+        const {
+          setAndroidInAppIncomingUi,
+          stopAndroidRingtoneAndDismiss,
+        } = require('./Src/Services/IncomingCallStyle');
         setAndroidInAppIncomingUi(true);
         stopAndroidRingtoneAndDismiss(roomId).catch(() => {});
       } catch (_) {}
@@ -693,19 +699,43 @@ const Main = () => {
       openIncomingCallScreen(callData);
       setTimeout(() => {
         RingtoneManager.playIncoming().catch(() => {});
-      }, 350);
-      setTimeout(() => {
+      }, 300);
+
+      const ensureIncomingVisible = () => {
         try {
-          if (navigationRef.isReady()) {
-            const route = navigationRef.getCurrentRoute()?.name;
-            if (route !== 'incomingCall' && route !== 'callScreen' && route !== 'videoCallScreen') {
-              console.log('📱 [Main:IncomingCall] FG retry open IncomingCall');
-              openIncomingCallScreen(callData);
-              RingtoneManager.playIncoming().catch(() => {});
-            }
-          }
-        } catch (_) {}
-      }, 1000);
+          if (!navigationRef.isReady()) return false;
+          const route = navigationRef.getCurrentRoute()?.name;
+          return (
+            route === 'incomingCall' ||
+            route === 'callScreen' ||
+            route === 'videoCallScreen'
+          );
+        } catch (_) {
+          return false;
+        }
+      };
+
+      setTimeout(() => {
+        if (!ensureIncomingVisible()) {
+          console.log('📱 [Main:IncomingCall] FG retry IncomingCall screen');
+          openIncomingCallScreen(callData);
+          RingtoneManager.playIncoming().catch(() => {});
+        }
+      }, 500);
+      setTimeout(() => {
+        if (!ensureIncomingVisible()) {
+          console.log('📱 [Main:IncomingCall] FG retry #2 IncomingCall screen');
+          openIncomingCallScreen(callData);
+          RingtoneManager.playIncoming().catch(() => {});
+        }
+      }, 1200);
+      setTimeout(() => {
+        if (!ensureIncomingVisible()) {
+          console.log('📱 [Main:IncomingCall] FG final retry IncomingCall screen');
+          openIncomingCallScreen(callData);
+          RingtoneManager.playIncoming().catch(() => {});
+        }
+      }, 2500);
       return;
     }
 

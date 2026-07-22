@@ -152,14 +152,17 @@ async function handleStyleAction(payload) {
     return;
   }
 
-  // Dedup — but Accept/Decline must NOT soft-fail if a prior claim raced headless.
-  // Body taps still dedupe; Accept/Decline always try to complete the action.
+  // Dedup — but Accept/Decline/FG-open must NOT soft-fail if a prior claim raced.
+  // Body taps still dedupe; critical actions always try to complete.
   const claimKey =
     action === 'open_incoming_call' || action === 'default' ? 'body_tap' : action || 'style';
-  const isAcceptOrDecline = action === 'accept_call' || action === 'decline_call';
-  if (!isAcceptOrDecline && !claimNotificationAction(claimKey, callData)) return;
-  if (isAcceptOrDecline) {
-    // Soft claim for logging only — never return early on Accept/Decline.
+  const isCriticalAction =
+    action === 'accept_call' ||
+    action === 'decline_call' ||
+    action === 'foreground_incoming_call';
+  if (!isCriticalAction && !claimNotificationAction(claimKey, callData)) return;
+  if (isCriticalAction) {
+    // Soft claim for logging only — never return early on Accept/Decline/FG open.
     claimNotificationAction(claimKey, callData);
   }
 
@@ -182,6 +185,57 @@ async function handleStyleAction(payload) {
     } catch (_) {}
     // Always navigate to CallScreen on Answer button (FG + BG + kill).
     await acceptCallFromNotification(callData, { navigateNow: true });
+    return;
+  }
+
+  // Phone in use: full IncomingCall screen only — never leave CallStyle banner up.
+  if (action === 'foreground_incoming_call') {
+    console.log('📱 [IncomingCallStyle] FG in-use → IncomingCall screen (no notif)', callData.roomId);
+    if (callData.callId && wasRecentlyRejected(callData)) {
+      return;
+    }
+    if (wasRecentlyAccepted(callData)) {
+      await acceptCallFromNotification(callData, { navigateNow: true });
+      return;
+    }
+    try {
+      setAndroidInAppIncomingUi(true);
+      await stopAndroidRingtoneAndDismiss(callData.roomId);
+    } catch (_) {}
+    const {
+      prepareIncomingCall,
+      openIncomingCallScreen,
+    } = require('../Utils/callAcceptFlow');
+    const { navigationRef } = require('../../Navigation/RootNavigation');
+    prepareIncomingCall(callData);
+    openIncomingCallScreen(callData);
+    try {
+      const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
+      RingtoneManager.clearIncomingSuppress();
+      setTimeout(() => {
+        RingtoneManager.playIncoming().catch(() => {});
+      }, 300);
+    } catch (_) {}
+    setTimeout(() => {
+      try {
+        if (navigationRef.isReady()) {
+          const route = navigationRef.getCurrentRoute()?.name;
+          if (route !== 'incomingCall' && route !== 'callScreen' && route !== 'videoCallScreen') {
+            openIncomingCallScreen(callData);
+          }
+        }
+      } catch (_) {}
+    }, 700);
+    setTimeout(() => {
+      try {
+        if (navigationRef.isReady()) {
+          const route = navigationRef.getCurrentRoute()?.name;
+          if (route !== 'incomingCall' && route !== 'callScreen' && route !== 'videoCallScreen') {
+            openIncomingCallScreen(callData);
+          }
+        }
+      } catch (_) {}
+    }, 1800);
     return;
   }
 

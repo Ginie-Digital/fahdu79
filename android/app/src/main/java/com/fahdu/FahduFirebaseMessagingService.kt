@@ -6,11 +6,8 @@ import com.google.firebase.messaging.RemoteMessage
 import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService
 
 /**
- * Kill / background: show CallStyle (circular Decline/Answer) BEFORE JS boots.
- *
- * Never call [super.handleIntent] for call payloads — that posts the wrong
- * FCM system tray banner (text Reject/Accept), which is what users were seeing
- * instead of CallStyle.
+ * BG/kill: show CallStyle (circular Decline/Answer) — skip FCM text tray.
+ * FG (phone in use): skip CallStyle; deliver to JS so IncomingCall full screen opens.
  */
 class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
 
@@ -23,12 +20,20 @@ class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
             val extras = intent.extras
             val handled = IncomingCallNativeHandler.handleIfCall(applicationContext, extras)
             if (handled) {
+                // BG/kill: CallStyle owns UI — never show FCM text Reject/Accept tray.
                 Log.i(TAG, "Call FCM → CallStyle only — skip FCM system tray")
                 return
             }
-            // Even if parse returned false, block super when payload looks like a call
-            // so the blue text Reject/Accept FCM banner never appears.
+            // handleIfCall=false means either not a call, OR FG skip (MainActivity resumed).
+            // FG MUST call super so JS onMessage opens IncomingCall + ringtone.
+            // Previously looksLikeIncomingCall blocked super on FG too → no CallStyle,
+            // no IncomingCall screen, only vibration — the "call ball screen missing" bug.
             if (looksLikeIncomingCall(extras)) {
+                if (IncomingCallStyleModule.isMainActivityResumed()) {
+                    Log.i(TAG, "FG call FCM — deliver to JS for IncomingCall screen")
+                    super.handleIntent(intent)
+                    return
+                }
                 Log.w(TAG, "Call-like FCM but parse missed — skip super to avoid wrong shade")
                 IncomingCallNativeHandler.onIntentExtras(applicationContext, extras)
                 return
@@ -36,6 +41,16 @@ class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
         } catch (e: Exception) {
             Log.w(TAG, "handleIntent call path failed: ${e.message}")
             if (looksLikeIncomingCall(intent.extras)) {
+                // FG: still try to deliver to JS so IncomingCall can open.
+                if (IncomingCallStyleModule.isMainActivityResumed()) {
+                    Log.w(TAG, "Call-like FCM after error (FG) — deliver to JS")
+                    try {
+                        super.handleIntent(intent)
+                    } catch (e2: Exception) {
+                        Log.w(TAG, "super.handleIntent failed: ${e2.message}")
+                    }
+                    return
+                }
                 Log.w(TAG, "Call-like FCM after error — skip super")
                 return
             }

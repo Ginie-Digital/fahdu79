@@ -16,16 +16,18 @@ const PACK_COLORS = [
   { bg: '#FEE2E2', circle: '#FDC4C4', badgeBorder: '#FDBFBF' }, // Fanatix - Rose
 ];
 
-const BADGE_IMAGES = [
-  require('../../Assets/Images/Badges/Bronze.png'),
-  require('../../Assets/Images/Badges/Silver.png'),
-  require('../../Assets/Images/Badges/Gold.png'),
-  require('../../Assets/Images/Badges/Platinum.png'),
-  require('../../Assets/Images/Badges/Diamond.png'),
-  require('../../Assets/Images/Badges/Elite.png'),
-  require('../../Assets/Images/Badges/Royal.png'),
-  require('../../Assets/Images/Badges/Legend.png'),
-];
+// Badge mapping by pack name (lowercase)
+const BADGE_MAP = {
+  'fuski pack': require('../../Assets/Images/Badges/Fahdu.png'),
+  'faltu pack': require('../../Assets/Images/Badges/Bronze.png'),
+  'farzi pack': require('../../Assets/Images/Badges/Silver.png'),
+  'fukrey pack': require('../../Assets/Images/Badges/Gold.png'),
+  'funtoosh pack': require('../../Assets/Images/Badges/Platinum.png'),
+  'fahdu pack': require('../../Assets/Images/Badges/Diamond.png'),
+  'fantom pack': require('../../Assets/Images/Badges/Elite.png'),
+  'fataka pack': require('../../Assets/Images/Badges/Royal.png'),
+  'fanatix pack': require('../../Assets/Images/Badges/Legend.png'),
+};
 
 const CircleDecoration = ({ color }) => (
   <View style={styles.circleContainer} pointerEvents="none">
@@ -51,8 +53,8 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
   const isCurrentLoading = packId != null && packId === currentButton;
 
   const colorConfig = PACK_COLORS[index % PACK_COLORS.length] || PACK_COLORS[0];
-  const rawCost = Platform.OS === 'android' ? item?.amount : item?.cost;
-  const cost = Number(rawCost || item?.cost || item?.amount || 0).toLocaleString('en-IN');
+  const rawCost = item?.cost;
+  const cost = Number(rawCost || item?.amount || 0).toLocaleString('en-IN');
 
 
   return (
@@ -72,7 +74,7 @@ const PackageBox = ({item, index, isLastItem, handler, offerText}) => {
         { borderColor: colorConfig.badgeBorder }
       ]}>
         <Image
-          source={BADGE_IMAGES[index % BADGE_IMAGES.length]}
+          source={BADGE_MAP[item?.name?.toLowerCase()] || require('../../Assets/Images/Badges/Bronze.png')}
           style={styles.badgeIcon}
         />
       </View>

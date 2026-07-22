@@ -20,6 +20,7 @@ import { chatRoomSuccess } from '../ErrorSnacks';
 
 // Badge image mapping
 const BADGE_IMAGES = {
+  FAHDU: require('../../../Assets/Images/Badges/Fahdu.png'),
   DIAMOND: require('../../../Assets/Images/Badges/Diamond.png'),
   PLATINUM: require('../../../Assets/Images/Badges/Platinum.png'),
   BRONZE: require('../../../Assets/Images/Badges/Bronze.png'),

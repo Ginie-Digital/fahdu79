@@ -132,8 +132,8 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
     <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
   ), []);
 
-  // Snap points - Android needs more space to account for system navigation bar
-  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '60%' : '75%'], []);
+  // Snap points - Compact height to eliminate empty bottom spacing
+  const snapPoints = useMemo(() => [Platform.OS === 'ios' ? '58%' : '68%'], []);
 
   return (
     <BottomSheetModal
@@ -185,8 +185,8 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
         <View style={[
           styles.footer, 
           {
-            paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : Math.max(insets.bottom, 16),
-            paddingTop: 16,
+            paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 8) : Math.max(insets.bottom, 12),
+            paddingTop: 8,
           }, 
           {
             backgroundColor: isDark ? '#121212' : '#fffef9',
@@ -216,7 +216,7 @@ const VerificationInformation = ({agreeModal, setAgreeModal}) => {
             </Animated.Text>
           </View>
 
-          <View style={{marginTop: 16, width: '100%'}}>
+          <View style={{marginTop: 8, marginBottom: 0, width: '100%'}}>
             <AnimatedButton
               title="I Agree"
               isDark={isDark}
@@ -238,20 +238,20 @@ const styles = StyleSheet.create({
   },
   indicator: {backgroundColor: '#1e1e1e', width: 40},
   headerContainer: {
-    paddingHorizontal: Platform.OS === 'ios' ? 24 : 32,
-    paddingTop: Platform.OS === 'ios' ? 16 : 24,
-    paddingBottom: Platform.OS === 'ios' ? 4 : 8,
+    paddingHorizontal: Platform.OS === 'ios' ? 24 : 24,
+    paddingTop: Platform.OS === 'ios' ? 16 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 4 : 6,
     borderBottomWidth: 0,
   },
   scrollContent: {
-    paddingHorizontal: Platform.OS === 'ios' ? 24 : 32, 
-    paddingTop: Platform.OS === 'ios' ? 4 : 8, 
-    paddingBottom: Platform.OS === 'ios' ? 8 : 16,
+    paddingHorizontal: Platform.OS === 'ios' ? 24 : 24, 
+    paddingTop: Platform.OS === 'ios' ? 4 : 6, 
+    paddingBottom: Platform.OS === 'ios' ? 8 : 12,
   },
   headerText: {
     fontFamily: 'Rubik-Bold',
-    fontSize: Platform.OS === 'ios' ? 22 : 28,
-    lineHeight: Platform.OS === 'ios' ? 22 : 28,
+    fontSize: Platform.OS === 'ios' ? 22 : 22,
+    lineHeight: Platform.OS === 'ios' ? 22 : 24,
     color: '#1e1e1e',
   },
   closeIcon: {
@@ -260,38 +260,38 @@ const styles = StyleSheet.create({
   subHeaderText: {
     fontFamily: 'Rubik-Regular',
     color: '#555555',
-    fontSize: Platform.OS === 'ios' ? 13 : 14,
-    lineHeight: Platform.OS === 'ios' ? 17 : 19,
-    marginTop: Platform.OS === 'ios' ? 6 : 8,
+    fontSize: Platform.OS === 'ios' ? 13 : 13,
+    lineHeight: Platform.OS === 'ios' ? 17 : 18,
+    marginTop: Platform.OS === 'ios' ? 6 : 6,
   },
   termItemRow: { 
     flexDirection: 'row', 
     alignItems: 'center',
-    borderRadius: Platform.OS === 'ios' ? 16 : 20,
-    padding: Platform.OS === 'ios' ? 14 : 20,
-    marginBottom: Platform.OS === 'ios' ? 8 : 12,
+    borderRadius: Platform.OS === 'ios' ? 16 : 16,
+    padding: Platform.OS === 'ios' ? 12 : 14,
+    marginBottom: Platform.OS === 'ios' ? 8 : 10,
   },
   iconContainer: { 
-    width: Platform.OS === 'ios' ? 40 : 56, 
-    height: Platform.OS === 'ios' ? 40 : 56, 
+    width: Platform.OS === 'ios' ? 40 : 44, 
+    height: Platform.OS === 'ios' ? 40 : 44, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    marginRight: Platform.OS === 'ios' ? 12 : 16,
+    marginRight: Platform.OS === 'ios' ? 12 : 14,
   },
   iconImageDark: {
-    width: Platform.OS === 'ios' ? 40 : 56,
-    height: Platform.OS === 'ios' ? 40 : 56,
+    width: Platform.OS === 'ios' ? 40 : 44,
+    height: Platform.OS === 'ios' ? 40 : 44,
   },
   iconImageLight: {
-    width: Platform.OS === 'ios' ? 28 : 36,
-    height: Platform.OS === 'ios' ? 28 : 36,
+    width: Platform.OS === 'ios' ? 28 : 30,
+    height: Platform.OS === 'ios' ? 28 : 30,
   },
   textContainer: {
     flex: 1,
   },
   termTitle: { 
     fontFamily: 'Rubik-Bold', 
-    fontSize: Platform.OS === 'ios' ? 15 : 18, 
+    fontSize: Platform.OS === 'ios' ? 15 : 16, 
     lineHeight: Platform.OS === 'ios' ? 15 : 18,
     marginBottom: Platform.OS === 'ios' ? 3 : 4,
   },
@@ -304,8 +304,8 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'column',
     alignItems: 'stretch',
-    paddingHorizontal: Platform.OS === 'ios' ? 24 : 32,
-    paddingTop: Platform.OS === 'ios' ? 12 : 16,
+    paddingHorizontal: Platform.OS === 'ios' ? 24 : 24,
+    paddingTop: Platform.OS === 'ios' ? 10 : 12,
     borderTopWidth: 0,
   },
   checkboxWrapper: { 
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     marginRight: 9,
   },
   checkedCheckboxDark: { backgroundColor: '#262626', borderColor: '#262626' },
-  checkedCheckboxLight: { backgroundColor: '#FFFFFF', borderColor: '#1E1E1E' },
+  checkedCheckboxLight: { backgroundColor: '#FFA86B', borderColor: '#FFA86B' },
   acceptAllText: {
     fontFamily: 'Rubik-SemiBold',
     fontSize: 14,

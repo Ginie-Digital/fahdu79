@@ -188,9 +188,9 @@ async function handleStyleAction(payload) {
     return;
   }
 
-  // Phone in use: full IncomingCall screen only — never leave CallStyle banner up.
+  // Phone in use: full IncomingCall screen — do NOT kill CallStyle/ring before screen opens.
   if (action === 'foreground_incoming_call') {
-    console.log('📱 [IncomingCallStyle] FG in-use → IncomingCall screen (no notif)', callData.roomId);
+    console.log('📱 [IncomingCallStyle] FG in-use → IncomingCall screen (keep ring)', callData.roomId);
     if (callData.callId && wasRecentlyRejected(callData)) {
       return;
     }
@@ -200,14 +200,11 @@ async function handleStyleAction(payload) {
     }
     try {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
-      // If native already ringing, keep it. Only dismiss shade without killing audio.
+      // Keep existing native ring; only drop shade (IncomingCall owns UI).
       if (RingtoneManager.isNativePlaying()) {
         RingtoneManager.adoptNativeIncoming();
-        await dismissAndroidCallStyleShade(callData.roomId);
-      } else {
-        setAndroidInAppIncomingUi(true);
-        await stopAndroidRingtoneAndDismiss(callData.roomId);
       }
+      await dismissAndroidCallStyleShade(callData.roomId);
     } catch (_) {}
     const {
       prepareIncomingCall,

@@ -42,10 +42,10 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     companion object {
         const val NAME = "IncomingCallStyle"
         /** Bump when channel sound/attrs change — Android never updates existing channels. */
-        // v11 = CallStyle-only actions (no stacked Reject text button) + channel sound.
-        // v12 = SILENT channel — MediaPlayer is the ONLY ringtone (no channel+MP double-ring).
-        const val CHANNEL_ID = "fahdu_incoming_calls_v12"
-        const val NOTIFICATION_ID_BASE = 71012
+        // v13 = channel sound + MediaPlayer = double/echo ringtone (bad).
+        // v14 = SILENT channel + ONE MediaPlayer loop (same IncomingCall.wav as call screen).
+        const val CHANNEL_ID = "fahdu_incoming_calls_v14"
+        const val NOTIFICATION_ID_BASE = 71014
         const val ACTION_ACCEPT = "com.fahdu.ACTION_CALL_ACCEPT"
         const val ACTION_DECLINE = "com.fahdu.ACTION_CALL_DECLINE"
         const val ACTION_OPEN = "com.fahdu.ACTION_CALL_OPEN"
@@ -484,7 +484,9 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             if (!obsoleteChannelsCleaned) {
                 obsoleteChannelsCleaned = true
                 try {
-                    // v11 had channel sound → double-ring with MediaPlayer; remove it.
+                    // v13 had channel sound overlapping MediaPlayer → echo/double ring.
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v13")
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v12")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v11")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v10")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v9")
@@ -502,13 +504,14 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
             if (nm.getNotificationChannel(CHANNEL_ID) != null) return
 
+            // SILENT channel — MediaPlayer is the ONLY ringtone (no channel+MP echo).
+            // IMPORTANCE_HIGH + CallStyle still heads-up without channel audio.
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Incoming Calls",
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Incoming voice and video calls"
-                // No vibration. No channel sound — MediaPlayer owns the ringtone.
                 enableVibration(false)
                 vibrationPattern = null
                 setBypassDnd(true)
@@ -756,10 +759,10 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     .setColor(0xFF10B981.toInt())
                     .addPerson(caller)
                     .setVibrate(longArrayOf(0L))
-                    // Heads-up MUST show in kill/BG. Channel has no sound — MediaPlayer
-                    // is the only ringtone (avoids channel+MP double-ring).
+                    // ONE audio source: MediaPlayer. Channel has no sound.
+                    // setSilent(false) → CallStyle heads-up; setOnlyAlertOnce → no re-alert echo.
                     .setSilent(!playRingtone)
-                    .setOnlyAlertOnce(alreadyRinging)
+                    .setOnlyAlertOnce(true)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     // WhatsApp-like: ONLY circular Decline + Answer.

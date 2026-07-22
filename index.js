@@ -124,7 +124,10 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
             await showIncomingCallNotification(callDetails);
           }
         } else {
-          const shown = await showIncomingCallNotification(callDetails);
+          const shown = await showIncomingCallNotification(callDetails, {
+            force: true,
+            playRingtone: true,
+          });
           console.log('📱 [index:FCM:Background] single call notif shown=', shown);
         }
 

@@ -7,8 +7,9 @@ import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService
 
 /**
  * BG/kill: show CallStyle (circular Decline/Answer) — skip FCM text tray.
- * FG (phone in use): skip CallStyle; deliver to JS so IncomingCall full screen opens.
+ * FG: still show CallStyle from native; also deliver to JS for IncomingCall screen.
  * Cancel/end: clear CallStyle natively, THEN still deliver to JS so callee UI cuts.
+ * Never silent-drop a call-like FCM — always retry display or deliver to JS.
  */
 class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
 
@@ -31,35 +32,48 @@ class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
                     }
                     return
                 }
-                // BG/kill incoming: CallStyle owns UI — never show FCM text Reject/Accept tray.
+                // Incoming CallStyle posted — skip FCM text tray (wrong Accept/Reject UI).
+                // If Activity is resumed, still deliver to JS so IncomingCall opens.
+                if (IncomingCallStyleModule.isMainActivityResumed()) {
+                    Log.i(TAG, "CallStyle posted + Activity resumed — also deliver to JS")
+                    try {
+                        super.handleIntent(intent)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "super.handleIntent FG after CallStyle failed: ${e.message}")
+                    }
+                    return
+                }
                 Log.i(TAG, "Call FCM → CallStyle only — skip FCM system tray")
                 return
             }
-            // handleIfCall=false means either not a call, OR FG skip (MainActivity resumed).
-            // FG MUST call super so JS onMessage opens IncomingCall + ringtone.
-            if (looksLikeIncomingCall(extras)) {
-                if (IncomingCallStyleModule.isMainActivityResumed()) {
-                    Log.i(TAG, "FG call FCM — deliver to JS for IncomingCall screen")
-                    super.handleIntent(intent)
-                    return
+            // Not handled: parse miss, display failed, or non-call.
+            if (looksLikeIncomingCall(extras) || IncomingCallNativeHandler.isCancelOrEndExtras(extras)) {
+                Log.w(TAG, "Call-like FCM not fully handled — retry native + deliver to JS")
+                try {
+                    IncomingCallNativeHandler.onIntentExtras(applicationContext, extras)
+                } catch (e: Exception) {
+                    Log.w(TAG, "retry onIntentExtras failed: ${e.message}")
                 }
-                Log.w(TAG, "Call-like FCM but parse missed — skip super to avoid wrong shade")
-                IncomingCallNativeHandler.onIntentExtras(applicationContext, extras)
+                try {
+                    super.handleIntent(intent)
+                } catch (e: Exception) {
+                    Log.w(TAG, "super.handleIntent fallback failed: ${e.message}")
+                }
                 return
             }
         } catch (e: Exception) {
             Log.w(TAG, "handleIntent call path failed: ${e.message}")
             if (looksLikeIncomingCall(intent.extras)) {
-                if (IncomingCallStyleModule.isMainActivityResumed()) {
-                    Log.w(TAG, "Call-like FCM after error (FG) — deliver to JS")
-                    try {
-                        super.handleIntent(intent)
-                    } catch (e2: Exception) {
-                        Log.w(TAG, "super.handleIntent failed: ${e2.message}")
-                    }
-                    return
+                Log.w(TAG, "Call-like FCM after error — force deliver to JS (never drop)")
+                try {
+                    IncomingCallNativeHandler.onIntentExtras(applicationContext, intent.extras)
+                } catch (_: Exception) {
                 }
-                Log.w(TAG, "Call-like FCM after error — skip super")
+                try {
+                    super.handleIntent(intent)
+                } catch (e2: Exception) {
+                    Log.w(TAG, "super.handleIntent failed: ${e2.message}")
+                }
                 return
             }
         }

@@ -697,7 +697,7 @@ const Main = () => {
         : AppState.currentState === 'active';
     if (appVisible) {
       console.log(
-        '📱 [Main:IncomingCall] Android FG in-use → IncomingCall screen ONLY (no CallStyle)',
+        '📱 [Main:IncomingCall] Android FG → IncomingCall screen (keep CallStyle until screen opens)',
         source,
         notifPayload.callType,
       );
@@ -705,37 +705,15 @@ const Main = () => {
         RingtoneManager.clearIncomingSuppress();
       } catch (_) {}
 
-      const nativeAlreadyRinging = (() => {
-        try {
-          return RingtoneManager.isNativePlaying();
-        } catch (_) {
-          return false;
-        }
-      })();
-
-      if (nativeAlreadyRinging) {
-        // Notif tap / BG→FG upgrade: keep SAME MediaPlayer — do not stop+restart JS tone.
-        console.log('📱 [Main:IncomingCall] native already ringing — adopt (no new ringtone)');
-        try {
-          RingtoneManager.adoptNativeIncoming();
-        } catch (_) {}
-        try {
-          cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
-        } catch (_) {}
-      } else {
-        // True FG invite: kill stale shade, start single JS ringtone.
-        try {
-          const {
-            setAndroidInAppIncomingUi,
-            stopAndroidRingtoneAndDismiss,
-          } = require('./Src/Services/IncomingCallStyle');
-          setAndroidInAppIncomingUi(true);
-          stopAndroidRingtoneAndDismiss(roomId).catch(() => {});
-        } catch (_) {}
-        try {
-          cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
-        } catch (_) {}
-      }
+      // NEVER stopRingtoneAndDismiss here — FCM often posts CallStyle first; killing it
+      // caused intermittent "no notification / no ring" when Activity looked resumed.
+      try {
+        RingtoneManager.adoptNativeIncoming();
+      } catch (_) {}
+      try {
+        // Drop shade only after we own the ring; do not silence audio.
+        cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
+      } catch (_) {}
 
       prepareIncomingCall(callData);
       openIncomingCallScreen(callData);

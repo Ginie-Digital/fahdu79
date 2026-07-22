@@ -686,13 +686,24 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
     return false;
   }
 
-  // FG: never post shade — IncomingCall screen + JS ringtone.
-  if (!options.force && AppState.currentState === 'active') {
-    console.log(
-      '📱 [showIncomingCallNotification] skip — app foreground (IncomingCall screen handles it)',
-      details.roomId,
-    );
-    return false;
+  // FG: only skip shade when Activity is truly resumed (not FCM wake AppState=active).
+  if (!options.force) {
+    let isFg = AppState.currentState === 'active';
+    if (Platform.OS === 'android') {
+      try {
+        const { NativeModules } = require('react-native');
+        if (typeof NativeModules.IncomingCallStyle?.isMainActivityResumedSync === 'function') {
+          isFg = !!NativeModules.IncomingCallStyle.isMainActivityResumedSync();
+        }
+      } catch (_) {}
+    }
+    if (isFg) {
+      console.log(
+        '📱 [showIncomingCallNotification] skip — app foreground (IncomingCall screen handles it)',
+        details.roomId,
+      );
+      return false;
+    }
   }
 
   try {

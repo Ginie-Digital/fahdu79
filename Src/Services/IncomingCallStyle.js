@@ -199,8 +199,15 @@ async function handleStyleAction(payload) {
       return;
     }
     try {
-      setAndroidInAppIncomingUi(true);
-      await stopAndroidRingtoneAndDismiss(callData.roomId);
+      const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
+      // If native already ringing, keep it. Only dismiss shade without killing audio.
+      if (RingtoneManager.isNativePlaying()) {
+        RingtoneManager.adoptNativeIncoming();
+        await dismissAndroidCallStyleShade(callData.roomId);
+      } else {
+        setAndroidInAppIncomingUi(true);
+        await stopAndroidRingtoneAndDismiss(callData.roomId);
+      }
     } catch (_) {}
     const {
       prepareIncomingCall,
@@ -213,7 +220,7 @@ async function handleStyleAction(payload) {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
       RingtoneManager.clearIncomingSuppress();
       setTimeout(() => {
-        RingtoneManager.playIncoming().catch(() => {});
+        RingtoneManager.ensureIncoming().catch(() => {});
       }, 300);
     } catch (_) {}
     setTimeout(() => {
@@ -239,9 +246,9 @@ async function handleStyleAction(payload) {
     return;
   }
 
-  // Notification body tap → IncomingCall screen.
+  // Notification body tap → IncomingCall screen (keep existing ringtone).
   if (action === 'open_incoming_call' || action === 'default' || !action) {
-    console.log('📱 [IncomingCallStyle] Body tap — open IncomingCall screen');
+    console.log('📱 [IncomingCallStyle] Body tap — open IncomingCall (keep ringtone)');
     if (callData.callId && wasRecentlyRejected(callData)) {
       return;
     }
@@ -249,8 +256,34 @@ async function handleStyleAction(payload) {
       await acceptCallFromNotification(callData, { navigateNow: true });
       return;
     }
+    try {
+      const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
+      // Continuity: same MediaPlayer keeps playing — never start a new tone on tap.
+      if (RingtoneManager.isNativePlaying()) {
+        RingtoneManager.adoptNativeIncoming();
+      }
+    } catch (_) {}
     const { openIncomingCallFromNotificationTap } = require('../Utils/callAcceptFlow');
     openIncomingCallFromNotificationTap(callData);
+    return;
+  }
+
+  // Creator cancelled / left — native cleared CallStyle; hang up callee UI.
+  if (action === 'remote_call_ended') {
+    console.log('📱 [IncomingCallStyle] remote_call_ended — dismiss callee UI', callData.roomId);
+    const endType = payload?.endType || 'call_cancelled';
+    const reason =
+      endType === 'call_unavailable'
+        ? 'UNAVAILABLE'
+        : endType === 'call_disconnected'
+          ? 'DISCONNECTED'
+          : 'REJECTED';
+    try {
+      const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
+      RingtoneManager.stopAndSuppress(callData.roomId);
+    } catch (_) {}
+    const { invalidateIncomingCall } = require('../Utils/callAcceptFlow');
+    await invalidateIncomingCall(callData, reason);
   }
 }
 

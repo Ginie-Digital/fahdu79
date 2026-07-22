@@ -148,7 +148,9 @@ const CallScreen = ({ route }) => {
       handleLogout(true);
     },
     onCallEnded: (status) => {
-      if (!callAcceptedRef.current && status === 'DISCONNECTED') {
+      // While still ringing, ignore flaky DISCONNECTED — but LEAVE/ENDED/COMPLETED = creator cut.
+      const upper = String(status || '').toUpperCase();
+      if (!callAcceptedRef.current && upper === 'DISCONNECTED') {
         console.log('🔄 [Polling] Ignoring DISCONNECTED while ringing');
         return;
       }
@@ -433,6 +435,33 @@ const CallScreen = ({ route }) => {
 
     leaveCallUi();
   };
+
+  // Remote reject / cancel (FCM or markIncomingCallEndedSync) — cut "Notifying/attempts" immediately.
+  useEffect(() => {
+    const roomId = route?.params?.roomId;
+    const callId = route?.params?.callId;
+    if (!roomId) return undefined;
+    const { subscribeCallIntent } = require('../../Utils/callAcceptFlow');
+    return subscribeCallIntent(({ type, callData }) => {
+      if (type !== 'REJECTED' && type !== 'UNAVAILABLE' && type !== 'ENDED') return;
+      const sameRoom =
+        callData?.roomId != null && String(callData.roomId) === String(roomId);
+      if (!sameRoom) return;
+      const sameCall =
+        !callId ||
+        !callData?.callId ||
+        String(callData.callId) === String(callId);
+      if (!sameCall) return;
+      if (isCallEndedRef.current) return;
+      console.log('📱 [CallScreen] Remote end intent — hang up', type);
+      setEndTriggerSource('SOCKET/FCM');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      if (type === 'REJECTED') LoginPageErrors('Call Rejected...');
+      handleLogout(true);
+    });
+  }, [route?.params?.roomId, route?.params?.callId, dispatch, stopAndUnloadRingtone]);
 
   // 🔥 Keep callAcceptedRef in sync with Redux state
   useEffect(() => {

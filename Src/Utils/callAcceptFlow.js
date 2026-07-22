@@ -389,7 +389,10 @@ export const markIncomingCallEndedSync = (callData, reason = 'ENDED') => {
     statusOverride: reason,
     apiDone: true,
   });
-  emitCallIntent('REJECTED', callData);
+  // Emit so CallScreen/VideoCallScreen hang up (creator "Notifying/attempts" UI).
+  const intentType =
+    String(reason || '').toUpperCase() === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'REJECTED';
+  emitCallIntent(intentType, callData);
 };
 
 export const fetchOtherParticipantStatus = async roomId => {
@@ -547,6 +550,8 @@ export const isIncomingCallStillActive = async callData => {
 /**
  * Mark call ended + cancel notification chrome on BOTH platforms.
  * Keeps ENDED pending in MMKV so a later notification tap cannot reopen IncomingCall.
+ * Also tears down creator CallScreen / VideoCallScreen so reject cuts immediately
+ * (FCM path used to leave "Notifying... / Last attempt..." running).
  */
 export const invalidateIncomingCall = async (callData, reason = 'ENDED') => {
   const roomId = callData?.roomId || callData;
@@ -586,11 +591,22 @@ export const invalidateIncomingCall = async (callData, reason = 'ENDED') => {
     RingtoneManager.stopAndSuppress(roomId);
   } catch (_) {}
 
-  // Only dismiss if IncomingCall is currently showing (do not force-navigate home).
+  // Dismiss ringing / active call UI for this room (IncomingCall + creator outgoing).
+  // CallScreen also listens via subscribeCallIntent for clean ZEGO teardown.
   try {
     if (navigationRef.isReady()) {
       const current = navigationRef.getCurrentRoute()?.name;
-      if (current === 'incomingCall') {
+      const routeRoom = navigationRef.getCurrentRoute()?.params?.roomId;
+      const sameRoom =
+        !roomId ||
+        !routeRoom ||
+        String(routeRoom) === String(roomId);
+      if (
+        sameRoom &&
+        (current === 'incomingCall' ||
+          current === 'callScreen' ||
+          current === 'videoCallScreen')
+      ) {
         if (navigationRef.canGoBack()) {
           navigationRef.goBack();
         } else {
@@ -934,6 +950,13 @@ export const openIncomingCallFromNotificationTap = callData => {
   }
 
   console.log('📱 [notif tap] → IncomingCall NOW', data.roomId, data.callId);
+  try {
+    const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
+    // Keep existing BG MediaPlayer — IncomingCall must not start a different tone.
+    if (RingtoneManager.isNativePlaying()) {
+      RingtoneManager.adoptNativeIncoming();
+    }
+  } catch (_) {}
   prepareIncomingCall(data);
   const opened = openIncomingCallScreen(data);
   // Extra delayed nudge — covers nav not ready + claim races.

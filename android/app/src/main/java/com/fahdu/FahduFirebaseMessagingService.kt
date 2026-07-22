@@ -8,6 +8,7 @@ import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService
 /**
  * BG/kill: show CallStyle (circular Decline/Answer) — skip FCM text tray.
  * FG (phone in use): skip CallStyle; deliver to JS so IncomingCall full screen opens.
+ * Cancel/end: clear CallStyle natively, THEN still deliver to JS so callee UI cuts.
  */
 class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
 
@@ -20,14 +21,22 @@ class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
             val extras = intent.extras
             val handled = IncomingCallNativeHandler.handleIfCall(applicationContext, extras)
             if (handled) {
-                // BG/kill: CallStyle owns UI — never show FCM text Reject/Accept tray.
+                // Creator cancel/end: native cleared shade — JS must still dismiss IncomingCall/CallScreen.
+                if (IncomingCallNativeHandler.isCancelOrEndExtras(extras)) {
+                    Log.i(TAG, "Call CANCEL/END FCM — CallStyle cleared, deliver to JS for UI hangup")
+                    try {
+                        super.handleIntent(intent)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "super.handleIntent after cancel failed: ${e.message}")
+                    }
+                    return
+                }
+                // BG/kill incoming: CallStyle owns UI — never show FCM text Reject/Accept tray.
                 Log.i(TAG, "Call FCM → CallStyle only — skip FCM system tray")
                 return
             }
             // handleIfCall=false means either not a call, OR FG skip (MainActivity resumed).
             // FG MUST call super so JS onMessage opens IncomingCall + ringtone.
-            // Previously looksLikeIncomingCall blocked super on FG too → no CallStyle,
-            // no IncomingCall screen, only vibration — the "call ball screen missing" bug.
             if (looksLikeIncomingCall(extras)) {
                 if (IncomingCallStyleModule.isMainActivityResumed()) {
                     Log.i(TAG, "FG call FCM — deliver to JS for IncomingCall screen")
@@ -41,7 +50,6 @@ class FahduFirebaseMessagingService : ReactNativeFirebaseMessagingService() {
         } catch (e: Exception) {
             Log.w(TAG, "handleIntent call path failed: ${e.message}")
             if (looksLikeIncomingCall(intent.extras)) {
-                // FG: still try to deliver to JS so IncomingCall can open.
                 if (IncomingCallStyleModule.isMainActivityResumed()) {
                     Log.w(TAG, "Call-like FCM after error (FG) — deliver to JS")
                     try {

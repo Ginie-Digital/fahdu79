@@ -42,11 +42,10 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     companion object {
         const val NAME = "IncomingCallStyle"
         /** Bump when channel sound/attrs change — Android never updates existing channels. */
-        /** v7: channel WITH call sound — Android system plays BG/kill ring reliably. */
-        // v10 = ringtone ON, vibration OFF (BG must ring, not just vibrate).
-        // v11 = CallStyle-only actions (no stacked Reject text button).
-        const val CHANNEL_ID = "fahdu_incoming_calls_v11"
-        const val NOTIFICATION_ID_BASE = 71011
+        // v11 = CallStyle-only actions (no stacked Reject text button) + channel sound.
+        // v12 = SILENT channel — MediaPlayer is the ONLY ringtone (no channel+MP double-ring).
+        const val CHANNEL_ID = "fahdu_incoming_calls_v12"
+        const val NOTIFICATION_ID_BASE = 71012
         const val ACTION_ACCEPT = "com.fahdu.ACTION_CALL_ACCEPT"
         const val ACTION_DECLINE = "com.fahdu.ACTION_CALL_DECLINE"
         const val ACTION_OPEN = "com.fahdu.ACTION_CALL_OPEN"
@@ -109,12 +108,29 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         /** Rooms currently starting/playing — prevents FCM+JS double start. */
         private val ringingRoomIds = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
+        /**
+         * Mark that IncomingCall screen owns UX (block NEW native starts).
+         * By default does NOT stop an already-playing MediaPlayer — notification
+         * body tap must keep the same ringtone continuous.
+         * Pass stopNativeRing=true only when intentionally switching to JS audio
+         * or silencing (Accept/Reject use stopAndSuppress instead).
+         */
         @JvmStatic
-        fun setInAppIncomingUi(active: Boolean) {
+        @JvmOverloads
+        fun setInAppIncomingUi(active: Boolean, stopNativeRing: Boolean = false) {
             inAppIncomingUi = active
-            if (active) {
-                // Kill any FCM-started MediaPlayer the moment in-app UI takes over.
+            if (active && stopNativeRing) {
                 stopRingtone(reactAppContext)
+            }
+        }
+
+        /** True while looping MediaPlayer is audibly ringing. */
+        @JvmStatic
+        fun isRingtonePlaying(): Boolean {
+            return try {
+                ringtonePlayer?.isPlaying == true
+            } catch (_: Exception) {
+                false
             }
         }
 
@@ -155,18 +171,18 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
 
-        /** Prefer call.mp3; fall back to bundled IncomingCall wav. */
+        /** Same asset as JS `Assets/IncomingCall.wav` — one tone for BG + call screen. */
         private fun ringtoneUri(context: Context): Uri {
             val pkg = context.packageName
-            val callId = context.resources.getIdentifier("call", "raw", pkg)
-            if (callId != 0) {
-                return Uri.parse("android.resource://$pkg/$callId")
-            }
             val wavId = context.resources.getIdentifier("assets_incomingcall", "raw", pkg)
             if (wavId != 0) {
                 return Uri.parse("android.resource://$pkg/$wavId")
             }
-            return Uri.parse("android.resource://$pkg/${R.raw.call}")
+            val callId = context.resources.getIdentifier("call", "raw", pkg)
+            if (callId != 0) {
+                return Uri.parse("android.resource://$pkg/$callId")
+            }
+            return Uri.parse("android.resource://$pkg/${R.raw.assets_incomingcall}")
         }
 
         private fun acquireRingtoneWakeLock(context: Context) {
@@ -224,6 +240,11 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                 android.util.Log.i(NAME, "startRingtone skipped — suppressed after Accept/Reject")
                 return
             }
+            // Already audible — never restart (notif refresh / duplicate FCM must not re-seek).
+            if (isRingtonePlaying()) {
+                android.util.Log.i(NAME, "startRingtone skipped — already playing")
+                return
+            }
             if (ignoreInAppUi) {
                 inAppIncomingUi = false
             }
@@ -232,6 +253,11 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             cancelRingtoneAutoStop()
 
             val runStart = Runnable {
+                // Re-check inside executor — another start may have won the race.
+                if (isRingtonePlaying()) {
+                    android.util.Log.i(NAME, "startRingtone aborted — already playing before prepare")
+                    return@Runnable
+                }
                 synchronized(ringtoneLock) {
                     stopRingtoneSync(appContext)
                 }
@@ -458,6 +484,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             if (!obsoleteChannelsCleaned) {
                 obsoleteChannelsCleaned = true
                 try {
+                    // v11 had channel sound → double-ring with MediaPlayer; remove it.
+                    nm.deleteNotificationChannel("fahdu_incoming_calls_v11")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v10")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v9")
                     nm.deleteNotificationChannel("fahdu_incoming_calls_v8")
@@ -474,26 +502,19 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
             if (nm.getNotificationChannel(CHANNEL_ID) != null) return
 
-            val soundUri = ringtoneUri(context)
-            val attrs = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Incoming Calls",
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Incoming voice and video calls"
-                // Ringtone only — no vibration (user request).
+                // No vibration. No channel sound — MediaPlayer owns the ringtone.
                 enableVibration(false)
                 vibrationPattern = null
                 setBypassDnd(true)
                 enableLights(true)
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-                // BG/kill: system plays ringtone with Accept/Reject shade.
-                setSound(soundUri, attrs)
+                setSound(null, null)
             }
             nm.createNotificationChannel(channel)
         }
@@ -517,6 +538,10 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
         @JvmStatic
         fun isMainActivityResumed(): Boolean = mainActivityResumed
+
+        /** JS sync — AppState is wrong after FCM wake; use Activity resume instead. */
+        @JvmStatic
+        fun isMainActivityResumedForJs(): Boolean = mainActivityResumed
 
         /**
          * True only when MainActivity is resumed (user can see the app).
@@ -573,7 +598,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     // Duplicate FCM only (same callId within 2s while already ringing).
                     val playingSame =
                         activeRoomId == roomId &&
-                            (ringtonePlayer?.isPlaying == true) &&
+                            isRingtonePlaying() &&
                             callId.isNotEmpty()
                     if (playingSame) {
                         android.util.Log.i(NAME, "CallStyle refresh (already ringing) room=$roomId")
@@ -609,8 +634,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
                 // Same call already ringing — refresh notification only, don't restart audio.
                 val alreadyRinging =
-                    activeRoomId == roomId &&
-                        ringtonePlayer?.isPlaying == true
+                    activeRoomId == roomId && isRingtonePlaying()
 
                 // Do NOT wipe pending Accept/Decline when refreshing an already-showing call.
                 if (!alreadyRinging) {
@@ -732,7 +756,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     .setColor(0xFF10B981.toInt())
                     .addPerson(caller)
                     .setVibrate(longArrayOf(0L))
-                    // BG ring: channel sound on. Shade-only (playRingtone=false) stays silent.
+                    // Heads-up MUST show in kill/BG. Channel has no sound — MediaPlayer
+                    // is the only ringtone (avoids channel+MP double-ring).
                     .setSilent(!playRingtone)
                     .setOnlyAlertOnce(alreadyRinging)
 
@@ -764,32 +789,26 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
                 val nm =
                     appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                // Drop any prior post (old build had Reject text action) so OEMs
-                // do not keep a stale 3-button CallStyle chip.
+                // Never cancel+re-post the same id on first show — OEMs drop heads-up.
+                // Only clear legacy 3-button ids; refresh uses notify() + setOnlyAlertOnce.
                 try {
-                    nm.cancel(notifId)
-                    // Legacy v10 id so old 3-button posts are cleared.
                     nm.cancel(71001 + (roomId.hashCode() and 0x0FFF))
+                    nm.cancel(71011 + (roomId.hashCode() and 0x0FFF))
                 } catch (_: Exception) {
                 }
                 nm.notify(notifId, builder.build())
                 activeRoomId = roomId
 
-                // BG/kill MUST ring: channel sound (once) + looping MediaPlayer.
+                // BG/kill MUST ring: ONE looping MediaPlayer only (channel is silent).
                 if (playRingtone) {
                     inAppIncomingUi = false
                     clearRingtoneSuppress()
-                    val playing = try {
-                        ringtonePlayer?.isPlaying == true
-                    } catch (_: Exception) {
-                        false
-                    }
-                    if (!playing) {
+                    if (!isRingtonePlaying()) {
                         ringingRoomIds.add(roomId)
                         startRingtone(appContext, ignoreInAppUi = true)
                         android.util.Log.i(
                             NAME,
-                            "BG ringtone STARTED room=$roomId video=$isVideo",
+                            "BG ringtone STARTED (MediaPlayer only) room=$roomId video=$isVideo",
                         )
                     } else {
                         android.util.Log.i(NAME, "BG ringtone already playing room=$roomId")
@@ -905,7 +924,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     @ReactMethod
     fun setInAppIncomingUi(active: Boolean, promise: Promise) {
         try {
-            Companion.setInAppIncomingUi(active)
+            // Keep existing MediaPlayer — notif tap must not restart a new tone.
+            Companion.setInAppIncomingUi(active, stopNativeRing = false)
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("SET_INAPP_FAILED", e.message, e)
@@ -916,8 +936,28 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     @ReactMethod(isBlockingSynchronousMethod = true)
     fun setInAppIncomingUiSync(active: Boolean): Boolean {
         return try {
-            Companion.setInAppIncomingUi(active)
+            Companion.setInAppIncomingUi(active, stopNativeRing = false)
             true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** Sync — JS can adopt an already-playing native ring instead of starting a new one. */
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun isRingtonePlayingSync(): Boolean {
+        return try {
+            Companion.isRingtonePlaying()
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** Sync — true only when MainActivity is visibly resumed (not FCM wake). */
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun isMainActivityResumedSync(): Boolean {
+        return try {
+            Companion.isMainActivityResumed()
         } catch (_: Exception) {
             false
         }
@@ -963,8 +1003,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
     }
 
     /**
-     * Sync Home/BG handoff: start MediaPlayer + CallStyle WITH channel sound.
-     * BG ring must be audible immediately.
+     * Sync Home/BG handoff: start ONE MediaPlayer + silent CallStyle shade.
+     * BG ring must be audible immediately (no channel sound).
      */
     @ReactMethod(isBlockingSynchronousMethod = true)
     fun handoffBackgroundRingSync(details: ReadableMap): Boolean {
@@ -976,7 +1016,7 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             val roomId = details.getString("roomId") ?: ""
             if (roomId.isEmpty()) return false
             // Sync Home/BG handoff: ONE MediaPlayer ring (channel is silent).
-            Companion.setInAppIncomingUi(false)
+            Companion.setInAppIncomingUi(false, stopNativeRing = false)
             // Force + playRingtone: MediaPlayer only (no channel double-ring).
             displayFromContext(
                 reactContext,

@@ -85,22 +85,33 @@ export const useCallStatusPolling = ({
         addLog(`Response: ${status} (${duration}ms)`);
 
         if (status) {
-          if (status === 'ACCEPTED' && !callAccepted) {
+          const upper = String(status).toUpperCase();
+          if (upper === 'ACCEPTED' && !callAccepted) {
             addLog('Action: Trigger onCallAccepted');
             savedCallbacks.current.onCallAccepted?.();
-          } else if (status === 'REJECTED') {
+          } else if (upper === 'REJECTED') {
             addLog('Action: Trigger onCallRejected');
             savedCallbacks.current.onCallRejected?.();
             isStopped = true;
             return;
-          } else if (status === 'UNAVAILABLE') {
+          } else if (upper === 'UNAVAILABLE') {
             addLog('Action: Trigger onCallUnavailable');
             savedCallbacks.current.onCallUnavailable?.();
             isStopped = true;
             return;
-          } else if (status === 'DISCONNECTED' || status === 'FORCE_CLOSED') {
-            addLog(`Action: Trigger onCallEnded (${status})`);
-            savedCallbacks.current.onCallEnded?.(status);
+          } else if (
+            upper === 'DISCONNECTED' ||
+            upper === 'FORCE_CLOSED' ||
+            upper === 'LEAVE' ||
+            upper === 'ENDED' ||
+            upper === 'COMPLETED' ||
+            upper === 'CANCELLED' ||
+            upper === 'CANCELED' ||
+            upper === 'MISSED'
+          ) {
+            // Creator cut / leave / completed — callee must hang up (not only DISCONNECTED).
+            addLog(`Action: Trigger onCallEnded (${upper})`);
+            savedCallbacks.current.onCallEnded?.(upper);
             isStopped = true;
             return;
           }

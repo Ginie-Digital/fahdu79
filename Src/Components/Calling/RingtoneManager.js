@@ -57,23 +57,123 @@ function killJsPlayer() {
   }
 }
 
+function isJsPlaying() {
+  return !!activePlayer;
+}
+
+/** Start / keep the ONE Android MediaPlayer (same IncomingCall.wav as BG). */
+function startOrKeepNativeAndroidIncoming() {
+  const mod = Native();
+  if (!mod) return false;
+  try {
+    if (mod.isRingtonePlayingSync?.()) {
+      setInAppIncomingUi(true);
+      return true;
+    }
+    // Allow start, then mark in-app so FCM cannot spawn a second player.
+    if (typeof mod.startRingtoneSync === 'function') {
+      mod.startRingtoneSync();
+    } else {
+      mod.startRingtoneJs?.();
+    }
+    setInAppIncomingUi(true);
+    return true;
+  } catch (e) {
+    console.warn('🔔 [RingtoneManager] native start failed:', e?.message || e);
+    return false;
+  }
+}
+
 const RingtoneManager = {
-  /** Foreground IncomingCall — JS only (never native). */
+  /** Native MediaPlayer already ringing (BG CallStyle / handoff / FG). */
+  isNativePlaying() {
+    if (Platform.OS !== 'android') return false;
+    try {
+      return !!Native()?.isRingtonePlayingSync?.();
+    } catch (_) {
+      return false;
+    }
+  },
+
+  /** Any incoming ringtone currently audible (native OR JS). */
+  isIncomingPlaying() {
+    return this.isNativePlaying() || isJsPlaying();
+  },
+
+  /**
+   * Notification tap / IncomingCall open while native already rings:
+   * keep the SAME MediaPlayer — never start a second/different tone.
+   */
+  adoptNativeIncoming() {
+    if (Date.now() < incomingSuppressedUntil) return false;
+    if (!this.isNativePlaying()) return false;
+    killJsPlayer();
+    setInAppIncomingUi(true);
+    console.log('🔔 [RingtoneManager] adopt native ringtone (no restart)');
+    return true;
+  },
+
+  /**
+   * Ensure exactly ONE incoming ringtone.
+   * Android: always the same native MediaPlayer + IncomingCall.wav.
+   * iOS: JS IncomingCall.wav.
+   */
+  async ensureIncoming() {
+    if (Date.now() < incomingSuppressedUntil) {
+      console.log('🔔 [RingtoneManager] skip ensureIncoming — suppressed');
+      return;
+    }
+    if (this.adoptNativeIncoming()) return;
+    if (isJsPlaying()) {
+      console.log('🔔 [RingtoneManager] ensureIncoming — JS already playing');
+      return;
+    }
+    await this.playIncoming();
+  },
+
+  /**
+   * Incoming ringtone — SAME sound in background notification AND IncomingCall screen.
+   * Android: native MediaPlayer (assets_incomingcall.wav == Assets/IncomingCall.wav).
+   * iOS: expo-audio IncomingCall.wav.
+   */
   async playIncoming() {
     if (Date.now() < incomingSuppressedUntil) {
       console.log('🔔 [RingtoneManager] skip playIncoming — suppressed after Accept/Reject');
       return;
     }
 
+    // Keep existing native tone continuous (BG → call screen).
+    if (this.adoptNativeIncoming()) return;
+
     const gen = ++playGeneration;
     try {
       this.stopJsOnly();
-      stopNativeAndroidRingtone();
-      setInAppIncomingUi(true);
       playGeneration = gen;
 
-      // active + inactive (notification shade / brief transition) — both FG.
-      // Only skip when truly backgrounded (native handoff owns that path).
+      // ─── Android: ONE MediaPlayer for BG + FG (same IncomingCall.wav) ───
+      if (Platform.OS === 'android') {
+        const canPlay =
+          AppState.currentState === 'active' ||
+          AppState.currentState === 'inactive' ||
+          AppState.currentState === 'background';
+        if (!canPlay) return;
+        if (this.isNativePlaying()) {
+          setInAppIncomingUi(true);
+          return;
+        }
+        const ok = startOrKeepNativeAndroidIncoming();
+        console.log(
+          ok
+            ? '🔔 [RingtoneManager] Android ringtone = native IncomingCall.wav (same as BG)'
+            : '🔔 [RingtoneManager] Android native start failed',
+        );
+        return;
+      }
+
+      // ─── iOS: JS IncomingCall.wav ───
+      stopNativeAndroidRingtone();
+      setInAppIncomingUi(true);
+
       const canPlayJs =
         AppState.currentState === 'active' || AppState.currentState === 'inactive';
       if (!canPlayJs) {
@@ -116,7 +216,7 @@ const RingtoneManager = {
       }
       activePlayer = player;
       activePlayer.play();
-      console.log('🔔 [RingtoneManager] FG ringtone playing (single)');
+      console.log('🔔 [RingtoneManager] iOS FG ringtone playing (IncomingCall.wav)');
     } catch (err) {
       console.log('❌ [RingtoneManager] playIncoming failed:', err?.message);
     }
@@ -188,18 +288,25 @@ const RingtoneManager = {
   },
 
   /**
-   * Home / background: stop JS, start ONE native MediaPlayer (sync).
-   * Channel is silent — MediaPlayer is the only ring.
+   * Home / background: keep SAME native MediaPlayer (IncomingCall.wav).
+   * If already playing — do not restart. Else start native once.
    */
   handOffToBackgroundRing(callDetails) {
     if (Date.now() < incomingSuppressedUntil) {
       console.log('🔔 [RingtoneManager] skip handoff — suppressed');
       return;
     }
-    console.log('🔔 [RingtoneManager] Handoff → native BG ringtone (sync)');
+    console.log('🔔 [RingtoneManager] Handoff → native BG ringtone (same tone)');
     this.stopJsOnly();
     const mod = Native();
     if (!mod) return;
+
+    // Already on native MediaPlayer — keep continuous (same sound).
+    if (this.isNativePlaying()) {
+      setInAppIncomingUi(false);
+      console.log('🔔 [RingtoneManager] handoff — native already playing (no restart)');
+      return;
+    }
 
     try {
       if (callDetails?.roomId && typeof mod.handoffBackgroundRingSync === 'function') {

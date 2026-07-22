@@ -215,15 +215,21 @@ const VideoCallScreen = ({route}) => {
       handleLogout(true);
     },
     onCallEnded: (status) => {
+      const upper = String(status || '').toUpperCase();
+      // Creator leave/end must hang up — not only show stream-end modal.
       console.log(`🔄 [Polling] Call ended with status: ${status}`);
       setEndTriggerSource('POLLING');
-      isCallEndedRef.current = true;
       stopAndUnloadRingtone();
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
       dispatch(toggleCallAccepted({ status: false }));
+      if (upper === 'LEAVE' || upper === 'ENDED' || upper === 'COMPLETED' || upper === 'CANCELLED' || upper === 'CANCELED') {
+        handleLogout(true);
+        return;
+      }
+      isCallEndedRef.current = true;
       setCallStreamEndModal(true);
     },
   });
@@ -343,6 +349,23 @@ const VideoCallScreen = ({route}) => {
   }
 
   async function rejectCallHandler() {
+    try {
+      const { data, error } = await callAcceptManual({
+        token,
+        data: {
+          roomId: route?.params?.roomId,
+          callType: route?.params?.callType || 'video',
+          status: 'REJECTED',
+        },
+      });
+      if (data) {
+        console.log(data, 'Cancel/Reject via callAccept success');
+        return;
+      }
+      if (error) console.log(error, 'callAccept REJECTED error — trying reject-call');
+    } catch (error) {
+      console.log('⚠️ callAccept REJECTED exception — trying reject-call:', error);
+    }
     try {
       const {data, error} = await rejectCall({
         token,
@@ -487,6 +510,33 @@ const VideoCallScreen = ({route}) => {
       }
     }
   };
+
+  // Remote reject / cancel — cut creator "Notifying/attempts" UI immediately.
+  useEffect(() => {
+    const roomId = route?.params?.roomId;
+    const callId = route?.params?.callId;
+    if (!roomId) return undefined;
+    const { subscribeCallIntent } = require('../../Utils/callAcceptFlow');
+    return subscribeCallIntent(({ type, callData }) => {
+      if (type !== 'REJECTED' && type !== 'UNAVAILABLE' && type !== 'ENDED') return;
+      const sameRoom =
+        callData?.roomId != null && String(callData.roomId) === String(roomId);
+      if (!sameRoom) return;
+      const sameCall =
+        !callId ||
+        !callData?.callId ||
+        String(callData.callId) === String(callId);
+      if (!sameCall) return;
+      if (isCallEndedRef.current) return;
+      console.log('📱 [VideoCallScreen] Remote end intent — hang up', type);
+      setEndTriggerSource('SOCKET/FCM');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      if (type === 'REJECTED') LoginPageErrors('Call Rejected...');
+      handleLogout(true);
+    });
+  }, [route?.params?.roomId, route?.params?.callId, dispatch, stopAndUnloadRingtone]);
 
   // 🔥 Bulletproof 60-second timeout — set ONCE, never resets
   useEffect(() => {

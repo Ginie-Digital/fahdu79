@@ -52,18 +52,29 @@ object IncomingCallNativeHandler {
         handleIfCall(context, extras)
     }
 
-    private fun isCallRelated(type: String): Boolean {
-        return type == "call" ||
-            type == "incoming_call" ||
-            type == "call_rejected" ||
+    /** True when FCM is creator cancel / end — JS must still hang up callee UI. */
+    fun isCancelOrEndExtras(extras: Bundle?): Boolean {
+        if (extras == null) return false
+        val info = parseFromBundle(extras) ?: return false
+        return isCancelOrEndType(info.type)
+    }
+
+    private fun isCancelOrEndType(type: String): Boolean {
+        return type == "call_rejected" ||
             type == "call_unavailable" ||
             type == "call_cancelled" ||
             type == "call_canceled" ||
-            type == "call_accepted" ||
             type == "call_ended" ||
             type == "call_completed" ||
             type == "call_disconnected" ||
             type == "missed_call"
+    }
+
+    private fun isCallRelated(type: String): Boolean {
+        return type == "call" ||
+            type == "incoming_call" ||
+            isCancelOrEndType(type) ||
+            type == "call_accepted"
     }
 
     /**
@@ -151,6 +162,22 @@ object IncomingCallNativeHandler {
                 if (info.roomId.isNotEmpty()) {
                     Log.i(TAG, "CANCEL call UI room=${info.roomId} type=${info.type}")
                     IncomingCallStyleModule.cancelFromContext(app, info.roomId, info.callId)
+                    // Notify JS (if bridge alive) so IncomingCall / CallScreen hang up even
+                    // when FCM is delayed — creator cut must cut callee UI immediately.
+                    try {
+                        val extras =
+                            Bundle().apply {
+                                putString(IncomingCallStyleModule.EXTRA_ROOM_ID, info.roomId)
+                                putString(IncomingCallStyleModule.EXTRA_CALL_ID, info.callId)
+                                putString(IncomingCallStyleModule.EXTRA_CALL_TYPE, info.callType)
+                                putString(IncomingCallStyleModule.EXTRA_ACTION, "remote_call_ended")
+                                putString("action", "remote_call_ended")
+                                putString("endType", info.type)
+                            }
+                        IncomingCallStyleModule.emitAction("remote_call_ended", extras)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "emit remote_call_ended failed: ${e.message}")
+                    }
                     return true
                 }
                 return false

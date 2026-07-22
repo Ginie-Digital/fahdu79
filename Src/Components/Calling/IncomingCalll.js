@@ -40,6 +40,7 @@ import {
   getPendingCallSync,
   wasRecentlyAccepted,
   wasRecentlyRejected,
+  wasCallEndedRecently,
   clearPendingCall,
   acceptCallFromNotification,
   declineCallFromNotification,
@@ -178,7 +179,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
       // Receiver is the one who accepts — ignore ACCEPTED polls here.
     },
     onCallRejected: () => {
-      // Only REJECTED means caller actually cancelled while we were ringing.
+      // Creator cancelled while we were ringing (or peer rejected).
       if (hasActedRef.current) return;
       markActed();
       console.log('🔄 [Polling] Call rejected/cancelled by caller, exiting...');
@@ -189,20 +190,40 @@ const IncomingCallScreen = ({ route, navigation }) => {
       navigation.goBack();
     },
     onCallUnavailable: () => {
-      // IMPORTANT: While ringing, other-participant status often returns UNAVAILABLE /
-      // DISCONNECTED even though the creator is still on the outgoing call screen.
-      // Treating that as terminal caused false "Creator is no longer available" on Accept.
-      // 60s safety timer still sends UNAVAILABLE if the user never answers.
+      // Flaky while creator still ringing — but if creator already stamped ended, cut UI.
       if (hasActedRef.current || wasRecentlyAccepted({ roomId, callId })) return;
+      if (wasRecentlyRejected({ roomId, callId }) || wasCallEndedRecently({ roomId, callId })) {
+        markActed();
+        console.log('🔄 [Polling] UNAVAILABLE + ended stamp — creator cut, dismissing');
+        RingtoneManager.stopAndSuppress(roomId);
+        if (callId) dispatch(clearProcessedRoomId(callId));
+        invalidateIncomingCall({ roomId, callId, callType }, 'UNAVAILABLE');
+        LoginPageErrors('Caller cancelled the call');
+        navigation.goBack();
+        return;
+      }
       console.log(
         '🔄 [Polling] Ignoring UNAVAILABLE on IncomingCall (creator may still be ringing)',
       );
     },
     onCallEnded: (status) => {
+      // Creator left / force-closed / completed — always cut IncomingCall.
       if (hasActedRef.current || wasRecentlyAccepted({ roomId, callId })) return;
-      console.log(
-        `🔄 [Polling] Ignoring ${status} on IncomingCall (not a confirmed caller cancel)`,
-      );
+      const upper = String(status || '').toUpperCase();
+      if (upper === 'DISCONNECTED') {
+        // Same flake as UNAVAILABLE while still ringing — only cut if stamped ended.
+        if (!wasRecentlyRejected({ roomId, callId }) && !wasCallEndedRecently({ roomId, callId })) {
+          console.log('🔄 [Polling] Ignoring DISCONNECTED on IncomingCall (may be flake)');
+          return;
+        }
+      }
+      markActed();
+      console.log(`🔄 [Polling] Call ended (${upper}) — dismissing IncomingCall`);
+      RingtoneManager.stopAndSuppress(roomId);
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      invalidateIncomingCall({ roomId, callId, callType }, upper || 'ENDED');
+      LoginPageErrors('Caller cancelled the call');
+      navigation.goBack();
     },
   });
 
@@ -234,8 +255,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
         return;
       }
 
-      if (type === 'REJECTED') {
-        console.log('📱 [IncomingCall] Reject intent from notification — dismissing');
+      if (type === 'REJECTED' || type === 'UNAVAILABLE' || type === 'ENDED') {
+        console.log('📱 [IncomingCall] Remote end intent — dismissing', type);
         markActed();
         RingtoneManager.stopAndSuppress(roomId);
         if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
@@ -337,7 +358,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
     }
   }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
 
-  // BUG_11: while IncomingCall is open in FG, drop shade (do NOT stopAll — that races FG ring).
+  // BUG_11: while IncomingCall is open in FG, drop shade (do NOT stop ringtone —
+  // notif tap must keep the same MediaPlayer continuous).
   useEffect(() => {
     if (!roomId) return;
     cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
@@ -354,7 +376,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
   }, [roomId]);
 
   // ─── One ringtone at a time:
-  // FG → JS only. Background → native MediaPlayer only. Accept/Reject → stopAndSuppress.
+  // If native already ringing (notif tap) → keep it.
+  // Else FG → JS. Background → native MediaPlayer. Accept/Reject → stopAndSuppress.
   useEffect(() => {
     console.log('🔔 [IncomingCall] Setting up ringtone...');
     let isCancelled = false;
@@ -374,7 +397,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
         if (roomId) {
           cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
         }
-        await RingtoneManager.playIncoming();
+        // ensureIncoming: adopt native if already playing (notif tap) — never start a 2nd tone.
+        await RingtoneManager.ensureIncoming();
       } catch (error) {
         console.log('❌ Failed to play incoming call ringtone:', error);
       }
@@ -440,8 +464,8 @@ const IncomingCallScreen = ({ route, navigation }) => {
       // Accept/Reject already suppressed. Soft-stop only if still ringing.
       if (hasActedRef.current) {
         RingtoneManager.stopAndSuppress(roomId);
-      } else if (handedOff) {
-        // Keep native BG ring alive after unmount.
+      } else if (handedOff || RingtoneManager.isNativePlaying()) {
+        // Keep native BG / notif-tap MediaPlayer alive across remounts — never restart.
         RingtoneManager.stopJsOnly();
       } else {
         RingtoneManager.stopAll(roomId);

@@ -1,4 +1,4 @@
-import { StyleSheet, AppState, StatusBar, Platform, View, Linking, Alert } from 'react-native';
+import { StyleSheet, AppState, StatusBar, Platform, View, Linking, Alert, NativeModules } from 'react-native';
 import React, { useCallback, useRef, useState } from 'react';
 import StackNavigation from './Navigation/StackNavigation';
 import { useEffect } from 'react';
@@ -600,8 +600,17 @@ const Main = () => {
       return;
     }
 
-    // active + inactive = user can see the app (shade pull is inactive — still open screen).
-    const isFg = AppState.currentState !== 'background';
+    // Android: Activity resumed is the only reliable FG signal (FCM wake lies about AppState).
+    const isFg =
+      Platform.OS === 'android'
+        ? (() => {
+            try {
+              return !!NativeModules.IncomingCallStyle?.isMainActivityResumedSync?.();
+            } catch (_) {
+              return AppState.currentState === 'active';
+            }
+          })()
+        : AppState.currentState !== 'background';
     const alreadyProcessed = !!(callId && processedRoomIdsRef.current.includes(callId));
 
     // Dedup: if we already handled this callId for BG notif, still upgrade to IncomingCall when FG.
@@ -671,8 +680,21 @@ const Main = () => {
       return;
     }
 
-    // Android phone-in-use (any screen): FULL IncomingCall only — NO Accept/Reject notification.
-    const appVisible = AppState.currentState !== 'background';
+    // Android: only treat as FG when MainActivity is visibly resumed.
+    // AppState !== 'background' is wrong after FCM wake (often 'inactive'/'active'
+    // with no UI) and was cancelling the kill/BG CallStyle notification.
+    const isAndroidActivityResumed = () => {
+      if (Platform.OS !== 'android') return false;
+      try {
+        return !!NativeModules.IncomingCallStyle?.isMainActivityResumedSync?.();
+      } catch (_) {
+        return false;
+      }
+    };
+    const appVisible =
+      Platform.OS === 'android'
+        ? isAndroidActivityResumed()
+        : AppState.currentState === 'active';
     if (appVisible) {
       console.log(
         '📱 [Main:IncomingCall] Android FG in-use → IncomingCall screen ONLY (no CallStyle)',
@@ -682,23 +704,43 @@ const Main = () => {
       try {
         RingtoneManager.clearIncomingSuppress();
       } catch (_) {}
-      // Immediately kill any CallStyle/heads-up — user wants full screen, not banner.
-      try {
-        const {
-          setAndroidInAppIncomingUi,
-          stopAndroidRingtoneAndDismiss,
-        } = require('./Src/Services/IncomingCallStyle');
-        setAndroidInAppIncomingUi(true);
-        stopAndroidRingtoneAndDismiss(roomId).catch(() => {});
-      } catch (_) {}
-      try {
-        cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
-      } catch (_) {}
+
+      const nativeAlreadyRinging = (() => {
+        try {
+          return RingtoneManager.isNativePlaying();
+        } catch (_) {
+          return false;
+        }
+      })();
+
+      if (nativeAlreadyRinging) {
+        // Notif tap / BG→FG upgrade: keep SAME MediaPlayer — do not stop+restart JS tone.
+        console.log('📱 [Main:IncomingCall] native already ringing — adopt (no new ringtone)');
+        try {
+          RingtoneManager.adoptNativeIncoming();
+        } catch (_) {}
+        try {
+          cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
+        } catch (_) {}
+      } else {
+        // True FG invite: kill stale shade, start single JS ringtone.
+        try {
+          const {
+            setAndroidInAppIncomingUi,
+            stopAndroidRingtoneAndDismiss,
+          } = require('./Src/Services/IncomingCallStyle');
+          setAndroidInAppIncomingUi(true);
+          stopAndroidRingtoneAndDismiss(roomId).catch(() => {});
+        } catch (_) {}
+        try {
+          cancelIncomingCallNotification(roomId, { stopRingtone: false }).catch(() => {});
+        } catch (_) {}
+      }
 
       prepareIncomingCall(callData);
       openIncomingCallScreen(callData);
       setTimeout(() => {
-        RingtoneManager.playIncoming().catch(() => {});
+        RingtoneManager.ensureIncoming().catch(() => {});
       }, 300);
 
       const ensureIncomingVisible = () => {
@@ -719,21 +761,21 @@ const Main = () => {
         if (!ensureIncomingVisible()) {
           console.log('📱 [Main:IncomingCall] FG retry IncomingCall screen');
           openIncomingCallScreen(callData);
-          RingtoneManager.playIncoming().catch(() => {});
+          RingtoneManager.ensureIncoming().catch(() => {});
         }
       }, 500);
       setTimeout(() => {
         if (!ensureIncomingVisible()) {
           console.log('📱 [Main:IncomingCall] FG retry #2 IncomingCall screen');
           openIncomingCallScreen(callData);
-          RingtoneManager.playIncoming().catch(() => {});
+          RingtoneManager.ensureIncoming().catch(() => {});
         }
       }, 1200);
       setTimeout(() => {
         if (!ensureIncomingVisible()) {
           console.log('📱 [Main:IncomingCall] FG final retry IncomingCall screen');
           openIncomingCallScreen(callData);
-          RingtoneManager.playIncoming().catch(() => {});
+          RingtoneManager.ensureIncoming().catch(() => {});
         }
       }, 2500);
       return;
@@ -860,7 +902,13 @@ const Main = () => {
         console.log(':::::::::::::::::::call_rejected:::::::::', data?.by, currentUserId, Platform.OS);
         AppLog('SOCKET_CALL', 'Received call_rejected event (Detailed)', data);
         RingtoneManager.stopAndSuppress();
-        if (currentUserId !== data?.by) {
+        // Hang up unless THIS device just sent the reject (by === me).
+        // Missing `by` still ends the call — creator must leave Notifying/attempts UI.
+        const isOwnRejectEcho =
+          data?.by != null &&
+          currentUserId != null &&
+          String(currentUserId) === String(data.by);
+        if (!isOwnRejectEcho) {
           dispatch(toggleCallAccepted({ status: false }));
           if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
           invalidateIncomingCall(data, 'REJECTED');
@@ -881,6 +929,24 @@ const Main = () => {
         invalidateIncomingCall(data, 'DISCONNECTED');
         navigate('home');
       };
+
+      // Creator cut / leave / completed — same hangup as FCM (socket parity).
+      const onCreatorCallEnded = (data, reason = 'ENDED') => {
+        console.log(`:::::::::::::::::::${reason}:::::::::`, data);
+        AppLog('SOCKET_CALL', `Received ${reason} — end callee/creator UI`, data);
+        RingtoneManager.stopAndSuppress(data?.roomId);
+        dispatch(toggleCallAccepted({ status: false }));
+        if (data?.callId) dispatch(clearProcessedRoomId(data.callId));
+        invalidateIncomingCall(data, reason);
+        if (reason === 'REJECTED') LoginPageErrors('Call Rejected...');
+        else if (reason === 'UNAVAILABLE') LoginPageErrors('User not receiving the call');
+        else LoginPageErrors('Caller cancelled the call');
+        navigate('home');
+      };
+
+      const onCallCompleted = data => onCreatorCallEnded(data, 'ENDED');
+      const onCallCancelled = data => onCreatorCallEnded(data, 'REJECTED');
+      const onCallEndedSocket = data => onCreatorCallEnded(data, 'ENDED');
 
       const onSocketDisconnectCloseApp = data => {
         console.log(':::::::::::socket_disconnect_close_app:::::::::', data);
@@ -929,6 +995,10 @@ const Main = () => {
       socketServcies.on('CREATOR_LIVE_STARTED', onCreatorLiveStarted);
       socketServcies.on('call_rejected', onCallRejected);
       socketServcies.on('call_disconnected', onCallDisconnected);
+      socketServcies.on('call_completed', onCallCompleted);
+      socketServcies.on('call_cancelled', onCallCancelled);
+      socketServcies.on('call_canceled', onCallCancelled);
+      socketServcies.on('call_ended', onCallEndedSocket);
       socketServcies.on('socket_disconnect_close_app', onSocketDisconnectCloseApp);
       socketServcies.on('incoming_caller', onIncomingCaller);
       socketServcies.on('connect', onConnect);
@@ -950,6 +1020,10 @@ const Main = () => {
         socketServcies.off('CREATOR_LIVE_STARTED', onCreatorLiveStarted);
         socketServcies.off('call_rejected', onCallRejected);
         socketServcies.off('call_disconnected', onCallDisconnected);
+        socketServcies.off('call_completed', onCallCompleted);
+        socketServcies.off('call_cancelled', onCallCancelled);
+        socketServcies.off('call_canceled', onCallCancelled);
+        socketServcies.off('call_ended', onCallEndedSocket);
         socketServcies.off('socket_disconnect_close_app', onSocketDisconnectCloseApp);
         socketServcies.off('incoming_caller', onIncomingCaller);
         socketServcies.off('connect', onConnect);
@@ -1750,11 +1824,22 @@ const Main = () => {
         remoteNotificationData?.type === 'call_canceled'
       ) {
         const ended = remoteNotificationData?.content || remoteNotificationData;
-        // Clears Notifee + Android CallStyle + iOS CallKit.
-        await invalidateIncomingCall(
-          ended,
-          remoteNotificationData?.type === 'call_unavailable' ? 'UNAVAILABLE' : 'REJECTED',
-        );
+        const reason =
+          remoteNotificationData?.type === 'call_unavailable' ? 'UNAVAILABLE' : 'REJECTED';
+        AppLog('FCM_CALL', `Received ${remoteNotificationData?.type} — end outgoing/incoming UI`, ended);
+        // Mirror socket reject: stop ring, clear CallScreen "Notifying/attempts", go home.
+        try {
+          RingtoneManager.stopAndSuppress(ended?.roomId);
+        } catch (_) {}
+        dispatch(toggleCallAccepted({ status: false }));
+        if (ended?.callId) dispatch(clearProcessedRoomId(ended.callId));
+        await invalidateIncomingCall(ended, reason);
+        if (reason === 'REJECTED') {
+          LoginPageErrors('Call Rejected...');
+        } else if (reason === 'UNAVAILABLE') {
+          LoginPageErrors('User not receiving the call');
+        }
+        navigate('home');
       } else if (remoteNotificationData?.type === 'call_completed') {
         console.log(remoteNotificationData, ':::::');
         AppLog('FCM_CALL', 'Received call_completed via FCM (silent trigger)');

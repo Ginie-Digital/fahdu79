@@ -8,9 +8,22 @@ import { useAppTheme } from "../../Hook/useAppTheme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Moved OUTSIDE the component so memo actually works and doesn't recreate on every render
+const SocialPostRender = memo(({ item, index }) => (
+  <OtherProfilePostCard item={item} index={index} />
+));
+
+// Static separator component - avoids creating a new function/component on every render
+const ItemSeparator = memo(({ isDark, colors }) => (
+  <View style={{
+    height: responsiveWidth(1),
+    backgroundColor: isDark ? colors.separator : '#EEEEEE',
+  }} />
+));
+
 const SinglePost = ({ route }) => {
   const { colors, isDark } = useAppTheme();
-  const styles = getStyles(colors, isDark);
+  const styles = useMemo(() => getStyles(colors, isDark), [colors, isDark]);
   const allPosts = useSelector((state) => state.profileFeedCache.data.content);
   const token = useSelector(state => state.auth.user.token);
   const targetIndex = route?.params?.scrollIndex || 0;
@@ -29,11 +42,15 @@ const SinglePost = ({ route }) => {
     }
   }, [targetIndex, allPosts?.length]);
 
-  const SocialPostRender = memo(({ item, index }) => (
-    <OtherProfilePostCard item={item} index={index} token={token} />
-  ));
+  const renderItem = useCallback(({ item, index }) => (
+    <SocialPostRender item={item} index={index} />
+  ), []);
 
   const keyExtractor = useCallback((item) => item._id, []);
+
+  const renderSeparator = useCallback(() => (
+    <ItemSeparator isDark={isDark} colors={colors} />
+  ), [isDark, colors]);
 
   // Pre-calculate layouts for accurate scrolling
   const getItemLayout = useMemo(() => {
@@ -87,7 +104,7 @@ const SinglePost = ({ route }) => {
       <FlatList
         ref={flatListRef}
         data={allPosts}
-        renderItem={({ item, index }) => <SocialPostRender item={item} index={index} />}
+        renderItem={renderItem}
         keyExtractor={keyExtractor}
 
         // Jump to target
@@ -101,18 +118,18 @@ const SinglePost = ({ route }) => {
              });
         }}
 
-        // Standard optimization
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={10}
+        // Performance optimizations - larger values prevent white flash on fast scroll
+        initialNumToRender={7}
+        maxToRenderPerBatch={10}
+        windowSize={21}
+        updateCellsBatchingPeriod={30}
         
         showsVerticalScrollIndicator={false}
 
-        ItemSeparatorComponent={() => (
-          <View style={styles.separator} />
-        )}
+        ItemSeparatorComponent={renderSeparator}
         
-        removeClippedSubviews={Platform.OS === 'android'}
+        // Enable on both platforms to reclaim memory from off-screen cells
+        removeClippedSubviews={true}
       />
     </GestureHandlerRootView>
   );
@@ -130,9 +147,5 @@ const getStyles = (colors, isDark) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
-  },
-  separator: {
-    height: responsiveWidth(1),
-    backgroundColor: isDark ? colors.separator : '#EEEEEE',
   },
 });

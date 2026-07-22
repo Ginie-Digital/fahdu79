@@ -8,8 +8,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import {toggleAreYou} from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import {FONT_SIZES} from '../../../DesiginData/Utility';
 import {useAreYouACreatorNotificationMutation} from '../../../Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
+import {useAppTheme} from '../../Hook/useAppTheme';
 
 const AreYou = () => {
+  const {colors, isDark} = useAppTheme();
   const visible = useSelector(state => state.hideShow.visibility.areYou);
 
   const dispatch = useDispatch();
@@ -54,21 +56,46 @@ const AreYou = () => {
   return (
     visible && (
       <View style={styles.overlay}>
-        <BlurView intensity={15} tint="dark" style={styles.blurBackground} />
-        <Dialog visible={visible} dialogStyle={styles.dialog} contentStyle={{padding: 0, paddingTop: 0}}>
+        <BlurView intensity={15} tint={isDark ? 'dark' : 'light'} style={styles.blurBackground} />
+        <Dialog
+          visible={visible}
+          dialogStyle={[
+            styles.dialog,
+            {
+              backgroundColor: isDark ? '#121212' : '#FFFFFF',
+              borderColor: isDark ? '#1E1E1E' : '#1E1E1E',
+            },
+          ]}
+          contentStyle={{padding: 0, paddingTop: 0}}>
           <View style={styles.content}>
             <View style={styles.yesNoContainer}>
-              <Text style={styles.textYesNo} numberOfLines={1}>
+              <Text style={[styles.textYesNo, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]} numberOfLines={1}>
                 Are you a "CREATOR" ?
               </Text>
 
               <View style={styles.buttonContainer}>
-                <Pressable onPress={() => handleButtonPress('verificationStepOne')} style={({pressed}) => [styles.button, styles.yesButton, pressed && {backgroundColor: '#FFC399'}]}>
+                <Pressable
+                  onPress={() => handleButtonPress('verificationStepOne')}
+                  style={({pressed}) => [
+                    styles.button,
+                    styles.yesButton,
+                    pressed && {backgroundColor: '#FFC399'},
+                  ]}>
                   <Text style={styles.yesButtonText}>Yes</Text>
                 </Pressable>
 
-                <Pressable onPress={() => handleButtonPress('discover')} style={({pressed}) => [styles.button, styles.noButton, pressed && {backgroundColor: '#2A2A2A'}]}>
-                  <Text style={styles.noButtonText}>No</Text>
+                <Pressable
+                  onPress={() => handleButtonPress('discover')}
+                  style={({pressed}) => [
+                    styles.button,
+                    styles.noButton,
+                    {
+                      backgroundColor: isDark ? '#1C1C1C' : '#FFFFFF',
+                      borderColor: isDark ? '#212121' : '#1E1E1E',
+                    },
+                    pressed && {backgroundColor: isDark ? '#2A2A2A' : '#FFF3EB'},
+                  ]}>
+                  <Text style={[styles.noButtonText, {color: isDark ? '#FFFFFF' : '#1E1E1E'}]}>No</Text>
                 </Pressable>
               </View>
             </View>

@@ -172,7 +172,14 @@ const OtherGridFeedPostComponent = ({ toCallApiInfo }) => {
         paddingBottom: 200,
         backgroundColor: colors.background,
       }}
+      // Performance optimizations to prevent white space on fast scroll
+      initialNumToRender={12}
+      maxToRenderPerBatch={15}
+      windowSize={21}
+      updateCellsBatchingPeriod={30}
+      removeClippedSubviews={true}
     />
+
   );
 };
 

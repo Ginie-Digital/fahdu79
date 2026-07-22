@@ -239,32 +239,45 @@ export const callAcceptAPI = async (roomId, callType, status) => {
     return { success: false, error: 'No token' };
   }
 
+  // Cache for native CallStyle Decline/Answer (kill/BG).
   try {
-    const response = await fetch(`${BASE_URL}/api/stream/call/accept/manual`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        roomId: String(roomId),
-        callType: callType || 'audio',
-        status,
-      }),
-    });
+    const { cacheAndroidCallAuthToken } = require('../Services/IncomingCallStyle');
+    cacheAndroidCallAuthToken(token);
+  } catch (_) {}
 
-    const result = await response.json().catch(() => ({}));
-    console.log('✅ [callAcceptAPI] API Response:', response.status, result);
+  let lastError = 'API error';
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/stream/call/accept/manual`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          roomId: String(roomId),
+          callType: callType || 'audio',
+          status,
+        }),
+      });
 
-    if (!response.ok) {
-      return { success: false, error: result?.message || `HTTP ${response.status}`, data: result };
+      const result = await response.json().catch(() => ({}));
+      console.log(`✅ [callAcceptAPI] attempt ${attempt} →`, response.status, result);
+
+      if (response.ok) {
+        return { success: true, data: result };
+      }
+      lastError = result?.message || `HTTP ${response.status}`;
+    } catch (error) {
+      console.error(`❌ [callAcceptAPI] attempt ${attempt}:`, error);
+      lastError = error?.message || 'API error';
     }
-
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('❌ [callAcceptAPI] API Error:', error);
-    return { success: false, error: error?.message || 'API error' };
+    if (attempt < 3) {
+      await new Promise(r => setTimeout(r, 400 * attempt));
+    }
   }
+
+  return { success: false, error: lastError };
 };
 
 /** Fallback reject endpoint used by CallScreen hangup-before-accept. */
@@ -1101,16 +1114,17 @@ export const acceptCallFromNotification = async (callData, { navigateNow = true 
     if (data.callId) recentlyRejectedKeys.delete(`call:${data.callId}`);
   } catch (_) {}
 
-  // Wait for auth so callScreen exists on the logged-in stack.
-  try {
-    await getAuthToken(40);
-  } catch (_) {}
-
-  // Stamp + open CallScreen FIRST (before stop/API) so Accept always lands on UI.
+  // Stamp + open CallScreen FIRST — never wait on token before leaving IncomingCall.
+  // (Waiting here made Accept look half-broken: callee timer, caller still Notifying.)
   markCallAcceptedSync(data);
   if (navigateNow) {
     openActiveCallScreen(data);
   }
+
+  // Auth for accept API (UI already navigated).
+  try {
+    await getAuthToken(40);
+  } catch (_) {}
 
   try {
     RingtoneManager.stopAndSuppress(data.roomId);

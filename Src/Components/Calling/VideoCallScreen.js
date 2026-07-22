@@ -1025,9 +1025,7 @@ const VideoCallScreen = ({route}) => {
       {/* Timer Badge - Always Mounted to prevent reset */}
       <View style={styles.timerBadgeContainer} pointerEvents="none">
          <View style={styles.timerBadge}>
-            {!callAccepted ? (
-              <Text style={styles.timerCallingText}>Calling...</Text>
-            ) : (
+            {callAccepted && (IS_STARTING || isOtherUserInRoom) ? (
               <TimerText
                 accepted={callAccepted}
                 totalDuration={route?.params?.totalDuration}
@@ -1038,6 +1036,10 @@ const VideoCallScreen = ({route}) => {
                 }}
                 textStyle={styles.timerCallingText}
               />
+            ) : (
+              <Text style={styles.timerCallingText}>
+                {callAccepted && !IS_STARTING ? 'Connecting...' : 'Calling...'}
+              </Text>
             )}
          </View>
       </View>

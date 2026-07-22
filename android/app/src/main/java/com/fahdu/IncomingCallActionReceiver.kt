@@ -8,10 +8,10 @@ import android.util.Log
 import com.facebook.react.HeadlessJsTaskService
 
 /**
- * Handles CallStyle Decline (and content-tap no-op).
+ * Handles CallStyle Decline (and Accept broadcast fallback).
  *
- * BUG_07: ACTION_OPEN must NOT start MainActivity. OEMs redeliver CATEGORY_CALL
- * contentIntent on unlock/wake; launching an Activity there auto-opened IncomingCall.
+ * Decline MUST hit the reject API from native — Android 12+ often blocks
+ * headless JS from a background BroadcastReceiver, which left callers ringing.
  */
 class IncomingCallActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -19,22 +19,24 @@ class IncomingCallActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             IncomingCallStyleModule.ACTION_OPEN -> {
-                // Intentional no-op — body open is via Notifee only.
                 Log.i(TAG, "ACTION_OPEN ignored (BUG_07 — no auto-launch on unlock/wake)")
                 return
             }
             IncomingCallStyleModule.ACTION_DECLINE -> handleDecline(context, intent)
-            // Accept is Activity PendingIntent → MainActivity. Keep broadcast as
-            // safety fallback but do NOT stamp ENDED (that raced CallScreen).
             IncomingCallStyleModule.ACTION_ACCEPT -> handleAcceptFallback(context, intent)
             else -> return
         }
     }
 
     private fun handleDecline(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
         val extras = intent.extras ?: Bundle()
         val roomId = extras.getString(IncomingCallStyleModule.EXTRA_ROOM_ID) ?: ""
         val callId = extras.getString(IncomingCallStyleModule.EXTRA_CALL_ID) ?: ""
+        val callType = extras.getString(IncomingCallStyleModule.EXTRA_CALL_TYPE) ?: "audio"
+        val authToken = extras.getString(IncomingCallStyleModule.EXTRA_AUTH_TOKEN)
+
+        Log.i(TAG, "DECLINE pressed room=$roomId callId=$callId hasToken=${!authToken.isNullOrBlank()}")
 
         if (roomId.isNotEmpty()) {
             IncomingCallStyleModule.cancelFromContext(context, roomId, callId)
@@ -44,15 +46,40 @@ class IncomingCallActionReceiver : BroadcastReceiver() {
 
         IncomingCallStyleModule.savePendingAction(context, "decline_call", extras)
         IncomingCallStyleModule.emitAction("decline_call", extras)
-        startHeadless(context, "decline_call", extras)
+
+        Thread {
+            try {
+                if (roomId.isNotEmpty()) {
+                    val ok =
+                        IncomingCallApi.postStatusWithRetry(
+                            context,
+                            roomId,
+                            callType,
+                            "REJECTED",
+                            authToken,
+                        )
+                    Log.i(TAG, "DECLINE native API ok=$ok room=$roomId")
+                }
+                startHeadless(context, "decline_call", extras)
+            } finally {
+                try {
+                    pendingResult.finish()
+                } catch (_: Exception) {
+                }
+            }
+        }.start()
     }
 
     private fun handleAcceptFallback(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
         val extras = intent.extras ?: Bundle()
         val roomId = extras.getString(IncomingCallStyleModule.EXTRA_ROOM_ID) ?: ""
         val callId = extras.getString(IncomingCallStyleModule.EXTRA_CALL_ID) ?: ""
+        val callType = extras.getString(IncomingCallStyleModule.EXTRA_CALL_TYPE) ?: "audio"
+        val authToken = extras.getString(IncomingCallStyleModule.EXTRA_AUTH_TOKEN)
 
-        // Match MainActivity Accept — silence only, do not mark call ended.
+        Log.i(TAG, "ACCEPT broadcast fallback room=$roomId callId=$callId")
+
         if (roomId.isNotEmpty()) {
             IncomingCallStyleModule.stopAndSuppressRingtone(context, roomId, callId)
             IncomingCallStyleModule.dismissShadeOnly(context, roomId)
@@ -63,35 +90,59 @@ class IncomingCallActionReceiver : BroadcastReceiver() {
         IncomingCallStyleModule.savePendingAction(context, "accept_call", extras)
         IncomingCallStyleModule.emitAction("accept_call", extras)
 
-        // Bring app up so JS can open CallScreen (cold start from killed).
-        try {
-            val launch = Intent(context, MainActivity::class.java).apply {
-                action = IncomingCallStyleModule.ACTION_ACCEPT
-                putExtras(extras)
-                putExtra(IncomingCallStyleModule.EXTRA_ACTION, "accept_call")
-                addFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP,
-                )
+        Thread {
+            try {
+                // ACCEPTED API BEFORE launching UI so caller leaves "Notifying..."
+                if (roomId.isNotEmpty()) {
+                    val ok =
+                        IncomingCallApi.postStatusWithRetry(
+                            context,
+                            roomId,
+                            callType,
+                            "ACCEPTED",
+                            authToken,
+                        )
+                    Log.i(TAG, "ACCEPT native API ok=$ok room=$roomId")
+                }
+                try {
+                    val launch =
+                        Intent(context, MainActivity::class.java).apply {
+                            action = IncomingCallStyleModule.ACTION_ACCEPT
+                            putExtras(extras)
+                            putExtra(IncomingCallStyleModule.EXTRA_ACTION, "accept_call")
+                            putExtra("action", "accept_call")
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT,
+                            )
+                        }
+                    context.startActivity(launch)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Accept fallback launch failed: ${e.message}")
+                    startHeadless(context, "accept_call", extras)
+                }
+            } finally {
+                try {
+                    pendingResult.finish()
+                } catch (_: Exception) {
+                }
             }
-            context.startActivity(launch)
-        } catch (e: Exception) {
-            Log.w(TAG, "Accept fallback launch failed: ${e.message}")
-            startHeadless(context, "accept_call", extras)
-        }
+        }.start()
     }
 
     private fun startHeadless(context: Context, action: String, extras: Bundle) {
-        val serviceIntent = Intent(context, IncomingCallHeadlessService::class.java).apply {
-            putExtra("action", action)
-            putExtras(extras)
-        }
+        val serviceIntent =
+            Intent(context, IncomingCallHeadlessService::class.java).apply {
+                putExtra("action", action)
+                putExtras(extras)
+            }
         try {
             context.startService(serviceIntent)
             HeadlessJsTaskService.acquireWakeLockNow(context)
-        } catch (_: Exception) {
-            // Pending action still saved for cold-start consume.
+        } catch (e: Exception) {
+            Log.w(TAG, "Headless start failed (native API still ran): ${e.message}")
         }
     }
 

@@ -101,6 +101,11 @@ const LoginPassword = ({ route }) => {
 
   const afterLoginProcess = useCallback(async data => {
     await AsyncStorage.setItem('data', data?.data?.token);
+    // Native CallStyle Decline/Answer need JWT when JS is killed/paused.
+    try {
+      const { cacheAndroidCallAuthToken } = require('../../Services/IncomingCallStyle');
+      cacheAndroidCallAuthToken(data?.data?.token);
+    } catch (_) {}
 
     console.log('FULLLLLNAME', data?.data?.user?.fullName);
 

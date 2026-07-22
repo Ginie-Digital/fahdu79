@@ -38,6 +38,18 @@ export async function isAndroidCallStyleSupported() {
   }
 }
 
+/** Persist JWT for native CallStyle Decline/Answer when JS is paused/killed. */
+export function cacheAndroidCallAuthToken(token) {
+  if (Platform.OS !== 'android' || !token || !Native) return;
+  try {
+    if (Native.cacheAuthTokenSync) {
+      Native.cacheAuthTokenSync(String(token));
+      return;
+    }
+    Native.cacheAuthToken?.(String(token));
+  } catch (_) {}
+}
+
 /**
  * WhatsApp-style CallStyle (circular Decline / Answer).
  * EVERY incoming call must show this — including 2nd/3rd call after Reject.
@@ -48,6 +60,7 @@ export async function displayAndroidCallStyleNotification(callDetails, options =
     const {
       clearEndedCallStampForIncoming,
       prepareIncomingCall,
+      getAuthToken,
     } = require('../Utils/callAcceptFlow');
 
     // Unlock previous Accept/Reject locks for this chat so next call always rings.
@@ -59,8 +72,12 @@ export async function displayAndroidCallStyleNotification(callDetails, options =
       RingtoneManager.clearIncomingSuppress();
     } catch (_) {}
 
-    // Do NOT skip based on wasRecentlyRejected/Accepted — that blocked the 2nd call
-    // when callId was reused or missing. Native force=true always posts CallStyle.
+    // Bake JWT into CallStyle PendingIntent so Decline/Answer work without JS.
+    let authToken = '';
+    try {
+      authToken = (await getAuthToken(5)) || '';
+      if (authToken) cacheAndroidCallAuthToken(authToken);
+    } catch (_) {}
 
     await Native.displayIncomingCall({
       roomId: String(callDetails.roomId || ''),
@@ -71,6 +88,7 @@ export async function displayAndroidCallStyleNotification(callDetails, options =
       ),
       senderId: String(callDetails.senderId || callDetails.callerId || ''),
       profileImage: String(callDetails.profileImage || callDetails.profileImageUrl || ''),
+      authToken: String(authToken || ''),
       force: true,
       playRingtone: options.playRingtone !== false,
     });
@@ -134,21 +152,27 @@ async function handleStyleAction(payload) {
     return;
   }
 
-  // Dedup — but body taps use a shared key so Notifee+native don't double-open.
+  // Dedup — but Accept/Decline must NOT soft-fail if a prior claim raced headless.
+  // Body taps still dedupe; Accept/Decline always try to complete the action.
   const claimKey =
     action === 'open_incoming_call' || action === 'default' ? 'body_tap' : action || 'style';
-  if (!claimNotificationAction(claimKey, callData)) return;
+  const isAcceptOrDecline = action === 'accept_call' || action === 'decline_call';
+  if (!isAcceptOrDecline && !claimNotificationAction(claimKey, callData)) return;
+  if (isAcceptOrDecline) {
+    // Soft claim for logging only — never return early on Accept/Decline.
+    claimNotificationAction(claimKey, callData);
+  }
 
   if (action === 'decline_call') {
     console.log('📱 [IncomingCallStyle] Decline — reject without requiring UI');
     markCallRejectedSync(callData);
+    // dismissUi true closes IncomingCall if open; native already dismissed shade + API.
     await declineCallFromNotification(callData, { dismissUi: true });
     return;
   }
 
   if (action === 'accept_call') {
     console.log('📱 [IncomingCallStyle] Accept — open CallScreen immediately');
-    // Do NOT claim-block a second time — open UI even if headless already stamped.
     try {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
       RingtoneManager.stopAndSuppress(callData.roomId);
@@ -156,7 +180,7 @@ async function handleStyleAction(payload) {
     try {
       await stopAndroidRingtoneAndDismiss(callData.roomId);
     } catch (_) {}
-    // Always navigate to CallScreen on Accept button.
+    // Always navigate to CallScreen on Answer button (FG + BG + kill).
     await acceptCallFromNotification(callData, { navigateNow: true });
     return;
   }

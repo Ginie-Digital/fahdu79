@@ -4,6 +4,7 @@ import expo.modules.ReactActivityDelegateWrapper
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -46,7 +47,7 @@ class MainActivity : ReactActivity() {
    * Body tap / normal launch must NOT turn the screen on or show over lock.
    */
   private fun applyLockScreenFlagsForCallIntent(intent: Intent?) {
-    val action = intent?.getStringExtra(IncomingCallStyleModule.EXTRA_ACTION)
+    val action = resolveCallAction(intent)
     // Accept OR full-screen IncomingCall from killed/locked state.
     val showOverLock = action == "accept_call" || action == "open_incoming_call"
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -56,29 +57,59 @@ class MainActivity : ReactActivity() {
   }
 
   /**
+   * Resolve action from EXTRA_ACTION or Intent.action (OEM extras can drop).
+   */
+  private fun resolveCallAction(intent: Intent?): String? {
+    if (intent == null) return null
+    val fromCallAction = intent.getStringExtra(IncomingCallStyleModule.EXTRA_ACTION)
+    if (!fromCallAction.isNullOrBlank()) return fromCallAction
+    val fromActionExtra = intent.getStringExtra("action")
+    if (!fromActionExtra.isNullOrBlank()) return fromActionExtra
+    return when (intent.action) {
+      IncomingCallStyleModule.ACTION_ACCEPT -> "accept_call"
+      IncomingCallStyleModule.ACTION_OPEN -> "open_incoming_call"
+      IncomingCallStyleModule.ACTION_DECLINE -> "decline_call"
+      else -> null
+    }
+  }
+
+  /**
    * CallStyle notification intents:
-   * - accept_call → stop ring, join CallScreen (JS)
+   * - accept_call → stop ring, join CallScreen (JS) + native ACCEPTED API
    * - open_incoming_call → body tap → IncomingCall screen (JS)
    */
   private fun handleCallIntent(intent: Intent?) {
     if (intent == null) return
-    val action = intent.getStringExtra(IncomingCallStyleModule.EXTRA_ACTION) ?: return
+    val action = resolveCallAction(intent) ?: return
     if (action != "accept_call" && action != "open_incoming_call") return
 
-    val extras = intent.extras ?: return
+    val extras = intent.extras ?: Bundle()
+    // Ensure EXTRA_ACTION is always present for pending JSON / emit map.
+    if (!extras.containsKey(IncomingCallStyleModule.EXTRA_ACTION)) {
+      extras.putString(IncomingCallStyleModule.EXTRA_ACTION, action)
+    }
     val roomId = extras.getString(IncomingCallStyleModule.EXTRA_ROOM_ID) ?: ""
+    val callId = extras.getString(IncomingCallStyleModule.EXTRA_CALL_ID) ?: ""
+    val callType = extras.getString(IncomingCallStyleModule.EXTRA_CALL_TYPE) ?: "audio"
+    val authToken = extras.getString(IncomingCallStyleModule.EXTRA_AUTH_TOKEN)
+
+    Log.i(TAG, "handleCallIntent action=$action room=$roomId callId=$callId hasToken=${!authToken.isNullOrBlank()}")
 
     // Save pending FIRST so cold-start JS can open the right screen.
     IncomingCallStyleModule.savePendingAction(this, action, extras)
 
     if (action == "accept_call") {
-      // Stop ring + suppress late FCM re-ring. Stamp this call ended natively only.
-      val callId = extras.getString(IncomingCallStyleModule.EXTRA_CALL_ID) ?: ""
+      // Stop ring + suppress late FCM re-ring.
       if (roomId.isNotEmpty()) {
         IncomingCallStyleModule.stopAndSuppressRingtone(this, roomId, callId)
+        IncomingCallStyleModule.dismissShadeOnly(this, roomId)
       } else {
         IncomingCallStyleModule.suppressRingtone(5_000L, roomId, callId)
         IncomingCallStyleModule.stopRingtone(this)
+      }
+      // ACCEPTED ASAP (retry) so iOS/Android caller leaves "Notifying..."
+      if (roomId.isNotEmpty()) {
+        IncomingCallApi.postStatusAsync(this, roomId, callType, "ACCEPTED", authToken)
       }
     }
     // Body tap keeps ringtone until IncomingCall / Accept handles it.
@@ -94,4 +125,8 @@ class MainActivity : ReactActivity() {
         BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled),
       )
+
+  companion object {
+    private const val TAG = "MainActivityCall"
+  }
 }

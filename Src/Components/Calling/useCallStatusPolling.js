@@ -57,7 +57,12 @@ export const useCallStatusPolling = ({
     let isStopped = false;
     let timeoutId = null;
 
-    addLog(`Polling started (Interval: ${callAccepted ? '8s' : '5s'}, callAccepted=${callAccepted})`);
+    // Ringing: poll fast so Answer/Decline on the other phone updates this UI quickly.
+    const ringingIntervalMs = 2000;
+    const connectedIntervalMs = 8000;
+    addLog(
+      `Polling started (Interval: ${callAccepted ? connectedIntervalMs : ringingIntervalMs}ms, callAccepted=${callAccepted})`,
+    );
 
     const poll = async () => {
       if (isStopped) return;
@@ -108,15 +113,14 @@ export const useCallStatusPolling = ({
         addLog(`Error: ${msg} (${duration}ms)`);
       }
 
-      // Schedule next poll
-      const interval = callAccepted ? 8000 : 5000;
+      const interval = callAccepted ? connectedIntervalMs : ringingIntervalMs;
       if (!isStopped) {
         timeoutId = setTimeout(poll, interval);
       }
     };
 
-    const initialInterval = callAccepted ? 8000 : 5000;
-    timeoutId = setTimeout(poll, initialInterval);
+    // First poll immediately while ringing so Accept/Reject feels instant.
+    timeoutId = setTimeout(poll, callAccepted ? connectedIntervalMs : 300);
 
     return () => {
       isStopped = true;

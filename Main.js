@@ -12,7 +12,11 @@ import { authLogout, currentUserInformation, token as memoizedToken, updateApnTo
 import { markRoomAsProcessed, markRoomAsAccepted, clearProcessedRoomId } from './Redux/Slices/NormalSlices/Call/CallSlice';
 import { useSendFcmTokenMutation } from './Redux/Slices/QuerySlices/chatWindowAttachmentSliceApi';
 import IncomingCallService from './Src/Services/IncomingCallService';
-import { wireIncomingCallStyleEvents } from './Src/Services/IncomingCallStyle';
+import {
+  wireIncomingCallStyleEvents,
+  cacheAndroidCallAuthToken,
+  consumePendingCallStyleAction,
+} from './Src/Services/IncomingCallStyle';
 
 import notifee, { EventType } from '@notifee/react-native';
 
@@ -136,6 +140,12 @@ const Main = () => {
     return wireIncomingCallStyleEvents();
   }, []);
 
+  // Cache JWT natively so CallStyle Decline/Answer work when JS is paused/killed.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !token) return;
+    cacheAndroidCallAuthToken(token);
+  }, [token]);
+
   // Initialize iOS VoIP / CallKit + Notifee Accept/Decline category once
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
@@ -231,6 +241,19 @@ const Main = () => {
   const pendingCallDataRef = useRef(null);
 
   const handlePendingCallStartup = useCallback(async (callData) => {
+    // Native CallStyle Answer/Decline pending FIRST (Notifee is often empty for CallStyle).
+    if (Platform.OS === 'android') {
+      try {
+        const handled = await consumePendingCallStyleAction();
+        if (handled) {
+          console.log('📱 [Main:Startup] Handled native CallStyle pending Accept/Decline');
+          return;
+        }
+      } catch (e) {
+        console.warn('[Main:Startup] consumePendingCallStyleAction failed:', e?.message || e);
+      }
+    }
+
     if (!callData?.roomId) return;
 
     // Prefer Notifee killed-state action — Accept must never open IncomingCall.

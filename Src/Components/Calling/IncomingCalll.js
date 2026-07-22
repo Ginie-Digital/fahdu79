@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Audio } from 'expo-av';
 import RingtoneManager from './RingtoneManager';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, Platform, Linking, AppState } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Dimensions, ActivityIndicator, Platform, Linking, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -16,7 +16,9 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+// TouchableOpacity from gesture-handler — RN Touchable inside GestureHandlerRootView
+// often swallows Decline presses on Android.
+import { Gesture, GestureDetector, GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Image } from 'expo-image';
@@ -40,7 +42,8 @@ import {
   wasRecentlyRejected,
   clearPendingCall,
   acceptCallFromNotification,
-  markCallRejectedSync,
+  declineCallFromNotification,
+  dismissIncomingCallScreen,
   subscribeCallIntent,
   invalidateIncomingCall,
 } from '../../Utils/callAcceptFlow';
@@ -560,15 +563,44 @@ const IncomingCallScreen = ({ route, navigation }) => {
   }, []);
 
 
-  // ─── Accept call (JS Thread) ───
+  const leaveIncomingUi = useCallback(() => {
+    try {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('chatRoomTab', { screen: 'home' });
+      }
+    } catch (_) {
+      dismissIncomingCallScreen();
+    }
+  }, [navigation]);
+
+  // ─── Accept — tap OR swipe-up ───
   const handleAccept = useCallback(async () => {
-    if (hasActedRef.current) return;
+    const callPayload = {
+      roomId,
+      callId,
+      callType: callType || 'audio',
+      displayName: name,
+      name,
+      senderId: callerId,
+      callerId,
+      profileImage: profileImageUrl,
+      profileImageUrl,
+    };
+
+    if (hasActedRef.current) {
+      try {
+        await acceptCallFromNotification(callPayload, { navigateNow: true });
+      } catch (_) {
+        leaveIncomingUi();
+      }
+      return;
+    }
     markActed();
     stopRingtone();
     clearSafetyTimer();
     if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
-
-    // Clear dedup guard so future calls to same room aren't blocked
     if (callId) dispatch(clearProcessedRoomId(callId));
 
     ReactNativeHapticFeedback.trigger('notificationSuccess', {
@@ -578,89 +610,69 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
     triggerSuccessSequence();
 
-    try {
-      // Shared accept path: BUG_04 soft-join + BUG_10 creator-gone toast.
-      const result = await acceptCallFromNotification(
-        {
-          roomId,
-          callId,
-          callType: callType || 'audio',
-          displayName: name,
-          name,
-          senderId: callerId,
-          callerId,
-          profileImage: profileImageUrl,
-          profileImageUrl,
-        },
-        { navigateNow: true },
-      );
-
-      if (!result?.success) {
-        // failCreatorGone already dismisses CallScreen/IncomingCall — do not goBack here
-        // (optimistic openActiveCallScreen may have already replaced this screen).
+    const connectWatchdog = setTimeout(() => {
+      try {
+        const routeName = navigation.getState?.()?.routes?.slice(-1)?.[0]?.name;
+        if (routeName === 'incomingCall') leaveIncomingUi();
+      } catch (_) {
+        leaveIncomingUi();
       }
+    }, 8000);
+
+    try {
+      await acceptCallFromNotification(callPayload, { navigateNow: true });
     } catch (err) {
       console.error('❌ Accept API exception:', err);
       LoginPageErrors('Something went wrong');
-      navigation.goBack();
+      leaveIncomingUi();
+    } finally {
+      clearTimeout(connectWatchdog);
     }
-  }, [roomId, name, callerId, profileImageUrl, callType, callId, markActed, stopRingtone, clearSafetyTimer, dispatch, triggerSuccessSequence, navigation]);
+  }, [roomId, name, callerId, profileImageUrl, callType, callId, markActed, stopRingtone, clearSafetyTimer, dispatch, triggerSuccessSequence, leaveIncomingUi, navigation]);
 
   const triggerAcceptJS = useCallback(() => {
     handleAccept();
   }, [handleAccept]);
 
-
-  // ─── Decline call (JS Thread - Optimistic Dismissal) ───
+  // ─── Decline — leave UI first, reject API in background ───
   const handleDecline = useCallback(() => {
-    if (hasActedRef.current) return;
-    if (shouldRejectIncomingCall({ isCallActive: true, hasActed: hasActedRef.current })) {
-      markActed();
-    } else {
+    console.log('📱 [IncomingCall] Decline pressed', { roomId, callId, hasActed: hasActedRef.current });
+    if (hasActedRef.current) {
+      leaveIncomingUi();
       return;
     }
+    if (!shouldRejectIncomingCall({ isCallActive: true, hasActed: hasActedRef.current })) {
+      leaveIncomingUi();
+      return;
+    }
+    markActed();
     stopRingtone();
     clearSafetyTimer();
     ReactNativeHapticFeedback.trigger('impactLight');
-
-    // 🔑 Clear dedup guard BEFORE navigation so the next call from this
-    // caller isn't silently blocked by the processedRoomIds check in Main.js
     if (callId) dispatch(clearProcessedRoomId(callId));
+    leaveIncomingUi();
 
-    markCallRejectedSync({
-      roomId,
-      callId,
-      callType: callType || 'audio',
-      displayName: name,
-      senderId: callerId,
-      profileImage: profileImageUrl,
-    });
-    if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
-
-    // Fire decline API in background (fire-and-forget) to keep UI responsive
-    callAcceptManual({
-      token,
-      data: {
-        roomId: roomId,
+    declineCallFromNotification(
+      {
+        roomId,
+        callId,
         callType: callType || 'audio',
-        status: 'REJECTED',
+        displayName: name,
+        senderId: callerId,
+        profileImage: profileImageUrl,
       },
-    })
-      .catch(error => {
-        console.error('Background decline API call error:', error);
-      })
-      .finally(() => {
-        clearPendingCall();
-      });
+      { dismissUi: false },
+    )
+      .catch(error => console.error('Background decline API call error:', error))
+      .finally(() => clearPendingCall());
+  }, [roomId, callType, callId, name, callerId, profileImageUrl, dispatch, leaveIncomingUi, stopRingtone, clearSafetyTimer, markActed]);
 
-    // Go back instantly
-    navigation.goBack();
-  }, [token, roomId, callType, callId, name, callerId, profileImageUrl, dispatch, navigation, stopRingtone, clearSafetyTimer]);
+  const tapAcceptGesture = Gesture.Tap().onEnd(() => {
+    runOnJS(triggerAcceptJS)();
+  });
 
-  // ─── Pan gesture (vertical) ───
   const panGesture = Gesture.Pan()
     .onUpdate(e => {
-      // Only allow upward drag (negative Y) & clamp at 0
       if (e.translationY <= 0) {
         translateY.value = e.translationY;
       }
@@ -670,18 +682,18 @@ const IncomingCallScreen = ({ route, navigation }) => {
       const velocity = Math.abs(e.velocityY);
 
       if (dragDistance >= ACCEPT_THRESHOLD || velocity >= VELOCITY_THRESHOLD) {
-        // Success
         runOnJS(triggerAcceptJS)();
         triggerSuccessSequence();
       } else {
-        // Bounce back if released too early
         translateY.value = withSpring(0, {
           damping: 15,
-          stiffness: 300, 
+          stiffness: 300,
           mass: 0.8,
         });
       }
     });
+
+  const acceptGesture = Gesture.Exclusive(tapAcceptGesture, panGesture);
 
   // ─── Animated styles ───
   const buttonAnimStyle = useAnimatedStyle(() => {
@@ -729,7 +741,13 @@ const IncomingCallScreen = ({ route, navigation }) => {
     return (
       <View style={styles.loaderContainer}>
         <LegacyLoader />
-        <Text style={styles.loaderText}>Loading...</Text>
+        <Text style={styles.loaderText}>Connecting...</Text>
+        <TouchableOpacity
+          style={styles.loaderCancelBtn}
+          onPress={leaveIncomingUi}
+          activeOpacity={0.7}>
+          <Text style={styles.loaderCancelText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -760,31 +778,33 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
         {/* ─── Bottom controls ─── */}
         <View style={styles.bottomControls}>
-          
-          {/* LEFT: Decline button */}
-          <View style={styles.declineContainer}>
-            <Animated.View style={declineButtonStyle}>
-                <TouchableOpacity
+          <View style={styles.declineContainer} pointerEvents="box-none">
+            <Animated.View style={declineButtonStyle} pointerEvents="box-none">
+              <TouchableOpacity
                 style={styles.declineButton}
                 onPress={handleDecline}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+                hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                accessibilityRole="button"
+                accessibilityLabel="Decline call">
                 <Feather name="x" size={28} color="#EF4444" />
-                </TouchableOpacity>
+              </TouchableOpacity>
             </Animated.View>
             <Text style={styles.buttonLabel}>Decline</Text>
           </View>
 
-          {/* RIGHT: Swipe-to-answer button */}
-          <View style={styles.acceptContainer}>
-            {/* Chevron arrows above */}
-            <Animated.View style={[styles.chevronContainer, chevronContainerStyle]}>
+          <View style={styles.acceptContainer} pointerEvents="box-none">
+            <Animated.View
+              style={[styles.chevronContainer, chevronContainerStyle]}
+              pointerEvents="none">
               <ChevronArrow delay={0} />
               <ChevronArrow delay={200} />
               <ChevronArrow delay={400} />
             </Animated.View>
 
-            {/* Green gradient trail */}
-            <Animated.View style={[styles.trailContainer, trailAnimStyle]}>
+            <Animated.View
+              style={[styles.trailContainer, trailAnimStyle]}
+              pointerEvents="none">
               <LinearGradient
                 colors={['transparent', '#10B98140', '#10B98180', '#10B981']}
                 style={StyleSheet.absoluteFill}
@@ -793,9 +813,11 @@ const IncomingCallScreen = ({ route, navigation }) => {
               />
             </Animated.View>
 
-            {/* Draggable accept button */}
-            <GestureDetector gesture={panGesture}>
-              <Animated.View style={[styles.acceptButton, buttonAnimStyle]}>
+            <GestureDetector gesture={acceptGesture}>
+              <Animated.View
+                style={[styles.acceptButton, buttonAnimStyle]}
+                accessibilityRole="button"
+                accessibilityLabel="Accept call">
                 <LinearGradient
                   colors={['#34D399', '#10B981']}
                   style={styles.acceptGradient}
@@ -806,7 +828,6 @@ const IncomingCallScreen = ({ route, navigation }) => {
               </Animated.View>
             </GestureDetector>
 
-            {/* Label below */}
             <Text style={styles.buttonLabel}>Accept</Text>
           </View>
         </View>
@@ -910,6 +931,20 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontSize: 16,
     color: '#6B7280',
+    fontFamily: 'Rubik-Medium',
+  },
+  loaderCancelBtn: {
+    marginTop: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+  },
+  loaderCancelText: {
+    fontSize: 15,
+    color: '#EF4444',
     fontFamily: 'Rubik-Medium',
   },
 

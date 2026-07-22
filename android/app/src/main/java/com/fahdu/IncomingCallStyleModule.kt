@@ -57,6 +57,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         const val EXTRA_SENDER_ID = "senderId"
         const val EXTRA_PROFILE_IMAGE = "profileImage"
         const val EXTRA_ACTION = "callAction"
+        /** Embedded JWT so Decline/Answer work when JS/storage is unavailable. */
+        const val EXTRA_AUTH_TOKEN = "authToken"
         const val PREFS = "fahdu_incoming_call_style"
         const val PREF_PENDING_ACTION = "pending_call_action_json"
         private const val ENDED_TTL_CALL_MS = 5 * 60 * 1000L
@@ -638,6 +640,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
                 ensureChannel(appContext)
 
+                // Bake auth into PendingIntent — Decline/Answer must hit API without JS.
+                val authForExtras = IncomingCallApi.readAuthToken(appContext)
                 val extras = Bundle().apply {
                     putString(EXTRA_ROOM_ID, roomId)
                     putString(EXTRA_CALL_ID, callId)
@@ -645,6 +649,9 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     putString(EXTRA_DISPLAY_NAME, displayName)
                     putString(EXTRA_SENDER_ID, senderId)
                     putString(EXTRA_PROFILE_IMAGE, profileImage)
+                    if (!authForExtras.isNullOrBlank()) {
+                        putString(EXTRA_AUTH_TOKEN, authForExtras)
+                    }
                 }
 
                 // Unique request codes per callId so each invite gets fresh Accept/Decline intents.
@@ -666,12 +673,16 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     reqSeed + 2,
                     Intent(appContext, MainActivity::class.java).apply {
                         action = ACTION_ACCEPT
+                        addCategory(Intent.CATEGORY_DEFAULT)
                         putExtras(extras)
                         putExtra(EXTRA_ACTION, "accept_call")
+                        // Duplicate on Intent.action path for OEM extras drops.
+                        putExtra("action", "accept_call")
                         addFlags(
                             Intent.FLAG_ACTIVITY_NEW_TASK or
                                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP,
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT,
                         )
                     },
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -682,12 +693,15 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                     reqSeed + 3,
                     Intent(appContext, MainActivity::class.java).apply {
                         action = ACTION_OPEN
+                        addCategory(Intent.CATEGORY_DEFAULT)
                         putExtras(extras)
                         putExtra(EXTRA_ACTION, "open_incoming_call")
+                        putExtra("action", "open_incoming_call")
                         addFlags(
                             Intent.FLAG_ACTIVITY_NEW_TASK or
                                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP,
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT,
                         )
                     },
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -867,6 +881,27 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
         promise.resolve(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
     }
 
+    /** Cache JWT so CallStyle Decline/Answer can hit accept/manual without JS. */
+    @ReactMethod
+    fun cacheAuthToken(token: String?, promise: Promise) {
+        try {
+            IncomingCallApi.cacheAuthToken(reactContext, token)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("CACHE_TOKEN_FAILED", e.message, e)
+        }
+    }
+
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun cacheAuthTokenSync(token: String?): Boolean {
+        return try {
+            IncomingCallApi.cacheAuthToken(reactContext, token)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     @ReactMethod
     fun setInAppIncomingUi(active: Boolean, promise: Promise) {
         try {
@@ -895,6 +930,12 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
             if (roomId.isEmpty()) {
                 promise.reject("NO_ROOM", "roomId required")
                 return
+            }
+
+            // Prefer JS-supplied token so Decline/Answer always have auth in the PI.
+            val tokenFromJs = details.getString("authToken")
+            if (!tokenFromJs.isNullOrBlank()) {
+                IncomingCallApi.cacheAuthToken(reactContext, tokenFromJs)
             }
 
             val ok = displayFromContext(

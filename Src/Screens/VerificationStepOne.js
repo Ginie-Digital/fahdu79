@@ -431,12 +431,12 @@ const VerificationStepOne = ({route}) => {
               color: isDark ? colors.text : '#1E1E1E'
             }}>Select Your Niche</Text>
             <View style={{
-              width: 88,
-              height: 22,
+              paddingVertical: 4,
+              paddingHorizontal: 8,
               flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
-              backgroundColor: isDark ? 'rgba(255, 168, 107, 0.15)' : '#FFF3EB',
+              backgroundColor: isDark ? 'rgba(255, 168, 107, 0.149)' : '#FFF3EB',
               borderWidth: 1,
               borderColor: isDark ? '#FF7819' : '#FFE0CC',
               borderRadius: 100,

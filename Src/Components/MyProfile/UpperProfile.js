@@ -57,6 +57,7 @@ const UpperProfile = ({isFocused}) => {
         headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
         timeout: 10000,
       });
+      console.log('Wallet recharge API response:', JSON.stringify(data, null, 2));
       if (data?.statusCode === 200 && data?.data) {
         setWalletBadges(data.data);
       }

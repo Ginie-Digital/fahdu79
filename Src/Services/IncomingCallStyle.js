@@ -17,18 +17,32 @@ const emitter =
 let wired = false;
 let appStateSub = null;
 
-const toCallData = payload => ({
-  roomId: payload?.roomId || payload?.room_id,
-  callId: payload?.callId || payload?.call_id,
-  callType: payload?.callType || payload?.call_type || 'audio',
-  displayName: payload?.displayName || payload?.name || 'Call',
-  name: payload?.displayName || payload?.name || 'Call',
-  senderId: payload?.senderId || payload?.callerId,
-  callerId: payload?.senderId || payload?.callerId,
-  profileImage: payload?.profileImage || payload?.profileImageUrl,
-  profileImageUrl: payload?.profileImage || payload?.profileImageUrl,
-  type: 'incoming_call',
-});
+const toCallData = payload => {
+  let profileImage = payload?.profileImage || payload?.profileImageUrl || payload?.profile_image;
+  try {
+    const { resolveProfileImageUrl } = require('../Utils/callAcceptFlow');
+    profileImage = resolveProfileImageUrl(
+      payload?.profileImage,
+      payload?.profileImageUrl,
+      payload?.profile_image,
+    );
+  } catch (_) {
+    if (typeof profileImage === 'object') profileImage = profileImage?.url || '';
+    if (profileImage === '[object Object]') profileImage = '';
+  }
+  return {
+    roomId: payload?.roomId || payload?.room_id,
+    callId: payload?.callId || payload?.call_id,
+    callType: payload?.callType || payload?.call_type || 'audio',
+    displayName: payload?.displayName || payload?.name || 'Call',
+    name: payload?.displayName || payload?.name || 'Call',
+    senderId: payload?.senderId || payload?.callerId,
+    callerId: payload?.senderId || payload?.callerId,
+    profileImage,
+    profileImageUrl: profileImage,
+    type: 'incoming_call',
+  };
+};
 
 export async function isAndroidCallStyleSupported() {
   if (Platform.OS !== 'android' || !Native?.isCallStyleSupported) return false;
@@ -120,6 +134,29 @@ export function setAndroidInAppIncomingUi(active) {
   } catch (_) {}
 }
 
+/** True only when user can see IncomingCall — hide CallStyle heads-up then. */
+export function isAndroidIncomingCallForegroundVisible() {
+  if (Platform.OS !== 'android') return AppState.currentState === 'active';
+  // Require active — FCM wakes often report inactive/background with no real UI.
+  // Never treat those as FG or we wipe BG/kill Accept/Reject notifications.
+  if (AppState.currentState !== 'active') return false;
+  try {
+    if (typeof Native?.isMainActivityResumedSync === 'function') {
+      return !!Native.isMainActivityResumedSync();
+    }
+  } catch (_) {}
+  return true;
+}
+
+/**
+ * Hide CallStyle Accept/Reject shade only while the full-screen IncomingCall is
+ * visible in the foreground. Never cancel BG/kill notifications.
+ */
+export async function dismissAndroidCallStyleIfForeground(roomId) {
+  if (!roomId || !isAndroidIncomingCallForegroundVisible()) return;
+  await dismissAndroidCallStyleShade(roomId);
+}
+
 export async function stopAndroidRingtoneAndDismiss(roomId) {
   if (Platform.OS !== 'android' || !roomId) return;
   try {
@@ -189,9 +226,10 @@ async function handleStyleAction(payload) {
     return;
   }
 
-  // Phone in use: IncomingCall screen + keep CallStyle notification visible.
+  // When app is visibly in use → open IncomingCall; hide CallStyle only in true FG.
+  // BG/kill: CallStyle Accept/Reject must stay — do not dismiss shade.
   if (action === 'foreground_incoming_call') {
-    console.log('📱 [IncomingCallStyle] FG in-use → IncomingCall + keep CallStyle', callData.roomId);
+    console.log('📱 [IncomingCallStyle] → IncomingCall open', callData.roomId);
     const {
       prepareIncomingCall,
       openIncomingCallScreen,
@@ -210,18 +248,20 @@ async function handleStyleAction(payload) {
     }
     try {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
-      // Keep existing native ring; do NOT dismiss CallStyle shade.
+      // Keep existing native ring; keep CallStyle if BG/kill.
       if (RingtoneManager.isNativePlaying()) {
         RingtoneManager.adoptNativeIncoming();
       }
     } catch (_) {}
     const { navigationRef } = require('../../Navigation/RootNavigation');
     openIncomingCallScreen(callData);
+    dismissAndroidCallStyleIfForeground(callData.roomId).catch(() => {});
     try {
       const RingtoneManager = require('../Components/Calling/RingtoneManager').default;
       RingtoneManager.clearIncomingSuppress();
       setTimeout(() => {
         RingtoneManager.ensureIncoming().catch(() => {});
+        dismissAndroidCallStyleIfForeground(callData.roomId).catch(() => {});
       }, 300);
     } catch (_) {}
     setTimeout(() => {

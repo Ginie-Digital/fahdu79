@@ -143,7 +143,10 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
           displayName: callDetails?.displayName || callDetails?.name,
           callType: callDetails?.callType || 'audio',
           senderId: callDetails?.senderId || callDetails?.callerId,
-          profileImage: callDetails?.profileImage || callDetails?.profileImageUrl,
+          profileImage:
+            callDetails?.profileImage ||
+            callDetails?.profileImageUrl ||
+            callDetails?.profile_image,
           callId: callDetails?.callId,
         });
 
@@ -159,7 +162,14 @@ setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
               name: callDetails?.displayName || callDetails?.name,
               senderId: callDetails?.senderId || callDetails?.callerId,
               callerId: callDetails?.senderId || callDetails?.callerId,
-              profileImage: callDetails?.profileImage || callDetails?.profileImageUrl,
+              profileImage:
+                callDetails?.profileImage ||
+                callDetails?.profileImageUrl ||
+                callDetails?.profile_image,
+              profileImageUrl:
+                callDetails?.profileImageUrl ||
+                callDetails?.profileImage ||
+                callDetails?.profile_image,
             });
           } catch (e) {
             console.warn('📱 [index:FCM:Background] openIncomingCallScreen failed:', e?.message || e);

@@ -578,8 +578,8 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
 
             try {
                 // BG/kill incoming (force=true): ALWAYS show CallStyle for every ring.
-                // First call worked but 2nd didn't — ended/suppress stamps were blocking
-                // same room / reused callId. Only debounce identical FCM within 2s.
+                // Never skip on inAppIncomingUi — that blocked kill/BG Accept/Reject.
+                // JS hides the shade only when IncomingCall is truly foreground-visible.
                 if (force) {
                     clearRingtoneSuppress()
                     inAppIncomingUi = false
@@ -614,8 +614,11 @@ class IncomingCallStyleModule(private val reactContext: ReactApplicationContext)
                         android.util.Log.i(NAME, "Skip CallStyle — same callId suppressed callId=$callId")
                         return false
                     }
-                    // Never skip CallStyle just because Activity is resumed or IncomingCall
-                    // is open — FG must keep the Declined/Answer shade visible too.
+                    // Soft path only: if IncomingCall already owns true FG UX, skip shade.
+                    if (inAppIncomingUi && isMainActivityResumed()) {
+                        android.util.Log.i(NAME, "Skip CallStyle — in-app IncomingCall UI active")
+                        return true
+                    }
                     if (callId.isNotEmpty() && wasCallEndedRecently(appContext, roomId, callId)) {
                         android.util.Log.i(NAME, "Skip display — same callId recently ended callId=$callId")
                         return false

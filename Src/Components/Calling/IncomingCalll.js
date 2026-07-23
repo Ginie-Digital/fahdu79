@@ -150,12 +150,24 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
   const {
     name,
-    profileImageUrl,
+    profileImageUrl: rawProfileImageUrl,
     callType,
     roomId,
     callerId,
     callId,
   } = route?.params || {};
+
+  const profileImageUrl = (() => {
+    try {
+      const { resolveProfileImageUrl } = require('../../Utils/callAcceptFlow');
+      return resolveProfileImageUrl(rawProfileImageUrl);
+    } catch (_) {
+      if (typeof rawProfileImageUrl === 'string' && rawProfileImageUrl !== '[object Object]') {
+        return rawProfileImageUrl;
+      }
+      return rawProfileImageUrl?.url || '';
+    }
+  })();
 
   const dispatch = useDispatch();
   const [callAcceptManual] = useCallAcceptManualMutation();
@@ -358,13 +370,17 @@ const IncomingCallScreen = ({ route, navigation }) => {
     }
   }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
 
-  // Keep CallStyle notification while IncomingCall is open (FG + BG full-screen).
-  // Only mark in-app UI so Accept/Reject from either surface stay in sync.
+  // Mark in-app UI. Dismiss CallStyle heads-up ONLY in true foreground —
+  // BG/kill Accept/Reject notification must stay visible.
   useEffect(() => {
     if (!roomId) return;
     try {
-      const { setAndroidInAppIncomingUi } = require('../../Services/IncomingCallStyle');
+      const {
+        setAndroidInAppIncomingUi,
+        dismissAndroidCallStyleIfForeground,
+      } = require('../../Services/IncomingCallStyle');
       setAndroidInAppIncomingUi(true);
+      dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
     } catch (_) {}
     return () => {
       try {
@@ -393,7 +409,7 @@ const IncomingCallScreen = ({ route, navigation }) => {
         // active + inactive both count as in-app (shade pull is inactive).
         if (AppState.currentState === 'background') return;
         handedOff = false;
-        // Keep CallStyle notification visible while ringing in FG.
+        // Screen open in FG — no CallStyle heads-up; ringtone only.
         // ensureIncoming: adopt native if already playing (notif tap) — never start a 2nd tone.
         await RingtoneManager.ensureIncoming();
       } catch (error) {
@@ -439,6 +455,11 @@ const IncomingCallScreen = ({ route, navigation }) => {
         if (isCancelled || hasActedRef.current) return;
         if (AppState.currentState === 'active' || AppState.currentState === 'inactive') {
           playFgRingtone();
+          // Back to FG with screen open — hide CallStyle heads-up again.
+          try {
+            const { dismissAndroidCallStyleIfForeground } = require('../../Services/IncomingCallStyle');
+            dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
+          } catch (_) {}
         } else if (AppState.currentState === 'background') {
           startBackgroundRingtone();
         }
@@ -784,9 +805,15 @@ const IncomingCallScreen = ({ route, navigation }) => {
             <PulseRing />
             <View style={styles.profileCircle}>
               <Image
-                source={{ uri: profileImageUrl }}
+                source={
+                  profileImageUrl
+                    ? { uri: profileImageUrl }
+                    : require('../../../Assets/Images/DefaultProfile.jpg')
+                }
+                placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
                 style={styles.profilePhoto}
                 contentFit="cover"
+                cachePolicy="memory-disk"
               />
             </View>
           </View>

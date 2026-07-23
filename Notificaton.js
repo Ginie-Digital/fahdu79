@@ -657,21 +657,55 @@ function normalizeIncomingCallDetails(raw) {
     name: details.name || details.displayName || details.callerName || 'Incoming Call',
     senderId: String(details.senderId || details.callerId || details.sender_id || ''),
     callerId: String(details.callerId || details.senderId || details.sender_id || ''),
-    profileImage: String(
-      details.profileImage || details.profileImageUrl || details.profile_image || details.profileImageurl || '',
-    ),
-    profileImageUrl: String(
-      details.profileImageUrl || details.profileImage || details.profile_image || details.profileImageurl || '',
-    ),
+    profileImage: (() => {
+      try {
+        const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+        return resolveProfileImageUrl(
+          details.profileImage,
+          details.profileImageUrl,
+          details.profile_image,
+          details.profileImageurl,
+        );
+      } catch (_) {
+        const v =
+          details.profileImage ||
+          details.profileImageUrl ||
+          details.profile_image ||
+          details.profileImageurl ||
+          '';
+        if (typeof v === 'string') return v === '[object Object]' ? '' : v;
+        return v?.url || '';
+      }
+    })(),
+    profileImageUrl: (() => {
+      try {
+        const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+        return resolveProfileImageUrl(
+          details.profileImageUrl,
+          details.profileImage,
+          details.profile_image,
+          details.profileImageurl,
+        );
+      } catch (_) {
+        const v =
+          details.profileImageUrl ||
+          details.profileImage ||
+          details.profile_image ||
+          details.profileImageurl ||
+          '';
+        if (typeof v === 'string') return v === '[object Object]' ? '' : v;
+        return v?.url || '';
+      }
+    })(),
   };
 }
 
 /**
- * Incoming call shade for BG / kill / foreground (audio + video).
+ * Incoming call shade for BG / kill / handoff.
  *
  * Android:
- *   ALWAYS show CallStyle (circular Decline + Answer) — FG and BG.
- *   IncomingCall full screen opens separately when the app is visible.
+ *   force=true → always post CallStyle (BG/kill Accept + Reject).
+ *   Without force, skip when app is active (IncomingCall screen handles FG).
  * iOS: Notifee / CallKit category.
  */
 export async function showIncomingCallNotification(callDetails, options = {}) {
@@ -685,12 +719,11 @@ export async function showIncomingCallNotification(callDetails, options = {}) {
     return false;
   }
 
-  // Android: always allow CallStyle (FG + BG). IncomingCall screen and notification
-  // must both be visible — never skip shade just because the Activity is resumed.
-  // iOS still skips duplicate Notifee when app is active unless force=true.
-  if (!options.force && Platform.OS === 'ios' && AppState.currentState === 'active') {
+  // Without force: skip when app is active (FG uses IncomingCall screen).
+  // force=true (BG/kill/handoff) must always post CallStyle.
+  if (!options.force && AppState.currentState === 'active') {
     console.log(
-      '📱 [showIncomingCallNotification] skip — iOS foreground (IncomingCall screen handles it)',
+      '📱 [showIncomingCallNotification] skip — foreground (IncomingCall screen handles it)',
       details.roomId,
     );
     return false;

@@ -31,6 +31,32 @@ export const callGuardKey = callData => {
 };
 
 /**
+ * FCM/socket may send profile as a URL string or `{ url }` object.
+ * Never pass `[object Object]` into Image uri.
+ */
+export const resolveProfileImageUrl = (...candidates) => {
+  for (const value of candidates) {
+    if (value == null || value === '') continue;
+    if (typeof value === 'string') {
+      const s = value.trim();
+      if (!s || s === '[object Object]') continue;
+      return s;
+    }
+    if (typeof value === 'object') {
+      const nested = resolveProfileImageUrl(
+        value.url,
+        value.uri,
+        value.profile_image,
+        value.profileImage,
+        value.profileImageUrl,
+      );
+      if (nested) return nested;
+    }
+  }
+  return '';
+};
+
+/**
  * Normalize socket/FCM call payloads (room_id vs roomId, nested/string content, etc.).
  */
 export const normalizeIncomingCallPayload = raw => {
@@ -60,16 +86,24 @@ export const normalizeIncomingCallPayload = raw => {
     senderId: src.senderId || src.callerId || src.sender_id || src.caller_id,
     name: src.name || src.displayName || src.callerName || 'Call',
     displayName: src.displayName || src.name || src.callerName || 'Call',
-    profileImage:
-      src.profileImage ||
-      src.profileImageurl ||
-      src.profileImageUrl ||
+    profileImage: resolveProfileImageUrl(
+      src.profileImage,
+      src.profileImageurl,
+      src.profileImageUrl,
       src.profile_image,
-    profileImageurl:
-      src.profileImageurl ||
-      src.profileImage ||
-      src.profileImageUrl ||
+    ),
+    profileImageurl: resolveProfileImageUrl(
+      src.profileImageurl,
+      src.profileImage,
+      src.profileImageUrl,
       src.profile_image,
+    ),
+    profileImageUrl: resolveProfileImageUrl(
+      src.profileImageUrl,
+      src.profileImageurl,
+      src.profileImage,
+      src.profile_image,
+    ),
   };
 };
 
@@ -1022,11 +1056,12 @@ export const openIncomingCallScreen = rawCallData => {
 
   const params = {
     name: callData?.name || callData?.displayName || callData?.callerName || 'Call',
-    profileImageUrl:
-      callData?.profileImageurl ||
-      callData?.profileImage ||
-      callData?.profile_image ||
+    profileImageUrl: resolveProfileImageUrl(
       callData?.profileImageUrl,
+      callData?.profileImageurl,
+      callData?.profileImage,
+      callData?.profile_image,
+    ),
     roomId: String(callData.roomId),
     callType: callData?.callType || 'audio',
     callerId: callData?.callerId || callData?.senderId,
@@ -1041,10 +1076,16 @@ export const openIncomingCallScreen = rawCallData => {
       const current = navigationRef.getCurrentRoute()?.name;
       const currentParams = navigationRef.getCurrentRoute()?.params;
       // Already showing this call — success (avoid remount glitch).
+      // If profile image arrived late, refresh params so the photo can render.
       if (
         current === 'incomingCall' &&
         String(currentParams?.roomId || '') === String(params.roomId)
       ) {
+        const nextPhoto = params.profileImageUrl || '';
+        const curPhoto = currentParams?.profileImageUrl || '';
+        if (nextPhoto && nextPhoto !== curPhoto) {
+          navigationRef.dispatch(StackActions.replace('incomingCall', params));
+        }
         return true;
       }
       // If already on CallScreen for this room, don't go back to IncomingCall.

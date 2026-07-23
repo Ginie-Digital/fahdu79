@@ -90,9 +90,9 @@ object IncomingCallNativeHandler {
                     return false
                 }
 
-                // ALWAYS post CallStyle for FCM — never cancel based on mainActivityResumed.
-                // False FG (full-screen intent / duplicate FCM) used to wipe the notification
-                // right after it was shown → intermittent "no call in background".
+                // ALWAYS post CallStyle for FCM (BG + kill). Do not skip on
+                // mainActivityResumed — false FG wakes used to wipe BG notifs.
+                // JS dismisses the shade only when IncomingCall is truly visible in FG.
                 IncomingCallStyleModule.setInAppIncomingUi(false)
                 IncomingCallStyleModule.clearRingtoneSuppress()
                 Log.i(
@@ -127,8 +127,7 @@ object IncomingCallNativeHandler {
                     Log.i(TAG, "displayFromContext retry=$ok")
                 }
 
-                // Always nudge JS to open IncomingCall (FG + minimized process).
-                // Does NOT cancel CallStyle — screen and notification must both stay.
+                // Nudge JS to open IncomingCall when process is alive (FG / minimized).
                 Log.i(TAG, "Emit IncomingCall open room=${info.roomId} resumed=${IncomingCallStyleModule.isMainActivityResumed()}")
                 val extras =
                     Bundle().apply {
@@ -141,7 +140,6 @@ object IncomingCallNativeHandler {
                         putString(IncomingCallStyleModule.EXTRA_ACTION, "foreground_incoming_call")
                         putString("action", "foreground_incoming_call")
                     }
-                // Persist so cold-start / React-not-ready still opens IncomingCall on resume.
                 IncomingCallStyleModule.savePendingAction(
                     app,
                     "foreground_incoming_call",
@@ -149,7 +147,6 @@ object IncomingCallNativeHandler {
                 )
                 IncomingCallStyleModule.emitAction("foreground_incoming_call", extras)
 
-                // false → FahduFCM calls super so JS can still show a fallback.
                 return ok
             }
 
@@ -241,7 +238,10 @@ object IncomingCallNativeHandler {
                     callType = data["callType"] ?: data["call_type"] ?: "audio",
                     displayName = data["displayName"] ?: data["name"] ?: "Incoming Call",
                     senderId = data["senderId"] ?: data["callerId"] ?: "",
-                    profileImage = data["profileImage"] ?: data["profileImageUrl"] ?: "",
+                    profileImage = data["profileImage"]
+                        ?: data["profileImageUrl"]
+                        ?: data["profile_image"]
+                        ?: "",
                 )
             }
             if (isCallRelated(type)) {
@@ -308,10 +308,22 @@ object IncomingCallNativeHandler {
                 "senderId",
                 content.optString("callerId", content.optString("sender_id", "")),
             ),
-            profileImage = content.optString(
-                "profileImage",
-                content.optString("profileImageUrl", content.optString("profile_image", "")),
-            ),
+            profileImage = extractProfileImage(content),
         )
+    }
+
+    private fun extractProfileImage(content: JSONObject): String {
+        val directKeys = listOf("profileImage", "profileImageUrl", "profileImageurl", "profile_image")
+        for (key in directKeys) {
+            if (!content.has(key)) continue
+            when (val raw = content.opt(key)) {
+                is String -> if (raw.isNotBlank() && raw != "[object Object]") return raw
+                is JSONObject -> {
+                    val url = raw.optString("url", raw.optString("uri", ""))
+                    if (url.isNotBlank()) return url
+                }
+            }
+        }
+        return ""
     }
 }

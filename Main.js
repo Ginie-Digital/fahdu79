@@ -634,10 +634,32 @@ const Main = () => {
           callerId: callData?.callerId || callData?.senderId,
           displayName: callData?.name || callData?.displayName,
           name: callData?.name || callData?.displayName,
-          profileImage:
-            callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
-          profileImageUrl:
-            callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
+          profileImage: (() => {
+            try {
+              const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+              return resolveProfileImageUrl(
+                callData?.profileImageurl,
+                callData?.profileImage,
+                callData?.profileImageUrl,
+                callData?.profile_image,
+              );
+            } catch (_) {
+              return callData?.profileImage || callData?.profile_image || '';
+            }
+          })(),
+          profileImageUrl: (() => {
+            try {
+              const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+              return resolveProfileImageUrl(
+                callData?.profileImageUrl,
+                callData?.profileImageurl,
+                callData?.profileImage,
+                callData?.profile_image,
+              );
+            } catch (_) {
+              return callData?.profileImage || callData?.profile_image || '';
+            }
+          })(),
           callId,
         },
         { force: true, playRingtone: true },
@@ -654,6 +676,10 @@ const Main = () => {
             String(route?.params?.roomId || '') === String(roomId)
           ) {
             console.log(`🚨 [Main:IncomingCall] Already on IncomingCall — skip`);
+            try {
+              const { dismissAndroidCallStyleIfForeground } = require('./Src/Services/IncomingCallStyle');
+              dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
+            } catch (_) {}
             console.log(`==========================================\n`);
             return;
           }
@@ -670,6 +696,13 @@ const Main = () => {
 
     console.log(`✅ [Main:IncomingCall] ALLOWED: Processing incoming call from ${source}`);
 
+    const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+    const profileImage = resolveProfileImageUrl(
+      callData?.profileImageurl,
+      callData?.profileImage,
+      callData?.profileImageUrl,
+      callData?.profile_image,
+    );
     const notifPayload = {
       roomId,
       callType: callData?.callType || 'audio',
@@ -677,8 +710,8 @@ const Main = () => {
       callerId: callData?.callerId || callData?.senderId,
       displayName: callData?.name || callData?.displayName,
       name: callData?.name || callData?.displayName,
-      profileImage: callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
-      profileImageUrl: callData?.profileImageurl || callData?.profileImage || callData?.profile_image,
+      profileImage,
+      profileImageUrl: profileImage,
       callId,
     };
 
@@ -719,40 +752,57 @@ const Main = () => {
         ? isAndroidActivityResumed()
         : AppState.currentState === 'active';
 
-    // Android FG + BG: ALWAYS show CallStyle (Decline/Answer). Never cancel it when
-    // opening IncomingCall — previous cancel race left users with neither UI.
+    // Android: FG = IncomingCall screen only (no CallStyle heads-up).
+    // BG / kill / minimized = ALWAYS show CallStyle Decline/Answer.
     try {
       RingtoneManager.clearIncomingSuppress();
     } catch (_) {}
-    showIncomingCallNotification(notifPayload, {
-      force: true,
-      playRingtone: true,
-    })
-      .then(shown => {
-        console.log(
-          `🚀 [Main:IncomingCall] CallStyle shown=${shown} type=${notifPayload.callType} fg=${appVisible} from ${source}`,
-        );
-      })
-      .catch(err => {
-        console.warn('[Main:IncomingCall] showIncomingCallNotification failed:', err?.message || err);
-      });
 
-    // Always open IncomingCall when JS is alive (FG or minimized).
-    // BG/kill full-screen intent / body tap also open it; stacking is deduped by route.
-    console.log(
-      '📱 [Main:IncomingCall] Android → IncomingCall screen + CallStyle',
-      appVisible ? 'FG' : 'BG/minimized',
-      source,
-      notifPayload.callType,
-    );
+    if (appVisible) {
+      console.log(
+        '📱 [Main:IncomingCall] Android FG → IncomingCall only (no notification)',
+        source,
+        notifPayload.callType,
+      );
+      try {
+        const { dismissAndroidCallStyleIfForeground } = require('./Src/Services/IncomingCallStyle');
+        dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
+      } catch (_) {}
+    } else {
+      showIncomingCallNotification(notifPayload, {
+        force: true,
+        playRingtone: true,
+      })
+        .then(shown => {
+          console.log(
+            `🚀 [Main:IncomingCall] CallStyle shown=${shown} type=${notifPayload.callType} from ${source}`,
+          );
+        })
+        .catch(err => {
+          console.warn('[Main:IncomingCall] showIncomingCallNotification failed:', err?.message || err);
+        });
+      console.log(
+        '📱 [Main:IncomingCall] Android BG/minimized → CallStyle (keep Accept/Reject)',
+        source,
+        notifPayload.callType,
+      );
+    }
+
     try {
       RingtoneManager.adoptNativeIncoming();
     } catch (_) {}
 
     prepareIncomingCall(callData);
+    // Open full-screen when process is alive. Shade dismiss only happens in true FG.
     openIncomingCallScreen(callData);
     setTimeout(() => {
       RingtoneManager.ensureIncoming().catch(() => {});
+      if (appVisible && roomId) {
+        try {
+          const { dismissAndroidCallStyleIfForeground } = require('./Src/Services/IncomingCallStyle');
+          dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
+        } catch (_) {}
+      }
     }, 300);
 
     const ensureIncomingVisible = () => {

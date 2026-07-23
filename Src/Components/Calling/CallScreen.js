@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import RingtoneManager from './RingtoneManager';
-import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, BackHandler, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, BackHandler, Alert, ActivityIndicator, AppState } from 'react-native';
 import { responsiveHeight, responsiveWidth, responsiveFontSize } from 'react-native-responsive-dimensions';
 import Back from '../../../Assets/svg/back.svg';
 import { Image } from 'expo-image';
@@ -17,7 +17,7 @@ import axios from 'axios';
 import { navigate } from '../../../Navigation/RootNavigation';
 import { setCallRejected, clearAcceptedRoomId, clearProcessedRoomId } from '../../../Redux/Slices/NormalSlices/Call/CallSlice';
 import StreamEndedUserModal from '../../Screens/Stream/StreamEndedUserModal';
-import { toggleCallAccepted } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
+import { toggleCallAccepted, toggleNewMessageRecieved } from '../../../Redux/Slices/NormalSlices/HideShowSlice';
 import { LoginPageErrors } from '../ErrorSnacks';
 import NetworkQualityBadge from './NetworkQualityBadge';
 import { useKeepAwake } from '@sayem314/react-native-keep-awake';
@@ -26,6 +26,8 @@ import CallingStatusText from './CallingStatusText';
 import { AppLog } from '../../Utils/Logger';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
+import { shouldTreatBlurAsCallEnd } from './callLifecycle';
+import { getLocalCallTerminationStatus } from './callFlow';
 
 const requestMicrophonePermission = async () => {
   if (Platform.OS === 'ios') {
@@ -61,14 +63,29 @@ const CallScreen = ({ route }) => {
   const isCallEndedRef = useRef(false);
   const timeoutIdRef = useRef(null);
   const hasNavigatedAwayRef = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
+
+  const { token, currentUserId, currentUserDisplayName } = useSelector(state => state.auth.user);
+  const callAccepted = useSelector(state => state.hideShow.visibility.callAccepted);
 
   const stopAndUnloadRingtone = useCallback(async () => {
     RingtoneManager.stopAll();
   }, []);
 
+  // Receiver Accept path — kill leftover incoming ring hard.
+  // Caller path — soft stop only (outgoing ring starts next).
+  useEffect(() => {
+    if (route?.params?.callAccepted) {
+      RingtoneManager.stopAndSuppress(route?.params?.roomId);
+    } else {
+      RingtoneManager.stopAll();
+    }
+  }, []);
+
   useEffect(() => {
     if (callAccepted) {
       callAcceptedRef.current = true;
+      RingtoneManager.stopAll();
     }
   }, [callAccepted]);
   const isEngineActive = useRef(false);
@@ -83,9 +100,6 @@ const CallScreen = ({ route }) => {
   const [networkQuality, setNetworkQuality] = useState(0);
   const [isEndingCall, setIsEndingCall] = useState(false);
 
-  const { token, currentUserId, currentUserDisplayName } = useSelector(state => state.auth.user);
-  const callAccepted = useSelector(state => state.hideShow.visibility.callAccepted);
-
   const dispatch = useDispatch();
 
   const [getCallToken] = useLazyGetCallTokenQuery();
@@ -94,7 +108,11 @@ const CallScreen = ({ route }) => {
   const [rejectCall] = useRejectCallMutation();
   const [callAcceptManual] = useCallAcceptManualMutation();
 
-  const IS_STARTING = currentUserId === route?.params?.callerId;
+  // Require both ids — missing callerId must NOT treat receiver as caller (sends false UNAVAILABLE).
+  const IS_STARTING =
+    !!currentUserId &&
+    !!route?.params?.callerId &&
+    String(currentUserId) === String(route.params.callerId);
 
   const { logs, clearLogs } = useCallStatusPolling({
     roomId: route?.params?.roomId,
@@ -115,6 +133,12 @@ const CallScreen = ({ route }) => {
       handleLogout(true);
     },
     onCallUnavailable: () => {
+      // Callee just accepted — server often still returns UNAVAILABLE while creator waits.
+      // Only the creator (IS_STARTING) should treat UNAVAILABLE as "user not answering".
+      if (!IS_STARTING) {
+        console.log('🔄 [Polling] Ignoring UNAVAILABLE for callee (creator may still be ringing)');
+        return;
+      }
       console.log('🔄 [Polling] Call unavailable, exiting...');
       setEndTriggerSource('POLLING');
       stopAndUnloadRingtone();
@@ -124,16 +148,21 @@ const CallScreen = ({ route }) => {
       handleLogout(true);
     },
     onCallEnded: (status) => {
+      // While still ringing, ignore flaky DISCONNECTED — but LEAVE/ENDED/COMPLETED = creator cut.
+      const upper = String(status || '').toUpperCase();
+      if (!callAcceptedRef.current && upper === 'DISCONNECTED') {
+        console.log('🔄 [Polling] Ignoring DISCONNECTED while ringing');
+        return;
+      }
       console.log(`🔄 [Polling] Call ended with status: ${status}`);
       setEndTriggerSource('POLLING');
-      isCallEndedRef.current = true;
       stopAndUnloadRingtone();
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
       dispatch(toggleCallAccepted({ status: false }));
-      setCallStreamEndModal(true);
+      handleLogout(true);
     },
   });
 
@@ -259,6 +288,23 @@ const CallScreen = ({ route }) => {
 
   async function rejectCallHandler() {
     try {
+      const { data, error } = await callAcceptManual({
+        token,
+        data: {
+          roomId: route?.params?.roomId,
+          callType: route?.params?.callType || 'audio',
+          status: 'REJECTED',
+        },
+      });
+      if (data) {
+        console.log(data, 'Cancel/Reject via callAccept success');
+        return;
+      }
+      if (error) console.log(error, 'callAccept REJECTED error — trying reject-call');
+    } catch (error) {
+      console.log('⚠️ callAccept REJECTED exception — trying reject-call:', error);
+    }
+    try {
       const { data, error } = await rejectCall({
         token,
         data: {
@@ -273,6 +319,20 @@ const CallScreen = ({ route }) => {
       console.log('⚠️ Exception in rejectCallHandler:', error);
     }
   }
+
+  const leaveCallUi = () => {
+    if (hasNavigatedAwayRef.current) return;
+    hasNavigatedAwayRef.current = true;
+    try {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigate('home');
+      }
+    } catch (_) {
+      navigate('home');
+    }
+  };
 
   const handleMic = async () => {
     try {
@@ -305,36 +365,41 @@ const CallScreen = ({ route }) => {
   };
 
   const handleLogout = async fromSocket => {
-    // 🔒 Use ref for SYNCHRONOUS guard - state is async/batched and allows double calls
+    // Escape hatch: already "ended" but still stuck → force leave.
     if (isCallEndedRef.current) {
-      console.log(`⛔ handleLogout BLOCKED - call already ended (ref guard) [room=${route?.params?.roomId}, fromSocket=${fromSocket}]`);
+      console.log(`⛔ handleLogout already ended — force leave UI [room=${route?.params?.roomId}]`);
+      leaveCallUi();
       return;
     }
     setEndTriggerSource(prev => {
       if (prev && prev !== 'LOCAL') return prev;
       return fromSocket ? 'SOCKET/FCM' : 'USER';
     });
-    console.log(`🔴 [handleLogout] ENTERED for room ${route?.params?.roomId}, fromSocket=${fromSocket}`);
-    console.log(`🔴 [handleLogout] Refs: isMounted=${isMounted.current}, isCallEnded=${isCallEndedRef.current}, hasNavigatedAway=${hasNavigatedAwayRef.current}`);
-    console.log(`🔴 [handleLogout] timeoutIdRef.current = ${timeoutIdRef.current}`);
+    // Snapshot BEFORE any Redux reset / navigate — after BG resume callAccepted
+    // can flicker false; we must still POST /leave so chat gets CALL_DETAILS + attempts.
+    const wasCallAccepted =
+      !!callAcceptedRef.current ||
+      !!callAccepted ||
+      !!route?.params?.callAccepted ||
+      !!isOtherUserInRoom;
+    console.log(
+      `🔴 [handleLogout] ENTERED room=${route?.params?.roomId} fromSocket=${fromSocket} wasAccepted=${wasCallAccepted}`,
+    );
     isCallEndedRef.current = true;
     setIsEndingCall(true);
+
     stopAndUnloadRingtone();
     if (timeoutIdRef.current) {
-      console.log(`🔴 [handleLogout] CLEARING timeout ID ${timeoutIdRef.current} for room ${route?.params?.roomId}`);
       clearTimeout(timeoutIdRef.current);
       timeoutIdRef.current = null;
-    } else {
-      console.log(`🔴 [handleLogout] ⚠️ NO timeout to clear! timeoutIdRef.current was null/undefined for room ${route?.params?.roomId}`);
     }
-    console.log(`Logging out from call_${route?.params?.roomId}`);
 
     try {
       if (isEngineActive.current) {
         const engine = ZegoExpressEngine.instance();
         if (engine) {
-          await engine.stopPlayingStream();
-          await engine.logoutRoom(callDetails.callRoomId || `call_${route?.params?.roomId}`);
+          engine.stopPlayingStream?.();
+          engine.logoutRoom?.(callDetails.callRoomId || `call_${route?.params?.roomId}`);
         }
         isEngineActive.current = false;
       }
@@ -342,31 +407,61 @@ const CallScreen = ({ route }) => {
       console.log('⚠️ ZEGO already destroyed or instance failed:', error.message);
     }
 
-    // Reset callAccepted to false BEFORE navigation
-    dispatch(toggleCallAccepted({ status: false }));
-
+    // BUG_13: hangup API MUST complete before unmount — navigating first cancelled
+    // /leave and left chat without Call Completed + callTries stuck at 0.
     if (!fromSocket) {
-      if (callAcceptedRef.current) {
-        // Call was accepted/active → Always use LEAVE
-        await leaveCallHandler();
-        console.log('Leaving call (call was accepted)...');
-      } else {
-        // Call was never accepted → REJECT
-        await rejectCallHandler();
-        console.log('Rejecting call (not accepted yet)...');
+      const terminationStatus = getLocalCallTerminationStatus({
+        callAccepted: wasCallAccepted,
+      });
+      try {
+        await Promise.race([
+          terminationStatus === 'LEAVE' ? leaveCallHandler() : rejectCallHandler(),
+          new Promise(resolve => setTimeout(resolve, 5000)),
+        ]);
+        console.log(`✅ [handleLogout] hangup API done status=${terminationStatus}`);
+      } catch (err) {
+        console.log('⚠️ hangup API timed out/failed:', err?.message || err);
       }
     }
 
-    // 🔒 Only navigate once
-    if (isMounted.current && !hasNavigatedAwayRef.current) {
-      hasNavigatedAwayRef.current = true;
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigate('home');
-      }
-    }
+    dispatch(toggleCallAccepted({ status: false }));
+    // Nudge ChatWindow now + shortly after so CALL_DETAILS / callTries land.
+    dispatch(toggleNewMessageRecieved());
+    setTimeout(() => {
+      try {
+        dispatch(toggleNewMessageRecieved());
+      } catch (_) {}
+    }, 1200);
+
+    leaveCallUi();
   };
+
+  // Remote reject / cancel (FCM or markIncomingCallEndedSync) — cut "Notifying/attempts" immediately.
+  useEffect(() => {
+    const roomId = route?.params?.roomId;
+    const callId = route?.params?.callId;
+    if (!roomId) return undefined;
+    const { subscribeCallIntent } = require('../../Utils/callAcceptFlow');
+    return subscribeCallIntent(({ type, callData }) => {
+      if (type !== 'REJECTED' && type !== 'UNAVAILABLE' && type !== 'ENDED') return;
+      const sameRoom =
+        callData?.roomId != null && String(callData.roomId) === String(roomId);
+      if (!sameRoom) return;
+      const sameCall =
+        !callId ||
+        !callData?.callId ||
+        String(callData.callId) === String(callId);
+      if (!sameCall) return;
+      if (isCallEndedRef.current) return;
+      console.log('📱 [CallScreen] Remote end intent — hang up', type);
+      setEndTriggerSource('SOCKET/FCM');
+      stopAndUnloadRingtone();
+      dispatch(toggleCallAccepted({ status: false }));
+      if (callId) dispatch(clearProcessedRoomId(callId));
+      if (type === 'REJECTED') LoginPageErrors('Call Rejected...');
+      handleLogout(true);
+    });
+  }, [route?.params?.roomId, route?.params?.callId, dispatch, stopAndUnloadRingtone]);
 
   // 🔥 Keep callAcceptedRef in sync with Redux state
   useEffect(() => {
@@ -456,14 +551,25 @@ const CallScreen = ({ route }) => {
     return () => x.remove();
   }, [isOtherUserInRoom]); // Dependency on isOtherUserInRoom for handleLogout
 
-  // 🧭 Navigation Blur Guard: If the screen loses focus (e.g. socket navigates away, or user leaves)
-  // we must immediately end the call context, stop ringing, and clear the 60s timeout.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      appStateRef.current = nextAppState;
+      if (nextAppState === 'background') {
+        console.log('📱 [CallScreen] App moved to background; keeping call active.');
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // 🧭 Blur: cancel for remote. Do NOT pre-set hasNavigatedAwayRef (soft-bricked End Call).
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
-      console.log(`🧭 [CallScreen] BLUR event fired - user navigated away from room ${route?.params?.roomId}`);
-      if (!isCallEndedRef.current) {
-        hasNavigatedAwayRef.current = true; // Mark as navigated away since we lost focus!
-        handleLogout(true); // End the call context (fromSocket = true skips duplicate API calls)
+      console.log(`🧭 [CallScreen] BLUR event fired - user navigated away from room ${route?.params?.roomId} (appState=${appStateRef.current})`);
+      if (!isCallEndedRef.current && shouldTreatBlurAsCallEnd({ appState: appStateRef.current, isCallEnded: isCallEndedRef.current })) {
+        handleLogout(false);
+      } else {
+        console.log('🧭 [CallScreen] BLUR ignored while app is backgrounded; keeping call alive');
       }
     });
     return unsubscribe;
@@ -681,9 +787,9 @@ const CallScreen = ({ route }) => {
             <Image source={{ uri: route?.params?.profileImageUrl }} style={styles.profileImage} />
           </View>
         </View>
-        {!callAccepted ? (
-          <CallingStatusText username={route?.params?.name} />
-        ) : (
+        {/* Timer only when both sides are actually in-call.
+            Callee used to show 00:0x while caller was still "Notifying..." */}
+        {callAccepted && (IS_STARTING || isOtherUserInRoom) ? (
           <TimerText
             accepted={callAccepted}
             totalDuration={route?.params?.totalDuration}
@@ -693,6 +799,8 @@ const CallScreen = ({ route }) => {
               }
             }}
           />
+        ) : (
+          <CallingStatusText username={route?.params?.name} />
         )}
       </View>
 

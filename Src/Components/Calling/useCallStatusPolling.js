@@ -57,7 +57,12 @@ export const useCallStatusPolling = ({
     let isStopped = false;
     let timeoutId = null;
 
-    addLog(`Polling started (Interval: ${callAccepted ? '8s' : '5s'}, callAccepted=${callAccepted})`);
+    // Ringing: poll fast so Answer/Decline on the other phone updates this UI quickly.
+    const ringingIntervalMs = 2000;
+    const connectedIntervalMs = 8000;
+    addLog(
+      `Polling started (Interval: ${callAccepted ? connectedIntervalMs : ringingIntervalMs}ms, callAccepted=${callAccepted})`,
+    );
 
     const poll = async () => {
       if (isStopped) return;
@@ -80,22 +85,33 @@ export const useCallStatusPolling = ({
         addLog(`Response: ${status} (${duration}ms)`);
 
         if (status) {
-          if (status === 'ACCEPTED' && !callAccepted) {
+          const upper = String(status).toUpperCase();
+          if (upper === 'ACCEPTED' && !callAccepted) {
             addLog('Action: Trigger onCallAccepted');
             savedCallbacks.current.onCallAccepted?.();
-          } else if (status === 'REJECTED') {
+          } else if (upper === 'REJECTED') {
             addLog('Action: Trigger onCallRejected');
             savedCallbacks.current.onCallRejected?.();
             isStopped = true;
             return;
-          } else if (status === 'UNAVAILABLE') {
+          } else if (upper === 'UNAVAILABLE') {
             addLog('Action: Trigger onCallUnavailable');
             savedCallbacks.current.onCallUnavailable?.();
             isStopped = true;
             return;
-          } else if (status === 'DISCONNECTED' || status === 'FORCE_CLOSED') {
-            addLog(`Action: Trigger onCallEnded (${status})`);
-            savedCallbacks.current.onCallEnded?.(status);
+          } else if (
+            upper === 'DISCONNECTED' ||
+            upper === 'FORCE_CLOSED' ||
+            upper === 'LEAVE' ||
+            upper === 'ENDED' ||
+            upper === 'COMPLETED' ||
+            upper === 'CANCELLED' ||
+            upper === 'CANCELED' ||
+            upper === 'MISSED'
+          ) {
+            // Creator cut / leave / completed — callee must hang up (not only DISCONNECTED).
+            addLog(`Action: Trigger onCallEnded (${upper})`);
+            savedCallbacks.current.onCallEnded?.(upper);
             isStopped = true;
             return;
           }
@@ -108,15 +124,14 @@ export const useCallStatusPolling = ({
         addLog(`Error: ${msg} (${duration}ms)`);
       }
 
-      // Schedule next poll
-      const interval = callAccepted ? 8000 : 5000;
+      const interval = callAccepted ? connectedIntervalMs : ringingIntervalMs;
       if (!isStopped) {
         timeoutId = setTimeout(poll, interval);
       }
     };
 
-    const initialInterval = callAccepted ? 8000 : 5000;
-    timeoutId = setTimeout(poll, initialInterval);
+    // First poll immediately while ringing so Accept/Reject feels instant.
+    timeoutId = setTimeout(poll, callAccepted ? connectedIntervalMs : 300);
 
     return () => {
       isStopped = true;

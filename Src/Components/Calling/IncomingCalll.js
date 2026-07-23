@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Audio } from 'expo-av';
 import RingtoneManager from './RingtoneManager';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Dimensions, ActivityIndicator, Platform, Linking, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -16,7 +16,9 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+// TouchableOpacity from gesture-handler — RN Touchable inside GestureHandlerRootView
+// often swallows Decline presses on Android.
+import { Gesture, GestureDetector, GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Image } from 'expo-image';
@@ -33,6 +35,20 @@ import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import MicPermissionModal from './MicPermissionModal';
 import { useCallStatusPolling } from './useCallStatusPolling';
 import { CallDebugConsole } from './CallDebugConsole';
+import { getLocalCallTerminationStatus, shouldRejectIncomingCall } from './callFlow';
+import {
+  getPendingCallSync,
+  wasRecentlyAccepted,
+  wasRecentlyRejected,
+  wasCallEndedRecently,
+  clearPendingCall,
+  acceptCallFromNotification,
+  declineCallFromNotification,
+  dismissIncomingCallScreen,
+  subscribeCallIntent,
+  invalidateIncomingCall,
+} from '../../Utils/callAcceptFlow';
+import { cancelIncomingCallNotification } from '../../../Notificaton';
 
 const { width, height } = Dimensions.get('window');
 const ACCEPT_THRESHOLD = 100;
@@ -134,59 +150,136 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
   const {
     name,
-    profileImageUrl,
+    profileImageUrl: rawProfileImageUrl,
     callType,
     roomId,
     callerId,
     callId,
   } = route?.params || {};
 
+  const profileImageUrl = (() => {
+    try {
+      const { resolveProfileImageUrl } = require('../../Utils/callAcceptFlow');
+      return resolveProfileImageUrl(rawProfileImageUrl);
+    } catch (_) {
+      if (typeof rawProfileImageUrl === 'string' && rawProfileImageUrl !== '[object Object]') {
+        return rawProfileImageUrl;
+      }
+      return rawProfileImageUrl?.url || '';
+    }
+  })();
+
   const dispatch = useDispatch();
   const [callAcceptManual] = useCallAcceptManualMutation();
   const safetyTimerRef = useRef(null);
   const hasActedRef = useRef(false);
   const ringtoneRef = useRef(null);
+  // State (not only ref) so polling `enabled` actually turns off after Accept/Reject.
+  const [hasActed, setHasActed] = useState(false);
+
+  const markActed = useCallback(() => {
+    hasActedRef.current = true;
+    setHasActed(true);
+  }, []);
 
   const { logs, clearLogs } = useCallStatusPolling({
     roomId,
     token,
-    enabled: !hasActedRef.current,
+    enabled: !hasActed,
     callAccepted: false,
     onCallAccepted: () => {
-      // Receiver side never expects call to transition to ACCEPTED through polling
-      // because receiver is the one who initiates acceptance.
+      // Receiver is the one who accepts — ignore ACCEPTED polls here.
     },
     onCallRejected: () => {
+      // Creator cancelled while we were ringing (or peer rejected).
       if (hasActedRef.current) return;
-      hasActedRef.current = true;
+      markActed();
       console.log('🔄 [Polling] Call rejected/cancelled by caller, exiting...');
-      stopRingtone();
-      clearSafetyTimer();
+      RingtoneManager.stopAndSuppress(roomId);
       if (callId) dispatch(clearProcessedRoomId(callId));
+      invalidateIncomingCall({ roomId, callId, callType }, 'REJECTED');
       LoginPageErrors('Caller cancelled the call');
       navigation.goBack();
     },
     onCallUnavailable: () => {
-      if (hasActedRef.current) return;
-      hasActedRef.current = true;
-      console.log('🔄 [Polling] Call unavailable, exiting...');
-      stopRingtone();
-      clearSafetyTimer();
-      if (callId) dispatch(clearProcessedRoomId(callId));
-      LoginPageErrors('Caller is no longer available');
-      navigation.goBack();
+      // Flaky while creator still ringing — but if creator already stamped ended, cut UI.
+      if (hasActedRef.current || wasRecentlyAccepted({ roomId, callId })) return;
+      if (wasRecentlyRejected({ roomId, callId }) || wasCallEndedRecently({ roomId, callId })) {
+        markActed();
+        console.log('🔄 [Polling] UNAVAILABLE + ended stamp — creator cut, dismissing');
+        RingtoneManager.stopAndSuppress(roomId);
+        if (callId) dispatch(clearProcessedRoomId(callId));
+        invalidateIncomingCall({ roomId, callId, callType }, 'UNAVAILABLE');
+        LoginPageErrors('Caller cancelled the call');
+        navigation.goBack();
+        return;
+      }
+      console.log(
+        '🔄 [Polling] Ignoring UNAVAILABLE on IncomingCall (creator may still be ringing)',
+      );
     },
     onCallEnded: (status) => {
-      if (hasActedRef.current) return;
-      hasActedRef.current = true;
-      console.log(`🔄 [Polling] Call ended with status: ${status}, exiting...`);
-      stopRingtone();
-      clearSafetyTimer();
+      // Creator left / force-closed / completed — always cut IncomingCall.
+      if (hasActedRef.current || wasRecentlyAccepted({ roomId, callId })) return;
+      const upper = String(status || '').toUpperCase();
+      if (upper === 'DISCONNECTED') {
+        // Same flake as UNAVAILABLE while still ringing — only cut if stamped ended.
+        if (!wasRecentlyRejected({ roomId, callId }) && !wasCallEndedRecently({ roomId, callId })) {
+          console.log('🔄 [Polling] Ignoring DISCONNECTED on IncomingCall (may be flake)');
+          return;
+        }
+      }
+      markActed();
+      console.log(`🔄 [Polling] Call ended (${upper}) — dismissing IncomingCall`);
+      RingtoneManager.stopAndSuppress(roomId);
       if (callId) dispatch(clearProcessedRoomId(callId));
-      LoginPageErrors('Caller is no longer available');
+      invalidateIncomingCall({ roomId, callId, callType }, upper || 'ENDED');
+      LoginPageErrors('Caller cancelled the call');
       navigation.goBack();
     },
   });
+
+  // Notification Accept/Reject while this screen is open — stop polling/ringtone immediately.
+  useEffect(() => {
+    return subscribeCallIntent(({ type, callData }) => {
+      const sameRoom =
+        callData?.roomId != null &&
+        roomId != null &&
+        String(callData.roomId) === String(roomId);
+      if (!sameRoom) return;
+
+      const sameCall =
+        !callId ||
+        !callData.callId ||
+        String(callData.callId) === String(callId);
+      if (!sameCall) return;
+
+      if (type === 'ACCEPTED') {
+        console.log('📱 [IncomingCall] Accept intent from notification — stopping local UI/polling');
+        markActed();
+        RingtoneManager.stopAndSuppress(roomId);
+        if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
+        if (safetyTimerRef.current) {
+          clearTimeout(safetyTimerRef.current);
+          safetyTimerRef.current = null;
+        }
+        // Do not goBack here — acceptCallFromNotification replaces this screen.
+        return;
+      }
+
+      if (type === 'REJECTED' || type === 'UNAVAILABLE' || type === 'ENDED') {
+        console.log('📱 [IncomingCall] Remote end intent — dismissing', type);
+        markActed();
+        RingtoneManager.stopAndSuppress(roomId);
+        if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
+        if (safetyTimerRef.current) {
+          clearTimeout(safetyTimerRef.current);
+          safetyTimerRef.current = null;
+        }
+        if (navigation.canGoBack()) navigation.goBack();
+      }
+    });
+  }, [roomId, callId, markActed, navigation]);
   
   // State for showing loader
   const [showLoader, setShowLoader] = useState(false);
@@ -213,31 +306,190 @@ const IncomingCallScreen = ({ route, navigation }) => {
     );
   }, []);
 
-  // ─── Incoming call ringtone (plays FIRST, before permission checks) ───
+  // Safety net: only for THIS callId (roomId alone is reused across chats).
+  useEffect(() => {
+    if (!roomId || hasActedRef.current) return;
+
+    const callRef = { roomId, callId };
+    const pending = getPendingCallSync();
+    // Same session only — roomId is reused; don't dismiss next call after prior REJECTED.
+    const samePendingCall =
+      pending?.roomId != null &&
+      String(pending.roomId) === String(roomId) &&
+      !!callId &&
+      !!pending.callId &&
+      String(pending.callId) === String(callId);
+
+    const accepted =
+      wasRecentlyAccepted(callRef) ||
+      (samePendingCall && (pending.status === 'ACCEPTED' || pending.callAccepted));
+    const rejected =
+      (callId && wasRecentlyRejected(callRef)) ||
+      (samePendingCall &&
+        (pending.status === 'REJECTED' ||
+          pending.status === 'ENDED' ||
+          pending.status === 'CANCELLED'));
+
+    if (rejected) {
+      markActed();
+      clearPendingCall();
+      navigation.goBack();
+      return;
+    }
+
+    if (accepted) {
+      // Notification/bootstrap already owns accept API + navigation — only stop local UI.
+      markActed();
+      RingtoneManager.stopAndSuppress(roomId);
+      if (pending?.apiDone) {
+        return;
+      }
+      acceptCallFromNotification(
+        {
+          roomId,
+          displayName: name,
+          callerName: name,
+          callType: callType || 'audio',
+          senderId: callerId,
+          profileImage: profileImageUrl,
+          callId,
+        },
+        { navigateNow: true },
+      ).catch(err => {
+        console.warn('[IncomingCall] auto-join after notification accept failed:', err?.message || err);
+        navigation.replace(callType === 'video' ? 'videoCallScreen' : 'callScreen', {
+          roomId,
+          name,
+          callType: callType || 'audio',
+          callerId,
+          profileImageUrl,
+          callAccepted: true,
+          callId,
+        });
+      });
+    }
+  }, [roomId, callType, name, callerId, profileImageUrl, callId, navigation, markActed]);
+
+  // Mark in-app UI. Dismiss CallStyle heads-up ONLY in true foreground —
+  // BG/kill Accept/Reject notification must stay visible.
+  useEffect(() => {
+    if (!roomId) return;
+    try {
+      const {
+        setAndroidInAppIncomingUi,
+        dismissAndroidCallStyleIfForeground,
+      } = require('../../Services/IncomingCallStyle');
+      setAndroidInAppIncomingUi(true);
+      dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
+    } catch (_) {}
+    return () => {
+      try {
+        const { setAndroidInAppIncomingUi } = require('../../Services/IncomingCallStyle');
+        setAndroidInAppIncomingUi(false);
+      } catch (_) {}
+    };
+  }, [roomId]);
+
+  // ─── One ringtone at a time:
+  // If native already ringing (notif tap) → keep it.
+  // Else FG → JS. Background → native MediaPlayer. Accept/Reject → stopAndSuppress.
   useEffect(() => {
     console.log('🔔 [IncomingCall] Setting up ringtone...');
     let isCancelled = false;
+    let handedOff = false;
+    let appStateTimer = null;
 
-    const playRingtone = async () => {
+    const playFgRingtone = async () => {
       try {
-        if (isCancelled || hasActedRef.current) {
-          console.log('🔔 [IncomingCall] Cancelled before playing');
+        if (isCancelled || hasActedRef.current) return;
+        if (wasRecentlyAccepted({ roomId, callId }) || wasRecentlyRejected({ roomId, callId })) {
+          RingtoneManager.stopAndSuppress(roomId);
           return;
         }
-
-        await RingtoneManager.playIncoming();
+        // active + inactive both count as in-app (shade pull is inactive).
+        if (AppState.currentState === 'background') return;
+        handedOff = false;
+        // Screen open in FG — no CallStyle heads-up; ringtone only.
+        // ensureIncoming: adopt native if already playing (notif tap) — never start a 2nd tone.
+        await RingtoneManager.ensureIncoming();
       } catch (error) {
         console.log('❌ Failed to play incoming call ringtone:', error);
       }
     };
 
-    playRingtone();
+    const startBackgroundRingtone = () => {
+      if (isCancelled || hasActedRef.current || !roomId) return;
+      if (wasRecentlyAccepted({ roomId, callId }) || wasRecentlyRejected({ roomId, callId })) {
+        RingtoneManager.stopAndSuppress(roomId);
+        return;
+      }
+      if (handedOff) return;
+      handedOff = true;
+
+      if (Platform.OS !== 'android') return;
+
+      console.log('🔔 [IncomingCall] Background → native ring NOW');
+      RingtoneManager.handOffToBackgroundRing({
+        roomId,
+        callId,
+        callType,
+        displayName: name,
+        name,
+        senderId: callerId,
+        callerId,
+        profileImage: profileImageUrl,
+        profileImageUrl,
+      });
+    };
+
+    const onAppState = next => {
+      if (isCancelled || hasActedRef.current) return;
+      if (wasRecentlyAccepted({ roomId, callId }) || wasRecentlyRejected({ roomId, callId })) {
+        RingtoneManager.stopAndSuppress(roomId);
+        return;
+      }
+      // Ignore inactive flicker; only react to active ↔ background.
+      if (next !== 'active' && next !== 'background') return;
+      if (appStateTimer) clearTimeout(appStateTimer);
+      appStateTimer = setTimeout(() => {
+        if (isCancelled || hasActedRef.current) return;
+        if (AppState.currentState === 'active' || AppState.currentState === 'inactive') {
+          playFgRingtone();
+          // Back to FG with screen open — hide CallStyle heads-up again.
+          try {
+            const { dismissAndroidCallStyleIfForeground } = require('../../Services/IncomingCallStyle');
+            dismissAndroidCallStyleIfForeground(roomId).catch(() => {});
+          } catch (_) {}
+        } else if (AppState.currentState === 'background') {
+          startBackgroundRingtone();
+        }
+      }, 300);
+    };
+
+    // Mount: ring in FG even if briefly inactive (notification shade).
+    if (AppState.currentState !== 'background') {
+      playFgRingtone();
+    } else {
+      startBackgroundRingtone();
+    }
+
+    const sub = AppState.addEventListener('change', onAppState);
 
     return () => {
       isCancelled = true;
-      RingtoneManager.stopAll();
+      if (appStateTimer) clearTimeout(appStateTimer);
+      sub.remove();
+      // Accept/Reject already suppressed. Soft-stop only if still ringing.
+      if (hasActedRef.current) {
+        RingtoneManager.stopAndSuppress(roomId);
+      } else if (handedOff || RingtoneManager.isNativePlaying()) {
+        // Keep native BG / notif-tap MediaPlayer alive across remounts — never restart.
+        RingtoneManager.stopJsOnly();
+      } else {
+        RingtoneManager.stopAll(roomId);
+      }
     };
-  }, []);
+  }, [roomId, callId, callType, name, callerId, profileImageUrl]);
 
   // ─── Initial Permissions Check ───
   // Delayed to avoid iOS system permission dialog stealing audio focus from the ringtone
@@ -276,18 +528,40 @@ const IncomingCallScreen = ({ route, navigation }) => {
     return () => clearTimeout(timer);
   }, [callType]);
 
-  // Helper to stop ringtone
+  // Helper to stop ringtone — Accept/Reject must suppress late re-ring.
   const stopRingtone = useCallback(() => {
-    RingtoneManager.stopAll();
-  }, []);
+    RingtoneManager.stopAndSuppress(roomId);
+  }, [roomId]);
+
+  const finalizeIncomingCallAction = useCallback(async (status, reason) => {
+    if (hasActedRef.current) return;
+    markActed();
+    stopRingtone();
+    clearSafetyTimer();
+
+    if (callId) dispatch(clearProcessedRoomId(callId));
+
+    try {
+      await callAcceptManual({
+        token,
+        data: {
+          roomId,
+          callType: callType || 'audio',
+          status,
+          reason,
+        },
+      });
+    } catch (error) {
+      console.warn('[IncomingCall] finalizeIncomingCallAction failed:', error?.message || error);
+    }
+  }, [callAcceptManual, callId, clearSafetyTimer, callType, dispatch, roomId, stopRingtone, token, markActed]);
 
   // ─── Safety timeout (60s) ───
   useEffect(() => {
     safetyTimerRef.current = setTimeout(() => {
       if (!hasActedRef.current) {
         console.log('⏰ Incoming call safety timeout — auto-dismissing');
-        // Clear dedup guard so caller can retry
-        if (callId) dispatch(clearProcessedRoomId(callId));
+        finalizeIncomingCallAction('UNAVAILABLE', 'timeout');
         navigation.goBack();
       }
     }, 60000);
@@ -331,14 +605,44 @@ const IncomingCallScreen = ({ route, navigation }) => {
   }, []);
 
 
-  // ─── Accept call (JS Thread) ───
+  const leaveIncomingUi = useCallback(() => {
+    try {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('chatRoomTab', { screen: 'home' });
+      }
+    } catch (_) {
+      dismissIncomingCallScreen();
+    }
+  }, [navigation]);
+
+  // ─── Accept — tap OR swipe-up ───
   const handleAccept = useCallback(async () => {
-    if (hasActedRef.current) return;
-    hasActedRef.current = true;
+    const callPayload = {
+      roomId,
+      callId,
+      callType: callType || 'audio',
+      displayName: name,
+      name,
+      senderId: callerId,
+      callerId,
+      profileImage: profileImageUrl,
+      profileImageUrl,
+    };
+
+    if (hasActedRef.current) {
+      try {
+        await acceptCallFromNotification(callPayload, { navigateNow: true });
+      } catch (_) {
+        leaveIncomingUi();
+      }
+      return;
+    }
+    markActed();
     stopRingtone();
     clearSafetyTimer();
-    
-    // Clear dedup guard so future calls to same room aren't blocked
+    if (roomId) cancelIncomingCallNotification(roomId).catch(() => {});
     if (callId) dispatch(clearProcessedRoomId(callId));
 
     ReactNativeHapticFeedback.trigger('notificationSuccess', {
@@ -346,86 +650,71 @@ const IncomingCallScreen = ({ route, navigation }) => {
       ignoreAndroidSystemSettings: false,
     });
 
-    // Start fade out sequence from JS (redundant safeguard)
     triggerSuccessSequence();
 
+    const connectWatchdog = setTimeout(() => {
+      try {
+        const routeName = navigation.getState?.()?.routes?.slice(-1)?.[0]?.name;
+        if (routeName === 'incomingCall') leaveIncomingUi();
+      } catch (_) {
+        leaveIncomingUi();
+      }
+    }, 8000);
+
     try {
-      const response = await callAcceptManual({
-        token,
-        data: {
-          roomId: roomId,
-          callType: callType || 'audio',
-          status: 'ACCEPTED',
-        },
-      });
-
-      // Check if the caller went offline before we could connect
-      if (response?.data?.message === 'USER_OFFLINE') {
-        console.log('⚠️ Accept API: Caller is offline');
-        LoginPageErrors('Caller is no longer available');
-        navigation.goBack();
-        return;
-      }
-
-      if (response?.error) {
-        console.log('⚠️ Accept API returned error:', response.error);
-      } else {
-        console.log('✅ Accept API succeeded');
-      }
-
-      // Navigate to call screen only if caller is online
-      navigation.replace(callType === 'video' ? 'videoCallScreen' : 'callScreen', {
-        roomId: roomId,
-        name: name,
-        callType: callType || 'audio',
-        callerId: callerId,
-        profileImageUrl: profileImageUrl,
-        callAccepted: true,
-      });
+      await acceptCallFromNotification(callPayload, { navigateNow: true });
     } catch (err) {
       console.error('❌ Accept API exception:', err);
       LoginPageErrors('Something went wrong');
-      navigation.goBack();
+      leaveIncomingUi();
+    } finally {
+      clearTimeout(connectWatchdog);
     }
-  }, [token, roomId, name, callerId, profileImageUrl, callType, callId]);
+  }, [roomId, name, callerId, profileImageUrl, callType, callId, markActed, stopRingtone, clearSafetyTimer, dispatch, triggerSuccessSequence, leaveIncomingUi, navigation]);
 
   const triggerAcceptJS = useCallback(() => {
     handleAccept();
   }, [handleAccept]);
 
-
-  // ─── Decline call (JS Thread - Optimistic Dismissal) ───
+  // ─── Decline — leave UI first, reject API in background ───
   const handleDecline = useCallback(() => {
-    if (hasActedRef.current) return;
-    hasActedRef.current = true;
+    console.log('📱 [IncomingCall] Decline pressed', { roomId, callId, hasActed: hasActedRef.current });
+    if (hasActedRef.current) {
+      leaveIncomingUi();
+      return;
+    }
+    if (!shouldRejectIncomingCall({ isCallActive: true, hasActed: hasActedRef.current })) {
+      leaveIncomingUi();
+      return;
+    }
+    markActed();
     stopRingtone();
     clearSafetyTimer();
     ReactNativeHapticFeedback.trigger('impactLight');
-
-    // 🔑 Clear dedup guard BEFORE navigation so the next call from this
-    // caller isn't silently blocked by the processedRoomIds check in Main.js
     if (callId) dispatch(clearProcessedRoomId(callId));
+    leaveIncomingUi();
 
-    // Fire decline API in background (fire-and-forget) to keep UI responsive
-    callAcceptManual({
-      token,
-      data: {
-        roomId: roomId,
+    declineCallFromNotification(
+      {
+        roomId,
+        callId,
         callType: callType || 'audio',
-        status: 'REJECTED',
+        displayName: name,
+        senderId: callerId,
+        profileImage: profileImageUrl,
       },
-    }).catch(error => {
-      console.error('Background decline API call error:', error);
-    });
+      { dismissUi: false },
+    )
+      .catch(error => console.error('Background decline API call error:', error))
+      .finally(() => clearPendingCall());
+  }, [roomId, callType, callId, name, callerId, profileImageUrl, dispatch, leaveIncomingUi, stopRingtone, clearSafetyTimer, markActed]);
 
-    // Go back instantly
-    navigation.goBack();
-  }, [token, roomId, callType, callId, dispatch, navigation]);
+  const tapAcceptGesture = Gesture.Tap().onEnd(() => {
+    runOnJS(triggerAcceptJS)();
+  });
 
-  // ─── Pan gesture (vertical) ───
   const panGesture = Gesture.Pan()
     .onUpdate(e => {
-      // Only allow upward drag (negative Y) & clamp at 0
       if (e.translationY <= 0) {
         translateY.value = e.translationY;
       }
@@ -435,18 +724,18 @@ const IncomingCallScreen = ({ route, navigation }) => {
       const velocity = Math.abs(e.velocityY);
 
       if (dragDistance >= ACCEPT_THRESHOLD || velocity >= VELOCITY_THRESHOLD) {
-        // Success
         runOnJS(triggerAcceptJS)();
         triggerSuccessSequence();
       } else {
-        // Bounce back if released too early
         translateY.value = withSpring(0, {
           damping: 15,
-          stiffness: 300, 
+          stiffness: 300,
           mass: 0.8,
         });
       }
     });
+
+  const acceptGesture = Gesture.Exclusive(tapAcceptGesture, panGesture);
 
   // ─── Animated styles ───
   const buttonAnimStyle = useAnimatedStyle(() => {
@@ -494,7 +783,13 @@ const IncomingCallScreen = ({ route, navigation }) => {
     return (
       <View style={styles.loaderContainer}>
         <LegacyLoader />
-        <Text style={styles.loaderText}>Loading...</Text>
+        <Text style={styles.loaderText}>Connecting...</Text>
+        <TouchableOpacity
+          style={styles.loaderCancelBtn}
+          onPress={leaveIncomingUi}
+          activeOpacity={0.7}>
+          <Text style={styles.loaderCancelText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -510,9 +805,15 @@ const IncomingCallScreen = ({ route, navigation }) => {
             <PulseRing />
             <View style={styles.profileCircle}>
               <Image
-                source={{ uri: profileImageUrl }}
+                source={
+                  profileImageUrl
+                    ? { uri: profileImageUrl }
+                    : require('../../../Assets/Images/DefaultProfile.jpg')
+                }
+                placeholder={require('../../../Assets/Images/DefaultProfile.jpg')}
                 style={styles.profilePhoto}
                 contentFit="cover"
+                cachePolicy="memory-disk"
               />
             </View>
           </View>
@@ -525,31 +826,33 @@ const IncomingCallScreen = ({ route, navigation }) => {
 
         {/* ─── Bottom controls ─── */}
         <View style={styles.bottomControls}>
-          
-          {/* LEFT: Decline button */}
-          <View style={styles.declineContainer}>
-            <Animated.View style={declineButtonStyle}>
-                <TouchableOpacity
+          <View style={styles.declineContainer} pointerEvents="box-none">
+            <Animated.View style={declineButtonStyle} pointerEvents="box-none">
+              <TouchableOpacity
                 style={styles.declineButton}
                 onPress={handleDecline}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+                hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+                accessibilityRole="button"
+                accessibilityLabel="Decline call">
                 <Feather name="x" size={28} color="#EF4444" />
-                </TouchableOpacity>
+              </TouchableOpacity>
             </Animated.View>
             <Text style={styles.buttonLabel}>Decline</Text>
           </View>
 
-          {/* RIGHT: Swipe-to-answer button */}
-          <View style={styles.acceptContainer}>
-            {/* Chevron arrows above */}
-            <Animated.View style={[styles.chevronContainer, chevronContainerStyle]}>
+          <View style={styles.acceptContainer} pointerEvents="box-none">
+            <Animated.View
+              style={[styles.chevronContainer, chevronContainerStyle]}
+              pointerEvents="none">
               <ChevronArrow delay={0} />
               <ChevronArrow delay={200} />
               <ChevronArrow delay={400} />
             </Animated.View>
 
-            {/* Green gradient trail */}
-            <Animated.View style={[styles.trailContainer, trailAnimStyle]}>
+            <Animated.View
+              style={[styles.trailContainer, trailAnimStyle]}
+              pointerEvents="none">
               <LinearGradient
                 colors={['transparent', '#10B98140', '#10B98180', '#10B981']}
                 style={StyleSheet.absoluteFill}
@@ -558,9 +861,11 @@ const IncomingCallScreen = ({ route, navigation }) => {
               />
             </Animated.View>
 
-            {/* Draggable accept button */}
-            <GestureDetector gesture={panGesture}>
-              <Animated.View style={[styles.acceptButton, buttonAnimStyle]}>
+            <GestureDetector gesture={acceptGesture}>
+              <Animated.View
+                style={[styles.acceptButton, buttonAnimStyle]}
+                accessibilityRole="button"
+                accessibilityLabel="Accept call">
                 <LinearGradient
                   colors={['#34D399', '#10B981']}
                   style={styles.acceptGradient}
@@ -571,7 +876,6 @@ const IncomingCallScreen = ({ route, navigation }) => {
               </Animated.View>
             </GestureDetector>
 
-            {/* Label below */}
             <Text style={styles.buttonLabel}>Accept</Text>
           </View>
         </View>
@@ -675,6 +979,20 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontSize: 16,
     color: '#6B7280',
+    fontFamily: 'Rubik-Medium',
+  },
+  loaderCancelBtn: {
+    marginTop: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+  },
+  loaderCancelText: {
+    fontSize: 15,
+    color: '#EF4444',
     fontFamily: 'Rubik-Medium',
   },
 

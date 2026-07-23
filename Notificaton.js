@@ -1,7 +1,56 @@
-import notifee, {AuthorizationStatus} from '@notifee/react-native';
+import notifee, {AuthorizationStatus, AndroidCategory} from '@notifee/react-native';
 import {AndroidColor, AndroidImportance, AndroidStyle, AndroidLaunchActivityFlag} from '@notifee/react-native/dist/types/NotificationAndroid';
-import {Alert} from 'react-native';
+import {Alert, AppState, Platform} from 'react-native';
 
+const INCOMING_CALL_CATEGORY_ID = 'incoming_call';
+
+/** iOS: Accept/Decline category (safe to call repeatedly). */
+export async function ensureIncomingCallNotificationCategory() {
+  if (Platform.OS !== 'ios') return;
+  try {
+    await notifee.setNotificationCategories([
+      {
+        id: INCOMING_CALL_CATEGORY_ID,
+        actions: [
+          {
+            id: 'decline_call',
+            title: 'Decline',
+            destructive: true,
+            foreground: false,
+            authenticationRequired: false,
+          },
+          {
+            id: 'accept_call',
+            title: 'Accept',
+            foreground: true,
+            authenticationRequired: false,
+          },
+        ],
+      },
+    ]);
+  } catch (error) {
+    console.log('❌ [Notifee] Failed to set iOS call categories:', error?.message || error);
+  }
+}
+
+async function ensureNotificationPermission() {
+  try {
+    const settings = await notifee.getNotificationSettings();
+    if (
+      settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+      settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
+    ) {
+      return true;
+    }
+    const req = await notifee.requestPermission();
+    return (
+      req.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+      req.authorizationStatus === AuthorizationStatus.PROVISIONAL
+    );
+  } catch (_) {
+    return true;
+  }
+}
 
 export async function onDisplayNotification(data) {
   // Request permissions (required for iOS)
@@ -565,6 +614,326 @@ export async function showMentionNotification(remoteMessage) {
     console.log('✅ Mention notification displayed');
   } catch (error) {
     console.log('❌ Error displaying mention notification:', error);
+  }
+}
+
+/** Normalize FCM/socket payloads so roomId is never missed. */
+function normalizeIncomingCallDetails(raw) {
+  let details = raw;
+  if (typeof details === 'string') {
+    try {
+      details = JSON.parse(details);
+    } catch (_) {
+      return null;
+    }
+  }
+  if (!details || typeof details !== 'object') return null;
+  // Some payloads nest under content / data.content
+  if (!details.roomId && details.content) {
+    const inner =
+      typeof details.content === 'string'
+        ? (() => {
+            try {
+              return JSON.parse(details.content);
+            } catch (_) {
+              return null;
+            }
+          })()
+        : details.content;
+    if (inner?.roomId) details = { ...details, ...inner };
+  }
+  const roomId = details.roomId || details.room_id;
+  if (!roomId) return null;
+  return {
+    roomId: String(roomId),
+    callId: String(details.callId || details.call_id || ''),
+    callType: details.callType === 'video' || details.call_type === 'video' ? 'video' : 'audio',
+    displayName:
+      details.displayName ||
+      details.name ||
+      details.callerName ||
+      details.username ||
+      'Incoming Call',
+    name: details.name || details.displayName || details.callerName || 'Incoming Call',
+    senderId: String(details.senderId || details.callerId || details.sender_id || ''),
+    callerId: String(details.callerId || details.senderId || details.sender_id || ''),
+    profileImage: (() => {
+      try {
+        const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+        return resolveProfileImageUrl(
+          details.profileImage,
+          details.profileImageUrl,
+          details.profile_image,
+          details.profileImageurl,
+        );
+      } catch (_) {
+        const v =
+          details.profileImage ||
+          details.profileImageUrl ||
+          details.profile_image ||
+          details.profileImageurl ||
+          '';
+        if (typeof v === 'string') return v === '[object Object]' ? '' : v;
+        return v?.url || '';
+      }
+    })(),
+    profileImageUrl: (() => {
+      try {
+        const { resolveProfileImageUrl } = require('./Src/Utils/callAcceptFlow');
+        return resolveProfileImageUrl(
+          details.profileImageUrl,
+          details.profileImage,
+          details.profile_image,
+          details.profileImageurl,
+        );
+      } catch (_) {
+        const v =
+          details.profileImageUrl ||
+          details.profileImage ||
+          details.profile_image ||
+          details.profileImageurl ||
+          '';
+        if (typeof v === 'string') return v === '[object Object]' ? '' : v;
+        return v?.url || '';
+      }
+    })(),
+  };
+}
+
+/**
+ * Incoming call shade for BG / kill / handoff.
+ *
+ * Android:
+ *   force=true → always post CallStyle (BG/kill Accept + Reject).
+ *   Without force, skip when app is active (IncomingCall screen handles FG).
+ * iOS: Notifee / CallKit category.
+ */
+export async function showIncomingCallNotification(callDetails, options = {}) {
+  const details = normalizeIncomingCallDetails(callDetails);
+  if (!details?.roomId) {
+    console.warn(
+      '[showIncomingCallNotification] missing roomId — skip',
+      typeof callDetails,
+      callDetails && Object.keys(callDetails),
+    );
+    return false;
+  }
+
+  // Without force: skip when app is active (FG uses IncomingCall screen).
+  // force=true (BG/kill/handoff) must always post CallStyle.
+  if (!options.force && AppState.currentState === 'active') {
+    console.log(
+      '📱 [showIncomingCallNotification] skip — foreground (IncomingCall screen handles it)',
+      details.roomId,
+    );
+    return false;
+  }
+
+  try {
+    const {
+      clearEndedCallStampForIncoming,
+      prepareIncomingCall,
+    } = require('./Src/Utils/callAcceptFlow');
+    clearEndedCallStampForIncoming(details);
+    prepareIncomingCall(details);
+  } catch (_) {}
+
+  try {
+    await ensureNotificationPermission();
+
+    // ─── Android: CallStyle ONLY (circular Decline + Answer). Never Notifee. ───
+    if (Platform.OS === 'android') {
+      // Kill leftover text Reject/Accept Notifee shade (wrong UI).
+      try {
+        await notifee.cancelNotification('incoming_call_' + details.roomId);
+      } catch (_) {}
+
+      try {
+        const {
+          displayAndroidCallStyleNotification,
+        } = require('./Src/Services/IncomingCallStyle');
+        const shown = await displayAndroidCallStyleNotification(details, {
+          force: true,
+          playRingtone: options.playRingtone !== false,
+        });
+        if (shown) {
+          try {
+            await notifee.cancelNotification('incoming_call_' + details.roomId);
+          } catch (_) {}
+          console.log(
+            '✅ [showIncomingCallNotification] CallStyle only',
+            details.roomId,
+            details.callType,
+          );
+          return true;
+        }
+        const retry = await displayAndroidCallStyleNotification(details, {
+          force: true,
+          playRingtone: options.playRingtone !== false,
+        });
+        console.log(
+          '📱 [showIncomingCallNotification] CallStyle retry=',
+          retry,
+          details.roomId,
+        );
+        return !!retry;
+      } catch (e) {
+        console.warn(
+          '📱 [showIncomingCallNotification] CallStyle error (no Notifee fallback):',
+          e?.message || e,
+        );
+        return false;
+      }
+    }
+
+    // ─── iOS: Notifee / CallKit category ───
+    await ensureIncomingCallNotificationCategory();
+    return await displayNotifeeIncomingCallFallback(details, { withSound: true });
+  } catch (error) {
+    console.log('❌ Error displaying incoming call notification:', error?.message || error);
+    if (Platform.OS === 'android') {
+      // Android: never show Notifee text Reject/Accept as fallback.
+      return false;
+    }
+    try {
+      return await displayNotifeeIncomingCallFallback(
+        normalizeIncomingCallDetails(callDetails),
+        { minimal: true },
+      );
+    } catch (e2) {
+      console.log('❌ Fallback notification also failed:', e2?.message || e2);
+      return false;
+    }
+  }
+}
+
+/** Notifee Accept/Reject — iOS primary, Android fallback only. */
+async function displayNotifeeIncomingCallFallback(details, opts = {}) {
+  if (!details?.roomId) return false;
+
+  const channelId = await notifee.createChannel({
+    id: opts.minimal
+      ? 'fahdu_incoming_calls_actions_v1'
+      : 'fahdu_incoming_calls_actions_v3_silent_novib',
+    name: 'Incoming Call Actions',
+    importance: AndroidImportance.HIGH,
+    sound: undefined,
+    vibration: false,
+  });
+
+  const callerName = details.displayName || 'Incoming Call';
+  const callTypeLabel = details.callType === 'video' ? 'video' : 'voice';
+  const notifId = 'incoming_call_' + details.roomId;
+  const withSound = opts.withSound === true;
+
+  await notifee.displayNotification({
+    id: notifId,
+    title: callerName,
+    body: opts.minimal ? 'Incoming call' : `Incoming ${callTypeLabel} call`,
+    data: {
+      roomId: details.roomId,
+      callType: details.callType,
+      senderId: details.senderId,
+      callerId: details.callerId,
+      displayName: callerName,
+      callerName: callerName,
+      name: callerName,
+      profileImage: details.profileImage,
+      profileImageUrl: details.profileImageUrl,
+      callId: details.callId,
+      type: 'incoming_call',
+    },
+    ios: {
+      categoryId: INCOMING_CALL_CATEGORY_ID,
+      sound: withSound ? 'default' : 'default',
+      interruptionLevel: 'timeSensitive',
+      foregroundPresentationOptions: {
+        badge: true,
+        sound: true,
+        banner: true,
+        list: true,
+      },
+    },
+    android: {
+      channelId,
+      smallIcon: 'icon_notification',
+      importance: AndroidImportance.HIGH,
+      // Not CALL — avoids OEM full-screen redelivery on unlock.
+      category: AndroidCategory.STATUS,
+      ongoing: true,
+      autoCancel: false,
+      lightUpScreen: false,
+      vibrationPattern: undefined,
+      color: '#10B981',
+      pressAction: {
+        id: 'default',
+        launchActivity: 'default',
+      },
+      actions: [
+        { title: 'Reject', pressAction: { id: 'decline_call' } },
+        {
+          title: 'Accept',
+          pressAction: { id: 'accept_call', launchActivity: 'default' },
+        },
+      ],
+    },
+  });
+
+  console.log(
+    '✅ Accept/Reject Notifee shown',
+    details.roomId,
+    opts.minimal ? '(minimal)' : '',
+  );
+
+  if (Platform.OS === 'ios') {
+    try {
+      const RingtoneManager = require('./Src/Components/Calling/RingtoneManager').default;
+      RingtoneManager.playIncoming().catch(() => {});
+    } catch (_) {}
+  }
+
+  return true;
+}
+
+/**
+ * Dismiss incoming-call shade.
+ * @param {string} roomId
+ * @param {{ stopRingtone?: boolean }} [options]
+ *   stopRingtone defaults true (Accept/Reject).
+ *   Pass false when IncomingCall is taking over FG audio — otherwise async
+ *   stopAll() races and kills the in-app ringtone that just started.
+ */
+export async function cancelIncomingCallNotification(roomId, options = {}) {
+  const stopRingtone = options.stopRingtone !== false;
+  try {
+    if (stopRingtone) {
+      try {
+        const RingtoneManager = require('./Src/Components/Calling/RingtoneManager').default;
+        RingtoneManager.stopAndSuppress(roomId);
+      } catch (_) {}
+    }
+    await notifee.cancelNotification('incoming_call_' + roomId);
+    if (Platform.OS === 'android') {
+      try {
+        if (stopRingtone) {
+          // Accept/Reject — stop MediaPlayer + remove CallStyle.
+          const { stopAndroidRingtoneAndDismiss } = require('./Src/Services/IncomingCallStyle');
+          await stopAndroidRingtoneAndDismiss(roomId);
+        } else {
+          // FG takeover — drop shade only; RingtoneManager owns audio.
+          const { dismissAndroidCallStyleShade } = require('./Src/Services/IncomingCallStyle');
+          await dismissAndroidCallStyleShade(roomId);
+        }
+      } catch (_) {
+        try {
+          const { cancelAndroidCallStyleNotification } = require('./Src/Services/IncomingCallStyle');
+          await cancelAndroidCallStyleNotification(roomId);
+        } catch (__) {}
+      }
+    }
+    console.log('✅ Cancelled call notification for room:', roomId, 'stopRing=', stopRingtone);
+  } catch (error) {
+    console.log('❌ Error cancelling call notification:', error);
   }
 }
 

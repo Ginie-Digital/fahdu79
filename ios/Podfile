@@ -73,5 +73,15 @@ target 'Fahdu' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # fmt 11.0.2 (bundled with React Native 0.79) uses a consteval path that
+    # fails under Xcode 26. Compile just this pod as C++17 to disable it.
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'fmt'
+
+      target.build_configurations.each do |build_configuration|
+        build_configuration.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
   end
 end

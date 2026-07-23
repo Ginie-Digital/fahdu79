@@ -958,35 +958,6 @@ const StackNavigation = () => {
             />
 
             <Stack.Screen
-              name="callScreen"
-              component={CallScreen}
-              options={({ navigation }) => ({
-                headerShown: false,
-                gestureEnabled: false,
-              })}
-            />
-
-            <Stack.Screen
-              name="videoCallScreen"
-              component={VideoCallScreen}
-              options={({ navigation }) => ({
-                headerShown: false,
-                gestureEnabled: false,
-              })}
-            />
-
-            <Stack.Screen
-              name="incomingCall"
-              component={IncomingCallScreen}
-              options={({ navigation }) => ({
-                headerShown: false,
-                gestureEnabled: false,
-                presentation: 'fullScreenModal',
-                animation: 'slide_from_bottom',
-              })}
-            />
-
-            <Stack.Screen
               name="cfPayment"
               component={Platform.OS === 'android' ? CFPayments : TestPurchase}
               options={({ navigation }) => ({
@@ -1185,6 +1156,34 @@ const StackNavigation = () => {
             />
           </>
         )}
+
+        {/* Always registered — kill/BG CallStyle + cold-start must open even on login/license. */}
+        <Stack.Screen
+          name="incomingCall"
+          component={IncomingCallScreen}
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+            presentation: 'fullScreenModal',
+            animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="callScreen"
+          component={CallScreen}
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="videoCallScreen"
+          component={VideoCallScreen}
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
       </Stack.Navigator>
     </SafeAreaProvider>
   );

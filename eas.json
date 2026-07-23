@@ -7,28 +7,45 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "cache": {},
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
-    },
-    "staging": {
-      "distribution": "internal",
-      "channel": "staging",
+      "channel": "preview",
+      "cache": {},
       "android": {
         "buildType": "apk"
       }
     },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging",
+      "cache": {},
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "REACT_NATIVE_ARCHITECTURES": "armeabi-v7a,arm64-v8a,x86,x86_64"
+      }
+    },
     "staging_store": {
       "distribution": "store",
-      "channel": "staging"
+      "channel": "staging",
+      "cache": {},
+      "env": {
+        "REACT_NATIVE_ARCHITECTURES": "armeabi-v7a,arm64-v8a,x86,x86_64"
+      }
     },
     "production": {
       "channel": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "cache": {},
+      "env": {
+        "REACT_NATIVE_ARCHITECTURES": "armeabi-v7a,arm64-v8a,x86,x86_64"
+      }
     }
   },
   "submit": {

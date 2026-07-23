@@ -8,16 +8,21 @@ Pod::Spec.new do |s|
   s.authors      = 'Arthenica'
 
   s.platform     = :ios, '12.1'
-  s.source       = { :http => 'file:///Users/giniedigital/Documents/fahdu79/ios/vendor/ffmpeg-kit-ios-full-gpl.zip' }
+  # FFmpegKit retired its official binary releases. Use a pinned mirror instead
+  # of a machine-specific local archive, so `pod install` also works in CI.
+  s.source       = {
+    :git => 'https://github.com/NooruddinLakhani/ffmpeg-kit-ios-full-gpl.git',
+    :commit => '8006263515e85a382052fd6388ed57b6a019811c'
+  }
 
   s.vendored_frameworks = [
-    'ffmpegkit.xcframework',
-    'libavcodec.xcframework',
-    'libavdevice.xcframework',
-    'libavfilter.xcframework',
-    'libavformat.xcframework',
-    'libavutil.xcframework',
-    'libswresample.xcframework',
-    'libswscale.xcframework'
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/ffmpegkit.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libavcodec.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libavdevice.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libavfilter.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libavformat.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libavutil.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libswresample.xcframework',
+    'ffmpeg-kit-ios-full-gpl/6.0-80adc/libswscale.xcframework'
   ]
 end
